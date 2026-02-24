@@ -1,0 +1,52 @@
+name: isis-basics
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+
+  nodes:
+    r1:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/r1/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+    r2:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/r2/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+    r3:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/r3/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+    r4:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/r4/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]
+    - endpoints: ["r3:eth2", "r4:eth1"]

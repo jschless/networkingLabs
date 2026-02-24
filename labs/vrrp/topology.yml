@@ -1,0 +1,61 @@
+name: vrrp
+
+topology:
+  nodes:
+    br-lan:
+      kind: bridge
+
+    host:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/host/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/r1/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/r2/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+    server:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/server/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+  links:
+    - endpoints: ["host:eth1", "br-lan:eth0"]
+    - endpoints: ["r1:eth1", "br-lan:eth1"]
+    - endpoints: ["r2:eth1", "br-lan:eth2"]
+    - endpoints: ["r1:eth2", "server:eth1"]
+    - endpoints: ["r2:eth2", "server:eth2"]

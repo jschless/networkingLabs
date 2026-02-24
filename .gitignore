@@ -1,0 +1,26 @@
+# ContainerLab runtime directories (created when labs are deployed)
+clab-*/
+labs/*/clab-*/
+
+# ContainerLab generated files
+*.clab.yml
+.clab_cache/
+
+# FRR runtime files that may appear in bind-mounted config dirs
+*.pid
+*.log
+*.sock
+frr.log
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Shell history / scratch files
+*.bak
+*.tmp

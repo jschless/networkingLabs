@@ -1,0 +1,30 @@
+name: bgp-aggregation
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - vtysh -b
+
+  nodes:
+    originator:
+      binds:
+        - configs/originator/frr.conf:/etc/frr/frr.conf
+
+    aggregator:
+      binds:
+        - configs/aggregator/frr.conf:/etc/frr/frr.conf
+
+    receiver:
+      binds:
+        - configs/receiver/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["originator:eth1", "aggregator:eth1"]
+    - endpoints: ["aggregator:eth2", "receiver:eth1"]

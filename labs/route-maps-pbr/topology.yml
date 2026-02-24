@@ -1,0 +1,68 @@
+name: route-maps-pbr
+
+# Policy-Based Routing (PBR) Lab
+#
+# Topology:
+#
+#   [host-a]   [host-b]
+#       \         /
+#       [router]
+#       /         \
+#    [isp1]     [isp2]
+#
+# host-a traffic -> router -> isp1  (PBR based on source IP)
+# host-b traffic -> router -> isp2  (PBR based on source IP)
+#
+# IP addressing:
+#   host-a:eth1  <-> router:eth1  = 192.168.1.0/30  (host-a=.1, router=.2)
+#   host-b:eth1  <-> router:eth2  = 192.168.2.0/30  (host-b=.1, router=.2)
+#   router:eth3  <-> isp1:eth1    = 10.0.1.0/30     (router=.1, isp1=.2)
+#   router:eth4  <-> isp2:eth1    = 10.0.2.0/30     (router=.1, isp2=.2)
+#
+# Loopbacks:
+#   isp1 = 10.99.1.1/32
+#   isp2 = 10.99.2.1/32
+#
+# What you configure:
+#   1. Static default route via isp1 (normal forwarding baseline)
+#   2. PBR on router: host-a -> isp1, host-b -> isp2
+#   3. Verify with traceroute from each host
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - vtysh -b
+
+  nodes:
+    host-a:
+      binds:
+        - configs/host-a/frr.conf:/etc/frr/frr.conf
+
+    host-b:
+      binds:
+        - configs/host-b/frr.conf:/etc/frr/frr.conf
+
+    router:
+      binds:
+        - configs/router/frr.conf:/etc/frr/frr.conf
+
+    isp1:
+      binds:
+        - configs/isp1/frr.conf:/etc/frr/frr.conf
+
+    isp2:
+      binds:
+        - configs/isp2/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["host-a:eth1", "router:eth1"]   # 192.168.1.0/30
+    - endpoints: ["host-b:eth1", "router:eth2"]   # 192.168.2.0/30
+    - endpoints: ["router:eth3", "isp1:eth1"]     # 10.0.1.0/30
+    - endpoints: ["router:eth4", "isp2:eth1"]     # 10.0.2.0/30

@@ -1,0 +1,78 @@
+name: mpls-sr-blank
+
+# Blank MPLS/BGP/IS-IS/SR practice lab
+#
+# Same topology as mpls-sr-isis-bgp but with only IP addressing pre-configured.
+# Implement the stack yourself using the hints in each node's frr.conf.
+#
+# Suggested order:
+#   1. IS-IS underlay          -> loopbacks reachable between SP nodes
+#   2. Segment Routing (SR)    -> MPLS labels auto-distributed via IS-IS
+#   3. BGP (iBGP + RR)         -> pe1/pe2 session to rr1
+#   4. L3VPN / VRF             -> VRF CUST-A on PE nodes, eBGP to CEs
+#
+# Topology:
+#          [rr1]   10.0.0.1   AS65000 Route Reflector
+#         /     \
+#      [p1]────[p2]           10.0.0.4 / 10.0.0.5
+#       |          |
+#     [pe1]     [pe2]         10.0.0.2 / 10.0.0.3
+#       |          |
+#     [ce1]     [ce2]         AS65001 / AS65002
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    binds:
+      # All nodes share the same daemons and vtysh.conf
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.mpls.platform_labels: "1048575"
+      net.ipv4.ip_forward: "1"
+    exec:
+      # Re-apply config after containerlab creates all veth pairs
+      - vtysh -b
+
+  nodes:
+    rr1:
+      binds:
+        - configs/rr1/frr.conf:/etc/frr/frr.conf
+
+    pe1:
+      binds:
+        - configs/pe1/frr.conf:/etc/frr/frr.conf
+
+    pe2:
+      binds:
+        - configs/pe2/frr.conf:/etc/frr/frr.conf
+
+    p1:
+      binds:
+        - configs/p1/frr.conf:/etc/frr/frr.conf
+
+    p2:
+      binds:
+        - configs/p2/frr.conf:/etc/frr/frr.conf
+
+    ce1:
+      binds:
+        - configs/ce1/frr.conf:/etc/frr/frr.conf
+
+    ce2:
+      binds:
+        - configs/ce2/frr.conf:/etc/frr/frr.conf
+
+  links:
+    # CE -- PE
+    - endpoints: ["ce1:eth1",  "pe1:eth1"]   # 192.168.10.0/30
+    - endpoints: ["ce2:eth1",  "pe2:eth2"]   # 192.168.20.0/30
+    # PE -- P
+    - endpoints: ["pe1:eth2",  "p1:eth1"]    # 10.1.0.0/30
+    - endpoints: ["pe2:eth1",  "p2:eth3"]    # 10.1.0.16/30
+    # P -- RR
+    - endpoints: ["p1:eth2",   "rr1:eth1"]   # 10.1.0.4/30
+    - endpoints: ["rr1:eth2",  "p2:eth1"]    # 10.1.0.8/30
+    # P -- P  (direct shortcut)
+    - endpoints: ["p1:eth3",   "p2:eth2"]    # 10.1.0.12/30

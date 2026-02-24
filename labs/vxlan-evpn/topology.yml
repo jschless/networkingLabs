@@ -1,0 +1,84 @@
+name: vxlan-evpn
+
+# VXLAN with BGP EVPN Control Plane
+#
+# Underlay: OSPF between VTEPs and spine (loopback reachability)
+# Overlay:  BGP EVPN type-2 (MAC/IP) and type-3 (IMET) routes
+# Forwarding: VXLAN UDP 4789 tunnels between VTEP loopbacks
+#
+# [host1]--[vtep1]--[spine/RR]--[vtep2]--[host2]
+#           VTEP                  VTEP
+#           10.0.0.1             10.0.0.2
+#           |<---- VNI 100 L2 segment ---->|
+#           172.16.0.1 (host1)    172.16.0.2 (host2)
+#
+# vtep1 setup.sh:
+#   - Manually adds loopback 10.0.0.1 (needed before vxlan creation)
+#   - Creates vxlan100 (VNI 100, local=10.0.0.1, nolearning)
+#   - Creates bridge br100
+#   - Enslaves vxlan100 and eth2 (host-facing) to br100
+#   - Runs vtysh -b to load FRR OSPF+EVPN config
+#
+# spine setup:
+#   - BGP Route Reflector for l2vpn evpn AF
+#   - OSPF for underlay only
+
+topology:
+  defaults:
+    kind: linux
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
+  nodes:
+    spine:
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/spine/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    vtep1:
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/vtep1/frr.conf:/etc/frr/frr.conf
+        - configs/vtep1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    vtep2:
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/vtep2/frr.conf:/etc/frr/frr.conf
+        - configs/vtep2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    host1:
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/host1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    host2:
+      image: frrouting/frr:latest
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/host2/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+  links:
+    - endpoints: ["vtep1:eth1", "spine:eth1"]   # 10.1.1.0/30 underlay
+    - endpoints: ["vtep2:eth1", "spine:eth2"]   # 10.1.2.0/30 underlay
+    - endpoints: ["host1:eth1", "vtep1:eth2"]   # host → vtep (enslaved to br100)
+    - endpoints: ["host2:eth1", "vtep2:eth2"]   # host → vtep (enslaved to br100)

@@ -1,0 +1,43 @@
+name: bgp-prefix-security
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - vtysh -b
+
+  nodes:
+    legitimate:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/legitimate/frr.conf:/etc/frr/frr.conf
+
+    isp:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/isp/frr.conf:/etc/frr/frr.conf
+
+    hijacker:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/hijacker/frr.conf:/etc/frr/frr.conf
+
+    victim:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/victim/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["legitimate:eth1", "isp:eth1"]
+    - endpoints: ["isp:eth2", "hijacker:eth1"]
+    - endpoints: ["isp:eth3", "victim:eth1"]

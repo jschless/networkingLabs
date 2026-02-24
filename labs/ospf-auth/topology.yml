@@ -1,0 +1,28 @@
+name: ospf-auth
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - vtysh -b
+
+  nodes:
+    r1:
+      binds:
+        - configs/r1/frr.conf:/etc/frr/frr.conf
+    r2:
+      binds:
+        - configs/r2/frr.conf:/etc/frr/frr.conf
+    r3:
+      binds:
+        - configs/r3/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]

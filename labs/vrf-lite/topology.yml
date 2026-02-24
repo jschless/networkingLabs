@@ -1,0 +1,76 @@
+name: vrf-lite
+
+# VRF-Lite segmentation practice lab
+#
+# VRF creation is pre-configured via setup.sh on PE nodes.
+# You configure routing within each VRF.
+#
+# Topology:
+#
+#   [ce-a1] --RED-- [pe1] --RED-- [pe2] --RED-- [ce-a2]
+#   [ce-b1] --BLUE- [pe1] --BLUE- [pe2] --BLUE- [ce-b2]
+#
+# pe1 and pe2 each have two VRFs: VRF-RED (table 100) and VRF-BLUE (table 200).
+# Two separate inter-PE links carry each VRF independently (VRF-Lite, no MPLS).
+# CE nodes cannot reach each other across VRFs — isolation is the whole point.
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
+  nodes:
+    # PE nodes run setup.sh to create VRF netdevs before FRR starts
+    pe1:
+      binds:
+        - configs/pe1/frr.conf:/etc/frr/frr.conf
+        - configs/pe1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    pe2:
+      binds:
+        - configs/pe2/frr.conf:/etc/frr/frr.conf
+        - configs/pe2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    # CE nodes are plain routers, no VRF needed
+    ce-a1:
+      binds:
+        - configs/ce-a1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    ce-a2:
+      binds:
+        - configs/ce-a2/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    ce-b1:
+      binds:
+        - configs/ce-b1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    ce-b2:
+      binds:
+        - configs/ce-b2/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+  links:
+    # VRF-RED links
+    - endpoints: ["ce-a1:eth1", "pe1:eth1"]   # 10.10.12.0/30  RED
+    - endpoints: ["pe1:eth2",   "pe2:eth1"]   # 10.10.99.0/30  RED inter-PE
+    - endpoints: ["pe2:eth2",   "ce-a2:eth1"] # 10.10.34.0/30  RED
+    # VRF-BLUE links
+    - endpoints: ["ce-b1:eth1", "pe1:eth3"]   # 10.20.12.0/30  BLUE
+    - endpoints: ["pe1:eth4",   "pe2:eth3"]   # 10.20.99.0/30  BLUE inter-PE
+    - endpoints: ["pe2:eth4",   "ce-b2:eth1"] # 10.20.34.0/30  BLUE

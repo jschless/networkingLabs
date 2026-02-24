@@ -1,0 +1,52 @@
+name: bgp-path-selection
+
+# BGP path selection attributes practice lab
+#
+# IP addressing is pre-configured. You implement BGP and manipulate
+# path selection attributes step by step.
+#
+# Topology (diamond — dual-homed):
+#
+#         [isp1] (AS65100)
+#        /        \
+#   [ce1]          [ce2]
+#   AS65001        AS65002
+#        \        /
+#         [isp2] (AS65100)
+#
+# Two paths exist between ce1 and ce2 via isp1 or isp2.
+# Both ISPs are in the same AS (iBGP between them).
+# Experiments manipulate which path is preferred and in which direction.
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - vtysh -b
+
+  nodes:
+    ce1:
+      binds:
+        - configs/ce1/frr.conf:/etc/frr/frr.conf
+    isp1:
+      binds:
+        - configs/isp1/frr.conf:/etc/frr/frr.conf
+    isp2:
+      binds:
+        - configs/isp2/frr.conf:/etc/frr/frr.conf
+    ce2:
+      binds:
+        - configs/ce2/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["ce1:eth1",  "isp1:eth1"]   # 10.1.11.0/30  ce1-isp1 eBGP
+    - endpoints: ["ce1:eth2",  "isp2:eth1"]   # 10.1.12.0/30  ce1-isp2 eBGP
+    - endpoints: ["isp1:eth2", "isp2:eth2"]   # 10.1.99.0/30  iBGP peering
+    - endpoints: ["isp1:eth3", "ce2:eth1"]    # 10.1.21.0/30  isp1-ce2 eBGP
+    - endpoints: ["isp2:eth3", "ce2:eth2"]    # 10.1.22.0/30  isp2-ce2 eBGP

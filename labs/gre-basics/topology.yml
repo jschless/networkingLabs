@@ -1,0 +1,51 @@
+name: gre-basics
+
+# GRE tunnel practice lab
+#
+# Physical IP addressing is pre-configured. You create the GRE tunnel
+# and configure routing over it.
+#
+# Topology:
+#
+#   [host-a] --- [gw-a] ---WAN--- [internet] ---WAN--- [gw-b] --- [host-b]
+#    LAN A         |                                      |          LAN B
+#             tun0 endpoint                         tun0 endpoint
+#
+# Pre-configured: all physical interface IPs, default routes on hosts,
+#                 WAN reachability via internet router.
+# You configure: GRE tunnel on gw-a and gw-b, routes over the tunnel.
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - vtysh -b
+
+  nodes:
+    host-a:
+      binds:
+        - configs/host-a/frr.conf:/etc/frr/frr.conf
+    gw-a:
+      binds:
+        - configs/gw-a/frr.conf:/etc/frr/frr.conf
+    internet:
+      binds:
+        - configs/internet/frr.conf:/etc/frr/frr.conf
+    gw-b:
+      binds:
+        - configs/gw-b/frr.conf:/etc/frr/frr.conf
+    host-b:
+      binds:
+        - configs/host-b/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["host-a:eth1",   "gw-a:eth1"]      # 192.168.1.0/24  LAN A
+    - endpoints: ["gw-a:eth2",     "internet:eth1"]   # 203.0.113.0/30  WAN A
+    - endpoints: ["internet:eth2", "gw-b:eth1"]       # 203.0.113.4/30  WAN B
+    - endpoints: ["gw-b:eth2",     "host-b:eth1"]     # 192.168.2.0/24  LAN B

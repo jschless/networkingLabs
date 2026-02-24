@@ -1,0 +1,85 @@
+name: spine-leaf
+
+# BGP CLOS Spine-Leaf Fabric Lab
+#
+# Classic data center underlay: eBGP with unique AS per device.
+# Each leaf connects to both spines for redundancy and ECMP.
+#
+#        [spine1]         [spine2]
+#        AS65100           AS65200
+#      /  |   |  \       /  |   |  \
+#     /   |   |   \     /   |   |   \
+# [leaf1][leaf2][leaf3][leaf4]
+# AS65001 AS65002 AS65003 AS65004
+#
+# /31 subnets (DC standard):
+#   leaf1-spine1: 10.1.0.0/31   leaf1-spine2: 10.2.0.0/31
+#   leaf2-spine1: 10.1.0.2/31   leaf2-spine2: 10.2.0.2/31
+#   leaf3-spine1: 10.1.0.4/31   leaf3-spine2: 10.2.0.4/31
+#   leaf4-spine1: 10.1.0.6/31   leaf4-spine2: 10.2.0.6/31
+
+topology:
+  defaults:
+    kind: linux
+    image: frrouting/frr:latest
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
+  nodes:
+    spine1:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/spine1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    spine2:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/spine2/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    leaf1:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/leaf1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    leaf2:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/leaf2/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    leaf3:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/leaf3/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    leaf4:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/leaf4/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+  links:
+    - endpoints: ["leaf1:eth1",  "spine1:eth1"]   # 10.1.0.0/31
+    - endpoints: ["leaf2:eth1",  "spine1:eth2"]   # 10.1.0.2/31
+    - endpoints: ["leaf3:eth1",  "spine1:eth3"]   # 10.1.0.4/31
+    - endpoints: ["leaf4:eth1",  "spine1:eth4"]   # 10.1.0.6/31
+    - endpoints: ["leaf1:eth2",  "spine2:eth1"]   # 10.2.0.0/31
+    - endpoints: ["leaf2:eth2",  "spine2:eth2"]   # 10.2.0.2/31
+    - endpoints: ["leaf3:eth2",  "spine2:eth3"]   # 10.2.0.4/31
+    - endpoints: ["leaf4:eth2",  "spine2:eth4"]   # 10.2.0.6/31
