@@ -22,11 +22,13 @@ interface Loopback0
 !
 interface Ethernet1
    description to spine1  10.1.0.0/31
+   no switchport
    ip address 10.1.0.0/31
    no shutdown
 !
 interface Ethernet2
    description to spine2  10.2.0.0/31
+   no switchport
    ip address 10.2.0.0/31
    no shutdown
 !

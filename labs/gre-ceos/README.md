@@ -154,6 +154,8 @@ configure
 no ip route 192.168.2.0/24 172.16.0.2
 
 interface Tunnel0
+   tunnel path-mtu-discovery
+   tunnel ttl 255
    ip ospf area 0
    ip ospf network point-to-point
 
@@ -164,6 +166,7 @@ interface Ethernet1
 router ospf 1
    router-id 10.0.0.1
    passive-interface Loopback0
+   tunnel routes
 ```
 
 Mirror on gw-b (router-id 10.0.0.2, `no ip route 192.168.1.0/24 172.16.0.1`).
@@ -175,6 +178,10 @@ show ip route ospf
 ```
 
 > **Why point-to-point?** GRE is a point-to-point medium. Without `ip ospf network point-to-point`, OSPF defaults to broadcast mode and tries to elect a DR/BDR — which never succeeds over a GRE tunnel.
+
+> **EOS gotcha — TTL=1:** EOS copies the inner IP TTL to the outer GRE header. OSPF hellos have inner TTL=1, so the GRE packet arrives at the `internet` transit router with outer TTL=1, gets decremented to 0, and is dropped. You need `tunnel path-mtu-discovery` and `tunnel ttl 255` on Tunnel0 (in that order — EOS won't let you set the TTL without PMTUD enabled first).
+
+> **EOS gotcha — `tunnel routes`:** Even after the OSPF adjacency reaches Full state, EOS does not install routes learned over tunnel interfaces by default. Without `tunnel routes` under `router ospf 1`, you'll see `show ip ospf neighbor` show Full but `show ip route ospf` will be empty. Add it on both routers.
 
 ---
 
@@ -223,10 +230,52 @@ traceroute 192.168.2.10               # path — should skip WAN hops
 - `show ip route 192.168.2.0/24` — is the static route installed?
 - Both ends need routes installed (gw-a routes to LAN B, gw-b routes to LAN A)
 - `ping 172.16.0.2` from gw-a — if this fails, the tunnel encap/decap is broken
+- If `ping 172.16.0.2` works from gw-a but host-a can't reach host-b, the iptables `EOS_FORWARD` drop rule is likely the culprit (see cEOS Caveats below — the topology already handles this via `exec`)
 
 **OSPF over GRE not forming adjacency**
 - Confirm `ip ospf network point-to-point` on Tunnel0 on both ends
 - `show ip ospf interface Tunnel0` — check network type and hello/dead timers
+- Make sure you added `tunnel path-mtu-discovery` and `tunnel ttl 255` on Tunnel0 — without these, OSPF hellos (inner TTL=1) are dropped by the transit `internet` router
+
+**OSPF adjacency is Full but no routes appear**
+- Check `show ip route ospf` — if empty despite Full neighbor, you're missing `tunnel routes` under `router ospf 1`
+- EOS does not install routes learned via tunnel interfaces by default; `tunnel routes` opts in
+
+---
+
+## cEOS-specific caveats
+
+These are behaviors unique to Arista EOS running in ContainerLab — you won't hit them on Linux `ip tunnel` or Cisco IOS.
+
+### 1. OSPF TTL=1 drop over multi-hop GRE
+
+EOS copies the **inner** IP TTL directly into the **outer** GRE encap header. OSPF hellos are sent with inner TTL=1. In this topology the `internet` router sits between the two tunnel endpoints, so the outer GRE packet arrives there with TTL=1, gets decremented to 0, and is silently discarded.
+
+Fix — add to `interface Tunnel0` on both gateways (order matters; EOS rejects `tunnel ttl` without PMTUD enabled first):
+```
+tunnel path-mtu-discovery
+tunnel ttl 255
+```
+
+### 2. OSPF `tunnel routes` disabled by default
+
+EOS OSPF will form a Full adjacency over a tunnel interface but will not install the learned routes into the routing table unless you explicitly opt in. Without `tunnel routes`, `show ip ospf neighbor` looks healthy but `show ip route ospf` stays empty.
+
+Fix — add to `router ospf 1` on both gateways:
+```
+tunnel routes
+```
+
+### 3. iptables `EOS_FORWARD` drops transit traffic
+
+cEOS installs a DROP rule in the `EOS_FORWARD` iptables chain for each data-plane interface. Traffic **originated by EOS itself** (e.g., self-ping across the tunnel) bypasses this via the OUTPUT chain. But **transit traffic** — a frame entering from the LAN port and being forwarded into the GRE tunnel — hits the DROP rule and is silently discarded.
+
+The `topology.yml` already handles this: the `exec:` block on gw-a and gw-b runs:
+```bash
+iptables -D EOS_FORWARD -i eth1 -j DROP 2>/dev/null || true   # gw-a
+iptables -D EOS_FORWARD -i eth2 -j DROP 2>/dev/null || true   # gw-b
+```
+This removes the DROP rule for the LAN-facing interface so host → tunnel forwarding works. The rule is added fresh each time the container starts, so it must be in `exec:` (not a one-time fix).
 
 ---
 

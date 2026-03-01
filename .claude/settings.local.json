@@ -8,7 +8,8 @@
       "Bash(sleep 20:*)",
       "Bash(done)",
       "Bash(head:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(docker ps:*)"
     ]
   }
 }

@@ -37,11 +37,13 @@ interface Loopback0
 !
 interface Ethernet1
    description to host-a LAN-A
+   no switchport
    ip address 192.168.1.1/24
    no shutdown
 !
 interface Ethernet2
    description to internet WAN-A
+   no switchport
    ip address 203.0.113.1/30
    no shutdown
 !

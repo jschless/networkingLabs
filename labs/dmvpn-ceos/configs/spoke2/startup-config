@@ -31,6 +31,7 @@ interface Loopback1
 !
 interface Ethernet1
    description WAN NBMA network (10.0.0.0/24)
+   no switchport
    ip address 10.0.0.12/24
    no shutdown
 !

@@ -34,6 +34,11 @@ topology:
       kind: ceos
       image: ceos:4.35.2F
       startup-config: configs/gw-a/startup-config
+      exec:
+        # cEOS drops LAN→tunnel transit traffic via iptables EOS_FORWARD by default.
+        # Remove the DROP rule for the LAN-facing interface (eth1 = Ethernet1) so
+        # forwarded traffic can reach the GRE tunnel.
+        - bash -c "iptables -D EOS_FORWARD -i eth1 -j DROP 2>/dev/null || true"
 
     internet:
       kind: ceos
@@ -44,6 +49,9 @@ topology:
       kind: ceos
       image: ceos:4.35.2F
       startup-config: configs/gw-b/startup-config
+      exec:
+        # gw-b's LAN is Ethernet2 (eth2 in Linux).
+        - bash -c "iptables -D EOS_FORWARD -i eth2 -j DROP 2>/dev/null || true"
 
     host-b:
       kind: linux
