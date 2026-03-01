@@ -1,0 +1,230 @@
+# debug-ospf-bgp-redist — One-Way Redistribution
+
+A network spans two routing domains: an OSPF area connecting r1 to the
+border (asbr), and a BGP AS beyond it (bgp1 → bgp2). The asbr is supposed
+to redistribute routes in both directions so that r1 and bgp2 can reach
+each other's loopbacks.
+
+After initial setup, someone ran a quick "cleanup" on the asbr config.
+bgp2 can still reach r1's loopback, but r1 cannot reach bgp2. The
+reachability is broken in exactly one direction.
+
+Your job: deploy the lab, use show commands to find the fault, and fix it.
+**Do not look at the config files yet** — diagnose from symptoms first.
+
+---
+
+## Topology
+
+```
+  [r1] --OSPF area 0-- [asbr] --eBGP-- [bgp1] --iBGP-- [bgp2]
+                       AS65100          AS65200
+```
+
+### Link addressing
+
+| Link        | Subnet        | Left              | Right             | Protocol |
+|-------------|---------------|-------------------|-------------------|----------|
+| r1 — asbr   | 10.0.12.0/30  | 10.0.12.1 (r1)    | 10.0.12.2 (asbr)  | OSPF a0  |
+| asbr — bgp1 | 10.0.23.0/30  | 10.0.23.1 (asbr)  | 10.0.23.2 (bgp1)  | eBGP     |
+| bgp1 — bgp2 | 10.0.34.0/30  | 10.0.34.1 (bgp1)  | 10.0.34.2 (bgp2)  | iBGP     |
+
+| Node | Loopback     | ASN   | Role                  |
+|------|--------------|-------|-----------------------|
+| r1   | 10.0.0.1/32  | —     | OSPF-only             |
+| asbr | 10.0.0.2/32  | 65100 | ASBR (redistribution) |
+| bgp1 | 10.0.0.3/32  | 65200 | eBGP + iBGP transit   |
+| bgp2 | 10.0.0.4/32  | 65200 | BGP end-router        |
+
+---
+
+## Expected behavior (when healthy)
+
+- OSPF adjacency between r1 and asbr in **Full** state
+- BGP sessions (asbr–bgp1, bgp1–bgp2) in **Established** state
+- bgp2 can see r1's prefix (10.0.0.1/32) in its BGP table
+- r1 can see bgp2's prefix (10.0.0.4/32) in its routing table as an OSPF external route
+- `ping 10.0.0.4 source 10.0.0.1` from r1 succeeds
+- `ping 10.0.0.1 source 10.0.0.4` from bgp2 succeeds
+
+---
+
+## Deploy and access
+
+```bash
+sudo containerlab deploy -t labs/debug-ospf-bgp-redist/topology.yml
+
+docker exec -it clab-debug-ospf-bgp-redist-r1    vtysh
+docker exec -it clab-debug-ospf-bgp-redist-asbr  vtysh
+docker exec -it clab-debug-ospf-bgp-redist-bgp2  vtysh
+```
+
+Wait ~25 seconds after deploy for OSPF and BGP to converge.
+
+---
+
+## Observed symptoms
+
+**On bgp2 — r1's prefix is present:**
+```
+bgp2# show bgp ipv4 unicast
+   Network          Next Hop            Metric LocPrf Weight Path
+*> 10.0.0.1/32      10.0.34.1                              0 65100 i
+*> 10.0.0.2/32      10.0.34.1                              0 65100 i
+*> 10.0.0.3/32      0.0.0.0                  0         32768 i
+*> 10.0.0.4/32      0.0.0.0                  0         32768 i
+```
+
+bgp2 can see OSPF-originated prefixes (10.0.0.1/32, 10.0.0.2/32) — the
+OSPF→BGP direction is working.
+
+**On r1 — no BGP routes in the routing table:**
+```
+r1# show ip route bgp
+(no output)
+
+r1# show ip route
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, ...
+O>* 10.0.0.2/32 [110/2] via 10.0.12.2, eth1
+C>* 10.0.12.0/30 is directly connected, eth1
+C>* 10.0.0.1/32 is directly connected, lo
+```
+
+r1 knows only about the OSPF domain. bgp2's loopback (10.0.0.4/32) is
+completely absent.
+
+**End-to-end ping:**
+```
+r1# ping 10.0.0.4 source 10.0.0.1
+5 packets transmitted, 0 received, 100% packet loss
+```
+
+---
+
+## Your task
+
+The OSPF→BGP direction is working (bgp2 can see r1's prefix). The BGP→OSPF
+direction is broken (r1 has no BGP-derived routes). The redistribution is
+configured on the asbr, but only half of it survived the "cleanup."
+
+Work through the diagnostic questions:
+1. On asbr, what does `show ip bgp` show? Does asbr have BGP routes?
+2. On asbr, what does `show ip route bgp` show? Are BGP routes in the RIB?
+3. On r1, what does `show ip ospf database external` show? Any Type-5 LSAs?
+4. What command should be in asbr's OSPF process but isn't?
+
+---
+
+## Useful show commands
+
+```
+! On r1 — check for OSPF external (Type-5) LSAs from asbr
+show ip ospf database external
+
+! On asbr — check both routing tables
+show ip route bgp
+show ip route ospf
+
+! On asbr — confirm which redistributions are active in each protocol
+show ip bgp                     ! does asbr have BGP routes from bgp1?
+show running-config             ! (only if you need a final confirmation)
+```
+
+---
+
+## Hints
+
+<details>
+<summary>Hint 1 — Where to start</summary>
+
+On asbr, run `show ip route bgp`. asbr should have BGP routes for the
+10.0.0.3/32 and 10.0.0.4/32 loopbacks (learned from bgp1 via eBGP).
+
+If those BGP routes *are* present in asbr's RIB, then asbr has the
+information it needs. The question becomes: why isn't it being injected
+into OSPF?
+
+</details>
+
+<details>
+<summary>Hint 2 — Narrowing it down</summary>
+
+On r1, run:
+```
+show ip ospf database external
+```
+
+If the output is empty (no Type-5 LSAs), asbr is not redistributing BGP
+into OSPF. Type-5 LSAs are generated by an ASBR when it redistributes
+external routes into OSPF.
+
+Compare: is `redistribute ospf` present under BGP on asbr? And is
+`redistribute bgp` present under OSPF on asbr?
+
+</details>
+
+<details>
+<summary>Hint 3 — The specific problem</summary>
+
+The asbr has `redistribute ospf` in its BGP address-family (OSPF→BGP
+direction — working), but is missing `redistribute bgp` in its OSPF
+process (BGP→OSPF direction — broken).
+
+The cleanup accidentally removed the `redistribute bgp` line from the
+OSPF process configuration on asbr.
+
+</details>
+
+---
+
+## Solution
+
+<details>
+<summary>Fix (don't peek until you've tried the hints)</summary>
+
+On **asbr**:
+
+```
+asbr# configure terminal
+asbr(config)# router ospf
+asbr(config-router)# redistribute bgp
+asbr(config-router)# end
+asbr# write memory
+```
+
+This makes asbr an ASBR (Autonomous System Boundary Router) in the OSPF
+sense: it generates Type-5 External LSAs for BGP-learned prefixes and
+floods them into the OSPF domain.
+
+</details>
+
+---
+
+## Verification
+
+After applying the fix:
+
+```
+! On r1 — Type-5 LSAs should now appear from asbr (10.0.0.2)
+show ip ospf database external
+
+! On r1 — BGP-originated routes should now appear as OE2
+show ip route bgp
+show ip route ospf
+
+! End-to-end reachability restored in both directions
+r1#   ping 10.0.0.4 source 10.0.0.1
+bgp2# ping 10.0.0.1 source 10.0.0.4
+```
+
+Expected on r1 after fix:
+```
+r1# show ip route ospf
+O>* 10.0.0.2/32  [110/2] via 10.0.12.2, eth1
+OE2>* 10.0.0.3/32 [110/20] via 10.0.12.2, eth1
+OE2>* 10.0.0.4/32 [110/20] via 10.0.12.2, eth1
+OE2>* 10.0.34.0/30 [110/20] via 10.0.12.2, eth1
+```
+
+The `OE2` routes are the BGP prefixes now redistributed into OSPF.

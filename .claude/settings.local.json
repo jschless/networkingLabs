@@ -6,7 +6,9 @@
       "Bash(echo === Reloading config on $node ===:*)",
       "Bash(containerlab deploy:*)",
       "Bash(sleep 20:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(head:*)",
+      "Bash(docker run:*)"
     ]
   }
 }

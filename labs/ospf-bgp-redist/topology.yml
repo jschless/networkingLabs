@@ -24,7 +24,7 @@ name: ospf-bgp-redist
 topology:
   defaults:
     kind: linux
-    image: frrouting/frr:latest
+    image: frr-lab:local
     binds:
       - configs/daemons:/etc/frr/daemons
       - configs/vtysh.conf:/etc/frr/vtysh.conf

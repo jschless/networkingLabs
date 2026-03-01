@@ -33,7 +33,7 @@ name: mpls-sr-isis-bgp
 topology:
   defaults:
     kind: linux
-    image: frrouting/frr:latest
+    image: frr-lab:local
     binds:
       # Shared daemons and vtysh.conf for all nodes
       - configs/daemons:/etc/frr/daemons

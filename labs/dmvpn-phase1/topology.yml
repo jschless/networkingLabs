@@ -33,11 +33,21 @@ name: dmvpn-phase1
 topology:
   nodes:
     br-wan:
-      kind: bridge
+      kind: linux
+      image: frr-lab:local
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - ip link add name br0 type bridge
+        - ip link set br0 up
+        - ip link set eth1 master br0
+        - ip link set eth2 master br0
+        - ip link set eth3 master br0
+        - ip link set eth4 master br0
 
     hub:
       kind: linux
-      image: frrouting/frr:latest
+      image: frr-lab:local
       binds:
         - configs/daemons:/etc/frr/daemons
         - configs/vtysh.conf:/etc/frr/vtysh.conf
@@ -50,7 +60,7 @@ topology:
 
     spoke1:
       kind: linux
-      image: frrouting/frr:latest
+      image: frr-lab:local
       binds:
         - configs/daemons:/etc/frr/daemons
         - configs/vtysh.conf:/etc/frr/vtysh.conf
@@ -63,7 +73,7 @@ topology:
 
     spoke2:
       kind: linux
-      image: frrouting/frr:latest
+      image: frr-lab:local
       binds:
         - configs/daemons:/etc/frr/daemons
         - configs/vtysh.conf:/etc/frr/vtysh.conf
@@ -76,7 +86,7 @@ topology:
 
     spoke3:
       kind: linux
-      image: frrouting/frr:latest
+      image: frr-lab:local
       binds:
         - configs/daemons:/etc/frr/daemons
         - configs/vtysh.conf:/etc/frr/vtysh.conf
@@ -88,7 +98,7 @@ topology:
         - bash /setup.sh
 
   links:
-    - endpoints: ["hub:eth1",    "br-wan:eth0"]
-    - endpoints: ["spoke1:eth1", "br-wan:eth1"]
-    - endpoints: ["spoke2:eth1", "br-wan:eth2"]
-    - endpoints: ["spoke3:eth1", "br-wan:eth3"]
+    - endpoints: ["hub:eth1",    "br-wan:eth1"]
+    - endpoints: ["spoke1:eth1", "br-wan:eth2"]
+    - endpoints: ["spoke2:eth1", "br-wan:eth3"]
+    - endpoints: ["spoke3:eth1", "br-wan:eth4"]

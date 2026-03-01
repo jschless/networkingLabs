@@ -2,6 +2,9 @@
 # hub setup — WAN IP + mGRE tunnel creation
 # Runs before FRR starts (exec in containerlab)
 
+# Remove management default route
+ip route del default dev eth0 2>/dev/null || true
+
 # WAN interface
 ip addr add 10.0.0.1/24 dev eth1 2>/dev/null || true
 ip link set eth1 up

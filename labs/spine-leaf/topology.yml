@@ -21,7 +21,7 @@ name: spine-leaf
 topology:
   defaults:
     kind: linux
-    image: frrouting/frr:latest
+    image: frr-lab:local
     sysctls:
       net.ipv4.ip_forward: "1"
 

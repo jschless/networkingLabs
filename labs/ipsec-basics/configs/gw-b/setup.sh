@@ -17,4 +17,5 @@ ip addr add 192.168.2.1/24 dev eth2 2>/dev/null || true
 ip link set eth2 up
 
 # Default route via internet node — lets gw-b reach gw-a's public IP
+ip route del default dev eth0 2>/dev/null || true
 ip route add default via 203.0.113.5 2>/dev/null || true

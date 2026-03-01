@@ -26,8 +26,9 @@ ip link set eth2 up
 # Enable IP forwarding
 sysctl -w net.ipv4.ip_forward=1 2>/dev/null || true
 
-# Default route via internet node
-ip route add default via 203.0.113.5 2>/dev/null || true
+# Remove management default route; add specific route to gw-a's WAN subnet
+ip route del default dev eth0 2>/dev/null || true
+ip route add 203.0.113.0/30 via 203.0.113.5 2>/dev/null || true
 
 # GRE tunnel: transport between gw-b (203.0.113.6) and gw-a (203.0.113.1)
 ip tunnel add tun0 mode gre local 203.0.113.6 remote 203.0.113.1 ttl 255 2>/dev/null || true

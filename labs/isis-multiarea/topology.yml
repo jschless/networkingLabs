@@ -3,7 +3,7 @@ name: isis-multiarea
 topology:
   defaults:
     kind: linux
-    image: frrouting/frr:latest
+    image: frr-lab:local
 
   nodes:
     r1:

@@ -3,7 +3,7 @@ name: isis-basics
 topology:
   defaults:
     kind: linux
-    image: frrouting/frr:latest
+    image: frr-lab:local
 
   nodes:
     r1:

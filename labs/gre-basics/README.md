@@ -137,7 +137,8 @@ traceroute 192.168.2.10
 
 Replace static routes with OSPF running directly over the tunnel. This is common when you want dynamic routing across a WAN.
 
-First, add OSPF to gw-a (in vtysh). The tunnel interface must be configured as point-to-point (GRE is a point-to-point medium):
+Remove the static LAN routes first (`no ip route 192.168.x.0/24 ...`), then add OSPF to gw-a (in vtysh). The tunnel interface must be configured as point-to-point (GRE is a point-to-point medium):
+
 ```
 interface tun0
  ip ospf area 0
@@ -149,12 +150,13 @@ interface eth1
 !
 router ospf
  ospf router-id 10.0.0.1
- redistribute connected
 ```
 
-Mirror on gw-b (router-id 10.0.0.2). Remove the static routes first.
+Mirror on gw-b (router-id 10.0.0.2).
 
 Check adjacency: `show ip ospf neighbor` — tun0 should show `Full/  -`.
+
+> **Warning — do not use `redistribute connected` here.** It will leak the WAN subnets (203.0.113.0/30, 203.0.113.4/30) into OSPF. The remote gateway will learn a route to the tunnel endpoint's WAN IP *via the tunnel*, creating a recursive routing loop that breaks the tunnel. The `ip ospf area 0` statement on the LAN interface already handles LAN advertisement — no redistribution is needed.
 
 ---
 
@@ -176,28 +178,6 @@ ip route 203.0.113.6/32 203.0.113.2
 ```
 
 The specific /32 host route for the remote tunnel endpoint must go out the physical interface, not the tunnel.
-
----
-
-## Experiment C — MTU and fragmentation
-
-GRE adds a 24-byte overhead (20-byte IP outer header + 4-byte GRE header). The effective MTU of the tunnel is 1476 bytes (assuming 1500-byte LAN MTU).
-
-Test with a large packet that cannot be fragmented:
-```bash
-docker exec -it clab-gre-basics-host-a bash
-ping 192.168.2.10 -s 1473 -M do -c 3
-```
-
-The `-M do` flag sets "Do Not Fragment". A 1473-byte payload + 28-byte IP+ICMP header = 1501 bytes > 1476 tunnel MTU. This should trigger an ICMP "Fragmentation Needed" response.
-
-Compare with:
-```bash
-ping 192.168.2.10 -s 1448 -M do -c 3
-```
-1448 + 28 = 1476 — should succeed.
-
-In production, the solution is either: lower the MSS on TCP (via ip tcp adjust-mss), or configure the tunnel MTU explicitly.
 
 ---
 

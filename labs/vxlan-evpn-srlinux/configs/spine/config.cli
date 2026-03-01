@@ -1,0 +1,93 @@
+# spine — BGP Route Reflector for EVPN, OSPF underlay only  (Nokia SR-Linux)
+# VTEP loopbacks: vtep1=10.0.0.1, vtep2=10.0.0.2
+# spine loopback: 10.0.0.100
+# Underlay links: 10.1.1.0/30 (vtep1), 10.1.2.0/30 (vtep2)
+
+enter candidate
+
+    /interface system0
+        admin-state enable
+        subinterface 0
+            admin-state enable
+            ipv4
+                admin-state enable
+                address 10.0.0.100/32 { }
+
+    /interface ethernet-1/1
+        description "underlay to vtep1"
+        admin-state enable
+        subinterface 0
+            admin-state enable
+            ipv4
+                admin-state enable
+                address 10.1.1.2/30 { }
+
+    /interface ethernet-1/2
+        description "underlay to vtep2"
+        admin-state enable
+        subinterface 0
+            admin-state enable
+            ipv4
+                admin-state enable
+                address 10.1.2.2/30 { }
+
+    /network-instance default
+        interface ethernet-1/1.0 { }
+        interface ethernet-1/2.0 { }
+        interface system0.0 { }
+
+        protocols
+            ospf
+                instance main
+                    admin-state enable
+                    router-id 10.0.0.100
+                    version v2
+
+                    area 0.0.0.0
+                        interface ethernet-1/1.0
+                            interface-type point-to-point
+                        interface ethernet-1/2.0
+                            interface-type point-to-point
+                        interface system0.0
+                            passive true
+
+            bgp
+                admin-state enable
+                autonomous-system 65000
+                router-id 10.0.0.100
+
+                afi-safi ipv4-unicast
+                    admin-state disable
+
+                afi-safi evpn
+                    admin-state enable
+
+                group vtep-clients
+                    admin-state enable
+                    peer-as 65000
+                    route-reflector
+                        client true
+                        cluster-id 10.0.0.100
+                    afi-safi ipv4-unicast
+                        admin-state disable
+                    afi-safi evpn
+                        admin-state enable
+                    transport
+                        local-address 10.0.0.100
+                    export-policy [ accept-all ]
+                    import-policy [ accept-all ]
+
+                neighbor 10.0.0.1
+                    peer-group vtep-clients
+                    description vtep1
+
+                neighbor 10.0.0.2
+                    peer-group vtep-clients
+                    description vtep2
+
+    /routing-policy
+        policy accept-all
+            default-action
+                policy-result accept
+
+commit now

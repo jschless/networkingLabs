@@ -1,0 +1,62 @@
+! spine1 — AS65100  (Arista EOS)
+!
+! Interface IPs are pre-configured.
+! YOUR TASK: Configure BGP AS65100 with eBGP sessions to all 4 leaves.
+!
+! -------------------------------------------------------
+! Key EOS BGP settings for CLOS fabric:
+!
+!   maximum-paths <n> ecmp <n>
+!     Install up to n equal-cost paths in the FIB.
+!     Without this, EOS installs only 1 path (no ECMP).
+!
+!   bgp bestpath as-path multipath-relax
+!     Allow routes with different AS paths to be treated as equal-cost.
+!     Required in CLOS: leaf1 and leaf2 have different AS paths to spine1,
+!     but both are equal-cost uplinks. Without this flag, only one is used.
+!
+! router bgp 65100
+!    router-id 10.0.0.101
+!    maximum-paths 4 ecmp 4
+!    bgp bestpath as-path multipath-relax
+!    neighbor 10.1.0.0 remote-as 65001
+!    neighbor 10.1.0.2 remote-as 65002
+!    neighbor 10.1.0.4 remote-as 65003
+!    neighbor 10.1.0.6 remote-as 65004
+!    !
+!    address-family ipv4
+!       neighbor 10.1.0.0 activate
+!       neighbor 10.1.0.2 activate
+!       neighbor 10.1.0.4 activate
+!       neighbor 10.1.0.6 activate
+!       network 10.0.0.101/32
+! -------------------------------------------------------
+!
+hostname spine1
+!
+interface Loopback0
+   ip address 10.0.0.101/32
+!
+interface Ethernet1
+   description to leaf1  10.1.0.0/31
+   ip address 10.1.0.1/31
+   no shutdown
+!
+interface Ethernet2
+   description to leaf2  10.1.0.2/31
+   ip address 10.1.0.3/31
+   no shutdown
+!
+interface Ethernet3
+   description to leaf3  10.1.0.4/31
+   ip address 10.1.0.5/31
+   no shutdown
+!
+interface Ethernet4
+   description to leaf4  10.1.0.6/31
+   ip address 10.1.0.7/31
+   no shutdown
+!
+ip routing
+!
+end

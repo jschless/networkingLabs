@@ -1,0 +1,102 @@
+name: mpls-sr-srlinux
+
+# MPLS Segment Routing lab — Nokia SR-Linux  (reference lab, fully working)
+#
+# Nokia invented Segment Routing. SR-Linux is purpose-built for SP SR-MPLS.
+# This lab mirrors mpls-sr-isis-bgp/ but uses native SR-Linux instead of FRR.
+#
+# Topology:
+#
+#          [rr1]   AS65000 Route Reflector
+#         /     \
+#      [p1]────[p2]   P routers (IS-IS + SR-MPLS only)
+#       |          |
+#     [pe1]     [pe2]  PE routers (IS-IS + SR + BGP L3VPN)
+#       |          |
+#     [ce1]     [ce2]  CE routers (Linux, eBGP)
+#
+# Loopbacks (system0) / SR Node SIDs (SRGB base 16000):
+#   rr1: 10.0.0.1  SID index 1  → label 16001
+#   pe1: 10.0.0.2  SID index 2  → label 16002
+#   pe2: 10.0.0.3  SID index 3  → label 16003
+#   p1:  10.0.0.4  SID index 4  → label 16004
+#   p2:  10.0.0.5  SID index 5  → label 16005
+#
+# Transit links (/30):
+#   pe1:e1-2 <-> p1:e1-1   10.1.0.0/30
+#   p1:e1-2  <-> rr1:e1-1  10.1.0.4/30
+#   rr1:e1-2 <-> p2:e1-1   10.1.0.8/30
+#   p1:e1-3  <-> p2:e1-2   10.1.0.12/30  (P-P shortcut)
+#   p2:e1-3  <-> pe2:e1-1  10.1.0.16/30
+#
+# CE links (/30, in network-instance CUST-A on PE side):
+#   ce1:eth1 <-> pe1:e1-1  192.168.10.0/30
+#   ce2:eth1 <-> pe2:e1-2  192.168.20.0/30
+#
+# Access:
+#   docker exec -it clab-mpls-sr-srlinux-rr1 sr_cli
+#   docker exec -it clab-mpls-sr-srlinux-ce1 bash
+
+topology:
+  nodes:
+    rr1:
+      kind: srl
+      image: ghcr.io/nokia/srlinux:latest
+      startup-config: configs/rr1/config.cli
+
+    pe1:
+      kind: srl
+      image: ghcr.io/nokia/srlinux:latest
+      startup-config: configs/pe1/config.cli
+
+    pe2:
+      kind: srl
+      image: ghcr.io/nokia/srlinux:latest
+      startup-config: configs/pe2/config.cli
+
+    p1:
+      kind: srl
+      image: ghcr.io/nokia/srlinux:latest
+      startup-config: configs/p1/config.cli
+
+    p2:
+      kind: srl
+      image: ghcr.io/nokia/srlinux:latest
+      startup-config: configs/p2/config.cli
+
+    ce1:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/ce1/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+    ce2:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/ce2/frr.conf:/etc/frr/frr.conf
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - vtysh -b
+
+  links:
+    # CE -- PE
+    - endpoints: ["ce1:eth1",  "pe1:e1-1"]    # 192.168.10.0/30  (CUST-A on pe1)
+    - endpoints: ["ce2:eth1",  "pe2:e1-2"]    # 192.168.20.0/30  (CUST-A on pe2)
+    # PE -- P
+    - endpoints: ["pe1:e1-2",  "p1:e1-1"]    # 10.1.0.0/30
+    - endpoints: ["pe2:e1-1",  "p2:e1-3"]    # 10.1.0.16/30
+    # P -- RR
+    - endpoints: ["p1:e1-2",   "rr1:e1-1"]   # 10.1.0.4/30
+    - endpoints: ["rr1:e1-2",  "p2:e1-1"]    # 10.1.0.8/30
+    # P -- P  (direct shortcut)
+    - endpoints: ["p1:e1-3",   "p2:e1-2"]    # 10.1.0.12/30

@@ -4,7 +4,7 @@ topology:
   nodes:
     r1:
       kind: linux
-      image: frrouting/frr:latest
+      image: frr-lab:local
       binds:
         - configs/daemons:/etc/frr/daemons
         - configs/vtysh.conf:/etc/frr/vtysh.conf
@@ -18,7 +18,7 @@ topology:
 
     r2:
       kind: linux
-      image: frrouting/frr:latest
+      image: frr-lab:local
       binds:
         - configs/daemons:/etc/frr/daemons
         - configs/vtysh.conf:/etc/frr/vtysh.conf
@@ -32,7 +32,7 @@ topology:
 
     r3:
       kind: linux
-      image: frrouting/frr:latest
+      image: frr-lab:local
       binds:
         - configs/daemons:/etc/frr/daemons
         - configs/vtysh.conf:/etc/frr/vtysh.conf
@@ -46,7 +46,7 @@ topology:
 
     r4:
       kind: linux
-      image: frrouting/frr:latest
+      image: frr-lab:local
       binds:
         - configs/daemons:/etc/frr/daemons
         - configs/vtysh.conf:/etc/frr/vtysh.conf

@@ -1,0 +1,139 @@
+# pe2 — Provider Edge router  (Nokia SR-Linux)
+# IS-IS level-2, SR-MPLS node SID index 3 (label 16003)
+# BGP L3VPN: iBGP to rr1 (l3vpn-ipv4-unicast), eBGP to ce2 in network-instance CUST-A
+# RD: 65000:100  RT: target:65000:100
+
+enter candidate
+
+    /interface system0
+        admin-state enable
+        subinterface 0
+            admin-state enable
+            ipv4
+                admin-state enable
+                address 10.0.0.3/32 { }
+
+    # e1-1: P-facing (IS-IS + MPLS in default network-instance)
+    /interface ethernet-1/1
+        description "to P2"
+        admin-state enable
+        subinterface 0
+            admin-state enable
+            ipv4
+                admin-state enable
+                address 10.1.0.18/30 { }
+
+    # e1-2: CE-facing (will be placed into CUST-A network-instance)
+    /interface ethernet-1/2
+        description "to CE2 (CUST-A)"
+        admin-state enable
+        subinterface 0
+            admin-state enable
+            ipv4
+                admin-state enable
+                address 192.168.20.2/30 { }
+
+    # Default network-instance: IS-IS underlay + global BGP (l3vpn)
+    /network-instance default
+        interface ethernet-1/1.0 { }
+        interface system0.0 { }
+
+        protocols
+            isis
+                instance main
+                    admin-state enable
+                    level-capability L2
+                    metric-style wide
+                    net [ "49.0001.0000.0000.0003.00" ]
+
+                    interface ethernet-1/1.0
+                        circuit-type point-to-point
+                        ipv4-unicast
+                            admin-state enable
+                        level 2
+                            metric 10
+
+                    interface system0.0
+                        passive true
+                        ipv4-unicast
+                            admin-state enable
+
+                    segment-routing
+                        mpls
+                            admin-state enable
+                            prefix-sids
+                                prefix 10.0.0.3/32
+                                    _idx 0
+                                    index 3
+                                    node-sid true
+                            dynamic-adjacency-sids
+                                all-interfaces true
+
+            bgp
+                admin-state enable
+                autonomous-system 65000
+                router-id 10.0.0.3
+
+                afi-safi ipv4-unicast
+                    admin-state disable
+
+                afi-safi l3vpn-ipv4-unicast
+                    admin-state enable
+
+                group ibgp
+                    admin-state enable
+                    peer-as 65000
+                    afi-safi ipv4-unicast
+                        admin-state disable
+                    afi-safi l3vpn-ipv4-unicast
+                        admin-state enable
+                    transport
+                        local-address 10.0.0.3
+                    export-policy [ accept-all ]
+                    import-policy [ accept-all ]
+
+                neighbor 10.0.0.1
+                    peer-group ibgp
+                    description rr1
+
+    # CUST-A L3VPN network-instance
+    /network-instance CUST-A
+        type ip-vrf
+        admin-state enable
+        interface ethernet-1/2.0 { }
+
+        bgp-vpn
+            bgp-instance 1
+                route-distinguisher
+                    rd 65000:100
+                route-target
+                    export-rt target:65000:100
+                    import-rt target:65000:100
+
+        protocols
+            bgp
+                admin-state enable
+                autonomous-system 65000
+                router-id 10.0.0.3
+
+                afi-safi ipv4-unicast
+                    admin-state enable
+
+                group CE
+                    admin-state enable
+                    afi-safi ipv4-unicast
+                        admin-state enable
+                    export-policy [ accept-all ]
+                    import-policy [ accept-all ]
+
+                neighbor 192.168.20.1
+                    peer-as 65002
+                    peer-group CE
+                    description ce2
+
+    /routing-policy
+        policy accept-all
+            default-action
+                policy-result accept
+
+commit now

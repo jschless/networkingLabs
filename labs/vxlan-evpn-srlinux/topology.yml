@@ -1,0 +1,58 @@
+name: vxlan-evpn-srlinux
+
+# VXLAN with BGP EVPN Control Plane — Nokia SR-Linux  (reference lab, fully working)
+#
+# No Linux bridge scripts needed. VXLAN and EVPN are native SR-Linux features.
+# Compare with vxlan-evpn/ which uses Linux vxlan+bridge+nolearning workarounds.
+#
+# Underlay: OSPF between VTEPs and spine (loopback reachability)
+# Overlay:  BGP EVPN type-2 (MAC/IP) and type-3 (IMET) routes
+# Forwarding: VXLAN UDP 4789 tunnels between VTEP loopbacks
+#
+# [host1]--[vtep1]--[spine/RR]--[vtep2]--[host2]
+#           VTEP                   VTEP
+#           10.0.0.1               10.0.0.2
+#           |<----- VNI 100 L2 segment ----->|
+#           172.16.0.1 (host1)     172.16.0.2 (host2)
+#
+# spine: BGP RR for l2vpn-evpn AF, OSPF underlay only
+# vtep1/vtep2: OSPF underlay, BGP EVPN, native VXLAN tunnel-interface
+
+topology:
+  nodes:
+    spine:
+      kind: srl
+      image: ghcr.io/nokia/srlinux:latest
+      startup-config: configs/spine/config.cli
+
+    vtep1:
+      kind: srl
+      image: ghcr.io/nokia/srlinux:latest
+      startup-config: configs/vtep1/config.cli
+
+    vtep2:
+      kind: srl
+      image: ghcr.io/nokia/srlinux:latest
+      startup-config: configs/vtep2/config.cli
+
+    host1:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/host1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    host2:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/host2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["vtep1:e1-1", "spine:e1-1"]    # 10.1.1.0/30 underlay
+    - endpoints: ["vtep2:e1-1", "spine:e1-2"]    # 10.1.2.0/30 underlay
+    - endpoints: ["host1:eth1", "vtep1:e1-2"]    # host → vtep1 (VXLAN bridge port)
+    - endpoints: ["host2:eth1", "vtep2:e1-2"]    # host → vtep2 (VXLAN bridge port)

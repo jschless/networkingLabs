@@ -23,7 +23,7 @@ name: ospf-multiarea
 topology:
   defaults:
     kind: linux
-    image: frrouting/frr:latest
+    image: frr-lab:local
     binds:
       # All nodes share the same daemons and vtysh.conf
       - configs/daemons:/etc/frr/daemons

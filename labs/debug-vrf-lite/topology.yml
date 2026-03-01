@@ -1,0 +1,58 @@
+name: debug-vrf-lite
+
+topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
+  nodes:
+    pe1:
+      binds:
+        - configs/pe1/frr.conf:/etc/frr/frr.conf
+        - configs/pe1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    pe2:
+      binds:
+        - configs/pe2/frr.conf:/etc/frr/frr.conf
+        - configs/pe2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    ce-a1:
+      binds:
+        - configs/ce-a1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    ce-a2:
+      binds:
+        - configs/ce-a2/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    ce-b1:
+      binds:
+        - configs/ce-b1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    ce-b2:
+      binds:
+        - configs/ce-b2/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+  links:
+    - endpoints: ["ce-a1:eth1", "pe1:eth1"]   # 10.10.12.0/30  RED
+    - endpoints: ["pe1:eth2",   "pe2:eth1"]   # 10.10.99.0/30  RED inter-PE
+    - endpoints: ["pe2:eth2",   "ce-a2:eth1"] # 10.10.34.0/30  RED
+    - endpoints: ["ce-b1:eth1", "pe1:eth3"]   # 10.20.12.0/30  BLUE
+    - endpoints: ["pe1:eth4",   "pe2:eth3"]   # 10.20.99.0/30  BLUE inter-PE
+    - endpoints: ["pe2:eth4",   "ce-b2:eth1"] # 10.20.34.0/30  BLUE

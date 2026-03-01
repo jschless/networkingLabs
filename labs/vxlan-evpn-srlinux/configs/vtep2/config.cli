@@ -1,0 +1,111 @@
+# vtep2 — VXLAN Tunnel Endpoint  (Nokia SR-Linux)
+# VTEP loopback: 10.0.0.2
+# Underlay: OSPF to spine via ethernet-1/1 (10.1.2.0/30)
+# VXLAN VNI 100: tunnel-interface vxlan1, host port ethernet-1/2 in mac-vrf VLAN100
+
+enter candidate
+
+    /interface system0
+        admin-state enable
+        subinterface 0
+            admin-state enable
+            ipv4
+                admin-state enable
+                address 10.0.0.2/32 { }
+
+    /interface ethernet-1/1
+        description "underlay to spine"
+        admin-state enable
+        subinterface 0
+            admin-state enable
+            ipv4
+                admin-state enable
+                address 10.1.2.1/30 { }
+
+    # ethernet-1/2: host-facing port, no IP (bridged in mac-vrf)
+    /interface ethernet-1/2
+        description "to host2 (VNI 100 bridge port)"
+        admin-state enable
+        ethernet
+            port-speed 1G
+        subinterface 0
+            type bridged
+            admin-state enable
+
+    # VXLAN tunnel interface for VNI 100
+    /tunnel-interface vxlan1
+        vxlan-interface 100
+            type bridged
+            ingress
+                vni 100
+            egress
+                source-ip 10.0.0.2
+
+    # mac-vrf for VNI 100 L2 segment
+    /network-instance VLAN100
+        type mac-vrf
+        admin-state enable
+        interface ethernet-1/2.0 { }
+        vxlan-interface vxlan1.100 { }
+
+        protocols
+            bgp-evpn
+                bgp-instance 1
+                    admin-state enable
+                    vxlan-interface vxlan1.100
+                    evi 100
+
+            bgp-vpn
+                bgp-instance 1
+
+    # Default network-instance: OSPF underlay + BGP EVPN
+    /network-instance default
+        interface ethernet-1/1.0 { }
+        interface system0.0 { }
+
+        protocols
+            ospf
+                instance main
+                    admin-state enable
+                    router-id 10.0.0.2
+                    version v2
+
+                    area 0.0.0.0
+                        interface ethernet-1/1.0
+                            interface-type point-to-point
+                        interface system0.0
+                            passive true
+
+            bgp
+                admin-state enable
+                autonomous-system 65000
+                router-id 10.0.0.2
+
+                afi-safi ipv4-unicast
+                    admin-state disable
+
+                afi-safi evpn
+                    admin-state enable
+
+                group spine-rr
+                    admin-state enable
+                    peer-as 65000
+                    afi-safi ipv4-unicast
+                        admin-state disable
+                    afi-safi evpn
+                        admin-state enable
+                    transport
+                        local-address 10.0.0.2
+                    export-policy [ accept-all ]
+                    import-policy [ accept-all ]
+
+                neighbor 10.0.0.100
+                    peer-group spine-rr
+                    description spine
+
+    /routing-policy
+        policy accept-all
+            default-action
+                policy-result accept
+
+commit now
