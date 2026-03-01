@@ -183,128 +183,274 @@ show ip route 10.0.0.4/32 detail
 
 ---
 
-## Extension Track — Related Topics
+## Data Center Capstone (All-in-One)
 
-Use the same topology to go deeper after the base underlay works.
+Use this single topology as a full capstone, progressing from basic underlay to
+multi-tenant EVPN/VXLAN design.
 
-### Module A — Fast Failure Detection with BFD
+### Capstone Outcomes
 
-Goal: reduce failure detection from BGP timers to sub-second.
+By the end, you should be able to:
+1. Build and troubleshoot eBGP CLOS underlay with ECMP.
+2. Add operational hardening (BFD, guardrails, policy filters, peer-groups).
+3. Segment tenants with VRFs and VLANs at leafs.
+4. Run BGP EVPN control plane over the existing underlay.
+5. Map VLANs to VNIs and validate VXLAN overlay reachability.
+6. Explain control-plane and data-plane behavior during failures.
 
-Example (leaf1):
-```
-configure
-router bfd
-   multihop interval 300 min-rx 300 multiplier 3
-!
-router bgp 65001
-   neighbor 10.1.0.1 bfd
-   neighbor 10.2.0.1 bfd
-```
+### Phase 1 — Underlay Foundation (Current Lab Core)
 
-Repeat on all leaves/spines for every BGP neighbor pair.
+Scope:
+1. Complete BGP on all spines/leaves.
+2. Validate all sessions `Established`.
+3. Validate ECMP for remote leaf loopbacks.
 
-Verify:
+Exit criteria:
+1. `show bgp summary` is healthy on every node.
+2. `show ip route <remote-loopback>/32` shows expected next-hops.
+3. Leaf-to-leaf loopback ping works with loopback source.
+
+### Phase 2 — Underlay Hardening
+
+Scope:
+1. Enable BFD on all eBGP adjacencies.
+2. Add `maximum-routes` guardrails per neighbor.
+3. Add inbound prefix filtering to only accept expected loopback/service ranges.
+4. Refactor repeated BGP config with peer-groups.
+
+Suggested checks:
 ```
 show bfd peers
-show bgp summary
-```
-
-Failure test:
-```
-# from host shell
-docker exec clab-spine-leaf-ceos-leaf1 ip link set eth1 down
-```
-Watch reconvergence time before/after enabling BFD.
-
-### Module B — Route Policy and Hygiene
-
-Goal: enforce what leaves are allowed to advertise.
-
-Example on spine1: accept only loopback /32s from leaf1.
-```
-configure
-ip prefix-list LEAF1-LOOPBACK seq 10 permit 10.0.0.1/32
-route-map FROM-LEAF1-IN permit 10
-   match ip address prefix-list LEAF1-LOOPBACK
-route-map FROM-LEAF1-IN deny 100
-!
-router bgp 65100
-   neighbor 10.1.0.0 route-map FROM-LEAF1-IN in
-```
-
-Add session guardrails:
-```
-router bgp 65100
-   neighbor 10.1.0.0 maximum-routes 10 warning-only
-```
-
-Verify:
-```
-show bgp neighbors 10.1.0.0 received-routes
-show bgp ipv4 unicast
-```
-
-### Module C — Scale Patterns (Peer Groups)
-
-Goal: simplify repetitive config and speed consistent rollout.
-
-Example on spine1:
-```
-configure
-router bgp 65100
-   neighbor LEAFS peer group
-   neighbor LEAFS remote-as external
-   neighbor LEAFS send-community
-   neighbor 10.1.0.0 peer group LEAFS
-   neighbor 10.1.0.2 peer group LEAFS
-   neighbor 10.1.0.4 peer group LEAFS
-   neighbor 10.1.0.6 peer group LEAFS
-   !
-   address-family ipv4
-      neighbor LEAFS activate
-```
-
-Check:
-```
+show bgp neighbors
 show running-config section router bgp
 ```
 
-### Module D — Underlay to Overlay Readiness
-
-Goal: prepare this underlay for a VXLAN EVPN control-plane lab.
-
-Tasks:
-1. Keep loopbacks stable and reachable end-to-end (already done here).
-2. Add a second loopback per leaf as a future VTEP source (for example `Loopback1`).
-3. Advertise `Loopback1` /32 in underlay BGP.
-4. Verify every leaf resolves every other leaf's future VTEP loopback.
-
-Example (leaf1):
+Failure drill:
 ```
-configure
-interface Loopback1
-   ip address 10.10.0.1/32
-!
-router bgp 65001
-   address-family ipv4
-      network 10.10.0.1/32
+# host shell example
+docker exec clab-spine-leaf-ceos-leaf1 ip link set eth1 down
+```
+Measure session and route convergence before/after BFD.
+
+### Phase 3 — Tenant Segmentation on Leafs (VRFs + VLANs)
+
+Scope:
+1. Create two tenant VRFs on each leaf (for example `TENANT_A`, `TENANT_B`).
+2. Create VLANs and SVIs per tenant.
+3. Place local test endpoints/subinterfaces into tenant VLANs.
+4. Validate local L3 within each VRF before overlay.
+
+Design target:
+1. No route leakage between tenants unless explicitly configured.
+2. Clean separation of routing tables per VRF.
+
+Suggested checks:
+```
+show vrf
+show ip route vrf TENANT_A
+show ip route vrf TENANT_B
 ```
 
-Verify from leaf2:
+### Phase 4 — EVPN Control Plane
+
+Scope:
+1. Add VTEP loopback (`Loopback1`) on each leaf.
+2. Advertise VTEP loopbacks in underlay IPv4 BGP.
+3. Build BGP EVPN sessions (commonly leaf-to-spine RR model in larger fabrics).
+4. Enable EVPN address-family neighbors and extended communities.
+
+Control-plane checks:
 ```
-show ip route 10.10.0.1/32
-ping 10.10.0.1 source Loopback0 repeat 5
+show bgp evpn summary
+show bgp evpn route-type mac-ip
 ```
+
+### Phase 5 — VXLAN Data Plane
+
+Scope:
+1. Map tenant VLANs to L2 VNIs.
+2. Configure VTEP source interface and VXLAN encapsulation on leaves.
+3. (Optional) Add L3VNI per VRF for distributed inter-subnet routing.
+4. Validate host reachability across leaves within the same tenant.
+
+Data-plane checks:
+```
+show vxlan vni
+show mac address-table dynamic
+show arp vrf TENANT_A
+```
+
+### Phase 6 — Policy, Failure, and Operations
+
+Scope:
+1. Apply route-policy controls per tenant/VRF.
+2. Validate behavior for link, spine, and leaf failure scenarios.
+3. Document expected blast radius for each failure.
+4. Capture operational runbook commands.
+
+Suggested capstone drills:
+1. Uplink loss on a leaf (ECMP path reduction, no outage expected).
+2. Full spine failure (fabric continues through surviving spine).
+3. Tenant route leak attempt (policy should block it).
+4. BFD disable/enable comparison (convergence delta).
+
+### Capstone Deliverables
+
+1. Final addressing/ASN/VRF/VLAN/VNI table.
+2. Per-node config snippets for underlay and overlay.
+3. Verification evidence (command outputs + pass/fail notes).
+4. Failure test report with observed convergence behavior.
+
+### Suggested Companion Labs
+
+1. `labs/debug-spine-leaf` for structured troubleshooting practice.
+2. `labs/bfd-bgp` for deeper BFD behavior and timer tuning.
+3. `labs/vrf-lite` for segmentation concepts before EVPN.
+4. `labs/vxlan-evpn` as reference for full overlay build patterns.
 
 ---
 
-## Suggested Next Labs
+## Guided Phase Snippets (Intentionally Incomplete)
 
-After completing extensions above:
-1. `labs/debug-spine-leaf` (troubleshooting muscle for ECMP/BGP underlay issues)
-2. `labs/bfd-bgp` (deeper BFD + BGP failure behavior)
-3. `labs/vxlan-evpn` (build overlay control plane on top of underlay concepts)
+These are starter templates, not final answer keys. Fill the TODOs and adapt per node.
+
+### Phase 2 Snippet — Underlay Hardening
+
+Leaf template:
+```
+configure
+router bfd
+   interval 300 min-rx 300 multiplier 3
+!
+router bgp <LEAF_ASN>
+   neighbor <SPINE1_P2P_IP> bfd
+   neighbor <SPINE2_P2P_IP> bfd
+   neighbor <SPINE1_P2P_IP> maximum-routes 32 warning-only
+   neighbor <SPINE2_P2P_IP> maximum-routes 32 warning-only
+```
+
+Spine template:
+```
+configure
+ip prefix-list LEAF-LOOPS seq 10 permit 10.0.0.0/24 ge 32 le 32
+route-map FROM-LEAFS-IN permit 10
+   match ip address prefix-list LEAF-LOOPS
+route-map FROM-LEAFS-IN deny 100
+!
+router bgp <SPINE_ASN>
+   neighbor LEAFS peer group
+   neighbor LEAFS remote-as external
+   neighbor LEAFS route-map FROM-LEAFS-IN in
+   ! TODO: bind each leaf neighbor IP to peer-group LEAFS
+```
+
+### Phase 3 Snippet — VRFs + VLANs on Leafs
+
+```
+configure
+vrf instance TENANT_A
+vrf instance TENANT_B
+!
+vlan 10
+   name TENANT_A_APP
+vlan 20
+   name TENANT_B_APP
+!
+interface Vlan10
+   vrf TENANT_A
+   ip address 172.16.10.<LEAF_ID>/24
+interface Vlan20
+   vrf TENANT_B
+   ip address 172.16.20.<LEAF_ID>/24
+!
+interface Ethernet3
+   switchport access vlan 10
+interface Ethernet4
+   switchport access vlan 20
+```
+
+TODO ideas:
+1. Pick an endpoint model (local host containers, subinterfaces, or just SVI reachability checks).
+2. Decide if each leaf hosts both tenants or split tenants across leaf pairs.
+
+### Phase 4 Snippet — EVPN Control Plane
+
+Leaf template:
+```
+configure
+interface Loopback1
+   ip address 10.10.0.<LEAF_ID>/32
+!
+router bgp <LEAF_ASN>
+   address-family ipv4
+      network 10.10.0.<LEAF_ID>/32
+   !
+   neighbor <SPINE1_P2P_IP> send-community extended
+   neighbor <SPINE2_P2P_IP> send-community extended
+   !
+   address-family evpn
+      neighbor <SPINE1_P2P_IP> activate
+      neighbor <SPINE2_P2P_IP> activate
+```
+
+Spine template:
+```
+configure
+router bgp <SPINE_ASN>
+   ! TODO: decide your EVPN peering model
+   ! Option A: direct leaf-spine EVPN sessions in this small lab
+   ! Option B: spine as RR pattern (closer to scale design)
+   address-family evpn
+      neighbor <LEAF_PEERS_OR_GROUP> activate
+```
+
+### Phase 5 Snippet — VXLAN + VNI Mapping
+
+```
+configure
+interface Vxlan1
+   vxlan source-interface Loopback1
+   vxlan udp-port 4789
+   vxlan vlan 10 vni 1010
+   vxlan vlan 20 vni 1020
+!
+router bgp <LEAF_ASN>
+   vlan 10
+      rd auto
+      route-target both 65000:1010
+   vlan 20
+      rd auto
+      route-target both 65000:1020
+```
+
+Optional L3VNI direction:
+```
+router bgp <LEAF_ASN>
+   vrf TENANT_A
+      rd auto
+      route-target import evpn 65000:11010
+      route-target export evpn 65000:11010
+   vrf TENANT_B
+      rd auto
+      route-target import evpn 65000:11020
+      route-target export evpn 65000:11020
+```
+
+### Phase 6 Snippet — Policy + Failure Drills
+
+Policy skeleton:
+```
+configure
+ip prefix-list TENANT_A_ALLOWED seq 10 permit 172.16.10.0/24 le 32
+route-map EVPN-TENANT-A-OUT permit 10
+   match ip address prefix-list TENANT_A_ALLOWED
+route-map EVPN-TENANT-A-OUT deny 100
+```
+
+Failure test examples:
+1. Disable one leaf uplink and observe ECMP to single-path transition.
+2. Disable one spine and validate control-plane/data-plane survival.
+3. Introduce a bad prefix and verify policy blocks propagation.
 
 ---
 
