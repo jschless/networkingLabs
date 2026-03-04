@@ -1,0 +1,153 @@
+! bleaf1 — AS65005  (Arista EOS)
+! VTEP loopback: 10.0.0.5
+! Role: border leaf — connects the EVPN fabric to the external internet router
+!
+! Uplinks: eth1 → spine1 (10.1.0.8/31),  eth2 → spine2 (10.2.0.8/31)
+! External: eth3 → ext-router (203.0.113.0/30)  ← lives in VRF TENANT-A
+!
+! Pre-configured: Ethernet interface IPs, Loopback0.
+! No host-facing ports — bleaf1 only routes between the fabric and outside.
+!
+! ═══════════════════════════════════════════════════════════════════
+! TASKS 1-5 are identical to the regular leaves.
+!
+! TASK 1  Create VRF instances
+!   vrf instance TENANT-A
+!   vrf instance TENANT-B
+!   ip routing vrf TENANT-A
+!   ip routing vrf TENANT-B
+!
+! TASK 2  Set the anycast gateway MAC (same global command as all other leaves)
+!   ip virtual-router mac-address 00:1c:73:aa:aa:aa
+!
+! TASK 3  Configure the VXLAN interface
+!   interface Vxlan1
+!      vxlan source-interface Loopback0
+!      vxlan udp-port 4789
+!      vxlan vlan 10 vni 10010
+!      vxlan vlan 20 vni 10020
+!      vxlan vrf TENANT-A vni 50001
+!      vxlan vrf TENANT-B vni 50002
+!
+! TASK 4  Configure SVIs (anycast IRB — same IPs as all leaves, even with no local hosts)
+!   interface Vlan10
+!      vrf TENANT-A
+!      ip address virtual 10.10.10.1/24
+!      no autostate
+!   interface Vlan20
+!      vrf TENANT-B
+!      ip address virtual 10.20.20.1/24
+!      no autostate
+!
+! TASK 5  Configure fabric BGP (underlay + EVPN, same pattern as other leaves)
+!   router bgp 65005
+!      router-id 10.0.0.5
+!      maximum-paths 2 ecmp 2
+!      bgp bestpath as-path multipath-relax
+!      !
+!      neighbor 10.1.0.9 remote-as 65100      ← spine1 (bleaf1 side is .8, spine side is .9)
+!      neighbor 10.1.0.9 send-community extended
+!      neighbor 10.2.0.9 remote-as 65200      ← spine2
+!      neighbor 10.2.0.9 send-community extended
+!      !
+!      address-family ipv4
+!         neighbor 10.1.0.9 activate
+!         neighbor 10.2.0.9 activate
+!         network 10.0.0.5/32
+!      !
+!      address-family evpn
+!         neighbor 10.1.0.9 activate
+!         neighbor 10.2.0.9 activate
+!      !
+!      ! L2VNI EVPN instances — same route-targets as all other leaves
+!      vlan 10
+!         rd auto
+!         route-target both 65000:10010
+!         redistribute learned
+!      !
+!      vlan 20
+!         rd auto
+!         route-target both 65000:10020
+!         redistribute learned
+!      !
+!      ! L3VPN EVPN instances — VRF RD uses bleaf1's loopback (10.0.0.5)
+!      vrf TENANT-A
+!         rd 10.0.0.5:50001
+!         route-target import evpn 65000:50001
+!         route-target export evpn 65000:50001
+!         redistribute connected     ← advertises 203.0.113.0/30 as type-5 to the fabric
+!         redistribute bgp           ← advertises 100.64.0.0/24 (from ext-router) as type-5
+!      !
+!      vrf TENANT-B
+!         rd 10.0.0.5:50002
+!         route-target import evpn 65000:50002
+!         route-target export evpn 65000:50002
+!         redistribute connected
+!
+! ─────────────────────────────────────────────────────────────────────────────
+! TASK 6  Put the external interface in VRF TENANT-A
+!
+!   The key idea: placing eth3 inside VRF TENANT-A means the external eBGP
+!   session and routing table are fully isolated to Tenant-A.  Tenant-B has
+!   NO path to the outside world.
+!
+!   interface Ethernet3
+!      no switchport
+!      vrf TENANT-A
+!      ip address 203.0.113.1/30
+!      no shutdown
+!
+! ─────────────────────────────────────────────────────────────────────────────
+! TASK 7  Configure external eBGP inside VRF TENANT-A
+!
+!   Add the following inside the `vrf TENANT-A` block you created in Task 5:
+!
+!      neighbor 203.0.113.2 remote-as 65500
+!      neighbor 203.0.113.2 send-community extended
+!      address-family ipv4
+!         neighbor 203.0.113.2 activate
+!
+!   This peers with ext-router (AS65500) using the external link.
+!   The session lives entirely inside VRF TENANT-A — ext-router can only
+!   reach Tenant-A prefixes, never Tenant-B.
+!
+! ─────────────────────────────────────────────────────────────────────────────
+! TASK 8  Verify end-to-end external reachability
+!
+!   From host-a1 or host-a2, ping the simulated internet:
+!     ping 100.64.0.1    ← ext-router loopback
+!
+!   From host-b1 or host-b2, attempt the same ping — it should FAIL.
+!   Tenant-B has no external route.
+!
+!   Verification steps:
+!     show bgp evpn route-type ip-prefix vrf TENANT-A          ← see type-5 for 100.64.0.0/24
+!     show ip route vrf TENANT-A                               ← 100.64.0.0/24 via 203.0.113.2
+!     show bgp neighbors 203.0.113.2                           ← external session state
+!     show ip bgp vrf TENANT-A 203.0.113.2 received-routes    ← routes from ext-router
+! ═══════════════════════════════════════════════════════════════════
+!
+hostname bleaf1
+!
+interface Loopback0
+   ip address 10.0.0.5/32
+!
+interface Ethernet1
+   description to spine1  10.1.0.8/31
+   no switchport
+   ip address 10.1.0.8/31
+   no shutdown
+!
+interface Ethernet2
+   description to spine2  10.2.0.8/31
+   no switchport
+   ip address 10.2.0.8/31
+   no shutdown
+!
+interface Ethernet3
+   description to ext-router  203.0.113.0/30  (VRF TENANT-A)
+   no shutdown
+!
+ip routing
+!
+end

@@ -2,8 +2,8 @@
 !
 ! Spines are fully pre-configured.
 ! They handle:
-!   - eBGP underlay: distribute leaf loopbacks across the fabric
-!   - eBGP EVPN: pass type-2/3/5 routes between leaves using next-hop-unchanged
+!   - eBGP underlay: distribute leaf loopbacks (including bleaf1) across the fabric
+!   - eBGP EVPN: pass type-2/3/5 routes between all VTEPs using next-hop-unchanged
 !     so that the VTEP IP (leaf loopback) is preserved end-to-end.
 !
 ! next-hop-unchanged is the key: without it, the spine would replace the
@@ -38,6 +38,12 @@ interface Ethernet4
    ip address 10.1.0.7/31
    no shutdown
 !
+interface Ethernet5
+   description to bleaf1  10.1.0.8/31
+   no switchport
+   ip address 10.1.0.9/31
+   no shutdown
+!
 ip routing
 !
 router bgp 65100
@@ -53,12 +59,15 @@ router bgp 65100
    neighbor 10.1.0.4 send-community extended
    neighbor 10.1.0.6 remote-as 65004
    neighbor 10.1.0.6 send-community extended
+   neighbor 10.1.0.8 remote-as 65005
+   neighbor 10.1.0.8 send-community extended
    !
    address-family ipv4
       neighbor 10.1.0.0 activate
       neighbor 10.1.0.2 activate
       neighbor 10.1.0.4 activate
       neighbor 10.1.0.6 activate
+      neighbor 10.1.0.8 activate
       network 10.0.0.101/32
    !
    address-family evpn
@@ -66,9 +75,11 @@ router bgp 65100
       neighbor 10.1.0.2 activate
       neighbor 10.1.0.4 activate
       neighbor 10.1.0.6 activate
+      neighbor 10.1.0.8 activate
       neighbor 10.1.0.0 next-hop-unchanged
       neighbor 10.1.0.2 next-hop-unchanged
       neighbor 10.1.0.4 next-hop-unchanged
       neighbor 10.1.0.6 next-hop-unchanged
+      neighbor 10.1.0.8 next-hop-unchanged
 !
 end

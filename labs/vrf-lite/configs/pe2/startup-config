@@ -1,0 +1,30 @@
+! pe2 — Provider Edge  (Arista EOS)
+! VRF-RED:  serves Customer A (ce-a1 ↔ ce-a2)
+! VRF-BLUE: serves Customer B (ce-b1 ↔ ce-b2)
+!
+! Interface addressing:
+!   Ethernet1  to pe1    10.10.99.2/30  VRF-RED  (inter-PE)
+!   Ethernet2  to ce-a2  10.10.34.1/30  VRF-RED
+!   Ethernet3  to pe1    10.20.99.2/30  VRF-BLUE (inter-PE)
+!   Ethernet4  to ce-b2  10.20.34.1/30  VRF-BLUE
+!
+! See pe1/startup-config for the full task guide.
+! Per-pe2 differences:
+!   - Ethernet1 = VRF-RED inter-PE (10.10.99.2/30), neighbor toward pe1 is 10.10.99.1
+!   - Ethernet2 = VRF-RED to ce-a2 (10.10.34.1/30), ce-a2 is 10.10.34.2
+!   - Ethernet3 = VRF-BLUE inter-PE (10.20.99.2/30), neighbor toward pe1 is 10.20.99.1
+!   - Ethernet4 = VRF-BLUE to ce-b2 (10.20.34.1/30), ce-b2 is 10.20.34.2
+!   - Static routes point back via pe1 for loopbacks on the other side:
+!       ip route vrf VRF-RED  10.10.0.1/32 10.10.99.1    ! ce-a1 loopback (via pe1)
+!       ip route vrf VRF-RED  10.10.0.2/32 10.10.34.2    ! ce-a2 loopback
+!       ip route vrf VRF-BLUE 10.20.0.1/32 10.20.99.1    ! ce-b1 loopback (via pe1)
+!       ip route vrf VRF-BLUE 10.20.0.2/32 10.20.34.2    ! ce-b2 loopback
+!
+hostname pe2
+!
+interface Loopback0
+   ip address 192.168.0.2/32
+!
+ip routing
+!
+end

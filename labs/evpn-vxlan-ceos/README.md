@@ -180,7 +180,9 @@ router bgp 65001                           ! 65001/65002/65003/65004
    bgp bestpath as-path multipath-relax
    !
    neighbor 10.1.0.1 remote-as 65100      ! spine1 neighbor IP (see topology)
+   neighbor 10.1.0.1 send-community extended  ! required: EOS eBGP strips ext-communities by default
    neighbor 10.2.0.1 remote-as 65200      ! spine2 neighbor IP (see topology)
+   neighbor 10.2.0.1 send-community extended
    !
    address-family ipv4
       neighbor 10.1.0.1 activate

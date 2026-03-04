@@ -1,0 +1,99 @@
+! leaf4 — AS65004  (Arista EOS)
+! VTEP loopback: 10.0.0.4
+! Host: host-b2 (Tenant-B, VLAN 20, 10.20.20.12)
+!
+! Pre-configured: fully working EVPN/VXLAN fabric leaf.
+! Focus of this lab is bleaf1 — see bleaf1/startup-config for your tasks.
+!
+hostname leaf4
+!
+vrf instance TENANT-A
+!
+vrf instance TENANT-B
+!
+interface Loopback0
+   ip address 10.0.0.4/32
+!
+interface Ethernet1
+   description to spine1  10.1.0.6/31
+   no switchport
+   ip address 10.1.0.6/31
+   no shutdown
+!
+interface Ethernet2
+   description to spine2  10.2.0.6/31
+   no switchport
+   ip address 10.2.0.6/31
+   no shutdown
+!
+interface Ethernet3
+   description to host-b2  (Tenant-B, VLAN 20)
+   switchport access vlan 20
+   no shutdown
+!
+interface Vlan10
+   vrf TENANT-A
+   ip address virtual 10.10.10.1/24
+   no autostate
+!
+interface Vlan20
+   vrf TENANT-B
+   ip address virtual 10.20.20.1/24
+   no autostate
+!
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan udp-port 4789
+   vxlan vlan 10 vni 10010
+   vxlan vlan 20 vni 10020
+   vxlan vrf TENANT-A vni 50001
+   vxlan vrf TENANT-B vni 50002
+!
+ip virtual-router mac-address 00:1c:73:aa:aa:aa
+!
+ip routing
+ip routing vrf TENANT-A
+ip routing vrf TENANT-B
+!
+router bgp 65004
+   router-id 10.0.0.4
+   maximum-paths 2 ecmp 2
+   bgp bestpath as-path multipath-relax
+   !
+   neighbor 10.1.0.7 remote-as 65100
+   neighbor 10.1.0.7 send-community extended
+   neighbor 10.2.0.7 remote-as 65200
+   neighbor 10.2.0.7 send-community extended
+   !
+   address-family ipv4
+      neighbor 10.1.0.7 activate
+      neighbor 10.2.0.7 activate
+      network 10.0.0.4/32
+   !
+   address-family evpn
+      neighbor 10.1.0.7 activate
+      neighbor 10.2.0.7 activate
+   !
+   vlan 10
+      rd auto
+      route-target both 65000:10010
+      redistribute learned
+   !
+   vlan 20
+      rd auto
+      route-target both 65000:10020
+      redistribute learned
+   !
+   vrf TENANT-A
+      rd 10.0.0.4:50001
+      route-target import evpn 65000:50001
+      route-target export evpn 65000:50001
+      redistribute connected
+   !
+   vrf TENANT-B
+      rd 10.0.0.4:50002
+      route-target import evpn 65000:50002
+      route-target export evpn 65000:50002
+      redistribute connected
+!
+end

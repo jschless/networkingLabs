@@ -1,0 +1,16 @@
+hostname ce-a1
+!
+interface Loopback0
+   ip address 10.10.0.1/32
+!
+interface Ethernet1
+   description to pe1 (VRF-RED)
+   no switchport
+   ip address 10.10.12.1/30
+   no shutdown
+!
+ip routing
+!
+ip route 0.0.0.0/0 10.10.12.2
+!
+end

@@ -1,69 +1,42 @@
 name: vrf-lite
 
-# VRF-Lite segmentation practice lab
+# VRF-Lite segmentation practice lab — Arista cEOS
 #
-# VRF creation is pre-configured via setup.sh on PE nodes.
-# You configure routing within each VRF.
+# VRF creation and routing are configured entirely in the EOS CLI.
+# No Linux ip link manipulation — everything is done on the router.
 #
 # Topology:
 #
 #   [ce-a1] --RED-- [pe1] --RED-- [pe2] --RED-- [ce-a2]
 #   [ce-b1] --BLUE- [pe1] --BLUE- [pe2] --BLUE- [ce-b2]
 #
-# pe1 and pe2 each have two VRFs: VRF-RED (table 100) and VRF-BLUE (table 200).
+# pe1 and pe2 each have two VRFs: VRF-RED and VRF-BLUE.
 # Two separate inter-PE links carry each VRF independently (VRF-Lite, no MPLS).
 # CE nodes cannot reach each other across VRFs — isolation is the whole point.
 
 topology:
   defaults:
-    kind: linux
-    image: frr-lab:local
-    binds:
-      - configs/daemons:/etc/frr/daemons
-      - configs/vtysh.conf:/etc/frr/vtysh.conf
-    sysctls:
-      net.ipv4.ip_forward: "1"
+    kind: ceos
+    image: ceos:4.35.2F
 
   nodes:
-    # PE nodes run setup.sh to create VRF netdevs before FRR starts
     pe1:
-      binds:
-        - configs/pe1/frr.conf:/etc/frr/frr.conf
-        - configs/pe1/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      startup-config: configs/pe1/startup-config
 
     pe2:
-      binds:
-        - configs/pe2/frr.conf:/etc/frr/frr.conf
-        - configs/pe2/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      startup-config: configs/pe2/startup-config
 
-    # CE nodes are plain routers, no VRF needed
     ce-a1:
-      binds:
-        - configs/ce-a1/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      startup-config: configs/ce-a1/startup-config
 
     ce-a2:
-      binds:
-        - configs/ce-a2/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      startup-config: configs/ce-a2/startup-config
 
     ce-b1:
-      binds:
-        - configs/ce-b1/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      startup-config: configs/ce-b1/startup-config
 
     ce-b2:
-      binds:
-        - configs/ce-b2/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      startup-config: configs/ce-b2/startup-config
 
   links:
     # VRF-RED links

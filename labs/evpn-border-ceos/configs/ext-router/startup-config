@@ -1,0 +1,34 @@
+! ext-router — AS65500  (Arista EOS)
+! Role: simulated internet router
+!
+! Loopback0: 100.64.0.1/24  (represents the internet address space)
+! eth1: 203.0.113.2/30  (WAN link to bleaf1 in VRF TENANT-A)
+!
+! Fully pre-configured: eBGP session to bleaf1.
+!   - Advertises 100.64.0.0/24 to bleaf1 (bleaf1 propagates it as EVPN type-5)
+!   - Learns Tenant-A prefixes (10.10.10.0/24) from bleaf1 via eBGP return path
+!
+hostname ext-router
+!
+interface Loopback0
+   description simulated internet  100.64.0.0/24
+   ip address 100.64.0.1/24
+!
+interface Ethernet1
+   description to bleaf1  203.0.113.0/30
+   no switchport
+   ip address 203.0.113.2/30
+   no shutdown
+!
+ip routing
+!
+router bgp 65500
+   router-id 100.64.0.1
+   neighbor 203.0.113.1 remote-as 65005
+   neighbor 203.0.113.1 send-community extended
+   !
+   address-family ipv4
+      neighbor 203.0.113.1 activate
+      network 100.64.0.0/24
+!
+end

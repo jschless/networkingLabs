@@ -9,7 +9,7 @@
 !   - BGP AS: 65003
 !   - Router-ID / VTEP IP: 10.0.0.3
 !   - Uplink IPs: eth1=10.1.0.4/31 (spine1 side .5), eth2=10.2.0.4/31 (spine2 side .5)
-!   - Spine neighbors: 10.1.0.5 (spine1), 10.2.0.5 (spine2)
+!   - Spine neighbors: 10.1.0.5 (spine1), 10.2.0.5 (spine2) — both need send-community extended
 !   - BGP network statement: 10.0.0.3/32
 !   - VRF RDs: 10.0.0.3:50001 / 10.0.0.3:50002
 !   - Ethernet3: switchport access vlan 10  ← Tenant-A

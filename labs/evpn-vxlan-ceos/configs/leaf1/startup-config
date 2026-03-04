@@ -47,7 +47,9 @@
 !      bgp bestpath as-path multipath-relax
 !      !
 !      neighbor 10.1.0.1 remote-as 65100      ← spine1 (via eth1)
+!      neighbor 10.1.0.1 send-community extended
 !      neighbor 10.2.0.1 remote-as 65200      ← spine2 (via eth2)
+!      neighbor 10.2.0.1 send-community extended
 !      !
 !      address-family ipv4
 !         neighbor 10.1.0.1 activate

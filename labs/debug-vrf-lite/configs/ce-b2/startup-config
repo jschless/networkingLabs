@@ -1,0 +1,16 @@
+hostname ce-b2
+!
+interface Loopback0
+   ip address 10.20.0.2/32
+!
+interface Ethernet1
+   description to pe2 (VRF-BLUE)
+   no switchport
+   ip address 10.20.34.2/30
+   no shutdown
+!
+ip routing
+!
+ip route 0.0.0.0/0 10.20.34.1
+!
+end
