@@ -1,0 +1,28 @@
+! acc1  (Arista EOS)
+!
+! Access layer — L2 only, no IP routing.
+! Uplink to dist1 (trunk), client-a on access port VLAN 10.
+!
+! STP: inherits dist1 as root for all VLANs (dist1 = priority 4096/8192).
+! portfast on client-facing port to speed up convergence.
+!
+hostname acc1
+!
+spanning-tree mode rstp
+!
+vlan 10,20,30,99
+!
+interface Ethernet1
+   description to-dist1  trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-client-a  access-vlan10
+   switchport access vlan 10
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+end

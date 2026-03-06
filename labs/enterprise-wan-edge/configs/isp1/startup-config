@@ -1,0 +1,43 @@
+! isp1 — AS65100  (Arista EOS)
+! Role: primary upstream ISP
+!
+! Simulates an ISP that advertises a default route and its own loopback
+! to the enterprise edge router. In the real world, a full BGP table or
+! a default + aggregate would be advertised here.
+!
+! Links:
+!   Ethernet1: 203.0.113.1/30  (to edge Ethernet1)
+!
+! Loopback0: 1.1.1.1/32
+!
+! eBGP session to edge (AS65300):
+!   - Advertises 0.0.0.0/0 (default route)  backed by ip route 0.0.0.0/0 Null0
+!   - Advertises 1.1.1.1/32 (loopback — simulates ISP reachability)
+
+hostname isp1
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Ethernet1
+   description to-edge  203.0.113.0/30
+   no switchport
+   ip address 203.0.113.1/30
+   no shutdown
+!
+ip routing
+!
+ip route 0.0.0.0/0 Null0
+!
+router bgp 65100
+   router-id 1.1.1.1
+   no bgp ebgp-requires-policy
+   neighbor 203.0.113.2 remote-as 65300
+   neighbor 203.0.113.2 description edge-primary
+   !
+   address-family ipv4
+      neighbor 203.0.113.2 activate
+      network 0.0.0.0/0
+      network 1.1.1.1/32
+!
+end

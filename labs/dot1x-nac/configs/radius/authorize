@@ -1,0 +1,36 @@
+# FreeRADIUS authorize (users) file
+# Format: username   check-attributes
+#                    reply-attributes
+#
+# VLAN assignment attributes (RFC 3580):
+#   Tunnel-Type        = VLAN (13)
+#   Tunnel-Medium-Type = IEEE-802 (6)
+#   Tunnel-Private-Group-ID = <vlan-id>
+
+# alice-tls — EAP-TLS client cert CN="alice-tls" → VLAN 10 (employee)
+# No password check; EAP-TLS module validates the certificate.
+alice-tls
+		Tunnel-Type = VLAN,
+		Tunnel-Medium-Type = IEEE-802,
+		Tunnel-Private-Group-ID = "10",
+		Reply-Message = "Welcome employee (EAP-TLS) - VLAN 10"
+
+# alice — PEAP/MSCHAPv2, correct password → VLAN 20 (contractor)
+alice		Cleartext-Password := "password123"
+		Tunnel-Type = VLAN,
+		Tunnel-Medium-Type = IEEE-802,
+		Tunnel-Private-Group-ID = "20",
+		Reply-Message = "Welcome contractor (PEAP) - VLAN 20"
+
+# bob-fail — PEAP/MSCHAPv2, wrong password → REJECT
+# (used by supplicant-fail — wrong password causes MSCHAPv2 to fail)
+bob-fail	Cleartext-Password := "correctpassword"
+		Reply-Message = "Access granted to bob-fail (should not see this)"
+
+# MAB fallback — any unknown username (MAC address) → VLAN 30 (IoT)
+# Matched when hostapd sends MAC as User-Name (no EAP, no known user entry).
+DEFAULT		Auth-Type := Accept
+		Tunnel-Type = VLAN,
+		Tunnel-Medium-Type = IEEE-802,
+		Tunnel-Private-Group-ID = "30",
+		Reply-Message = "MAB accepted - VLAN 30"

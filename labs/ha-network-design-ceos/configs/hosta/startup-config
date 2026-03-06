@@ -1,0 +1,28 @@
+! hosta — Simulated client host (cEOS)
+! LACP toward dist1/dist2. Default gateway should be VRRP VIP.
+
+hostname hosta
+!
+interface Port-Channel1
+   description Uplink LACP bundle to MLAG pair
+   switchport access vlan 10
+   no shutdown
+!
+interface Ethernet1
+   description to dist1
+   channel-group 1 mode active
+   no shutdown
+!
+interface Ethernet2
+   description to dist2
+   channel-group 1 mode active
+   no shutdown
+!
+interface Vlan10
+   ip address 192.168.10.10/24
+   no shutdown
+!
+ip route 0.0.0.0/0 192.168.10.254
+ip routing
+!
+end

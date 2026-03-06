@@ -1,0 +1,87 @@
+name: network-assurance
+
+# Network Assurance Lab — SNMP, Syslog, SPAN, NetFlow
+#
+# Three FRR routers form an OSPF domain; management node collects:
+#   - SNMP (v2c + v3) polls from all routers
+#   - Syslog (UDP 514) from all routers
+#   - NetFlow v5 (UDP 2055) via softflowd on each router
+#
+# SPAN (port mirroring) is configured on r2 via tc mirred:
+#   r2:eth1 traffic is mirrored to r2:eth3 (management link),
+#   and the analyzer receives mirrored frames via management's eth4.
+#
+# Topology:
+#
+#   [client]─eth1─[r1]─eth2─[r2]─eth2─[r3]─eth2─[server]
+#                   │eth3     │eth3     │eth3
+#                   │         │         │
+#                 172.16.0.x ─┴─────────┘
+#                       [management]─eth4─[analyzer]
+
+topology:
+  defaults:
+    kind: linux
+    image: assurance-lab:local
+
+  nodes:
+    r1:
+      binds:
+        - configs/r1/frr.conf:/etc/frr/frr.conf
+        - configs/r1/setup.sh:/setup.sh
+        - configs/shared/daemons:/etc/frr/daemons
+        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
+      exec:
+        - bash /setup.sh
+
+    r2:
+      binds:
+        - configs/r2/frr.conf:/etc/frr/frr.conf
+        - configs/r2/setup.sh:/setup.sh
+        - configs/shared/daemons:/etc/frr/daemons
+        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
+      exec:
+        - bash /setup.sh
+
+    r3:
+      binds:
+        - configs/r3/frr.conf:/etc/frr/frr.conf
+        - configs/r3/setup.sh:/setup.sh
+        - configs/shared/daemons:/etc/frr/daemons
+        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
+      exec:
+        - bash /setup.sh
+
+    management:
+      binds:
+        - configs/management/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    analyzer:
+      binds:
+        - configs/analyzer/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    client:
+      binds:
+        - configs/client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    server:
+      binds:
+        - configs/server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["client:eth1",      "r1:eth1"]       # 10.1.0.0/30
+    - endpoints: ["r1:eth2",          "r2:eth1"]       # 10.0.12.0/30
+    - endpoints: ["r2:eth2",          "r3:eth1"]       # 10.0.23.0/30
+    - endpoints: ["r3:eth2",          "server:eth1"]   # 10.3.0.0/30
+    - endpoints: ["r1:eth3",          "management:eth1"] # 172.16.0.0/30
+    - endpoints: ["r2:eth3",          "management:eth2"] # 172.16.0.4/30
+    - endpoints: ["r3:eth3",          "management:eth3"] # 172.16.0.8/30
+    - endpoints: ["management:eth4",  "analyzer:eth1"]   # 192.168.99.0/30

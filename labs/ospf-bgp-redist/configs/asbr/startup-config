@@ -1,0 +1,41 @@
+hostname asbr
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to r1 — OSPF area 0
+   no switchport
+   ip address 10.0.12.2/30
+!
+interface Ethernet2
+   description to bgp1 (AS65200) — eBGP
+   no switchport
+   ip address 10.0.23.1/30
+!
+! ── Task: Configure OSPF + BGP with mutual redistribution ────────────────────
+! asbr is in AS65100. It runs both OSPF and eBGP, and redistributes between them.
+!
+! Step 1 — OSPF (runs between r1 and asbr):
+! router ospf 1
+!    router-id 10.0.0.2
+!    passive-interface Loopback0
+!    network 10.0.0.2/32 area 0.0.0.0
+!    network 10.0.12.0/30 area 0.0.0.0
+!    redistribute bgp
+! !
+!
+! Step 2 — BGP (eBGP to bgp1):
+! router bgp 65100
+!    bgp router-id 10.0.0.2
+!    neighbor 10.0.23.2 remote-as 65200
+!    !
+!    address-family ipv4
+!       neighbor 10.0.23.2 activate
+!       network 10.0.0.2/32
+!       redistribute ospf
+!    !
+! !
+end

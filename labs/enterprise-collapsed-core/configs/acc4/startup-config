@@ -1,0 +1,29 @@
+! acc4 — access layer switch #4  (Arista EOS)
+!
+! Pure L2 switch. No ip routing.
+! Uplink to cc2 (trunk). No client downlinks in this lab
+! (available for expansion — e.g. connect a VLAN 10 or VLAN 30 client).
+!
+hostname acc4
+!
+spanning-tree mode rstp
+!
+vlan 10
+   name corporate
+!
+vlan 20
+   name voice
+!
+vlan 30
+   name guest
+!
+vlan 99
+   name management
+!
+interface Ethernet1
+   description to-cc2-trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+end

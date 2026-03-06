@@ -1,0 +1,46 @@
+hostname r3
+!
+ip routing
+!
+mpls ip
+!
+interface Loopback0
+   ip address 10.0.0.3/32
+!
+interface Ethernet1
+   description to r2 (AS65001 — eBGP-LU ASBR)
+   no switchport
+   ip address 10.1.23.2/30
+   mpls ip
+!
+interface Ethernet2
+   description to r4 (AS65002 — iBGP-LU)
+   no switchport
+   ip address 10.1.34.1/30
+   mpls ip
+!
+! ── IGP: OSPF within AS65002 (pre-configured) ────────────────────────────────
+router ospf 1
+   router-id 10.0.0.3
+   passive-interface Loopback0
+   network 10.0.0.3/32 area 0.0.0.0
+   network 10.1.34.0/30 area 0.0.0.0
+!
+! ── Task: Configure eBGP-LU to r2 and iBGP-LU to r4 (ASBR) ─────────────────
+! r3 is the AS65002 ASBR. Two BGP-LU sessions:
+!   r2 at 10.1.23.1 — eBGP-LU (direct link peer)
+!   r4 at 10.0.0.4  — iBGP-LU (loopback peer, update-source Loopback0)
+!
+! router bgp 65002
+!    bgp router-id 10.0.0.3
+!    neighbor 10.1.23.1 remote-as 65001
+!    neighbor 10.0.0.4 remote-as 65002
+!    neighbor 10.0.0.4 update-source Loopback0
+!    !
+!    address-family ipv4 labeled-unicast
+!       neighbor 10.1.23.1 activate
+!       neighbor 10.0.0.4 activate
+!       network 10.0.0.3/32
+!    !
+! !
+end

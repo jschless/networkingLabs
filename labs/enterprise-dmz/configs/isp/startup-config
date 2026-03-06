@@ -1,0 +1,25 @@
+! isp — simulated ISP / internet transit (Arista EOS)
+!
+! This node acts as the internet backbone, providing connectivity between
+! the internet-client (attacker) and fw-outside (the enterprise WAN edge).
+!
+! Ethernet1: 203.0.113.1/30  facing internet-client
+! Ethernet2: 203.0.114.1/30  facing fw-outside WAN
+!
+hostname isp
+!
+ip routing
+!
+interface Ethernet1
+   description to internet-client
+   no switchport
+   ip address 203.0.113.1/30
+   no shutdown
+!
+interface Ethernet2
+   description to fw-outside WAN
+   no switchport
+   ip address 203.0.114.1/30
+   no shutdown
+!
+end

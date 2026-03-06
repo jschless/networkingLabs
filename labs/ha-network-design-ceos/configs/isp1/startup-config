@@ -1,0 +1,24 @@
+! isp1 — Simulated upstream ISP 1 (AS65101)
+! eBGP with edge1 is configured in lab tasks.
+
+hostname isp1
+!
+interface Loopback0
+   ip address 203.255.1.1/32
+!
+interface Ethernet1
+   description to edge1 203.0.113.1/31
+   no switchport
+   ip address 203.0.113.1/31
+   no shutdown
+!
+interface Ethernet2
+   description to app1 198.51.100.0/31
+   no switchport
+   ip address 198.51.100.0/31
+   no shutdown
+!
+ip route 172.20.20.20/32 198.51.100.1
+ip routing
+!
+end

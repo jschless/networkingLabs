@@ -1,0 +1,58 @@
+hostname isp1
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to ce1 (AS65001)
+   no switchport
+   ip address 10.1.11.2/30
+!
+interface Ethernet2
+   description to isp2 — iBGP peering
+   no switchport
+   ip address 10.1.99.1/30
+!
+interface Ethernet3
+   description to ce2 (AS65002)
+   no switchport
+   ip address 10.1.21.1/30
+!
+! ── Task: Configure eBGP to CEs and iBGP to isp2 ───────────────────────────
+! isp1 is in AS65100. Three peers:
+!   ce1  at 10.1.11.1 — eBGP (AS65001)
+!   isp2 at 10.1.99.2 — iBGP (AS65100, same AS)
+!   ce2  at 10.1.21.2 — eBGP (AS65002)
+!
+! Experiments:
+!   LOCAL-PREFERENCE: prefer isp1 path for ce1's prefix using a route-map
+!   applied INBOUND from ce1 (set local-preference 200). This propagates via
+!   iBGP to isp2, making isp2 also prefer to route ce1's traffic via isp1.
+!
+!   ip prefix-list CE1-PREFIX seq 10 permit 10.0.0.1/32
+!   !
+!   route-map LP-HIGH permit 10
+!      match ip address prefix-list CE1-PREFIX
+!      set local-preference 200
+!   !
+!   route-map LP-HIGH permit 20
+!   !
+!
+! router bgp 65100
+!    bgp router-id 10.0.0.2
+!    neighbor 10.1.11.1 remote-as 65001
+!    neighbor 10.1.99.2 remote-as 65100
+!    neighbor 10.1.21.2 remote-as 65002
+!    !
+!    address-family ipv4
+!       neighbor 10.1.11.1 activate
+!       neighbor 10.1.11.1 route-map LP-HIGH in
+!       neighbor 10.1.99.2 activate
+!       neighbor 10.1.99.2 next-hop-self
+!       neighbor 10.1.21.2 activate
+!       network 10.0.0.2/32
+!    !
+! !
+end

@@ -1,0 +1,43 @@
+! isp2 — AS65200  (Arista EOS)
+! Role: backup upstream ISP
+!
+! Simulates a second ISP that also advertises a default route and its
+! loopback. The enterprise edge prefers isp1 outbound (higher local-pref)
+! and signals isp2 as a less-preferred inbound path via AS-path prepend.
+!
+! Links:
+!   Ethernet1: 203.0.114.1/30  (to edge Ethernet2)
+!
+! Loopback0: 2.2.2.2/32
+!
+! eBGP session to edge (AS65300):
+!   - Advertises 0.0.0.0/0 (default route)  backed by ip route 0.0.0.0/0 Null0
+!   - Advertises 2.2.2.2/32 (loopback — simulates ISP reachability)
+
+hostname isp2
+!
+interface Loopback0
+   ip address 2.2.2.2/32
+!
+interface Ethernet1
+   description to-edge  203.0.114.0/30
+   no switchport
+   ip address 203.0.114.1/30
+   no shutdown
+!
+ip routing
+!
+ip route 0.0.0.0/0 Null0
+!
+router bgp 65200
+   router-id 2.2.2.2
+   no bgp ebgp-requires-policy
+   neighbor 203.0.114.2 remote-as 65300
+   neighbor 203.0.114.2 description edge-backup
+   !
+   address-family ipv4
+      neighbor 203.0.114.2 activate
+      network 0.0.0.0/0
+      network 2.2.2.2/32
+!
+end

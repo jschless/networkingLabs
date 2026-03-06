@@ -1,0 +1,39 @@
+hostname r1
+!
+ip routing
+!
+mpls ip
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to r2 (AS65001 — iBGP-LU)
+   no switchport
+   ip address 10.1.12.1/30
+   mpls ip
+!
+! ── IGP: OSPF within AS65001 (pre-configured) ────────────────────────────────
+router ospf 1
+   router-id 10.0.0.1
+   passive-interface Loopback0
+   network 10.0.0.1/32 area 0.0.0.0
+   network 10.1.12.0/30 area 0.0.0.0
+!
+! ── Task: Configure iBGP-LU to r2 ────────────────────────────────────────────
+! r1 is in AS65001. iBGP-LU peer: r2 at 10.0.0.2 (loopback, reachable via OSPF).
+! BGP-LU uses the loopbacks as update-source and peer address.
+! The labeled-unicast AF distributes MPLS labels along with IP prefixes,
+! enabling an end-to-end LSP from r1 to r4.
+!
+! router bgp 65001
+!    bgp router-id 10.0.0.1
+!    neighbor 10.0.0.2 remote-as 65001
+!    neighbor 10.0.0.2 update-source Loopback0
+!    !
+!    address-family ipv4 labeled-unicast
+!       neighbor 10.0.0.2 activate
+!       network 10.0.0.1/32
+!    !
+! !
+end

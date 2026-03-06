@@ -1,45 +1,32 @@
 name: debug-bgp-path-selection
 
 # Debug lab — BGP path selection with an intentional misconfiguration.
-# Deploy, observe the symptoms, and diagnose the fault before looking at configs.
+# The network is supposed to prefer isp1 for all traffic between ce1 and ce2.
+# Something is wrong with the local-preference policy on isp1.
 #
 # Topology (diamond — dual-homed):
 #
-#         [isp1] (AS65100)
-#        /        \
-#   [ce1]          [ce2]
-#   AS65001        AS65002
-#        \        /
-#         [isp2] (AS65100)
-#
-# The network is supposed to prefer isp1 for all traffic between ce1 and ce2.
-# Something is wrong with the local-preference policy on isp1.
+#          [isp1] (AS65100)
+#         /        \
+#    [ce1]          [ce2]
+#    AS65001        AS65002
+#         \        /
+#          [isp2] (AS65100)
 
 topology:
   defaults:
-    kind: linux
-    image: frr-lab:local
-    binds:
-      - configs/daemons:/etc/frr/daemons
-      - configs/vtysh.conf:/etc/frr/vtysh.conf
-    sysctls:
-      net.ipv4.ip_forward: "1"
-    exec:
-      - vtysh -b
+    kind: ceos
+    image: ceos:4.35.2F
 
   nodes:
     ce1:
-      binds:
-        - configs/ce1/frr.conf:/etc/frr/frr.conf
+      startup-config: configs/ce1/startup-config
     isp1:
-      binds:
-        - configs/isp1/frr.conf:/etc/frr/frr.conf
+      startup-config: configs/isp1/startup-config
     isp2:
-      binds:
-        - configs/isp2/frr.conf:/etc/frr/frr.conf
+      startup-config: configs/isp2/startup-config
     ce2:
-      binds:
-        - configs/ce2/frr.conf:/etc/frr/frr.conf
+      startup-config: configs/ce2/startup-config
 
   links:
     - endpoints: ["ce1:eth1",  "isp1:eth1"]   # 10.1.11.0/30  ce1-isp1 eBGP

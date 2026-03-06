@@ -1,0 +1,54 @@
+! dist1 — Distribution switch 1
+! Base interfaces only. Configure MLAG/VRRP/OSPF/BFD in lab tasks.
+
+hostname dist1
+!
+interface Loopback0
+   ip address 10.255.0.11/32
+!
+interface Ethernet1
+   description hosta-eth1 (MLAG access port)
+   switchport
+   no shutdown
+!
+interface Ethernet2
+   description dist2 peer-link member 1
+   switchport
+   no shutdown
+!
+interface Ethernet3
+   description dist2 peer-link member 2
+   switchport
+   no shutdown
+!
+interface Ethernet4
+   description to core1 10.0.1.0/31
+   no switchport
+   ip address 10.0.1.0/31
+   no shutdown
+!
+interface Ethernet5
+   description to core2 10.0.1.2/31
+   no switchport
+   ip address 10.0.1.2/31
+   no shutdown
+!
+interface Ethernet6
+   description to dist2 keepalive 10.255.255.0/31
+   no switchport
+   ip address 10.255.255.0/31
+   no shutdown
+!
+interface Vlan10
+   description Users VLAN gateway
+   ip address 192.168.10.1/24
+   no shutdown
+!
+interface Vlan4094
+   description MLAG peer SVI
+   ip address 10.255.254.1/30
+   no shutdown
+!
+ip routing
+!
+end

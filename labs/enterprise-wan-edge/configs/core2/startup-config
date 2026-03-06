@@ -1,0 +1,43 @@
+! core2 — AS65300 internal core router  (Arista EOS)
+! Role: redundant core router, no directly attached servers
+!
+! Runs OSPF area 0 with edge and core1.
+! Provides a redundant path from core1 to edge — if the core1-to-edge
+! link fails, traffic can traverse core1 → core2 → edge.
+! OSPF default-information from edge propagates to core2 as well.
+!
+! Links:
+!   Ethernet1: 10.255.2.2/30   (to edge)
+!   Ethernet2: 10.255.3.2/30   (to core1 — redundant core interconnect)
+!
+! Loopback0: 10.0.0.3/32
+
+hostname core2
+!
+interface Loopback0
+   ip address 10.0.0.3/32
+!
+interface Ethernet1
+   description to-edge  10.255.2.0/30
+   no switchport
+   ip address 10.255.2.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-core1  10.255.3.0/30
+   no switchport
+   ip address 10.255.3.2/30
+   no shutdown
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.3
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   network 10.0.0.3/32 area 0.0.0.0
+   network 10.255.2.0/30 area 0.0.0.0
+   network 10.255.3.0/30 area 0.0.0.0
+!
+end

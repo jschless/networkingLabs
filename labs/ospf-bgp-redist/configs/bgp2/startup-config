@@ -1,0 +1,26 @@
+hostname bgp2
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.4/32
+!
+interface Ethernet1
+   description to bgp1 (AS65200) — iBGP
+   no switchport
+   ip address 10.0.34.2/30
+!
+! ── Task: Configure iBGP to bgp1 ─────────────────────────────────────────────
+! bgp2 is in AS65200. Single iBGP peer: bgp1 at 10.0.34.1.
+! Goal: bgp2 can reach r1's loopback (10.0.0.1/32) via the redistribution chain.
+!
+! router bgp 65200
+!    bgp router-id 10.0.0.4
+!    neighbor 10.0.34.1 remote-as 65200
+!    !
+!    address-family ipv4
+!       neighbor 10.0.34.1 activate
+!       network 10.0.0.4/32
+!    !
+! !
+end

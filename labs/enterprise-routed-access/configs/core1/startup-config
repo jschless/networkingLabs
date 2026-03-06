@@ -1,0 +1,75 @@
+! core1 — Arista EOS
+! Core switch, OSPF area 0
+! Loopback: 10.0.0.1/32
+! iBGP peer: core2 (10.0.0.2) — placeholder for future BGP extension
+!
+hostname core1
+!
+ip routing
+!
+! ── Loopback ────────────────────────────────────────────────────────────────
+interface Loopback0
+   description router-id
+   ip address 10.0.0.1/32
+!
+! ── Core ↔ Distribution links (area 0) ─────────────────────────────────────
+interface Ethernet1
+   description to-dist1
+   no switchport
+   ip address 10.1.0.0/31
+   no shutdown
+!
+interface Ethernet2
+   description to-dist2
+   no switchport
+   ip address 10.1.0.2/31
+   no shutdown
+!
+interface Ethernet3
+   description to-dist3
+   no switchport
+   ip address 10.1.0.4/31
+   no shutdown
+!
+interface Ethernet4
+   description to-dist4
+   no switchport
+   ip address 10.1.0.6/31
+   no shutdown
+!
+! ── Core ↔ Core link (area 0) ───────────────────────────────────────────────
+interface Ethernet5
+   description to-core2
+   no switchport
+   ip address 10.1.2.0/31
+   no shutdown
+!
+! ── OSPF ────────────────────────────────────────────────────────────────────
+router ospf 1
+   router-id 10.0.0.1
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   no passive-interface Ethernet3
+   no passive-interface Ethernet4
+   no passive-interface Ethernet5
+   bfd default
+   max-lsa 12000
+   network 10.0.0.1/32 area 0.0.0.0
+   network 10.1.0.0/31 area 0.0.0.0
+   network 10.1.0.2/31 area 0.0.0.0
+   network 10.1.0.4/31 area 0.0.0.0
+   network 10.1.0.6/31 area 0.0.0.0
+   network 10.1.2.0/31 area 0.0.0.0
+!
+! ── iBGP (placeholder — core-to-core peering for future L3VPN/Internet exit) ─
+router bgp 65000
+   router-id 10.0.0.1
+   neighbor 10.0.0.2 remote-as 65000
+   neighbor 10.0.0.2 update-source Loopback0
+   neighbor 10.0.0.2 description core2
+   !
+   address-family ipv4
+      neighbor 10.0.0.2 activate
+!
+end

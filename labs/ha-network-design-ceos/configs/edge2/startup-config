@@ -1,0 +1,29 @@
+! edge2 — WAN edge 2
+! Base interfaces only. Configure OSPF/BFD and eBGP in tasks.
+
+hostname edge2
+!
+interface Loopback0
+   ip address 10.255.0.32/32
+!
+interface Ethernet1
+   description to core1 10.0.2.3/31
+   no switchport
+   ip address 10.0.2.3/31
+   no shutdown
+!
+interface Ethernet2
+   description to core2 10.0.2.7/31
+   no switchport
+   ip address 10.0.2.7/31
+   no shutdown
+!
+interface Ethernet3
+   description to isp2 203.0.113.2/31
+   no switchport
+   ip address 203.0.113.2/31
+   no shutdown
+!
+ip routing
+!
+end

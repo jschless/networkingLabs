@@ -1,0 +1,108 @@
+! edge — AS65300  (Arista EOS)
+! Role: enterprise WAN edge router
+!
+! Dual-homed to two ISPs with BGP policy:
+!   Outbound: LP-HIGH (200) on isp1 ensures traffic exits via isp1 by default.
+!             LP-LOW  (100) on isp2 makes it a cold standby for outbound.
+!   Inbound:  PREPEND-ISP2 prepends AS 65300 three times on advertisements
+!             to isp2, making isp1 the preferred inbound path for remote peers.
+!
+! Enterprise public block 198.51.100.0/24 is originated via BGP (network stmt)
+! backed by a static black-hole route to Null0.
+!
+! OSPF 1 (area 0) runs on the internal links to core1/core2.
+!   default-information originate always injects the BGP-learned default
+!   route into OSPF so core routers and servers can reach the internet.
+!   WAN interfaces (Ethernet1/2) are passive to prevent accidental adjacency.
+!
+! Links:
+!   Ethernet1: 203.0.113.2/30  (to isp1 — primary WAN)
+!   Ethernet2: 203.0.114.2/30  (to isp2 — backup WAN)
+!   Ethernet3: 10.255.1.1/30   (to core1)
+!   Ethernet4: 10.255.2.1/30   (to core2)
+!
+! Loopback0: 10.0.0.1/32
+
+hostname edge
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to-isp1-primary  203.0.113.0/30
+   no switchport
+   ip address 203.0.113.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-isp2-backup  203.0.114.0/30
+   no switchport
+   ip address 203.0.114.2/30
+   no shutdown
+!
+interface Ethernet3
+   description to-core1  10.255.1.0/30
+   no switchport
+   ip address 10.255.1.1/30
+   no shutdown
+!
+interface Ethernet4
+   description to-core2  10.255.2.0/30
+   no switchport
+   ip address 10.255.2.1/30
+   no shutdown
+!
+ip routing
+!
+! Black-hole backing route — required for BGP to originate 198.51.100.0/24
+ip route 198.51.100.0/24 Null0
+!
+! Classify enterprise public prefix for AS-path prepend policy
+ip prefix-list OWN-PREFIXES seq 5 permit 198.51.100.0/24
+!
+! Outbound policy: prefer isp1 by setting higher local-preference on received routes
+route-map LP-HIGH permit 10
+   set local-preference 200
+!
+! Outbound policy: mark isp2-learned routes with lower local-preference
+route-map LP-LOW permit 10
+   set local-preference 100
+!
+! Inbound traffic engineering: prepend our AS on advertisements sent to isp2.
+! This makes isp1 appear as a shorter AS path from the internet, attracting
+! inbound traffic to the primary link.
+! Sequence 10: prepend 3x on OWN-PREFIXES (198.51.100.0/24)
+! Sequence 20: pass all other advertisements unchanged
+route-map PREPEND-ISP2 permit 10
+   match ip address prefix-list OWN-PREFIXES
+   set as-path prepend 65300 65300 65300
+!
+route-map PREPEND-ISP2 permit 20
+!
+router ospf 1
+   router-id 10.0.0.1
+   passive-interface default
+   no passive-interface Ethernet3
+   no passive-interface Ethernet4
+   network 10.0.0.1/32 area 0.0.0.0
+   network 10.255.1.0/30 area 0.0.0.0
+   network 10.255.2.0/30 area 0.0.0.0
+   default-information originate always
+!
+router bgp 65300
+   router-id 10.0.0.1
+   no bgp ebgp-requires-policy
+   neighbor 203.0.113.1 remote-as 65100
+   neighbor 203.0.113.1 description isp1-primary
+   neighbor 203.0.113.1 route-map LP-HIGH in
+   neighbor 203.0.114.1 remote-as 65200
+   neighbor 203.0.114.1 description isp2-backup
+   neighbor 203.0.114.1 route-map LP-LOW in
+   neighbor 203.0.114.1 route-map PREPEND-ISP2 out
+   !
+   address-family ipv4
+      neighbor 203.0.113.1 activate
+      neighbor 203.0.114.1 activate
+      network 198.51.100.0/24
+!
+end

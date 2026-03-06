@@ -1,0 +1,41 @@
+hostname r2
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to r1 (AS65001) — eBGP
+   no switchport
+   ip address 10.1.12.2/30
+!
+interface Ethernet2
+   description to r3 (AS65002) — iBGP
+   no switchport
+   ip address 10.1.23.1/30
+!
+! ── Task: Configure eBGP to r1 and iBGP to r3 ───────────────────────────────
+! r2 is in AS65002. Two peers:
+!   r1 at 10.1.12.1 — eBGP (AS65001)
+!   r3 at 10.1.23.2 — iBGP (AS65002, same AS)
+!
+! KEY CONCEPT: next-hop-self
+!   When r2 receives r1's prefix via eBGP, the next-hop is 10.1.12.1.
+!   If r2 passes this to r3 via iBGP without next-hop-self, r3 will try
+!   to reach 10.1.12.1 directly — but r3 has no route to that /30 subnet.
+!   Add "neighbor 10.1.23.2 next-hop-self" to fix this.
+!
+! router bgp 65002
+!    bgp router-id 10.0.0.2
+!    neighbor 10.1.12.1 remote-as 65001
+!    neighbor 10.1.23.2 remote-as 65002
+!    !
+!    address-family ipv4
+!       neighbor 10.1.12.1 activate
+!       neighbor 10.1.23.2 activate
+!       neighbor 10.1.23.2 next-hop-self
+!       network 10.0.0.2/32
+!    !
+! !
+end

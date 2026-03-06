@@ -1,0 +1,64 @@
+! acc1 — Arista EOS
+! Access switch, OSPF area 1 (stub)
+! Loopback: 10.0.2.1/32
+! Uplinks: dist1 (10.2.0.0/31), dist2 (10.2.0.2/31) — dual-homed for redundancy
+! Hosts: h1 (10.10.1.0/30), h2 (10.10.1.4/30)
+!
+! h1 and h2 have two equal-cost paths to core:
+!   h1/h2 -> acc1 -> dist1 -> core1/core2
+!   h1/h2 -> acc1 -> dist2 -> core1/core2
+! OSPF will ECMP both uplinks automatically.
+!
+hostname acc1
+!
+ip routing
+!
+! ── Loopback ────────────────────────────────────────────────────────────────
+interface Loopback0
+   description router-id
+   ip address 10.0.2.1/32
+!
+! ── Uplinks to distribution (area 1) ─────────────────────────────────────────
+interface Ethernet1
+   description to-dist1
+   no switchport
+   ip address 10.2.0.1/31
+   no shutdown
+!
+interface Ethernet2
+   description to-dist2
+   no switchport
+   ip address 10.2.0.3/31
+   no shutdown
+!
+! ── Host-facing interfaces (area 1, passive) ──────────────────────────────────
+interface Ethernet3
+   description to-h1
+   no switchport
+   ip address 10.10.1.1/30
+   no shutdown
+!
+interface Ethernet4
+   description to-h2
+   no switchport
+   ip address 10.10.1.5/30
+   no shutdown
+!
+! ── OSPF ─────────────────────────────────────────────────────────────────────
+! acc1 is a stub area 1 node. Host-facing interfaces are passive (no hellos).
+! Uplinks to dist1/dist2 are active for adjacency.
+router ospf 1
+   router-id 10.0.2.1
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   bfd default
+   max-lsa 12000
+   network 10.0.2.1/32 area 0.0.0.1
+   network 10.2.0.0/31 area 0.0.0.1
+   network 10.2.0.2/31 area 0.0.0.1
+   network 10.10.1.0/30 area 0.0.0.1
+   network 10.10.1.4/30 area 0.0.0.1
+   area 0.0.0.1 stub
+!
+end

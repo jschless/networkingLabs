@@ -1,0 +1,22 @@
+hostname r4
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.4/32
+!
+interface Ethernet1
+   description to r3 (AS65002) — eBGP
+   no switchport
+   ip address 10.1.34.2/30
+!
+router bgp 65003
+   bgp router-id 10.0.0.4
+   neighbor 10.1.34.1 remote-as 65002
+   !
+   address-family ipv4
+      neighbor 10.1.34.1 activate
+      network 10.0.0.4/32
+   !
+!
+end

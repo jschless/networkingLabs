@@ -1,0 +1,41 @@
+hostname ce1
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to isp1 (AS65100)
+   no switchport
+   ip address 10.1.11.1/30
+!
+interface Ethernet2
+   description to isp2 (AS65100)
+   no switchport
+   ip address 10.1.12.1/30
+!
+! ── Task: Configure dual-homed eBGP to isp1 and isp2 ───────────────────────
+! ce1 is in AS65001, dual-homed to AS65100 (isp1=10.1.11.2, isp2=10.1.12.2).
+!
+! Experiments:
+!   1. BASE: configure BGP, verify ce1 sees ce2's prefix via both paths.
+!   2. WEIGHT: prefer isp1 outbound using "neighbor 10.1.11.2 weight 200"
+!              (weight is local only — affects which exit this router uses)
+!   3. AS-PATH PREPEND: influence inbound traffic — advertise to isp2 with
+!              prepend so isp2 prefers to send traffic via isp1:
+!              route-map PREPEND-VIA-ISP2 permit 10 / set as-path prepend 65001 65001
+!              neighbor 10.1.12.2 route-map PREPEND-VIA-ISP2 out
+!
+! router bgp 65001
+!    bgp router-id 10.0.0.1
+!    neighbor 10.1.11.2 remote-as 65100
+!    neighbor 10.1.12.2 remote-as 65100
+!    !
+!    address-family ipv4
+!       neighbor 10.1.11.2 activate
+!       neighbor 10.1.12.2 activate
+!       network 10.0.0.1/32
+!    !
+! !
+end
