@@ -59,8 +59,8 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ```bash
 sudo containerlab deploy -t labs/debug-bgp-path-selection/topology.yml
 
-docker exec -it clab-debug-bgp-path-selection-isp1 vtysh
-docker exec -it clab-debug-bgp-path-selection-isp2 vtysh
+docker exec -it clab-debug-bgp-path-selection-isp1 Cli
+docker exec -it clab-debug-bgp-path-selection-isp2 Cli
 ```
 
 Wait ~20 seconds after deploy for BGP sessions to establish.
@@ -73,13 +73,13 @@ Wait ~20 seconds after deploy for BGP sessions to establish.
 ```
 isp2# show bgp ipv4 unicast 10.0.0.1/32
 BGP routing table entry for 10.0.0.1/32
-Paths: (2 available, best #1, table default)
+Paths: 2 available
   65001
     10.1.12.1 from 10.1.12.1 (10.0.0.1)
-      Origin IGP, metric 0, localpref 100, valid, external, best (Local Pref)
+      Origin IGP, metric 0, localpref 100, weight 0, valid, external, best
   65001
-    10.1.99.1 (metric 0) from 10.1.99.1 (10.0.0.2)
-      Origin IGP, metric 0, localpref 100, valid, internal
+    10.1.99.1 from 10.1.99.1 (10.0.0.2)
+      Origin IGP, metric 0, localpref 100, weight 0, valid, internal
 ```
 
 Both paths show `localpref 100` — the LP=200 policy on isp1 is not taking
@@ -90,10 +90,10 @@ local-preference is equal.
 ```
 isp1# show bgp ipv4 unicast 10.0.0.1/32
 BGP routing table entry for 10.0.0.1/32
-Paths: (1 available, best #1, table default)
+Paths: 1 available
   65001
     10.1.11.1 from 10.1.11.1 (10.0.0.1)
-      Origin IGP, metric 0, localpref 100, valid, external, best (First path received)
+      Origin IGP, metric 0, localpref 100, weight 0, valid, external, best
 ```
 
 LP is 100 on isp1 too — the route-map is not setting LP=200 as intended.
@@ -127,7 +127,7 @@ show bgp neighbors 10.1.11.1
 show bgp ipv4 unicast 10.0.0.1/32
 
 ! After fixing, force re-evaluation without dropping sessions
-clear ip bgp 10.1.11.1 soft in
+clear bgp neighbors 10.1.11.1 soft-inbound
 ```
 
 ---
@@ -183,18 +183,18 @@ and propagating via iBGP to isp2.
 On **isp1**:
 
 ```
-isp1# configure terminal
+isp1# configure
 isp1(config)# router bgp 65100
-isp1(config-router)# address-family ipv4 unicast
-isp1(config-router-af)# no neighbor 10.1.11.1 route-map LP-CE1-HIGH out
-isp1(config-router-af)# neighbor 10.1.11.1 route-map LP-CE1-HIGH in
-isp1(config-router-af)# end
+isp1(config-router-bgp)# address-family ipv4
+isp1(config-router-bgp-af)# no neighbor 10.1.11.1 route-map LP-CE1-HIGH out
+isp1(config-router-bgp-af)# neighbor 10.1.11.1 route-map LP-CE1-HIGH in
+isp1(config-router-bgp-af)# end
 isp1# write memory
 ```
 
 Then re-process inbound routes from ce1:
 ```
-isp1# clear ip bgp 10.1.11.1 soft in
+isp1# clear bgp neighbors 10.1.11.1 soft-inbound
 ```
 
 </details>
@@ -216,13 +216,14 @@ show bgp ipv4 unicast 10.0.0.1/32
 Expected on isp2 after fix:
 ```
 isp2# show bgp ipv4 unicast 10.0.0.1/32
-Paths: (2 available, best #1, table default)
+BGP routing table entry for 10.0.0.1/32
+Paths: 2 available
   65001
-    10.1.99.1 (metric 0) from 10.1.99.1 (10.0.0.2)
-      Origin IGP, localpref 200, valid, internal, best (Local Pref)
+    10.1.99.1 from 10.1.99.1 (10.0.0.2)
+      Origin IGP, metric 0, localpref 200, weight 0, valid, internal, best
   65001
     10.1.12.1 from 10.1.12.1 (10.0.0.1)
-      Origin IGP, localpref 100, valid, external
+      Origin IGP, metric 0, localpref 100, weight 0, valid, external
 ```
 
 The iBGP path (LP=200) now wins over the direct eBGP path (LP=100). isp1

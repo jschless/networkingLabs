@@ -37,10 +37,12 @@ AS65001       AS65002        AS65002        AS65003
 ```bash
 sudo containerlab deploy --topo topology.yml
 
-# FRR CLI
-docker exec -it clab-bgp-basics-r1 vtysh
-docker exec -it clab-bgp-basics-r2 vtysh
+# EOS CLI
+docker exec -it clab-bgp-basics-r1 Cli
+docker exec -it clab-bgp-basics-r2 Cli
 ```
+
+> Note: EOS does not require any explicit policy configuration for eBGP sessions to exchange routes (unlike FRR). Sessions come up and exchange prefixes as soon as they are configured.
 
 ---
 
@@ -49,23 +51,25 @@ docker exec -it clab-bgp-basics-r2 vtysh
 On **r1**:
 ```
 router bgp 65001
- no bgp ebgp-requires-policy
- bgp router-id 10.0.0.1
- neighbor 10.1.12.2 remote-as 65002
- address-family ipv4 unicast
-  neighbor 10.1.12.2 activate
-  network 10.0.0.1/32
+   bgp router-id 10.0.0.1
+   neighbor 10.1.12.2 remote-as 65002
+   !
+   address-family ipv4
+      neighbor 10.1.12.2 activate
+      network 10.0.0.1/32
+   !
 ```
 
 On **r2** (eBGP side only for now):
 ```
 router bgp 65002
- no bgp ebgp-requires-policy
- bgp router-id 10.0.0.2
- neighbor 10.1.12.1 remote-as 65001
- address-family ipv4 unicast
-  neighbor 10.1.12.1 activate
-  network 10.0.0.2/32
+   bgp router-id 10.0.0.2
+   neighbor 10.1.12.1 remote-as 65001
+   !
+   address-family ipv4
+      neighbor 10.1.12.1 activate
+      network 10.0.0.2/32
+   !
 ```
 
 Check: `show bgp ipv4 unicast summary` on r1 — the state should reach `Established`.
@@ -79,20 +83,23 @@ Check: `show bgp ipv4 unicast summary` on r1 — the state should reach `Establi
 On **r2** (add to existing config):
 ```
 router bgp 65002
- neighbor 10.1.23.2 remote-as 65002
- address-family ipv4 unicast
-  neighbor 10.1.23.2 activate
+   neighbor 10.1.23.2 remote-as 65002
+   !
+   address-family ipv4
+      neighbor 10.1.23.2 activate
+   !
 ```
 
 On **r3**:
 ```
 router bgp 65002
- no bgp ebgp-requires-policy
- bgp router-id 10.0.0.3
- neighbor 10.1.23.1 remote-as 65002
- address-family ipv4 unicast
-  neighbor 10.1.23.1 activate
-  network 10.0.0.3/32
+   bgp router-id 10.0.0.3
+   neighbor 10.1.23.1 remote-as 65002
+   !
+   address-family ipv4
+      neighbor 10.1.23.1 activate
+      network 10.0.0.3/32
+   !
 ```
 
 Now check r3's BGP table:
@@ -105,8 +112,10 @@ You will see r1's prefix (10.0.0.1/32) listed but marked as **inaccessible** (no
 **Fix — add next-hop-self on r2:**
 ```
 router bgp 65002
- address-family ipv4 unicast
-  neighbor 10.1.23.2 next-hop-self
+   !
+   address-family ipv4
+      neighbor 10.1.23.2 next-hop-self
+   !
 ```
 
 Now r3 sees r2 (10.1.23.1) as the next-hop for r1's prefix — reachable!
@@ -118,21 +127,24 @@ Now r3 sees r2 (10.1.23.1) as the next-hop for r1's prefix — reachable!
 On **r3** (add to existing config):
 ```
 router bgp 65002
- neighbor 10.1.34.2 remote-as 65003
- address-family ipv4 unicast
-  neighbor 10.1.34.2 activate
-  neighbor 10.1.34.2 next-hop-self
+   neighbor 10.1.34.2 remote-as 65003
+   !
+   address-family ipv4
+      neighbor 10.1.34.2 activate
+      neighbor 10.1.34.2 next-hop-self
+   !
 ```
 
 On **r4**:
 ```
 router bgp 65003
- no bgp ebgp-requires-policy
- bgp router-id 10.0.0.4
- neighbor 10.1.34.1 remote-as 65002
- address-family ipv4 unicast
-  neighbor 10.1.34.1 activate
-  network 10.0.0.4/32
+   bgp router-id 10.0.0.4
+   neighbor 10.1.34.1 remote-as 65002
+   !
+   address-family ipv4
+      neighbor 10.1.34.1 activate
+      network 10.0.0.4/32
+   !
 ```
 
 ---
@@ -149,7 +161,7 @@ show bgp ipv4 unicast
 ! Routing table — BGP routes marked with 'B'
 show ip route bgp
 
-! End-to-end ping (run from vtysh)
+! End-to-end ping (run from EOS CLI)
 ping 10.0.0.4 source 10.0.0.1    ! on r1
 ping 10.0.0.1 source 10.0.0.4    ! on r4
 ```
@@ -162,26 +174,28 @@ ping 10.0.0.1 source 10.0.0.4    ! on r4
 
 In production, iBGP sessions use loopback addresses for resilience (session stays up if one path goes down). This requires:
 1. r2 and r3 to have routes to each other's loopbacks (via a static route or IGP)
-2. `update-source lo` on both peers
+2. `update-source Loopback0` on both peers
 3. `ebgp-multihop` is NOT needed for iBGP (TTL=255 by default)
 
 Add static routes on r2 and r3 to reach each other's loopbacks:
 ```
 ! On r2:
-ip route 10.0.0.3/32 10.1.23.2
+r2(config)# ip route 10.0.0.3/32 10.1.23.2
 ! On r3:
-ip route 10.0.0.2/32 10.1.23.1
+r3(config)# ip route 10.0.0.2/32 10.1.23.1
 ```
 
 Then change iBGP peering to use loopbacks:
 ```
 ! On r2:
 router bgp 65002
- neighbor 10.0.0.3 remote-as 65002
- address-family ipv4 unicast
-  neighbor 10.0.0.3 activate
-  neighbor 10.0.0.3 update-source lo
-  neighbor 10.0.0.3 next-hop-self
+   neighbor 10.0.0.3 remote-as 65002
+   !
+   address-family ipv4
+      neighbor 10.0.0.3 activate
+      neighbor 10.0.0.3 update-source Loopback0
+      neighbor 10.0.0.3 next-hop-self
+   !
 ```
 
 ### Observe iBGP split-horizon
@@ -201,11 +215,6 @@ To see this: add a 5th container node and peer it iBGP with r3 only. r5 will not
 **Prefix visible in BGP table but not in routing table**
 - The next-hop is unreachable — add `next-hop-self` on the advertising iBGP peer
 - `show bgp ipv4 unicast 10.0.0.1/32` — look at the Nexthop field and the 'inaccessible' note
-
-**`no bgp ebgp-requires-policy` — what does this do?**
-- FRR enforces route policies on eBGP sessions by default (unlike Cisco IOS)
-- Without this line, eBGP peers won't exchange routes
-- In production you'd use explicit route-maps instead
 
 **BGP routes not showing up on r1 from r4**
 - Walk the path: does r4 have the prefix? Does r3? Does r2?

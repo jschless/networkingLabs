@@ -52,9 +52,9 @@ AS65001       AS65002       AS65003       AS65004
 ```bash
 sudo containerlab deploy -t labs/debug-bgp-filtering/topology.yml
 
-docker exec -it clab-debug-bgp-filtering-r2 vtysh
-docker exec -it clab-debug-bgp-filtering-r3 vtysh
-docker exec -it clab-debug-bgp-filtering-r4 vtysh
+docker exec -it clab-debug-bgp-filtering-r2 Cli
+docker exec -it clab-debug-bgp-filtering-r3 Cli
+docker exec -it clab-debug-bgp-filtering-r4 Cli
 ```
 
 Wait ~20 seconds after deploy for BGP sessions to establish.
@@ -66,12 +66,21 @@ Wait ~20 seconds after deploy for BGP sessions to establish.
 **On r4 — 172.16.2.0/24 is visible when it should be blocked:**
 ```
 r4# show bgp ipv4 unicast
-   Network          Next Hop            Metric LocPrf Weight Path
-*> 10.0.0.1/32      10.1.34.1                              0 65003 65002 65001 i
-*> 10.0.0.3/32      10.1.34.1                0             0 65003 i
-*> 10.0.0.4/32      0.0.0.0                  0         32768 i
-*> 172.16.1.0/24    10.1.34.1                              0 65003 65002 65001 i
-*> 172.16.2.0/24    10.1.34.1                              0 65003 65002 65001 i
+BGP routing table information for VRF default
+Router identifier 10.0.0.4, local AS number 65004
+Route status codes: s - suppressed contributor, * - valid, > - active, E - ECMP head, e - ECMP
+                    S - Stale, c - Contributing to ECMP, b - backup, L - labeled-unicast
+                    % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+RPKI Origin Validation codes: V - valid, I - invalid, U - unknown
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  AIGP       LocPref Weight  Path
+ * >      10.0.0.1/32            10.1.34.1             0       -          100     0       65003 65002 65001 i
+ * >      10.0.0.3/32            10.1.34.1             0       -          100     0       65003 i
+ * >      10.0.0.4/32            -                     0       -          -       0       i
+ * >      172.16.1.0/24          10.1.34.1             0       -          100     0       65003 65002 65001 i
+ * >      172.16.2.0/24          10.1.34.1             0       -          100     0       65003 65002 65001 i
 ```
 
 172.16.2.0/24 reached r4. The filter on r2 is not working.
@@ -79,11 +88,14 @@ r4# show bgp ipv4 unicast
 **On r3 — also seeing 172.16.2.0/24:**
 ```
 r3# show bgp ipv4 unicast
-   Network          Next Hop            Metric LocPrf Weight Path
-*> 10.0.0.1/32      10.1.23.1                              0 65002 65001 i
-*> 10.0.0.3/32      0.0.0.0                  0         32768 i
-*> 172.16.1.0/24    10.1.23.1                              0 65002 65001 i
-*> 172.16.2.0/24    10.1.23.1                              0 65002 65001 i
+BGP routing table information for VRF default
+Router identifier 10.0.0.3, local AS number 65003
+...
+          Network                Next Hop              Metric  AIGP       LocPref Weight  Path
+ * >      10.0.0.1/32            10.1.23.1             0       -          100     0       65002 65001 i
+ * >      10.0.0.3/32            -                     0       -          -       0       i
+ * >      172.16.1.0/24          10.1.23.1             0       -          100     0       65002 65001 i
+ * >      172.16.2.0/24          10.1.23.1             0       -          100     0       65002 65001 i
 ```
 
 r3 received 172.16.2.0/24 from r2. r2's outbound filter toward r3 is not active.
@@ -113,14 +125,14 @@ show bgp ipv4 unicast
 ! On r2 — check what r2 actually advertises to r3
 show bgp ipv4 unicast neighbors 10.1.23.2 advertised-routes
 
-! On r2 — check what r2 received from r1 (pre-filter due to soft-reconfiguration)
-show bgp ipv4 unicast neighbors 10.1.12.1 received-routes
+! On r2 — check what r2 received from r1
+show bgp neighbors 10.1.12.1 received-routes
 
-! On r2 — show neighbor config: look for 'Route map for outgoing/incoming advertisements'
+! On r2 — show neighbor config: look for 'Inbound prefix-list' / 'Outbound prefix-list'
 show bgp neighbors 10.1.23.2
 
 ! After fixing: soft-reset to re-advertise without dropping session
-clear ip bgp 10.1.23.2 soft out
+clear bgp neighbors 10.1.23.2 soft-outbound
 ```
 
 ---
@@ -150,8 +162,6 @@ show bgp neighbors 10.1.23.2
 ```
 
 Look for lines containing:
-- `Route map for outgoing advertisements`
-- `Route map for incoming advertisements`
 - `Inbound prefix-list`
 - `Outbound prefix-list`
 
@@ -184,18 +194,18 @@ The filter should be applied `out` on the r3 neighbor, so that r2 blocks
 On **r2**:
 
 ```
-r2# configure terminal
+r2# configure
 r2(config)# router bgp 65002
-r2(config-router)# address-family ipv4 unicast
-r2(config-router-af)# no neighbor 10.1.23.2 prefix-list BLOCK-172-16-2 in
-r2(config-router-af)# neighbor 10.1.23.2 prefix-list BLOCK-172-16-2 out
-r2(config-router-af)# end
+r2(config-router-bgp)# address-family ipv4
+r2(config-router-bgp-af)# no neighbor 10.1.23.2 prefix-list BLOCK-172-16-2 in
+r2(config-router-bgp-af)# neighbor 10.1.23.2 prefix-list BLOCK-172-16-2 out
+r2(config-router-bgp-af)# end
 r2# write memory
 ```
 
 Then re-advertise to r3 with the corrected filter:
 ```
-r2# clear ip bgp 10.1.23.2 soft out
+r2# clear bgp neighbors 10.1.23.2 soft-outbound
 ```
 
 </details>
@@ -223,10 +233,13 @@ show bgp ipv4 unicast
 Expected on r3 after fix:
 ```
 r3# show bgp ipv4 unicast
-   Network          Next Hop            Metric LocPrf Weight Path
-*> 10.0.0.1/32      10.1.23.1                              0 65002 65001 i
-*> 10.0.0.3/32      0.0.0.0                  0         32768 i
-*> 172.16.1.0/24    10.1.23.1                              0 65002 65001 i
+BGP routing table information for VRF default
+Router identifier 10.0.0.3, local AS number 65003
+...
+          Network                Next Hop              Metric  AIGP       LocPref Weight  Path
+ * >      10.0.0.1/32            10.1.23.1             0       -          100     0       65002 65001 i
+ * >      10.0.0.3/32            -                     0       -          -       0       i
+ * >      172.16.1.0/24          10.1.23.1             0       -          100     0       65002 65001 i
 ```
 
 172.16.2.0/24 is gone from r3 and r4. r2 still has it locally (it was filtered outbound,

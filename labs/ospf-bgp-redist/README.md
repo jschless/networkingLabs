@@ -30,8 +30,8 @@ routing protocols and redistribution.
 | bgp1 | 10.0.0.3/32  | 65200 | eBGP + iBGP transit                |
 | bgp2 | 10.0.0.4/32  | 65200 | BGP end-router                     |
 
-**Goal:** `ping 10.0.0.4 source 10.0.0.1` succeeds from r1's vtysh, and
-`ping 10.0.0.1 source 10.0.0.4` succeeds from bgp2's vtysh.
+**Goal:** `ping 10.0.0.4 source 10.0.0.1` succeeds from r1's EOS CLI, and
+`ping 10.0.0.1 source 10.0.0.4` succeeds from bgp2's EOS CLI.
 
 ---
 
@@ -41,11 +41,8 @@ routing protocols and redistribution.
 # Deploy the lab
 sudo containerlab deploy --topo topology.yml
 
-# Open the FRR CLI on any node
-sudo containerlab exec --topo topology.yml --node asbr --cmd "vtysh"
-
-# Or via docker
-docker exec -it clab-ospf-bgp-redist-asbr vtysh
+# Open the EOS CLI on any node
+docker exec -it clab-ospf-bgp-redist-asbr Cli
 ```
 
 ---
@@ -58,29 +55,25 @@ Configure OSPF in area 0 on both nodes. Loopbacks should be passive
 ### r1
 
 ```
-interface lo
- ip ospf passive
- ip ospf area 0
-!
-interface eth1
- ip ospf area 0
-!
-router ospf
- ospf router-id 10.0.0.1
+r1# configure
+r1(config)# router ospf 1
+r1(config-router-ospf)# router-id 10.0.0.1
+r1(config-router-ospf)# passive-interface Loopback0
+r1(config-router-ospf)# network 10.0.0.1/32 area 0.0.0.0
+r1(config-router-ospf)# network 10.0.12.0/30 area 0.0.0.0
+r1(config-router-ospf)# end
 ```
 
 ### asbr
 
 ```
-interface lo
- ip ospf passive
- ip ospf area 0
-!
-interface eth1
- ip ospf area 0
-!
-router ospf
- ospf router-id 10.0.0.2
+asbr# configure
+asbr(config)# router ospf 1
+asbr(config-router-ospf)# router-id 10.0.0.2
+asbr(config-router-ospf)# passive-interface Loopback0
+asbr(config-router-ospf)# network 10.0.0.2/32 area 0.0.0.0
+asbr(config-router-ospf)# network 10.0.12.0/30 area 0.0.0.0
+asbr(config-router-ospf)# end
 ```
 
 Verify on asbr: `show ip ospf neighbor` should show r1 in Full state.
@@ -92,24 +85,28 @@ Verify on asbr: `show ip ospf neighbor` should show r1 in Full state.
 ### asbr (AS 65100)
 
 ```
-router bgp 65100
- no bgp ebgp-requires-policy
- neighbor 10.0.23.2 remote-as 65200
- address-family ipv4 unicast
-  neighbor 10.0.23.2 activate
+asbr# configure
+asbr(config)# router bgp 65100
+asbr(config-router-bgp)# bgp router-id 10.0.0.2
+asbr(config-router-bgp)# neighbor 10.0.23.2 remote-as 65200
+asbr(config-router-bgp)# address-family ipv4
+asbr(config-router-bgp-af)# neighbor 10.0.23.2 activate
+asbr(config-router-bgp-af)# end
 ```
 
 ### bgp1 (AS 65200) — also configure iBGP to bgp2 here
 
 ```
-router bgp 65200
- no bgp ebgp-requires-policy
- neighbor 10.0.23.1 remote-as 65100
- neighbor 10.0.34.2 remote-as 65200
- address-family ipv4 unicast
-  neighbor 10.0.23.1 activate
-  neighbor 10.0.34.2 activate
-  neighbor 10.0.34.2 next-hop-self
+bgp1# configure
+bgp1(config)# router bgp 65200
+bgp1(config-router-bgp)# bgp router-id 10.0.0.3
+bgp1(config-router-bgp)# neighbor 10.0.23.1 remote-as 65100
+bgp1(config-router-bgp)# neighbor 10.0.34.2 remote-as 65200
+bgp1(config-router-bgp)# address-family ipv4
+bgp1(config-router-bgp-af)# neighbor 10.0.23.1 activate
+bgp1(config-router-bgp-af)# neighbor 10.0.34.2 activate
+bgp1(config-router-bgp-af)# neighbor 10.0.34.2 next-hop-self
+bgp1(config-router-bgp-af)# end
 ```
 
 `next-hop-self` is critical: without it, bgp2 receives prefixes with
@@ -118,11 +115,13 @@ a next-hop of 10.0.23.1 (asbr), which bgp2 cannot reach.
 ### bgp2 (AS 65200)
 
 ```
-router bgp 65200
- no bgp ebgp-requires-policy
- neighbor 10.0.34.1 remote-as 65200
- address-family ipv4 unicast
-  neighbor 10.0.34.1 activate
+bgp2# configure
+bgp2(config)# router bgp 65200
+bgp2(config-router-bgp)# bgp router-id 10.0.0.4
+bgp2(config-router-bgp)# neighbor 10.0.34.1 remote-as 65200
+bgp2(config-router-bgp)# address-family ipv4
+bgp2(config-router-bgp-af)# neighbor 10.0.34.1 activate
+bgp2(config-router-bgp-af)# end
 ```
 
 Verify: `show bgp ipv4 unicast summary` on asbr and bgp1 should show
@@ -135,9 +134,11 @@ Established state.
 This makes OSPF-learned prefixes (r1's loopback, etc.) visible in BGP.
 
 ```
-router bgp 65100
- address-family ipv4 unicast
-  redistribute ospf
+asbr# configure
+asbr(config)# router bgp 65100
+asbr(config-router-bgp)# address-family ipv4
+asbr(config-router-bgp-af)# redistribute ospf
+asbr(config-router-bgp-af)# end
 ```
 
 Check on bgp2: `show bgp ipv4 unicast` — you should see 10.0.0.1/32
@@ -151,8 +152,10 @@ This makes BGP-learned prefixes (bgp1/bgp2 loopbacks, etc.) visible
 in OSPF as Type-5 external LSAs.
 
 ```
-router ospf
- redistribute bgp
+asbr# configure
+asbr(config)# router ospf 1
+asbr(config-router-ospf)# redistribute bgp
+asbr(config-router-ospf)# end
 ```
 
 Check on r1: `show ip route ospf` — you should see 10.0.0.3/32 and
@@ -168,14 +171,14 @@ show ip ospf neighbor
 show bgp ipv4 unicast summary
 
 ! On asbr — see what is being redistributed
-show ip bgp                    ! BGP table (should include OSPF prefixes)
+show bgp ipv4 unicast          ! BGP table (should include OSPF prefixes)
 show ip route ospf             ! OSPF routes (should include BGP prefixes)
 
 ! On bgp2 — confirm OSPF prefixes arrived via BGP
 show bgp ipv4 unicast
 show ip route
 
-! End-to-end ping — run from vtysh
+! End-to-end ping
 ping 10.0.0.4 source 10.0.0.1   ! on r1
 ping 10.0.0.1 source 10.0.0.4   ! on bgp2
 ```
@@ -191,12 +194,14 @@ that sets a BGP community on redistributed prefixes.
 
 On asbr:
 ```
-route-map OSPF-TO-BGP permit 10
- set community 65100:100
-!
-router bgp 65100
- address-family ipv4 unicast
-  redistribute ospf route-map OSPF-TO-BGP
+asbr# configure
+asbr(config)# route-map OSPF-TO-BGP permit 10
+asbr(config-route-map)# set community 65100:100
+asbr(config-route-map)# exit
+asbr(config)# router bgp 65100
+asbr(config-router-bgp)# address-family ipv4
+asbr(config-router-bgp-af)# redistribute ospf route-map OSPF-TO-BGP
+asbr(config-router-bgp-af)# end
 ```
 
 Check `show bgp ipv4 unicast` on bgp1 — the community should appear.
@@ -207,15 +212,16 @@ Suppress the transit subnet (10.0.12.0/30) from being redistributed
 into BGP using a prefix-list:
 
 ```
-ip prefix-list NO-TRANSIT seq 5 deny 10.0.12.0/30
-ip prefix-list NO-TRANSIT seq 10 permit 0.0.0.0/0 le 32
-!
-route-map OSPF-TO-BGP permit 10
- match ip address prefix-list NO-TRANSIT
-!
-router bgp 65100
- address-family ipv4 unicast
-  redistribute ospf route-map OSPF-TO-BGP
+asbr# configure
+asbr(config)# ip prefix-list NO-TRANSIT seq 5 deny 10.0.12.0/30
+asbr(config)# ip prefix-list NO-TRANSIT seq 10 permit 0.0.0.0/0 le 32
+asbr(config)# route-map OSPF-TO-BGP permit 10
+asbr(config-route-map)# match ip address prefix-list NO-TRANSIT
+asbr(config-route-map)# exit
+asbr(config)# router bgp 65100
+asbr(config-router-bgp)# address-family ipv4
+asbr(config-router-bgp-af)# redistribute ospf route-map OSPF-TO-BGP
+asbr(config-router-bgp-af)# end
 ```
 
 ### Redistribute connected instead of BGP into OSPF
@@ -228,7 +234,7 @@ in the OSPF process. Observe how the metric and LSA type differ.
 ## Troubleshooting
 
 **OSPF neighbours not forming**
-- `show ip ospf interface eth1` — confirm OSPF is enabled and area matches
+- `show ip ospf interface Ethernet1` — confirm OSPF is enabled and area matches
 - `show ip ospf neighbor` — check state; Init means hellos arriving but not bidirectional
 
 **BGP session stuck in Active**
@@ -237,7 +243,7 @@ in the OSPF process. Observe how the metric and LSA type differ.
 - `ping 10.0.23.2` from asbr to confirm L3 reachability
 
 **Prefixes not appearing after redistribution**
-- `show bgp ipv4 unicast` on asbr — if no OSPF prefixes, check `redistribute ospf` is under `address-family ipv4 unicast`
+- `show bgp ipv4 unicast` on asbr — if no OSPF prefixes, check `redistribute ospf` is under `address-family ipv4`
 - `show ip route bgp` on r1 — if empty, check `redistribute bgp` is in the OSPF process
 - `show ip ospf database external` on r1 — Type-5 LSAs from asbr should appear
 

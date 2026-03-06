@@ -16,9 +16,9 @@ AS65001               AS65001|AS65002               AS65002
 
 | Link | Subnet | r-left | r-right | Session type |
 |------|--------|--------|---------|--------------|
-| r1:eth1 -- r2:eth1 | 10.1.12.0/30 | .1 | .2 | iBGP-LU (AS65001) |
-| r2:eth2 -- r3:eth1 | 10.1.23.0/30 | .1 | .2 | eBGP-LU (inter-AS) |
-| r3:eth2 -- r4:eth1 | 10.1.34.0/30 | .1 | .2 | iBGP-LU (AS65002) |
+| r1:Ethernet1 -- r2:Ethernet1 | 10.1.12.0/30 | .1 | .2 | iBGP-LU (AS65001) |
+| r2:Ethernet2 -- r3:Ethernet1 | 10.1.23.0/30 | .1 | .2 | eBGP-LU (inter-AS) |
+| r3:Ethernet2 -- r4:Ethernet1 | 10.1.34.0/30 | .1 | .2 | iBGP-LU (AS65002) |
 
 | Node | Loopback    | AS    | Role |
 |------|-------------|-------|------|
@@ -37,43 +37,49 @@ sudo containerlab deploy -t topology.yml
 sudo containerlab destroy -t topology.yml
 ```
 
+Access a node:
+```bash
+docker exec -it clab-bgp-labeled-unicast-r1 Cli
+```
+
 ## What You Configure
 
-The frr.conf files have IP addressing, OSPF, and MPLS interface configuration pre-done.
+The startup-config files have IP addressing, OSPF, and `mpls ip` pre-configured on all interfaces.
 Your task is to configure BGP Labeled Unicast sessions on all four nodes.
 
 ### Step 1: Configure iBGP-LU within AS65001 (r1 and r2)
 
+For iBGP-LU in EOS, peers use loopback addresses (reachable via OSPF). The loopback-based iBGP
+peer with `update-source Loopback0` is the correct approach.
+
 On **r1**:
 ```
-vtysh
-configure terminal
-
-router bgp 65001
- no bgp ebgp-requires-policy
- bgp router-id 10.0.0.1
- neighbor 10.1.12.2 remote-as 65001
- !
- address-family ipv4 labeled-unicast
-  neighbor 10.1.12.2 activate
-  network 10.0.0.1/32
-
-end
-write memory
+r1# configure
+r1(config)# router bgp 65001
+r1(config-router-bgp)# bgp router-id 10.0.0.1
+r1(config-router-bgp)# neighbor 10.0.0.2 remote-as 65001
+r1(config-router-bgp)# neighbor 10.0.0.2 update-source Loopback0
+r1(config-router-bgp)# address-family ipv4 labeled-unicast
+r1(config-router-bgp-af)# neighbor 10.0.0.2 activate
+r1(config-router-bgp-af)# network 10.0.0.1/32
+r1(config-router-bgp-af)# end
+r1# write memory
 ```
 
 On **r2**:
 ```
-router bgp 65001
- no bgp ebgp-requires-policy
- bgp router-id 10.0.0.2
- neighbor 10.1.12.1 remote-as 65001
- neighbor 10.1.23.2 remote-as 65002
- !
- address-family ipv4 labeled-unicast
-  neighbor 10.1.12.1 activate
-  neighbor 10.1.23.2 activate
-  network 10.0.0.2/32
+r2# configure
+r2(config)# router bgp 65001
+r2(config-router-bgp)# bgp router-id 10.0.0.2
+r2(config-router-bgp)# neighbor 10.0.0.1 remote-as 65001
+r2(config-router-bgp)# neighbor 10.0.0.1 update-source Loopback0
+r2(config-router-bgp)# neighbor 10.1.23.2 remote-as 65002
+r2(config-router-bgp)# address-family ipv4 labeled-unicast
+r2(config-router-bgp-af)# neighbor 10.0.0.1 activate
+r2(config-router-bgp-af)# neighbor 10.1.23.2 activate
+r2(config-router-bgp-af)# network 10.0.0.2/32
+r2(config-router-bgp-af)# end
+r2# write memory
 ```
 
 ### Step 2: Configure eBGP-LU at the AS boundary (r2 and r3)
@@ -82,30 +88,34 @@ The eBGP-LU session between r2 (AS65001) and r3 (AS65002) is already partially c
 on r2. On **r3**:
 
 ```
-router bgp 65002
- no bgp ebgp-requires-policy
- bgp router-id 10.0.0.3
- neighbor 10.1.23.1 remote-as 65001
- neighbor 10.1.34.2 remote-as 65002
- !
- address-family ipv4 labeled-unicast
-  neighbor 10.1.23.1 activate
-  neighbor 10.1.34.2 activate
-  network 10.0.0.3/32
+r3# configure
+r3(config)# router bgp 65002
+r3(config-router-bgp)# bgp router-id 10.0.0.3
+r3(config-router-bgp)# neighbor 10.1.23.1 remote-as 65001
+r3(config-router-bgp)# neighbor 10.0.0.4 remote-as 65002
+r3(config-router-bgp)# neighbor 10.0.0.4 update-source Loopback0
+r3(config-router-bgp)# address-family ipv4 labeled-unicast
+r3(config-router-bgp-af)# neighbor 10.1.23.1 activate
+r3(config-router-bgp-af)# neighbor 10.0.0.4 activate
+r3(config-router-bgp-af)# network 10.0.0.3/32
+r3(config-router-bgp-af)# end
+r3# write memory
 ```
 
 ### Step 3: Configure iBGP-LU within AS65002 (r3 and r4)
 
 On **r4**:
 ```
-router bgp 65002
- no bgp ebgp-requires-policy
- bgp router-id 10.0.0.4
- neighbor 10.1.34.1 remote-as 65002
- !
- address-family ipv4 labeled-unicast
-  neighbor 10.1.34.1 activate
-  network 10.0.0.4/32
+r4# configure
+r4(config)# router bgp 65002
+r4(config-router-bgp)# bgp router-id 10.0.0.4
+r4(config-router-bgp)# neighbor 10.0.0.3 remote-as 65002
+r4(config-router-bgp)# neighbor 10.0.0.3 update-source Loopback0
+r4(config-router-bgp)# address-family ipv4 labeled-unicast
+r4(config-router-bgp-af)# neighbor 10.0.0.3 activate
+r4(config-router-bgp-af)# network 10.0.0.4/32
+r4(config-router-bgp-af)# end
+r4# write memory
 ```
 
 ### Step 4: Verify
@@ -122,7 +132,7 @@ show bgp ipv4 labeled-unicast
 
 Check MPLS forwarding table:
 ```
-show mpls table
+show mpls lfib route
 ```
 
 Test end-to-end connectivity:
@@ -143,13 +153,13 @@ show bgp ipv4 labeled-unicast
 show bgp ipv4 labeled-unicast 10.0.0.4/32
 
 # MPLS forwarding entries (local label -> out-label, next-hop)
-show mpls table
+show mpls lfib route
 
 # Full label details
-show mpls table detail
+show mpls lfib route detail
 
 # Interface MPLS status
-show mpls interfaces
+show mpls interface
 
 # OSPF (underlay, within each AS)
 show ip ospf neighbor
@@ -191,7 +201,7 @@ its loopback 10.0.0.4/32 with label 17:
 
 ### address-family ipv4 labeled-unicast
 
-This is the FRR address family for BGP-LU. It is distinct from `address-family ipv4 unicast`.
+This is the EOS address family for BGP-LU. It is distinct from `address-family ipv4 unicast`.
 You must explicitly activate neighbors in this AF:
 
 ```
@@ -204,14 +214,10 @@ address-family ipv4 labeled-unicast
 
 For labeled packets to be forwarded, each interface must have MPLS enabled:
 ```
-interface eth1
- mpls enable
+interface Ethernet1
+   mpls ip
 ```
-This is pre-configured in the frr.conf files. The exec also runs:
-```
-sysctl -w net.mpls.conf.eth1.input=1
-```
-to allow MPLS packet reception.
+This is pre-configured in the startup-config files.
 
 ## Challenge Exercises
 
@@ -224,7 +230,7 @@ to allow MPLS packet reception.
 3. Add a new loopback prefix (e.g., 192.168.99.1/32) on r1 and advertise it via BGP-LU.
    Verify it appears in r4's MPLS table with a proper label.
 
-4. Compare `show mpls table` on r2 (transit ASBR) before and after configuring BGP-LU.
+4. Compare `show mpls lfib route` on r2 (transit ASBR) before and after configuring BGP-LU.
    What entries appear and how do they relate to the label bindings you see in BGP?
 
 5. Try removing the `network 10.0.0.2/32` statement from r2's BGP-LU config.
