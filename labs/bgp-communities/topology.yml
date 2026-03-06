@@ -2,32 +2,21 @@ name: bgp-communities
 
 topology:
   defaults:
-    kind: linux
-    image: frr-lab:local
-    binds:
-      - configs/daemons:/etc/frr/daemons
-      - configs/vtysh.conf:/etc/frr/vtysh.conf
-    sysctls:
-      net.ipv4.ip_forward: "1"
-    exec:
-      - vtysh -b
+    kind: ceos
+    image: ceos:4.35.2F
 
   nodes:
     r1:
-      binds:
-        - configs/r1/frr.conf:/etc/frr/frr.conf
+      startup-config: configs/r1/startup-config
 
     r2:
-      binds:
-        - configs/r2/frr.conf:/etc/frr/frr.conf
+      startup-config: configs/r2/startup-config
 
     r3:
-      binds:
-        - configs/r3/frr.conf:/etc/frr/frr.conf
+      startup-config: configs/r3/startup-config
 
     r4:
-      binds:
-        - configs/r4/frr.conf:/etc/frr/frr.conf
+      startup-config: configs/r4/startup-config
 
   links:
     - endpoints: ["r1:eth1", "r2:eth1"]

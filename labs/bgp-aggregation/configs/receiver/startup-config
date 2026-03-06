@@ -1,39 +1,31 @@
-frr version 8.5
-frr defaults traditional
 hostname receiver
-log syslog informational
-no ipv6 forwarding
-service integrated-vtysh-config
-
-! receiver is in AS65003
-! receiver is the downstream router that observes the effect of aggregation.
-! It only peers with aggregator. No filtering or aggregation tasks here.
 !
-! Interface addressing:
-!   eth1 = 10.1.23.2/30  (link to aggregator:eth2 at 10.1.23.1)
-!   lo   = 10.0.0.3/32   (loopback)
-
-interface lo
- ip address 10.0.0.3/32
-
-interface eth1
- ip address 10.1.23.2/30
-
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.3/32
+!
+interface Ethernet1
+   description to aggregator:eth2
+   no switchport
+   ip address 10.1.23.2/30
+!
 ! ============================================================
 ! YOUR TASKS ON RECEIVER
 ! ============================================================
 !
 ! TASK 1 — Base BGP
+!   configure
 !   router bgp 65003
-!    bgp router-id 10.0.0.3
-!    no bgp ebgp-requires-policy
-!    neighbor 10.1.23.1 remote-as 65002
-!    !
-!    address-family ipv4 unicast
-!     network 10.0.0.3/32
-!    exit-address-family
+!      bgp router-id 10.0.0.3
+!      neighbor 10.1.23.1 remote-as 65002
+!      !
+!      address-family ipv4
+!         neighbor 10.1.23.1 activate
+!         network 10.0.0.3/32
+!      !
 !
-! TASK 2 — Observe BGP table before aggregation (Task 2 on aggregator)
+! TASK 2 — Observe BGP table before aggregation
 !   show bgp ipv4 unicast
 !   Expected (no aggregate configured):
 !     10.0.0.1/32
@@ -73,7 +65,8 @@ interface eth1
 !   The atomic-aggregate attribute disappears when as-set is used.
 !
 ! TASK 6 — Verify reachability
-!   ping 10.1.1.1     (should reach originator's loopback in customer prefix 1)
-!   ping 10.0.0.1     (should reach originator's management loopback)
+!   ping 10.1.1.1     (should reach originator's Loopback1)
+!   ping 10.0.0.1     (should reach originator's Loopback0)
 !   These pings work because aggregator has more-specific routes for forwarding.
 ! ============================================================
+end

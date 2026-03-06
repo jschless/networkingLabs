@@ -22,6 +22,9 @@ aggregator that summarizes them, and a receiver that observes the result.
   10.1.4.0/24
 ```
 
+Originator uses separate Loopback interfaces: Loopback0 (10.0.0.1/32) for
+management, Loopback1–4 for the four customer /24 prefixes.
+
 ### Link Addresses
 
 | Link                          | Left side      | Right side     |
@@ -39,9 +42,9 @@ sudo containerlab destroy -t topology.yml
 ## Access Nodes
 
 ```bash
-sudo docker exec -it clab-bgp-aggregation-originator vtysh
-sudo docker exec -it clab-bgp-aggregation-aggregator vtysh
-sudo docker exec -it clab-bgp-aggregation-receiver vtysh
+docker exec -it clab-bgp-aggregation-originator Cli
+docker exec -it clab-bgp-aggregation-aggregator Cli
+docker exec -it clab-bgp-aggregation-receiver Cli
 ```
 
 ---
@@ -60,7 +63,7 @@ participates in global BGP must store and process all of them. Aggregation:
 
 ### How aggregate-address Works
 
-`aggregate-address` in FRR BGP creates a summary prefix. Key rules:
+`aggregate-address` in EOS BGP creates a summary prefix. Key rules:
 
 1. **At least one more-specific must be in the BGP table** for the aggregate to
    be active. Remove all components and the aggregate withdraws automatically.
@@ -105,7 +108,7 @@ advertise others specifically:
 ! Suppress only 10.1.4.0/24, let the other three through
 ip prefix-list SUPPRESS-ONE seq 5 permit 10.1.4.0/24
 route-map SELECTIVE permit 10
- match ip address prefix-list SUPPRESS-ONE
+   match ip address prefix-list SUPPRESS-ONE
 aggregate-address 10.1.0.0/22 suppress-map SELECTIVE
 ```
 
@@ -118,7 +121,7 @@ but NOT 10.1.4.0/24.
 
 ### Task 1 — Base BGP
 
-Configure BGP on all three nodes. Include `no bgp ebgp-requires-policy` on all.
+Configure BGP on all three nodes.
 
 Originator must advertise four component prefixes:
 ```
@@ -144,9 +147,9 @@ receiver# show bgp ipv4 unicast
 
 On aggregator, add the aggregate-address:
 ```
-router bgp 65002
- address-family ipv4 unicast
-  aggregate-address 10.1.0.0/22
+aggregator(config)# router bgp 65002
+aggregator(config-router-bgp)# address-family ipv4
+aggregator(config-router-bgp-af)# aggregate-address 10.1.0.0/22
 ```
 
 Verify on receiver:
@@ -201,9 +204,9 @@ With `aggregate-address 10.1.0.0/22 summary-only` active:
 
 On originator, remove one component:
 ```
-router bgp 65001
- address-family ipv4 unicast
-  no network 10.1.4.0/24
+originator(config)# router bgp 65001
+originator(config-router-bgp)# address-family ipv4
+originator(config-router-bgp-af)# no network 10.1.4.0/24
 ```
 
 Question: Does 10.1.0.0/22 stay on receiver?
@@ -220,13 +223,12 @@ Restore the network statements on originator to bring it back.
 
 Instead of suppressing everything, suppress only 10.1.4.0/24:
 ```
-ip prefix-list SUPPRESS-4 seq 5 permit 10.1.4.0/24
-route-map SUPPRESS-MAP permit 10
- match ip address prefix-list SUPPRESS-4
-
-router bgp 65002
- address-family ipv4 unicast
-  aggregate-address 10.1.0.0/22 suppress-map SUPPRESS-MAP
+aggregator(config)# ip prefix-list SUPPRESS-4 seq 5 permit 10.1.4.0/24
+aggregator(config)# route-map SUPPRESS-MAP permit 10
+aggregator(config-route-map-SUPPRESS-MAP)# match ip address prefix-list SUPPRESS-4
+aggregator(config)# router bgp 65002
+aggregator(config-router-bgp)# address-family ipv4
+aggregator(config-router-bgp-af)# aggregate-address 10.1.0.0/22 suppress-map SUPPRESS-MAP
 ```
 
 On receiver:
@@ -247,7 +249,7 @@ show bgp ipv4 unicast 10.1.0.0/22            # Aggregate detail
 show bgp ipv4 unicast 10.1.1.0/24            # Component detail (look for 's' flag)
 show bgp neighbors 10.1.12.1 advertised-routes   # What aggregator sends to originator
 show bgp neighbors 10.1.23.2 advertised-routes   # What aggregator sends to receiver
-show ip bgp summary                           # Session status
+show bgp ipv4 unicast summary                 # Session status
 ```
 
 ## Troubleshooting
@@ -258,8 +260,8 @@ show ip bgp summary                           # Session status
 - The aggregate is only generated IF a matching more-specific exists
 
 **Specifics still showing after summary-only**
-- Verify `summary-only` is in the config: `show run | grep aggregate`
-- Run `clear ip bgp * soft out` to force re-advertisement with new policy
+- Verify `summary-only` is in the config: `show running-config | grep aggregate`
+- Run `clear bgp * soft-outbound` to force re-advertisement with new policy
 
 **as-set not showing in AS-path**
 - Verify `as-set` is in the config
@@ -268,4 +270,4 @@ show ip bgp summary                           # Session status
 
 **Aggregate not withdrawn after removing all components**
 - BGP withdrawal can take a few seconds to propagate
-- Force it: `clear ip bgp * soft out` on aggregator
+- Force it: `clear bgp * soft-outbound` on aggregator

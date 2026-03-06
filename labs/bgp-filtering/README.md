@@ -34,16 +34,16 @@ r1 originates three prefixes:
 
 ```bash
 sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.yml --cleanup
 ```
 
 ## Access Nodes
 
 ```bash
-sudo docker exec -it clab-bgp-filtering-r1 vtysh
-sudo docker exec -it clab-bgp-filtering-r2 vtysh
-sudo docker exec -it clab-bgp-filtering-r3 vtysh
-sudo docker exec -it clab-bgp-filtering-r4 vtysh
+docker exec -it clab-bgp-filtering-r1 Cli
+docker exec -it clab-bgp-filtering-r2 Cli
+docker exec -it clab-bgp-filtering-r3 Cli
+docker exec -it clab-bgp-filtering-r4 Cli
 ```
 
 ---
@@ -115,35 +115,27 @@ match `65001234`).
 
 ### Filter-list vs Prefix-list vs Distribute-list
 
-| Tool              | Matches on     | Applied via                          |
-|-------------------|---------------|--------------------------------------|
-| `prefix-list`     | IP prefix     | `neighbor X prefix-list NAME in/out` |
-| `filter-list`     | AS-path regex | `neighbor X filter-list NAME in/out` |
-| `distribute-list` | IP prefix     | `neighbor X distribute-list NAME in/out` (older, use prefix-list instead) |
-| `route-map`       | Multiple attrs| `neighbor X route-map NAME in/out`  |
+| Tool              | Matches on     | Applied via                              |
+|-------------------|----------------|------------------------------------------|
+| `prefix-list`     | IP prefix      | `neighbor X prefix-list NAME in/out`    |
+| `filter-list`     | AS-path regex  | `neighbor X filter-list NAME in/out`    |
+| `distribute-list` | IP prefix      | `neighbor X distribute-list NAME in/out` (older, use prefix-list instead) |
+| `route-map`       | Multiple attrs | `neighbor X route-map NAME in/out`      |
 
-### soft-reconfiguration inbound
+### Received Routes in EOS
 
-FRR can store a copy of raw received routes (before your inbound filter runs).
-This lets you inspect what your neighbor actually sent without clearing the session.
+In EOS, received routes from neighbors are stored automatically — no additional
+configuration is required. You can inspect pre-filter routes at any time:
 
 ```
-! Enable storage of inbound pre-filter RIB
-neighbor 10.1.12.1 soft-reconfiguration inbound
+! What the neighbor sent (pre-filter, raw from peer)
+show bgp neighbors 10.1.12.1 received-routes
 
-! Refresh the stored copy
-clear ip bgp 10.1.12.1 soft in
-
-! View pre-filter routes (what neighbor sent)
-show bgp ipv4 unicast neighbors 10.1.12.1 received-routes
-
-! View post-filter routes (what was accepted after your filter)
-show bgp ipv4 unicast neighbors 10.1.12.1 routes
+! What was accepted after your inbound filter ran
+show bgp neighbors 10.1.12.1 routes
 ```
 
-Without `soft-reconfiguration inbound`, you can still apply filters without
-resetting the session using `clear ip bgp * soft in`, but you cannot inspect
-the pre-filter view.
+This works natively without enabling any soft-reconfiguration option.
 
 ---
 
@@ -151,13 +143,25 @@ the pre-filter view.
 
 ### Task 1 — Base BGP (all four routers)
 
-Configure BGP on all four nodes. Include `no bgp ebgp-requires-policy` on all.
+Configure BGP on all four nodes. EOS does not require `no bgp ebgp-requires-policy`.
 
 r1 must advertise three prefixes:
 ```
 network 10.0.0.1/32
 network 172.16.1.0/24
 network 172.16.2.0/24
+```
+
+Example on r1:
+```
+r1(config)# router bgp 65001
+r1(config-router-bgp)# bgp router-id 10.0.0.1
+r1(config-router-bgp)# neighbor 10.1.12.2 remote-as 65002
+r1(config-router-bgp)# address-family ipv4
+r1(config-router-bgp-af)# neighbor 10.1.12.2 activate
+r1(config-router-bgp-af)# network 10.0.0.1/32
+r1(config-router-bgp-af)# network 172.16.1.0/24
+r1(config-router-bgp-af)# network 172.16.2.0/24
 ```
 
 Verify on r4 — all six prefixes should be visible:
@@ -171,56 +175,42 @@ r4# show bgp ipv4 unicast
  * 172.16.2.0/24  (AS-path: 65003 65002 65001)
 ```
 
-### Task 2 — Enable soft-reconfiguration on r2
-
-Before adding any filters, enable the pre-filter RIB storage on r2:
+### Task 2 — Inbound prefix-list on r2: block 172.16.2.0/24
 
 ```
-router bgp 65002
- address-family ipv4 unicast
-  neighbor 10.1.12.1 soft-reconfiguration inbound
+r2(config)# ip prefix-list BLOCK-172-16-2 seq 5 deny 172.16.2.0/24
+r2(config)# ip prefix-list BLOCK-172-16-2 seq 10 permit 0.0.0.0/0 le 32
+r2(config)# router bgp 65002
+r2(config-router-bgp)# address-family ipv4
+r2(config-router-bgp-af)# neighbor 10.1.12.1 prefix-list BLOCK-172-16-2 in
 ```
 
-Reset: `clear ip bgp 10.1.12.1 soft in`
-
-This lets you see both before and after your filter runs:
-```
-r2# show bgp ipv4 unicast neighbors 10.1.12.1 received-routes
-! Shows everything r1 sent
-r2# show bgp ipv4 unicast neighbors 10.1.12.1 routes
-! Shows only what passed your inbound filter
-```
-
-### Task 3 — Inbound prefix-list on r2: block 172.16.2.0/24
-
-```
-ip prefix-list BLOCK-172-16-2 seq 5 deny 172.16.2.0/24
-ip prefix-list BLOCK-172-16-2 seq 10 permit 0.0.0.0/0 le 32
-
-router bgp 65002
- address-family ipv4 unicast
-  neighbor 10.1.12.1 prefix-list BLOCK-172-16-2 in
-```
-
-Apply: `clear ip bgp * soft in`
+Apply: `clear bgp neighbors 10.1.12.1 soft-inbound`
 
 Expected:
 - r2's BGP table: 172.16.2.0/24 absent, 172.16.1.0/24 present
-- r2's received-routes: both still visible
+- r2's received-routes: both still visible (pre-filter view)
 - r4: 172.16.2.0/24 absent (was never forwarded by r2)
 
-### Task 4 — AS-path filter on r3: only accept routes from AS65001
-
+Verify pre- and post-filter:
 ```
-ip as-path access-list ONLY-AS65001 permit _65001$
-ip as-path access-list ONLY-AS65001 deny .*
-
-router bgp 65003
- address-family ipv4 unicast
-  neighbor 10.1.23.1 filter-list ONLY-AS65001 in
+r2# show bgp neighbors 10.1.12.1 received-routes
+! Shows everything r1 sent (both /24s visible here)
+r2# show bgp neighbors 10.1.12.1 routes
+! Shows only what passed the inbound filter (172.16.2.0/24 absent)
 ```
 
-Apply: `clear ip bgp * soft in`
+### Task 3 — AS-path filter on r3: only accept routes from AS65001
+
+```
+r3(config)# ip as-path access-list ONLY-AS65001 permit _65001$
+r3(config)# ip as-path access-list ONLY-AS65001 deny .*
+r3(config)# router bgp 65003
+r3(config-router-bgp)# address-family ipv4
+r3(config-router-bgp-af)# neighbor 10.1.23.1 filter-list ONLY-AS65001 in
+```
+
+Apply: `clear bgp neighbors 10.1.23.1 soft-inbound`
 
 With this filter, r3 only accepts routes where AS65001 is the origin AS.
 Routes from r2 (10.0.0.2/32) and r3 itself (10.0.0.3/32) are NOT from AS65001,
@@ -230,25 +220,24 @@ Verify on r4:
 - Routes with AS65001 origin are present
 - Routes with only AS65002 in the path may be absent
 
-### Task 5 — Outbound prefix-list on r1: control what r1 advertises
+### Task 4 — Outbound prefix-list on r1: control what r1 advertises
 
 Instead of filtering at r2, filter at the source. On r1, only send the loopback
 to r2 — suppress the /24 prefixes outbound:
 
 ```
-ip prefix-list LOOPBACK-ONLY seq 5 permit 10.0.0.1/32
-ip prefix-list LOOPBACK-ONLY seq 10 deny 0.0.0.0/0 le 32
-
-router bgp 65001
- address-family ipv4 unicast
-  neighbor 10.1.12.2 prefix-list LOOPBACK-ONLY out
+r1(config)# ip prefix-list LOOPBACK-ONLY seq 5 permit 10.0.0.1/32
+r1(config)# ip prefix-list LOOPBACK-ONLY seq 10 deny 0.0.0.0/0 le 32
+r1(config)# router bgp 65001
+r1(config-router-bgp)# address-family ipv4
+r1(config-router-bgp-af)# neighbor 10.1.12.2 prefix-list LOOPBACK-ONLY out
 ```
 
-Apply: `clear ip bgp * soft out` on r1
+Apply: `clear bgp * soft-outbound` on r1
 
 r2 will now only receive 10.0.0.1/32 from r1.
 
-### Task 6 — Combine prefix-list and attribute-setting in a route-map
+### Task 5 — Combine prefix-list and attribute-setting in a route-map
 
 On r2, instead of a pure deny/permit, use a route-map that:
 - Accepts 172.16.1.0/24 with local-pref 150
@@ -256,19 +245,17 @@ On r2, instead of a pure deny/permit, use a route-map that:
 - Accepts everything else at default
 
 ```
-ip prefix-list WANT-172-16-1 seq 5 permit 172.16.1.0/24
-ip prefix-list UNWANTED seq 5 permit 172.16.2.0/24
-
-route-map FROM-R1 permit 10
- match ip address prefix-list WANT-172-16-1
- set local-preference 150
-route-map FROM-R1 deny 20
- match ip address prefix-list UNWANTED
-route-map FROM-R1 permit 30
-
-router bgp 65002
- address-family ipv4 unicast
-  neighbor 10.1.12.1 route-map FROM-R1 in
+r2(config)# ip prefix-list WANT-172-16-1 seq 5 permit 172.16.1.0/24
+r2(config)# ip prefix-list UNWANTED seq 5 permit 172.16.2.0/24
+r2(config)# route-map FROM-R1 permit 10
+r2(config-route-map-FROM-R1)# match ip address prefix-list WANT-172-16-1
+r2(config-route-map-FROM-R1)# set local-preference 150
+r2(config)# route-map FROM-R1 deny 20
+r2(config-route-map-FROM-R1)# match ip address prefix-list UNWANTED
+r2(config)# route-map FROM-R1 permit 30
+r2(config)# router bgp 65002
+r2(config-router-bgp)# address-family ipv4
+r2(config-router-bgp-af)# neighbor 10.1.12.1 route-map FROM-R1 in
 ```
 
 ---
@@ -276,21 +263,23 @@ router bgp 65002
 ## Useful Show Commands
 
 ```
-show bgp ipv4 unicast                                     # BGP table
-show bgp ipv4 unicast 172.16.2.0/24                      # Detail for specific prefix
-show bgp neighbors 10.1.12.1 received-routes             # Pre-filter (needs soft-reconfig)
-show bgp neighbors 10.1.12.1 routes                      # Post-filter accepted routes
-show bgp neighbors 10.1.12.1 advertised-routes           # What we send to neighbor
-show ip prefix-list                                       # All prefix-lists
-show ip as-path-access-list                              # All AS-path access-lists
-show route-map                                            # All route-maps
-show ip bgp summary                                       # Session status
+show bgp ipv4 unicast                                     ! BGP table
+show bgp ipv4 unicast 172.16.2.0/24                      ! Detail for specific prefix
+show bgp neighbors 10.1.12.1 received-routes             ! Pre-filter (what neighbor sent)
+show bgp neighbors 10.1.12.1 routes                      ! Post-filter accepted routes
+show bgp neighbors 10.1.12.1 advertised-routes           ! What we send to neighbor
+show ip prefix-list                                       ! All prefix-lists
+show ip as-path                                           ! All AS-path access-lists
+show route-map                                            ! All route-maps
+show bgp ipv4 unicast summary                            ! Session status
+show running-config | grep prefix-list                   ! Search running config
 ```
 
 ## Troubleshooting
 
 **Filter not taking effect**
-- Run `clear ip bgp * soft in` (inbound filter) or `clear ip bgp * soft out` (outbound)
+- Run `clear bgp * soft-inbound` (inbound filter) or `clear bgp * soft-outbound` (outbound)
+- You can also target a specific neighbor: `clear bgp neighbors 10.1.12.1 soft-inbound`
 - Without a soft reset, existing routes keep their old filter decisions
 
 **Prefix-list matching too much or too little**

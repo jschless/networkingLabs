@@ -1,0 +1,86 @@
+hostname r2
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to r1:eth1
+   no switchport
+   ip address 10.1.12.2/30
+!
+interface Ethernet2
+   description to r3:eth1
+   no switchport
+   ip address 10.1.23.1/30
+!
+! ============================================================
+! YOUR TASKS ON R2
+! ============================================================
+!
+! TASK 1 — Base BGP session
+!   configure
+!   router bgp 65002
+!      bgp router-id 10.0.0.2
+!      neighbor 10.1.12.1 remote-as 65001
+!      neighbor 10.1.23.2 remote-as 65003
+!      !
+!      address-family ipv4
+!         neighbor 10.1.12.1 activate
+!         neighbor 10.1.23.2 activate
+!         network 10.0.0.2/32
+!      !
+!
+! TASK 2 — Match community 65001:100 and set local-preference
+!   When r1 tags its prefix with 65001:100, r2 can act on it.
+!   Higher local-pref = preferred path.
+!
+!   ip community-list standard PREF-COMM permit 65001:100
+!
+!   route-map MATCH-COMM permit 10
+!      match community PREF-COMM
+!      set local-preference 200
+!   route-map MATCH-COMM permit 20
+!      ! permit everything else with default local-pref
+!
+!   Apply inbound from r1:
+!   router bgp 65002
+!      address-family ipv4
+!         neighbor 10.1.12.1 route-map MATCH-COMM in
+!      !
+!
+!   Verify: show bgp ipv4 unicast 10.0.0.1/32
+!   Look for "Local Pref: 200" (or similar field) in the output.
+!
+! TASK 3 — Filter (deny) based on community
+!   Instead of adjusting local-pref, drop the route entirely:
+!
+!   route-map BLOCK-COMM deny 10
+!      match community PREF-COMM
+!   route-map BLOCK-COMM permit 20
+!
+!   router bgp 65002
+!      address-family ipv4
+!         neighbor 10.1.12.1 route-map BLOCK-COMM in
+!      !
+!
+!   After applying (clear bgp * soft-inbound), 10.0.0.1/32 disappears from r2's table.
+!
+! TASK 4 — Stripping communities before forwarding
+!   You may want to accept a route but strip the community before
+!   sending it on to r3, so r3 doesn't see it:
+!
+!   route-map STRIP-COMM permit 10
+!      set community none
+!
+!   router bgp 65002
+!      address-family ipv4
+!         neighbor 10.1.23.2 route-map STRIP-COMM out
+!      !
+!
+! NOTE: After changing route-map or community-list, apply with:
+!   clear bgp * soft-inbound    ! re-evaluate inbound policy
+!   clear bgp * soft-outbound   ! re-advertise with new outbound policy
+! ============================================================
+end

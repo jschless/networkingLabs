@@ -1,0 +1,85 @@
+hostname r2
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to r1:eth1
+   no switchport
+   ip address 10.1.12.2/30
+!
+interface Ethernet2
+   description to r3:eth1
+   no switchport
+   ip address 10.1.23.1/30
+!
+! ============================================================
+! YOUR TASKS ON R2
+! ============================================================
+!
+! TASK 1 — Base BGP
+!   configure
+!   router bgp 65002
+!      bgp router-id 10.0.0.2
+!      neighbor 10.1.12.1 remote-as 65001
+!      neighbor 10.1.23.2 remote-as 65003
+!      !
+!      address-family ipv4
+!         neighbor 10.1.12.1 activate
+!         neighbor 10.1.23.2 activate
+!         network 10.0.0.2/32
+!      !
+!
+! NOTE: In EOS, received routes from neighbors are stored automatically.
+!   You can always inspect pre-filter routes without any extra configuration:
+!   show bgp neighbors 10.1.12.1 received-routes   ! what r1 sent (pre-filter)
+!   show bgp neighbors 10.1.12.1 routes             ! what was accepted (post-filter)
+!
+! TASK 2 — Inbound prefix-list: block 172.16.2.0/24
+!   ip prefix-list BLOCK-172-16-2 seq 5 deny 172.16.2.0/24
+!   ip prefix-list BLOCK-172-16-2 seq 10 permit 0.0.0.0/0 le 32
+!
+!   router bgp 65002
+!      address-family ipv4
+!         neighbor 10.1.12.1 prefix-list BLOCK-172-16-2 in
+!      !
+!
+!   Apply: clear bgp neighbors 10.1.12.1 soft-inbound
+!   Verify: show bgp ipv4 unicast
+!   172.16.2.0/24 should be absent; 172.16.1.0/24 should be present.
+!
+!   Inspect pre-filter: show bgp neighbors 10.1.12.1 received-routes
+!   Both /24s still appear here (raw from r1).
+!   Post-filter: show bgp neighbors 10.1.12.1 routes
+!   Only 172.16.1.0/24 appears.
+!
+! TASK 3 — More specific prefix-list matching
+!   You can match a range of prefix lengths using "le" (less-than-or-equal)
+!   and "ge" (greater-than-or-equal):
+!
+!   Block any prefix in the 172.16.0.0/16 space:
+!   ip prefix-list BLOCK-172-16 seq 5 deny 172.16.0.0/16 le 32
+!   ip prefix-list BLOCK-172-16 seq 10 permit 0.0.0.0/0 le 32
+!
+!   This matches 172.16.0.0/16 and ALL more-specifics up to /32.
+!
+! TASK 4 — Apply a route-map with prefix-list for more complex logic
+!   A route-map can embed a prefix-list match and also set attributes:
+!
+!   ip prefix-list WANTED seq 5 permit 172.16.1.0/24
+!
+!   route-map FILTER-AND-TAG permit 10
+!      match ip address prefix-list WANTED
+!      set local-preference 150
+!   route-map FILTER-AND-TAG deny 20
+!      match ip address prefix-list BLOCK-172-16-2
+!   route-map FILTER-AND-TAG permit 30
+!
+!   router bgp 65002
+!      address-family ipv4
+!         neighbor 10.1.12.1 route-map FILTER-AND-TAG in
+!      !
+! ============================================================
+end

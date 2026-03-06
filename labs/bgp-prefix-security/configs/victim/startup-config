@@ -1,0 +1,26 @@
+hostname victim
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.4/32
+!
+interface Ethernet1
+   description to isp:eth3
+   no switchport
+   ip address 10.1.13.2/30
+!
+! TODO: Configure eBGP session with isp (10.1.13.1, AS65100)
+! After setup, use "show bgp ipv4 unicast 192.0.2.0/24" to see which path
+! the victim is using -- legitimate's or hijacker's.
+!
+! configure
+! router bgp 65003
+!    bgp router-id 10.0.0.4
+!    neighbor 10.1.13.1 remote-as 65100
+!    !
+!    address-family ipv4
+!       neighbor 10.1.13.1 activate
+!       network 10.0.0.4/32
+!    !
+end

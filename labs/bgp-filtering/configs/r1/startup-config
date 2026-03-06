@@ -1,46 +1,39 @@
-frr version 8.5
-frr defaults traditional
 hostname r1
-log syslog informational
-no ipv6 forwarding
-service integrated-vtysh-config
-
-! r1 is in AS65001
-! It originates the loopback plus two additional /24 prefixes used for filtering exercises.
-! The extra prefixes are configured as additional addresses on the loopback interface.
 !
-! Interface addressing:
-!   eth1        = 10.1.12.1/30   (link to r2:eth1 at 10.1.12.2)
-!   lo          = 10.0.0.1/32    (loopback — always advertised)
-!   lo (alias1) = 172.16.1.0/24  (extra prefix — subject to outbound filtering)
-!   lo (alias2) = 172.16.2.0/24  (extra prefix — blocked at r2 by prefix-list)
-
-interface lo
- ip address 10.0.0.1/32
- ip address 172.16.1.1/24
- ip address 172.16.2.1/24
-
-interface eth1
- ip address 10.1.12.1/30
-
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Loopback1
+   ip address 172.16.1.1/24
+!
+interface Loopback2
+   ip address 172.16.2.1/24
+!
+interface Ethernet1
+   description to r2:eth1
+   no switchport
+   ip address 10.1.12.1/30
+!
 ! ============================================================
 ! YOUR TASKS ON R1
 ! ============================================================
 !
 ! TASK 1 — Base BGP with all prefixes advertised
 !   Advertise the loopback and both /24 prefixes.
-!   Note: for loopback aliases, you must use the network address (not the host address).
 !
+!   configure
 !   router bgp 65001
-!    bgp router-id 10.0.0.1
-!    no bgp ebgp-requires-policy
-!    neighbor 10.1.12.2 remote-as 65002
-!    !
-!    address-family ipv4 unicast
-!     network 10.0.0.1/32
-!     network 172.16.1.0/24
-!     network 172.16.2.0/24
-!    exit-address-family
+!      bgp router-id 10.0.0.1
+!      neighbor 10.1.12.2 remote-as 65002
+!      !
+!      address-family ipv4
+!         neighbor 10.1.12.2 activate
+!         network 10.0.0.1/32
+!         network 172.16.1.0/24
+!         network 172.16.2.0/24
+!      !
 !
 !   Verify on r2: show bgp ipv4 unicast
 !   r2 should see all three prefixes from r1.
@@ -53,10 +46,11 @@ interface eth1
 !   ip prefix-list ADVERTISE-ONLY-LO seq 10 deny 0.0.0.0/0 le 32
 !
 !   router bgp 65001
-!    address-family ipv4 unicast
-!     neighbor 10.1.12.2 prefix-list ADVERTISE-ONLY-LO out
+!      address-family ipv4
+!         neighbor 10.1.12.2 prefix-list ADVERTISE-ONLY-LO out
+!      !
 !
-!   After: clear ip bgp * soft out
+!   After: clear bgp * soft-outbound
 !   Verify on r2: 172.16.1.0/24 and 172.16.2.0/24 should be GONE.
 !
 ! TASK 3 — Selective outbound: allow one /24 but not the other
@@ -69,3 +63,4 @@ interface eth1
 ! TIP: Prefix-list evaluation is sequential. First match wins.
 !      A prefix-list with no matching entry has an implicit deny-all.
 ! ============================================================
+end

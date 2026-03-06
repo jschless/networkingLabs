@@ -1,0 +1,31 @@
+hostname hijacker
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.3/32
+!
+interface Loopback1
+   ip address 192.0.2.128/25
+!
+interface Ethernet1
+   description to isp:eth2
+   no switchport
+   ip address 10.1.12.2/30
+!
+! TODO: Configure eBGP session with isp (10.1.12.1, AS65100)
+! TASK 3: Advertise 192.0.2.0/24 to simulate a hijack
+! TASK 4: Advertise more-specific 192.0.2.128/25 to demonstrate longest-match wins
+!
+! configure
+! router bgp 65002
+!    bgp router-id 10.0.0.3
+!    neighbor 10.1.12.1 remote-as 65100
+!    !
+!    address-family ipv4
+!       neighbor 10.1.12.1 activate
+!       network 10.0.0.3/32
+!       network 192.0.2.0/24       ! hijack -- same prefix as legitimate
+!       network 192.0.2.128/25     ! more-specific hijack -- always wins
+!    !
+end

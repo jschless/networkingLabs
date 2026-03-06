@@ -1,0 +1,29 @@
+hostname legitimate
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Loopback1
+   ip address 192.0.2.1/24
+!
+interface Ethernet1
+   description to isp:eth1
+   no switchport
+   ip address 10.1.11.1/30
+!
+! TODO: Configure eBGP session with isp (10.1.11.2, AS65100)
+! Advertise loopback 10.0.0.1/32 and customer prefix 192.0.2.0/24
+!
+! configure
+! router bgp 65001
+!    bgp router-id 10.0.0.1
+!    neighbor 10.1.11.2 remote-as 65100
+!    !
+!    address-family ipv4
+!       neighbor 10.1.11.2 activate
+!       network 10.0.0.1/32
+!       network 192.0.2.0/24
+!    !
+end

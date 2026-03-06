@@ -1,37 +1,29 @@
-frr version 8.5
-frr defaults traditional
 hostname r4
-log syslog informational
-no ipv6 forwarding
-service integrated-vtysh-config
-
-! r4 is in AS65004
-! r4 is the tail end of the chain and is used to verify filtering effects.
-! No filtering configuration is required on r4 for most tasks.
 !
-! Interface addressing:
-!   eth1 = 10.1.34.2/30  (link to r3:eth2 at 10.1.34.1)
-!   lo   = 10.0.0.4/32   (loopback — advertised into BGP)
-
-interface lo
- ip address 10.0.0.4/32
-
-interface eth1
- ip address 10.1.34.2/30
-
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.4/32
+!
+interface Ethernet1
+   description to r3:eth2
+   no switchport
+   ip address 10.1.34.2/30
+!
 ! ============================================================
 ! YOUR TASKS ON R4
 ! ============================================================
 !
 ! TASK 1 — Base BGP
+!   configure
 !   router bgp 65004
-!    bgp router-id 10.0.0.4
-!    no bgp ebgp-requires-policy
-!    neighbor 10.1.34.1 remote-as 65003
-!    !
-!    address-family ipv4 unicast
-!     network 10.0.0.4/32
-!    exit-address-family
+!      bgp router-id 10.0.0.4
+!      neighbor 10.1.34.1 remote-as 65003
+!      !
+!      address-family ipv4
+!         neighbor 10.1.34.1 activate
+!         network 10.0.0.4/32
+!      !
 !
 ! TASK 2 — Verify filtering effects end-to-end
 !   Baseline (no filters): r4 should see all prefixes from r1, r2, r3, r4.
@@ -59,9 +51,11 @@ interface eth1
 !   ip prefix-list ONLY-RFC1918-10 seq 10 deny 0.0.0.0/0 le 32
 !
 !   router bgp 65004
-!    address-family ipv4 unicast
-!     neighbor 10.1.34.1 prefix-list ONLY-RFC1918-10 in
+!      address-family ipv4
+!         neighbor 10.1.34.1 prefix-list ONLY-RFC1918-10 in
+!      !
 !
 !   After: 172.16.x.x prefixes will be absent from r4's table
 !   even if r3 forwarded them.
 ! ============================================================
+end

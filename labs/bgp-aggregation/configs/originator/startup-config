@@ -1,0 +1,65 @@
+hostname originator
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Loopback1
+   ip address 10.1.1.1/24
+!
+interface Loopback2
+   ip address 10.1.2.1/24
+!
+interface Loopback3
+   ip address 10.1.3.1/24
+!
+interface Loopback4
+   ip address 10.1.4.1/24
+!
+interface Ethernet1
+   description to aggregator:eth1
+   no switchport
+   ip address 10.1.12.1/30
+!
+! ============================================================
+! YOUR TASKS ON ORIGINATOR
+! ============================================================
+!
+! TASK 1 — Base BGP, advertise all component prefixes
+!   configure
+!   router bgp 65001
+!      bgp router-id 10.0.0.1
+!      neighbor 10.1.12.2 remote-as 65002
+!      !
+!      address-family ipv4
+!         neighbor 10.1.12.2 activate
+!         network 10.0.0.1/32
+!         network 10.1.1.0/24
+!         network 10.1.2.0/24
+!         network 10.1.3.0/24
+!         network 10.1.4.0/24
+!      !
+!
+!   Verify on aggregator: show bgp ipv4 unicast
+!   All four /24s should be present with AS-path "65001".
+!
+! TASK 2 — Selective withdrawal (simulate a route going down)
+!   To test aggregation behavior, remove one of the component routes:
+!
+!   router bgp 65001
+!      address-family ipv4
+!         no network 10.1.4.0/24
+!      !
+!
+!   Observe: on aggregator, what happens to the aggregate?
+!   (If aggregate-address requires all four to be present, removing one
+!    may withdraw the aggregate. Depends on your configuration.)
+!
+!   Restore it after testing:
+!      network 10.1.4.0/24
+!
+! NOTE: The "network" statement requires a matching route in the routing table.
+! The loopback interfaces create directly connected routes, which satisfies this.
+! ============================================================
+end

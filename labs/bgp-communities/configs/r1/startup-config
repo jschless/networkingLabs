@@ -1,56 +1,47 @@
-frr version 8.5
-frr defaults traditional
 hostname r1
-log syslog informational
-no ipv6 forwarding
-service integrated-vtysh-config
-
-! r1 is in AS65001
-! It has one eBGP link to r2 (AS65002) on eth1
 !
-! Interface addressing:
-!   eth1 = 10.1.12.1/30  (link to r2:eth1 at 10.1.12.2)
-!   lo   = 10.0.0.1/32   (loopback — advertised into BGP)
-
-interface lo
- ip address 10.0.0.1/32
-
-interface eth1
- ip address 10.1.12.1/30
-
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to r2:eth1
+   no switchport
+   ip address 10.1.12.1/30
+!
 ! ============================================================
 ! YOUR TASKS ON R1
 ! ============================================================
 !
 ! TASK 1 — Base BGP session
-!   Configure BGP AS 65001.
-!   Peer with r2 at 10.1.12.2 (remote-as 65002).
-!   Advertise loopback 10.0.0.1/32 via a network statement.
-!   Add: no bgp ebgp-requires-policy
-!
+!   configure
 !   router bgp 65001
-!    bgp router-id 10.0.0.1
-!    no bgp ebgp-requires-policy
-!    neighbor 10.1.12.2 remote-as 65002
-!    !
-!    address-family ipv4 unicast
-!     network 10.0.0.1/32
-!    exit-address-family
+!      bgp router-id 10.0.0.1
+!      neighbor 10.1.12.2 remote-as 65002
+!      !
+!      address-family ipv4
+!         neighbor 10.1.12.2 activate
+!         network 10.0.0.1/32
+!      !
 !
 ! TASK 2 — Attach a standard community to your loopback advertisement
 !   Create a route-map that sets community 65001:100 on outbound updates.
 !   Apply it with: neighbor 10.1.12.2 route-map SET-COMM out
 !
-!   bgp community-list standard MY-ORIGIN permit 65001:100
+!   ip community-list standard MY-ORIGIN permit 65001:100
 !
 !   route-map SET-COMM permit 10
-!    set community 65001:100
+!      set community 65001:100
 !
-!   Then inside address-family ipv4 unicast:
-!    neighbor 10.1.12.2 route-map SET-COMM out
+!   Then inside address-family ipv4:
+!      neighbor 10.1.12.2 route-map SET-COMM out
 !
 !   Verify on r2: show bgp ipv4 unicast 10.0.0.1/32
 !   Look for "Community: 65001:100" in the output.
+!
+! NOTE: In EOS, standard communities are sent to eBGP peers automatically.
+!   No additional "send-community" command is needed for standard communities.
 !
 ! TASK 3 — Well-known community: no-export
 !   The no-export community tells r2: "accept this route but do NOT
@@ -58,7 +49,7 @@ interface eth1
 !
 !   Modify SET-COMM to set community no-export instead of (or in addition to) 65001:100:
 !   route-map SET-COMM permit 10
-!    set community no-export
+!      set community no-export
 !
 !   Verify: after applying, r3 should NOT have 10.0.0.1/32 in its table.
 !   Check on r3: show bgp ipv4 unicast
@@ -68,12 +59,13 @@ interface eth1
 !   neighbor (including iBGP). The route stays only in r2's local RIB.
 !
 !   route-map SET-COMM permit 10
-!    set community no-advertise
+!      set community no-advertise
 !
 ! TASK 5 — Combining communities
 !   You can set multiple communities at once:
 !   route-map SET-COMM permit 10
-!    set community 65001:100 65001:200 no-export additive
+!      set community 65001:100 65001:200 no-export additive
 !
 !   The "additive" keyword appends instead of replacing communities.
 ! ============================================================
+end

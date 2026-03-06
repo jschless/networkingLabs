@@ -1,43 +1,36 @@
-frr version 8.5
-frr defaults traditional
 hostname aggregator
-log syslog informational
-no ipv6 forwarding
-service integrated-vtysh-config
-
-! aggregator is in AS65002
-! This is where all aggregation configuration lives.
-! It receives four /24 specifics from originator and summarizes them
-! into 10.1.0.0/22 before forwarding to receiver.
 !
-! Interface addressing:
-!   eth1 = 10.1.12.2/30  (link to originator:eth1 at 10.1.12.1)
-!   eth2 = 10.1.23.1/30  (link to receiver:eth1 at 10.1.23.2)
-!   lo   = 10.0.0.2/32   (loopback)
-
-interface lo
- ip address 10.0.0.2/32
-
-interface eth1
- ip address 10.1.12.2/30
-
-interface eth2
- ip address 10.1.23.1/30
-
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to originator:eth1
+   no switchport
+   ip address 10.1.12.2/30
+!
+interface Ethernet2
+   description to receiver:eth1
+   no switchport
+   ip address 10.1.23.1/30
+!
 ! ============================================================
 ! YOUR TASKS ON AGGREGATOR
 ! ============================================================
 !
 ! TASK 1 — Base BGP
+!   configure
 !   router bgp 65002
-!    bgp router-id 10.0.0.2
-!    no bgp ebgp-requires-policy
-!    neighbor 10.1.12.1 remote-as 65001
-!    neighbor 10.1.23.2 remote-as 65003
-!    !
-!    address-family ipv4 unicast
-!     network 10.0.0.2/32
-!    exit-address-family
+!      bgp router-id 10.0.0.2
+!      neighbor 10.1.12.1 remote-as 65001
+!      neighbor 10.1.23.2 remote-as 65003
+!      !
+!      address-family ipv4
+!         neighbor 10.1.12.1 activate
+!         neighbor 10.1.23.2 activate
+!         network 10.0.0.2/32
+!      !
 !
 !   Verify: receiver should see all four /24s and the loopbacks.
 !
@@ -46,9 +39,9 @@ interface eth2
 !   It ONLY activates when at least one more-specific is present in the BGP table.
 !
 !   router bgp 65002
-!    address-family ipv4 unicast
-!     aggregate-address 10.1.0.0/22
-!    exit-address-family
+!      address-family ipv4
+!         aggregate-address 10.1.0.0/22
+!      !
 !
 !   Verify on receiver: show bgp ipv4 unicast
 !   Expected: BOTH 10.1.0.0/22 (aggregate) AND the four /24s (specifics).
@@ -59,8 +52,6 @@ interface eth2
 !   Look for: "Atomic Aggregate" in the output.
 !
 ! TASK 3 — summary-only: suppress the component specifics
-!   Add summary-only to stop advertising the /24 components:
-!
 !   aggregate-address 10.1.0.0/22 summary-only
 !
 !   Verify on receiver: show bgp ipv4 unicast
@@ -84,8 +75,8 @@ interface eth2
 !   While aggregate is active, have originator remove one component.
 !   On originator:
 !     router bgp 65001
-!      address-family ipv4 unicast
-!       no network 10.1.4.0/24
+!        address-family ipv4
+!           no network 10.1.4.0/24
 !
 !   Question: Does the aggregate 10.1.0.0/22 stay active on aggregator?
 !   Answer: YES — as long as at least ONE component is in the BGP table,
@@ -100,12 +91,16 @@ interface eth2
 !   ip prefix-list SUPPRESS-4 seq 5 permit 10.1.4.0/24
 !
 !   route-map SELECTIVE-SUPPRESS permit 10
-!    match ip address prefix-list SUPPRESS-4
+!      match ip address prefix-list SUPPRESS-4
 !
-!   aggregate-address 10.1.0.0/22 suppress-map SELECTIVE-SUPPRESS
+!   router bgp 65002
+!      address-family ipv4
+!         aggregate-address 10.1.0.0/22 suppress-map SELECTIVE-SUPPRESS
+!      !
 !
 !   Result:
 !   - Aggregate 10.1.0.0/22 is advertised
 !   - 10.1.1.0/24, 10.1.2.0/24, 10.1.3.0/24 are still advertised (not suppressed)
 !   - 10.1.4.0/24 is suppressed
 ! ============================================================
+end

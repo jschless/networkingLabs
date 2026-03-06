@@ -1,42 +1,36 @@
-frr version 8.5
-frr defaults traditional
 hostname r3
-log syslog informational
-no ipv6 forwarding
-service integrated-vtysh-config
-
-! r3 is in AS65003
-! eBGP to r2 (AS65002) on eth1, eBGP to r4 (AS65004) on eth2
-! r3 is used to verify whether communities caused r2 to suppress routes.
 !
-! Interface addressing:
-!   eth1 = 10.1.23.2/30  (link to r2:eth2 at 10.1.23.1)
-!   eth2 = 10.1.34.1/30  (link to r4:eth1 at 10.1.34.2)
-!   lo   = 10.0.0.3/32   (loopback — advertised into BGP)
-
-interface lo
- ip address 10.0.0.3/32
-
-interface eth1
- ip address 10.1.23.2/30
-
-interface eth2
- ip address 10.1.34.1/30
-
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.3/32
+!
+interface Ethernet1
+   description to r2:eth2
+   no switchport
+   ip address 10.1.23.2/30
+!
+interface Ethernet2
+   description to r4:eth1
+   no switchport
+   ip address 10.1.34.1/30
+!
 ! ============================================================
 ! YOUR TASKS ON R3
 ! ============================================================
 !
 ! TASK 1 — Base BGP session
+!   configure
 !   router bgp 65003
-!    bgp router-id 10.0.0.3
-!    no bgp ebgp-requires-policy
-!    neighbor 10.1.23.1 remote-as 65002
-!    neighbor 10.1.34.2 remote-as 65004
-!    !
-!    address-family ipv4 unicast
-!     network 10.0.0.3/32
-!    exit-address-family
+!      bgp router-id 10.0.0.3
+!      neighbor 10.1.23.1 remote-as 65002
+!      neighbor 10.1.34.2 remote-as 65004
+!      !
+!      address-family ipv4
+!         neighbor 10.1.23.1 activate
+!         neighbor 10.1.34.2 activate
+!         network 10.0.0.3/32
+!      !
 !
 ! TASK 2 — Observe the effect of no-export from r1
 !   If r1 tagged its loopback with community no-export, r2 should NOT
@@ -57,14 +51,17 @@ interface eth2
 !   strip them if you don't want them forwarded.
 !
 ! TASK 4 — Apply your own community policy on r3
-!   Match community 65001:100 on routes received from r2, and set a
-!   local-preference or modify metrics:
+!   Match community 65001:100 on routes received from r2, and set local-preference:
 !
-!   bgp community-list standard UPSTREAM-TAG permit 65001:100
+!   ip community-list standard UPSTREAM-TAG permit 65001:100
 !   route-map HONOR-TAG permit 10
-!    match community UPSTREAM-TAG
-!    set local-preference 150
+!      match community UPSTREAM-TAG
+!      set local-preference 150
 !   route-map HONOR-TAG permit 20
 !
-!   neighbor 10.1.23.1 route-map HONOR-TAG in
+!   router bgp 65003
+!      address-family ipv4
+!         neighbor 10.1.23.1 route-map HONOR-TAG in
+!      !
 ! ============================================================
+end

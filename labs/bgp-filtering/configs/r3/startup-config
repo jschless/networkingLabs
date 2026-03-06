@@ -1,42 +1,36 @@
-frr version 8.5
-frr defaults traditional
 hostname r3
-log syslog informational
-no ipv6 forwarding
-service integrated-vtysh-config
-
-! r3 is in AS65003
-! r3 applies AS-path access-list filtering: only accepts prefixes that
-! originated in AS65001 (regardless of what r2 sent).
 !
-! Interface addressing:
-!   eth1 = 10.1.23.2/30  (link to r2:eth2 at 10.1.23.1)
-!   eth2 = 10.1.34.1/30  (link to r4:eth1 at 10.1.34.2)
-!   lo   = 10.0.0.3/32   (loopback — advertised into BGP)
-
-interface lo
- ip address 10.0.0.3/32
-
-interface eth1
- ip address 10.1.23.2/30
-
-interface eth2
- ip address 10.1.34.1/30
-
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.3/32
+!
+interface Ethernet1
+   description to r2:eth2
+   no switchport
+   ip address 10.1.23.2/30
+!
+interface Ethernet2
+   description to r4:eth1
+   no switchport
+   ip address 10.1.34.1/30
+!
 ! ============================================================
 ! YOUR TASKS ON R3
 ! ============================================================
 !
 ! TASK 1 — Base BGP
+!   configure
 !   router bgp 65003
-!    bgp router-id 10.0.0.3
-!    no bgp ebgp-requires-policy
-!    neighbor 10.1.23.1 remote-as 65002
-!    neighbor 10.1.34.2 remote-as 65004
-!    !
-!    address-family ipv4 unicast
-!     network 10.0.0.3/32
-!    exit-address-family
+!      bgp router-id 10.0.0.3
+!      neighbor 10.1.23.1 remote-as 65002
+!      neighbor 10.1.34.2 remote-as 65004
+!      !
+!      address-family ipv4
+!         neighbor 10.1.23.1 activate
+!         neighbor 10.1.34.2 activate
+!         network 10.0.0.3/32
+!      !
 !
 ! TASK 2 — AS-path filter: only accept prefixes from AS65001
 !   AS-path access-lists use POSIX-style regular expressions.
@@ -54,10 +48,11 @@ interface eth2
 !   The pattern _65001$ matches "65001" at the end → permit.
 !
 !   router bgp 65003
-!    address-family ipv4 unicast
-!     neighbor 10.1.23.1 filter-list ONLY-65001 in
+!      address-family ipv4
+!         neighbor 10.1.23.1 filter-list ONLY-65001 in
+!      !
 !
-!   After: clear ip bgp * soft in
+!   After: clear bgp neighbors 10.1.23.1 soft-inbound
 !   r3 should now only accept routes with AS65001 as origin.
 !   r2's own loopback (10.0.0.2/32, AS-path "65002") would be blocked.
 !
@@ -72,10 +67,10 @@ interface eth2
 !
 !   Note: apply as filter-list, or use in a route-map:
 !   route-map ASPATH-FILTER deny 10
-!    match as-path BLOCK-65002
+!      match as-path BLOCK-65002
 !   route-map ASPATH-FILTER permit 20
 !
-! TASK 4 — AS-path filter: only accept locally-originated (iBGP)
+! TASK 4 — AS-path filter: only accept locally-originated
 !   ip as-path access-list SELF-ONLY permit ^$
 !
 !   ^$ matches an empty AS-path — meaning the route was originated locally
@@ -87,6 +82,8 @@ interface eth2
 !
 !   ip as-path access-list FROM-65001 permit _65001$
 !   router bgp 65003
-!    address-family ipv4 unicast
-!     neighbor 10.1.34.2 filter-list FROM-65001 out
+!      address-family ipv4
+!         neighbor 10.1.34.2 filter-list FROM-65001 out
+!      !
 ! ============================================================
+end
