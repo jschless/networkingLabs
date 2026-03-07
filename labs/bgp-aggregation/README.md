@@ -18,7 +18,7 @@ aggregator that summarizes them, and a receiver that observes the result.
   10.0.0.1/32                  10.0.0.2/32               10.0.0.3/32
   10.1.1.0/24
   10.1.2.0/24   (component prefixes)
-  10.1.3.0/24   (aggregated into 10.1.0.0/22)
+  10.1.3.0/24   (aggregated into 10.1.0.0/21)
   10.1.4.0/24
 ```
 
@@ -79,20 +79,21 @@ participates in global BGP must store and process all of them. Aggregation:
 | (none)          | Advertise aggregate AND all component specifics                      |
 | `summary-only`  | Suppress component specifics; advertise only the summary             |
 | `as-set`        | Include AS-paths of all contributors in the aggregate AS-path (as set notation) |
-| `suppress-map`  | Only suppress routes matching the route-map; let others through      |
+| `summary-only match-map` | Only suppress routes matching the route-map; let others through (EOS syntax) |
 | `route-map`     | Apply a route-map to the aggregate itself (set attributes)           |
 | `origin`        | Set the origin attribute on the aggregate (igp/egp/incomplete)       |
 
 ### atomic-aggregate vs as-set
 
-When you create an aggregate without `as-set`, BGP sets the **atomic-aggregate**
-attribute on the summary route. This is a signal to other routers: "some AS-path
-information was lost in this aggregate — you are not seeing the complete picture."
+**RFC 4271 behavior** (standards-compliant implementations):
+- Without `as-set`: the aggregate has an **empty AS-path** and carries the
+  `atomic-aggregate` attribute — signalling "some path info was lost here."
+- With `as-set`: contributor AS-paths are included as an **AS_SET segment**
+  (`{65001}` notation). The `atomic-aggregate` attribute is NOT set.
 
-When you use `as-set`, the aggregate's AS-path includes the AS-paths of all
-component routes in **set notation**: `{65001}` or `{65001 65005}`. This
-preserves the information but in unordered form. The atomic-aggregate attribute
-is NOT set when as-set is used.
+**cEOS 4.35.2F behavior**: `as-set` is accepted but has no effect. Both
+variants produce identical output — `AS_SEQUENCE 65002 65001` with no
+`atomic-aggregate` attribute. This is a known limitation of cEOS.
 
 Production practice:
 - Most operators use `summary-only` without `as-set`
@@ -109,8 +110,12 @@ advertise others specifically:
 ip prefix-list SUPPRESS-ONE seq 5 permit 10.1.4.0/24
 route-map SELECTIVE permit 10
    match ip address prefix-list SUPPRESS-ONE
-aggregate-address 10.1.0.0/22 suppress-map SELECTIVE
+aggregate-address 10.1.0.0/21 summary-only match-map SELECTIVE
 ```
+
+EOS does not have a standalone `suppress-map` option. Instead, combine
+`summary-only` with `match-map`: routes that MATCH the map are suppressed;
+routes that do NOT match pass through normally.
 
 Result: receiver sees the aggregate AND 10.1.1.0/24, 10.1.2.0/24, 10.1.3.0/24,
 but NOT 10.1.4.0/24.
@@ -149,21 +154,21 @@ On aggregator, add the aggregate-address:
 ```
 aggregator(config)# router bgp 65002
 aggregator(config-router-bgp)# address-family ipv4
-aggregator(config-router-bgp-af)# aggregate-address 10.1.0.0/22
+aggregator(config-router-bgp-af)# aggregate-address 10.1.0.0/21
 ```
 
 Verify on receiver:
-- `10.1.0.0/22` is NOW present (the aggregate)
+- `10.1.0.0/21` is NOW present (the aggregate)
 - The four `/24s` are still present (specifics not suppressed)
-- Detail: `show bgp ipv4 unicast 10.1.0.0/22` — look for `Atomic Aggregate`
+- Detail: `show bgp ipv4 unicast 10.1.0.0/21` — look for `Atomic Aggregate`
 
-The AS-path for 10.1.0.0/22 is empty (AS65002 claims it as locally originated).
+The AS-path for 10.1.0.0/21 is empty (AS65002 claims it as locally originated).
 
 ### Task 3 — summary-only: suppress component routes
 
 Change the aggregate on aggregator:
 ```
-aggregate-address 10.1.0.0/22 summary-only
+aggregate-address 10.1.0.0/21 summary-only
 ```
 
 On aggregator, check the BGP table:
@@ -177,30 +182,36 @@ The four /24s are still in aggregator's table but marked with `s` (suppressed):
 ```
 
 On receiver:
-- `10.1.0.0/22` is present
+- `10.1.0.0/21` is present
 - The four `/24s` are ABSENT (suppressed, never sent)
 
 ### Task 4 — as-set: preserve contributor AS-paths
 
 Change to:
 ```
-aggregate-address 10.1.0.0/22 summary-only as-set
+aggregate-address 10.1.0.0/21 summary-only as-set
 ```
 
 On receiver, detail view:
 ```
-receiver# show bgp ipv4 unicast 10.1.0.0/22
-  BGP routing table entry for 10.1.0.0/22
-  AS-path: {65001}
-  (no Atomic Aggregate line)
+receiver# show bgp ipv4 unicast 10.1.0.0/21
 ```
 
-The `{65001}` is the AS-set: curly braces indicate it is an unordered set of
-contributor ASNs, not a sequential path.
+**EOS 4.35.2F limitation:** cEOS does not implement `as-set` per RFC 4271. In
+standard BGP, `as-set` should produce an `AS_SET` segment type (`{65001}` in
+curly braces) and suppress the `atomic-aggregate` attribute; without `as-set`,
+the aggregate should have an empty AS-path and carry `atomic-aggregate`. In
+cEOS, both variants produce the same result: `AS_SEQUENCE 65002 65001` with
+no `atomic-aggregate`. The option is accepted silently but has no effect on
+the wire format.
+
+The concept: in a real implementation, `as-set` preserves path information in
+the aggregate so downstream routers can still detect routing loops through
+any of the originating ASes.
 
 ### Task 5 — Test aggregate behavior when a component is withdrawn
 
-With `aggregate-address 10.1.0.0/22 summary-only` active:
+With `aggregate-address 10.1.0.0/21 summary-only` active:
 
 On originator, remove one component:
 ```
@@ -209,13 +220,13 @@ originator(config-router-bgp)# address-family ipv4
 originator(config-router-bgp-af)# no network 10.1.4.0/24
 ```
 
-Question: Does 10.1.0.0/22 stay on receiver?
+Question: Does 10.1.0.0/21 stay on receiver?
 Answer: YES. The aggregate remains as long as ANY one component is in the table.
 
 Now remove all four on originator. After a moment:
 - Aggregator's BGP table loses all /24s
-- The aggregate 10.1.0.0/22 is withdrawn automatically
-- Receiver loses 10.1.0.0/22
+- The aggregate 10.1.0.0/21 is withdrawn automatically
+- Receiver loses 10.1.0.0/21
 
 Restore the network statements on originator to bring it back.
 
@@ -228,11 +239,11 @@ aggregator(config)# route-map SUPPRESS-MAP permit 10
 aggregator(config-route-map-SUPPRESS-MAP)# match ip address prefix-list SUPPRESS-4
 aggregator(config)# router bgp 65002
 aggregator(config-router-bgp)# address-family ipv4
-aggregator(config-router-bgp-af)# aggregate-address 10.1.0.0/22 suppress-map SUPPRESS-MAP
+aggregator(config-router-bgp-af)# aggregate-address 10.1.0.0/21 summary-only match-map SUPPRESS-MAP
 ```
 
 On receiver:
-- `10.1.0.0/22` is present (aggregate)
+- `10.1.0.0/21` is present (aggregate)
 - `10.1.1.0/24`, `10.1.2.0/24`, `10.1.3.0/24` are still advertised
 - `10.1.4.0/24` is suppressed
 
@@ -245,7 +256,7 @@ routing while using the aggregate for the rest.
 
 ```
 show bgp ipv4 unicast                         # Full BGP table
-show bgp ipv4 unicast 10.1.0.0/22            # Aggregate detail
+show bgp ipv4 unicast 10.1.0.0/21            # Aggregate detail
 show bgp ipv4 unicast 10.1.1.0/24            # Component detail (look for 's' flag)
 show bgp neighbors 10.1.12.1 advertised-routes   # What aggregator sends to originator
 show bgp neighbors 10.1.23.2 advertised-routes   # What aggregator sends to receiver
@@ -265,7 +276,7 @@ show bgp ipv4 unicast summary                 # Session status
 
 **as-set not showing in AS-path**
 - Verify `as-set` is in the config
-- Check: `show bgp ipv4 unicast 10.1.0.0/22` on receiver
+- Check: `show bgp ipv4 unicast 10.1.0.0/21` on receiver
 - The AS-set appears as `{65001}` — curly braces, not angle brackets
 
 **Aggregate not withdrawn after removing all components**

@@ -40,36 +40,35 @@ interface Ethernet2
 !
 !   router bgp 65002
 !      address-family ipv4
-!         aggregate-address 10.1.0.0/22
+!         aggregate-address 10.1.0.0/21
 !      !
 !
 !   Verify on receiver: show bgp ipv4 unicast
-!   Expected: BOTH 10.1.0.0/22 (aggregate) AND the four /24s (specifics).
+!   Expected: BOTH 10.1.0.0/21 (aggregate) AND the four /24s (specifics).
 !   The aggregate has the "atomic-aggregate" attribute set by default.
 !   The aggregate AS-path is empty (appears as locally originated).
 !
-!   Detail: show bgp ipv4 unicast 10.1.0.0/22
+!   Detail: show bgp ipv4 unicast 10.1.0.0/21
 !   Look for: "Atomic Aggregate" in the output.
 !
 ! TASK 3 — summary-only: suppress the component specifics
-!   aggregate-address 10.1.0.0/22 summary-only
+!   aggregate-address 10.1.0.0/21 summary-only
 !
 !   Verify on receiver: show bgp ipv4 unicast
-!   Expected: ONLY 10.1.0.0/22 — the four /24s are SUPPRESSED.
+!   Expected: ONLY 10.1.0.0/21 — the four /24s are SUPPRESSED.
 !
 !   Important: "suppressed" means aggregator still has them locally
 !   (show bgp ipv4 unicast on aggregator shows them with 's' flag)
 !   but they are NOT advertised to receiver.
 !
 ! TASK 4 — as-set: preserve AS-path information in the aggregate
-!   Without as-set, the aggregate has an empty AS-path (looks locally originated).
-!   With as-set, the aggregate AS-path includes the AS-paths of all components.
+!   aggregate-address 10.1.0.0/21 summary-only as-set
 !
-!   aggregate-address 10.1.0.0/22 summary-only as-set
-!
-!   Verify on receiver: show bgp ipv4 unicast 10.1.0.0/22
-!   Expected: AS-path shows {65001} (set notation because multiple components)
-!   The atomic-aggregate attribute is NOT set when as-set is used.
+!   NOTE: cEOS 4.35.2F does not implement as-set per RFC 4271.
+!   Both "summary-only" and "summary-only as-set" produce identical wire output:
+!   AS_SEQUENCE 65002 65001, no atomic-aggregate attribute.
+!   In a standards-compliant implementation, as-set would produce AS_SET {65001}
+!   and suppress the atomic-aggregate attribute.
 !
 ! TASK 5 — Observe aggregate behavior when a component is withdrawn
 !   While aggregate is active, have originator remove one component.
@@ -78,7 +77,7 @@ interface Ethernet2
 !        address-family ipv4
 !           no network 10.1.4.0/24
 !
-!   Question: Does the aggregate 10.1.0.0/22 stay active on aggregator?
+!   Question: Does the aggregate 10.1.0.0/21 stay active on aggregator?
 !   Answer: YES — as long as at least ONE component is in the BGP table,
 !           the aggregate remains active.
 !
@@ -88,6 +87,9 @@ interface Ethernet2
 !   Instead of suppressing ALL with summary-only, suppress only one specific route
 !   while letting others still be advertised:
 !
+!   NOTE: EOS uses "summary-only match-map" instead of "suppress-map".
+!   Routes that MATCH the map are suppressed; routes that do NOT match pass through.
+!
 !   ip prefix-list SUPPRESS-4 seq 5 permit 10.1.4.0/24
 !
 !   route-map SELECTIVE-SUPPRESS permit 10
@@ -95,11 +97,11 @@ interface Ethernet2
 !
 !   router bgp 65002
 !      address-family ipv4
-!         aggregate-address 10.1.0.0/22 suppress-map SELECTIVE-SUPPRESS
+!         aggregate-address 10.1.0.0/21 summary-only match-map SELECTIVE-SUPPRESS
 !      !
 !
 !   Result:
-!   - Aggregate 10.1.0.0/22 is advertised
+!   - Aggregate 10.1.0.0/21 is advertised
 !   - 10.1.1.0/24, 10.1.2.0/24, 10.1.3.0/24 are still advertised (not suppressed)
 !   - 10.1.4.0/24 is suppressed
 ! ============================================================
