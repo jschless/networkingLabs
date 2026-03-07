@@ -118,9 +118,11 @@ match `65001234`).
 | Tool              | Matches on     | Applied via                              |
 |-------------------|----------------|------------------------------------------|
 | `prefix-list`     | IP prefix      | `neighbor X prefix-list NAME in/out`    |
-| `filter-list`     | AS-path regex  | `neighbor X filter-list NAME in/out`    |
-| `distribute-list` | IP prefix      | `neighbor X distribute-list NAME in/out` (older, use prefix-list instead) |
+| AS-path filter    | AS-path regex  | Define `ip as-path access-list`, reference via `route-map` + `match as-path` |
 | `route-map`       | Multiple attrs | `neighbor X route-map NAME in/out`      |
+
+**Note:** EOS does not have `neighbor X filter-list`. AS-path access-lists must be
+applied via a route-map using `match as-path NAME`.
 
 ### Received Routes in EOS
 
@@ -202,12 +204,15 @@ r2# show bgp neighbors 10.1.12.1 routes
 
 ### Task 3 — AS-path filter on r3: only accept routes from AS65001
 
+EOS does not have `neighbor filter-list`. Apply AS-path filters via a route-map:
+
 ```
 r3(config)# ip as-path access-list ONLY-AS65001 permit _65001$
-r3(config)# ip as-path access-list ONLY-AS65001 deny .*
+r3(config)# route-map ASPATH-IN permit 10
+r3(config-route-map-ASPATH-IN)# match as-path ONLY-AS65001
 r3(config)# router bgp 65003
 r3(config-router-bgp)# address-family ipv4
-r3(config-router-bgp-af)# neighbor 10.1.23.1 filter-list ONLY-AS65001 in
+r3(config-router-bgp-af)# neighbor 10.1.23.1 route-map ASPATH-IN in
 ```
 
 Apply: `clear bgp neighbors 10.1.23.1 soft-inbound`
@@ -293,6 +298,6 @@ show running-config | grep prefix-list                   ! Search running config
 - `^65001$` matches ONLY "65001" exactly (one-hop AS-path)
 - `_65001$` matches "65001" at the end of any longer path
 
-**filter-list vs prefix-list applied together**
-- You can apply both a prefix-list AND a filter-list to the same neighbor
-- Both must permit the route for it to be accepted
+**Combining AS-path and prefix filters**
+- In EOS, combine them in a single route-map with multiple match conditions, or chain two route-maps
+- Both conditions must permit the route for it to be accepted

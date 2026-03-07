@@ -1,8 +1,10 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **38 hands-on networking labs** covering OSPF, BGP, MPLS,
-VPN, data center, and more. All labs run locally using [ContainerLab](https://containerlab.dev/)
-and [FRRouting (FRR)](https://frrouting.org/) inside Docker containers.
+A self-hosted lab environment with **55 hands-on networking labs** covering OSPF, BGP, MPLS,
+VPN, data center, enterprise design, security, and more. All labs run locally using
+[ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
+[Arista cEOS](https://www.arista.com/en/support/software-download), and
+[Nokia SR-Linux](https://learn.srlinux.dev/).
 
 ---
 
@@ -12,8 +14,11 @@ and [FRRouting (FRR)](https://frrouting.org/) inside Docker containers.
 # Deploy a lab
 sudo containerlab deploy -t labs/<name>/topology.yml
 
-# Attach to a node's FRR CLI
+# Attach to an FRR node's CLI
 docker exec -it clab-<name>-<node> vtysh
+
+# Attach to a cEOS node's CLI
+docker exec -it clab-<name>-<node> Cli
 
 # Attach to a node's shell
 docker exec -it clab-<name>-<node> bash
@@ -37,19 +42,20 @@ Each lab directory contains:
 
 ```
 labs/<name>/
-  topology.yml        ← ContainerLab topology (nodes + links)
-  README.md           ← Lab guide, tasks, verification commands
+  topology.yml        <- ContainerLab topology (nodes + links)
+  README.md           <- Lab guide, tasks, verification commands
   configs/
-    daemons           ← Which FRR daemons to enable (shared)
-    vtysh.conf        ← FRR vtysh setting (shared)
+    daemons           <- Which FRR daemons to enable (shared)
+    vtysh.conf        <- FRR vtysh setting (shared)
     <node>/
-      frr.conf        ← FRR config for this node
-      setup.sh        ← (some labs) Linux network setup script
+      frr.conf        <- FRR config for this node
+      startup-config  <- cEOS EOS startup config
+      setup.sh        <- (some labs) Linux network setup script
 ```
 
 **Practice labs**: IP addressing is pre-configured. You implement the routing protocol
-or feature by running `vtysh` and entering config. Each `frr.conf` has commented-out
-hints showing the expected config.
+or feature by running `vtysh` / `Cli` and entering config. Each config file has
+commented-out hints showing the expected config.
 
 **Reference labs**: Fully working out of the box. Deploy and observe/explore.
 
@@ -64,21 +70,48 @@ containerlab version
 # Check Docker is running
 docker ps
 
-# Pull the FRR image (if not already done)
+# Pull the FRR image and build the enhanced version (required for ALL FRR labs)
 docker pull frrouting/frr:latest
+docker build -t frr-lab:local images/frr/
 ```
 
 ### Labs requiring custom images
 
-Two labs need a custom image built first:
-
 ```bash
-# ipsec-basics AND gre-ipsec (both use this image)
+# ipsec-basics AND gre-ipsec
 docker build -t ipsec-lab:local labs/ipsec-basics/
 
 # wireguard
 docker build -t wireguard-lab:local labs/wireguard/
+
+# dot1x-nac
+docker build -t nac-lab:local labs/dot1x-nac/
+
+# macsec-basics
+docker build -t macsec-lab:local labs/macsec-basics/
+
+# network-assurance
+docker build -t assurance-lab:local labs/network-assurance/
+
+# qos-enterprise
+docker build -t qos-lab:local labs/qos-enterprise/
 ```
+
+### Labs requiring Arista cEOS
+
+Import the cEOS image once:
+```bash
+docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
+```
+Used by: `gre-ceos`, `dmvpn-ceos`, `spine-leaf-ceos`, `evpn-vxlan-ceos`,
+`evpn-border-ceos`, `vrf-lite`, `enterprise-*`, `ha-network-design-ceos`.
+
+### Labs requiring Nokia SR-Linux
+
+```bash
+docker pull ghcr.io/nokia/srlinux:latest
+```
+Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 
 ---
 
@@ -96,6 +129,7 @@ docker build -t wireguard-lab:local labs/wireguard/
 | [ospf-nssa](labs/ospf-nssa/) | Practice | Not-So-Stubby Area, Type-7 LSAs |
 | [ospf-virtual-link](labs/ospf-virtual-link/) | Practice | Virtual links, discontiguous area 0 |
 | [ospf-bgp-redist](labs/ospf-bgp-redist/) | Practice | Mutual OSPF↔BGP redistribution at an ASBR |
+| [ipv6-ospf3](labs/ipv6-ospf3/) | Practice | OSPFv3, link-local next-hops, IPv6 areas |
 
 ---
 
@@ -115,11 +149,11 @@ docker build -t wireguard-lab:local labs/wireguard/
 |-----|------|----------------|
 | [bgp-basics](labs/bgp-basics/) | Practice | eBGP/iBGP sessions, next-hop problem, split-horizon |
 | [bgp-path-selection](labs/bgp-path-selection/) | Practice | Weight → LP → AS-path → MED, step by step |
-| [bgp-communities](labs/bgp-communities/) | Practice | Standard/extended communities, route-map tagging |
 | [bgp-filtering](labs/bgp-filtering/) | Practice | Prefix-lists, AS-path ACLs, distribute-lists |
-| [bgp-aggregation](labs/bgp-aggregation/) | Practice | `aggregate-address`, summary-only, as-set |
+| [bgp-communities](labs/bgp-communities/) | Practice | Standard/extended communities, route-map tagging |
+| [bgp-aggregation](labs/bgp-aggregation/) | Practice | `aggregate-address`, summary-only, selective suppression |
 | [bgp-prefix-security](labs/bgp-prefix-security/) | Practice | Route hijacking demo, prefix-list defenses, RPKI concepts |
-| [bgp-labeled-unicast](labs/bgp-labeled-unicast/) | Practice | BGP-LU (RFC 3107), inter-AS MPLS Option C |
+| [bgp-labeled-unicast](labs/bgp-labeled-unicast/) | Practice | BGP-LU (RFC 3107), inter-AS MPLS label distribution |
 | [ipv6-bgp](labs/ipv6-bgp/) | Practice | Dual-stack BGP, extended next-hop, native IPv6 sessions |
 
 ---
@@ -143,34 +177,41 @@ docker build -t wireguard-lab:local labs/wireguard/
 
 ---
 
-### Track 6 — IPv6
-
-| Lab | Type | What You Learn |
-|-----|------|----------------|
-| [ipv6-ospf3](labs/ipv6-ospf3/) | Practice | OSPFv3, link-local next-hops, IPv6 areas |
-| [ipv6-bgp](labs/ipv6-bgp/) | Practice | Dual-stack BGP (see Track 3 above) |
-
----
-
-### Track 7 — Tunnels & VPN
+### Track 6 — Tunnels & VPN
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
 | [gre-basics](labs/gre-basics/) | Practice | GRE tunnel, routing over GRE, recursive routing pitfall |
+| [gre-ceos](labs/gre-ceos/) | Practice | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
 | [gre-ipsec](labs/gre-ipsec/) | Practice | GRE + IPsec transport mode, strongSwan |
 | [ipsec-basics](labs/ipsec-basics/) | Practice | IKEv2 site-to-site IPsec, PSK, tunnel mode |
-| [dmvpn-phase1](labs/dmvpn-phase1/) | Practice | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel |
+| [dmvpn-phase1](labs/dmvpn-phase1/) | Practice | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel (FRR) |
+| [dmvpn-ceos](labs/dmvpn-ceos/) | Practice | DMVPN hub-and-spoke on Arista cEOS |
 | [wireguard](labs/wireguard/) | Practice | WireGuard VPN, key pairs, hub-and-spoke topology |
-| [vrf-lite](labs/vrf-lite/) | Practice | VRF-Lite, per-VRF routing tables, route leaking |
+| [vrf-lite](labs/vrf-lite/) | Practice | VRF-Lite on cEOS, per-VRF routing tables, route leaking |
 
 ---
 
-### Track 8 — MPLS & Service Provider
+### Track 7 — MPLS & Service Provider
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
-| [mpls-sr-isis-bgp](labs/mpls-sr-isis-bgp/) | **Reference** | Full SP stack: IS-IS + SR-MPLS + BGP VPNv4 + L3VPN |
-| [mpls-sr-blank](labs/mpls-sr-blank/) | Practice | Build the SP stack yourself from scratch |
+| [mpls-sr-blank](labs/mpls-sr-blank/) | Practice | Build the full SP stack yourself from scratch (FRR) |
+| [mpls-sr-isis-bgp](labs/mpls-sr-isis-bgp/) | **Reference** | IS-IS + SR-MPLS + BGP VPNv4 + L3VPN (FRR) |
+| [mpls-sr-srlinux](labs/mpls-sr-srlinux/) | **Reference** | Same SP stack on Nokia SR-Linux — compare platforms |
+
+---
+
+### Track 8 — Data Center
+
+| Lab | Type | What You Learn |
+|-----|------|----------------|
+| [spine-leaf](labs/spine-leaf/) | Practice | BGP CLOS fabric (FRR), unique AS per device, ECMP |
+| [spine-leaf-ceos](labs/spine-leaf-ceos/) | Practice | BGP CLOS fabric on Arista cEOS |
+| [vxlan-evpn](labs/vxlan-evpn/) | **Reference** | VXLAN + BGP EVPN control plane (FRR) |
+| [vxlan-evpn-srlinux](labs/vxlan-evpn-srlinux/) | **Reference** | VXLAN + BGP EVPN on Nokia SR-Linux |
+| [evpn-vxlan-ceos](labs/evpn-vxlan-ceos/) | Practice | VXLAN + EVPN on Arista cEOS, L2VNI + L3VNI, symmetric IRB |
+| [evpn-border-ceos](labs/evpn-border-ceos/) | Practice | EVPN border leaf, external eBGP in VRF, type-5 routes |
 
 ---
 
@@ -181,77 +222,173 @@ docker build -t wireguard-lab:local labs/wireguard/
 | [bfd-ospf](labs/bfd-ospf/) | Practice | BFD with OSPF, sub-second link failure detection |
 | [bfd-bgp](labs/bfd-bgp/) | Practice | BFD with BGP, fast session teardown vs hold timer |
 | [vrrp](labs/vrrp/) | Practice | VRRP master/backup, virtual IP, priority, preemption |
+| [ha-network-design-ceos](labs/ha-network-design-ceos/) | Practice | MLAG, VRRP tracking, OSPF+BFD+ECMP, dual-ISP BGP combined |
 
 ---
 
-### Track 10 — Data Center
+### Track 10 — Enterprise Design
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
-| [spine-leaf](labs/spine-leaf/) | Practice | BGP CLOS fabric, unique AS per device, ECMP |
-| [vxlan-evpn](labs/vxlan-evpn/) | **Reference** | VXLAN tunnels, BGP EVPN control plane, MAC/IP distribution |
+| [enterprise-collapsed-core](labs/enterprise-collapsed-core/) | **Reference** | 2-tier campus: collapsed core/distribution, VRRP, STP, OSPF |
+| [enterprise-campus](labs/enterprise-campus/) | **Reference** | 3-tier campus: core/distribution/access, eBGP upstream |
+| [enterprise-routed-access](labs/enterprise-routed-access/) | **Reference** | L3-everywhere: routed access layer, no STP, OSPF+BFD |
+| [enterprise-dmz](labs/enterprise-dmz/) | **Reference** | Screened-subnet DMZ, dual-firewall, nftables policy |
+| [enterprise-wan-edge](labs/enterprise-wan-edge/) | Practice | Dual-ISP BGP edge, LP inbound policy, AS-path prepend outbound |
 
 ---
 
-## Suggested Study Order
+### Track 11 — Security
 
-**CCNP Enterprise path (ENCOR + ENARSI):**
-1. `two-routers` → `ospf-multiarea` → `ospf-auth` → `ospf-summarization` → `ospf-default-route` → `ospf-nssa` → `ospf-virtual-link`
-2. `eigrp-basics` → `eigrp-variance` → `eigrp-stub`
-3. `bgp-basics` → `bgp-path-selection`
-4. `ospf-bgp-redist` → `redistribution-tags` → `route-maps-pbr`
-5. `gre-basics` → `ipsec-basics` → `gre-ipsec` → `dmvpn-phase1`
-6. `bgp-communities` → `bgp-filtering` → `bgp-aggregation`
-7. `bfd-ospf` → `bfd-bgp` → `vrrp`
-8. `isis-basics` → `isis-multiarea`
-
-**Service Provider path:**
-1. Complete CCNP path above
-2. `isis-basics` → `isis-multiarea`
-3. `bgp-labeled-unicast`
-4. `mpls-sr-blank` (practice) → `mpls-sr-isis-bgp` (reference)
-
-**Data Center path:**
-1. `bgp-basics` → `bgp-path-selection`
-2. `spine-leaf`
-3. `vxlan-evpn`
-4. `vrf-lite`
+| Lab | Type | What You Learn |
+|-----|------|----------------|
+| [macsec-basics](labs/macsec-basics/) | Practice | IEEE 802.1AE MACsec, MKA key agreement, infrastructure + endpoint modes |
+| [dot1x-nac](labs/dot1x-nac/) | Practice | 802.1X port authentication, RADIUS, EAP, NAC enforcement |
 
 ---
 
-## Common FRR Commands
+### Track 12 — Network Operations
+
+| Lab | Type | What You Learn |
+|-----|------|----------------|
+| [network-assurance](labs/network-assurance/) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |
+| [qos-enterprise](labs/qos-enterprise/) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
+
+---
+
+### Debug Labs
+
+Each debug lab is a fully-working topology with **one intentional bug**. The README gives
+you the scenario, symptoms, three-level hints, and the solution. Use them to practice
+structured troubleshooting.
+
+| Lab | Bug Domain |
+|-----|-----------|
+| [debug-ospf-multiarea](labs/debug-ospf-multiarea/) | OSPF multi-area |
+| [debug-ospf-auth](labs/debug-ospf-auth/) | OSPF authentication |
+| [debug-ospf-nssa](labs/debug-ospf-nssa/) | OSPF NSSA |
+| [debug-ospf-bgp-redist](labs/debug-ospf-bgp-redist/) | OSPF↔BGP redistribution |
+| [debug-eigrp-basics](labs/debug-eigrp-basics/) | EIGRP |
+| [debug-isis-basics](labs/debug-isis-basics/) | IS-IS |
+| [debug-bgp-basics](labs/debug-bgp-basics/) | BGP sessions |
+| [debug-bgp-path-selection](labs/debug-bgp-path-selection/) | BGP path selection |
+| [debug-bgp-filtering](labs/debug-bgp-filtering/) | BGP filtering |
+| [debug-gre-basics](labs/debug-gre-basics/) | GRE tunnels |
+| [debug-dmvpn-phase1](labs/debug-dmvpn-phase1/) | DMVPN |
+| [debug-vrf-lite](labs/debug-vrf-lite/) | VRF-Lite (cEOS) |
+| [debug-spine-leaf](labs/debug-spine-leaf/) | BGP spine-leaf |
+| [debug-mpls-sr-isis-bgp](labs/debug-mpls-sr-isis-bgp/) | MPLS SR + BGP L3VPN |
+| [debug-vxlan-evpn](labs/debug-vxlan-evpn/) | VXLAN + EVPN |
+
+---
+
+## Suggested Study Paths
+
+### CCNP Enterprise (ENCOR + ENARSI)
 
 ```
-# General
-show version               # FRR version and enabled daemons
-show running-config        # current config
-write memory               # save config to frr.conf
+OSPF:     two-routers -> ospf-multiarea -> ospf-auth -> ospf-summarization
+          -> ospf-default-route -> ospf-nssa -> ospf-virtual-link
+EIGRP:    eigrp-basics -> eigrp-variance -> eigrp-stub
+BGP:      bgp-basics -> bgp-path-selection -> bgp-filtering -> bgp-communities -> bgp-aggregation
+Redist:   ospf-bgp-redist -> redistribution-tags -> route-maps-pbr
+Tunnels:  gre-basics -> ipsec-basics -> gre-ipsec -> dmvpn-phase1
+HA:       bfd-ospf -> bfd-bgp -> vrrp
+IS-IS:    isis-basics -> isis-multiarea
+IPv6:     ipv6-ospf3 -> ipv6-bgp
+```
 
-# OSPF
-show ip ospf neighbor      # adjacency state
-show ip ospf database      # LSDB
-show ip route ospf         # OSPF routes in RIB
+### Service Provider
 
-# BGP
-show bgp ipv4 unicast summary      # session state and prefix counts
-show bgp ipv4 unicast              # full BGP table
-show ip route bgp                  # BGP routes in RIB
+```
+Prereq:   CCNP path above
+BGP-LU:   bgp-labeled-unicast
+MPLS:     mpls-sr-blank -> mpls-sr-isis-bgp (reference) -> mpls-sr-srlinux (reference)
+```
 
-# IS-IS
-show isis neighbor         # adjacency state
-show isis database         # LSDB
-show isis route            # IS-IS routes
+### Data Center / EVPN
 
-# MPLS
-show mpls table            # MPLS forwarding table
-show bgp l2vpn evpn        # EVPN routes (vxlan-evpn lab)
+```
+Prereq:   bgp-basics -> bgp-path-selection
+Fabric:   spine-leaf -> spine-leaf-ceos
+VXLAN:    vxlan-evpn (reference) -> evpn-vxlan-ceos -> evpn-border-ceos
+SR-Linux: vxlan-evpn-srlinux (reference)
+VRF:      vrf-lite
+```
 
-# BFD
-show bfd peers             # BFD session state
+### Enterprise Design
 
-# General
-show ip route              # full routing table
-show interface brief       # interface state and IPs
+```
+Prereq:   ospf-multiarea, bgp-basics, vrrp
+Designs:  enterprise-collapsed-core -> enterprise-campus -> enterprise-routed-access
+Edge:     enterprise-wan-edge
+DMZ:      enterprise-dmz
+HA:       ha-network-design-ceos
+```
+
+### Security
+
+```
+bgp-prefix-security -> ipsec-basics -> gre-ipsec -> macsec-basics -> dot1x-nac
+```
+
+### Troubleshooting Practice
+
+```
+debug-ospf-multiarea -> debug-bgp-basics -> debug-eigrp-basics -> debug-isis-basics
+-> debug-bgp-filtering -> debug-gre-basics -> debug-spine-leaf
+-> debug-vxlan-evpn -> debug-mpls-sr-isis-bgp
+```
+
+---
+
+## Common Commands
+
+### FRR (vtysh)
+
+```
+show version                          # FRR version and enabled daemons
+show running-config                   # current config
+write memory                          # save config to frr.conf
+
+show ip ospf neighbor                 # OSPF adjacency state
+show ip ospf database                 # OSPF LSDB
+show ip route ospf                    # OSPF routes in RIB
+
+show bgp ipv4 unicast summary         # BGP session state and prefix counts
+show bgp ipv4 unicast                 # full BGP table
+show ip route bgp                     # BGP routes in RIB
+
+show isis neighbor                    # IS-IS adjacency state
+show isis database                    # IS-IS LSDB
+
+show mpls table                       # MPLS forwarding table
+show bfd peers                        # BFD session state
+show ip route                         # full routing table
+```
+
+### Arista cEOS (Cli)
+
+```
+show version                          # EOS version
+show running-config                   # current config
+
+show ip ospf neighbor                 # OSPF adjacency state
+show bgp ipv4 unicast summary         # BGP session state
+show bgp ipv4 unicast                 # full BGP table
+show vxlan vtep                       # VXLAN remote VTEPs
+show bgp evpn                         # EVPN routes
+show vrf                              # VRF summary
+show ip route vrf <name>              # routes in a specific VRF
+```
+
+### Nokia SR-Linux (sr_cli)
+
+```
+show version
+show network-instance default route-table
+show bgp neighbor
+show tunnel-interface
 ```
 
 ---
@@ -266,19 +403,23 @@ show interface brief       # interface state and IPs
 | `p1`, `p2` | Provider core (transit) |
 | `rr1` | BGP Route Reflector |
 | `spine1`, `spine2` | DC spine switches |
-| `leaf1`–`leaf4` | DC leaf switches |
+| `leaf1`-`leaf4` | DC leaf switches |
 | `vtep1`, `vtep2` | VXLAN Tunnel Endpoints |
 | `gw-a`, `gw-b` | Gateway / edge nodes in VPN labs |
-| `hub`, `spoke1`–`spoke3` | DMVPN hub and spokes |
+| `hub`, `spoke1`-`spoke3` | DMVPN hub and spokes |
 | `host-a`, `host-b` | End hosts (test traffic source/sink) |
+| `edge`, `core1`, `core2` | Enterprise WAN/core nodes |
+| `dist1`, `dist2` | Enterprise distribution layer |
 
 ---
 
 ## Tips
 
 - **Always wait for convergence** after deploy — OSPF/BGP need 15–60 seconds
-- **`vtysh -b`** is run automatically on deploy to reload configs after interfaces come up
-- **Custom images**: build `ipsec-lab:local` and `wireguard-lab:local` before those labs
-- **MPLS labs**: kernel MPLS must be enabled — the topologies set `net.mpls.platform_labels` via `sysctls`
-- **VRF labs** (`vrf-lite`, `mpls-sr-isis-bgp`): Linux VRFs are created by `setup.sh` — check that script if something seems wrong
+- **`vtysh -b`** is run automatically on deploy to reload FRR configs after interfaces come up
+- **cEOS**: use `Cli` (capital C) to access the EOS CLI; startup-config loads automatically on boot
+- **SR-Linux**: use `sr_cli` to access the CLI; startup-config loads automatically on boot
+- **Custom images**: build the required image before deploying labs that need one (see Prerequisites)
+- **MPLS labs**: kernel label space is set via `sysctls` in topology.yml — do not try to set it via exec
+- **VRF labs (FRR)**: Linux VRFs are created by `setup.sh` — check that script if interfaces look wrong
 - See `ROADMAP.md` for a topic-by-topic breakdown with study order guidance
