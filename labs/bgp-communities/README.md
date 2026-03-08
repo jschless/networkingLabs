@@ -137,8 +137,13 @@ clear bgp * soft-inbound    ! Re-evaluate inbound policy
 clear bgp * soft-outbound   ! Re-advertise with updated outbound policy
 ```
 
-In EOS, standard communities are automatically included in eBGP updates. No additional
-send-community command is needed for standard communities.
+In EOS, you must explicitly enable community sending per neighbor:
+```
+router bgp 65001
+   neighbor 10.1.12.2 send-community
+```
+This applies to standard communities. For extended communities (MPLS VPN route-targets),
+use `neighbor X send-community extended` instead.
 
 ---
 
@@ -161,14 +166,14 @@ r4# show bgp ipv4 unicast
 
 ### Task 2 — Tag a route with a standard community
 
-On r1, create a route-map that sets community `65001:100` on the loopback prefix
-and apply it outbound to r2.
+On r1, create a route-map that sets community `65001:100` on outbound routes to r2.
+Since r1 only advertises its loopback (10.0.0.1/32), this effectively tags that prefix.
 
 ```
-r1(config)# ip community-list standard MY-ORIGIN permit 65001:100
 r1(config)# route-map SET-COMM permit 10
 r1(config-route-map-SET-COMM)#    set community 65001:100
 r1(config)# router bgp 65001
+r1(config-router-bgp)#    neighbor 10.1.12.2 send-community
 r1(config-router-bgp)#    address-family ipv4
 r1(config-router-bgp-af)#       neighbor 10.1.12.2 route-map SET-COMM out
 ```
@@ -280,9 +285,11 @@ show bgp ipv4 unicast summary                ! Neighbor session status
 ## Troubleshooting
 
 **Community not appearing on neighbor**
-- In EOS, standard communities are sent automatically on eBGP sessions — no send-community
-  command is required. For extended communities (e.g., MPLS VPN route targets), you must
-  explicitly configure `neighbor X send-community extended`.
+- In EOS, you must explicitly configure `neighbor X send-community` for standard communities
+  on eBGP sessions — they are NOT sent automatically. Check with:
+  `show bgp neighbors X.X.X.X | grep "communities advertised"`
+  If it shows "none", add `neighbor X send-community` under `router bgp`.
+- For extended communities (MPLS VPN route targets), use `neighbor X send-community extended`.
 - Did you `clear bgp * soft-outbound` after changing the route-map?
 
 **Route not being suppressed by no-export**

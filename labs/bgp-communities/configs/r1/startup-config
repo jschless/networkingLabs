@@ -35,13 +35,14 @@ interface Ethernet1
 !      set community 65001:100
 !
 !   Then inside address-family ipv4:
+!      neighbor 10.1.12.2 send-community
 !      neighbor 10.1.12.2 route-map SET-COMM out
 !
 !   Verify on r2: show bgp ipv4 unicast 10.0.0.1/32
 !   Look for "Community: 65001:100" in the output.
 !
-! NOTE: In EOS, standard communities are sent to eBGP peers automatically.
-!   No additional "send-community" command is needed for standard communities.
+! NOTE: In EOS, you MUST explicitly configure "neighbor X send-community" for
+!   standard communities on eBGP sessions. They are NOT sent automatically.
 !
 ! TASK 3 — Well-known community: no-export
 !   The no-export community tells r2: "accept this route but do NOT
