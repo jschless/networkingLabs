@@ -69,8 +69,8 @@ you are starting from.
 **On r1:**
 ```
 r1# show ip ospf neighbor
-Neighbor ID     Pri State           Up Time         Dead Time Address         Interface                        RXmtL RqstL DBsmL
-10.0.0.2          1 Full/-          1m12s             36.108s 10.1.12.2       eth1:10.1.12.1                       0     0     0
+Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
+10.0.0.2         1 default     1 Full/-                   00:01:12   10.1.12.2       Ethernet1
 ```
 
 **On r4:**
@@ -103,8 +103,8 @@ an OSPF adjacency. The physical link is up — this is a configuration issue.
 
 Work through the diagnostic questions:
 1. Which side of the r3–r4 link is failing to participate in OSPF correctly?
-2. What does `show ip ospf interface eth2` tell you on r3?
-3. What does `show ip ospf interface eth1` tell you on r4?
+2. What does `show ip ospf interface Ethernet2` tell you on r3?
+3. What does `show ip ospf interface Ethernet1` tell you on r4?
 4. Compare the two outputs — what is different?
 
 ---
@@ -137,7 +137,7 @@ Run these on **both r3 and r4** and compare.
 The r3–r4 link is up at the IP layer (they can ping each other's interface
 addresses directly). The problem is in how OSPF is configured on that link.
 
-Run `show ip ospf interface eth2` on r3 and `show ip ospf interface eth1`
+Run `show ip ospf interface Ethernet2` on r3 and `show ip ospf interface Ethernet1`
 on r4. Look at the **Area** field in each output.
 
 </details>
@@ -156,10 +156,10 @@ One side of the r3–r4 link has the wrong area number. Which one?
 <details>
 <summary>Hint 3 — The specific problem</summary>
 
-On r3, `show ip ospf interface eth2` shows **Area 0.0.0.0** (Area 0).
-On r4, `show ip ospf interface eth1` shows **Area 0.0.0.2** (Area 2).
+On r3, `show ip ospf interface Ethernet2` shows **Area 0.0.0.0** (Area 0).
+On r4, `show ip ospf interface Ethernet1` shows **Area 0.0.0.2** (Area 2).
 
-r3's eth2 was misconfigured as `ip ospf area 0` instead of `ip ospf area 2`.
+r3's Ethernet2 was misconfigured as `ip ospf area 0` instead of `ip ospf area 2`.
 The fix is a single interface command on r3.
 
 </details>
@@ -175,7 +175,7 @@ On **r3**:
 
 ```
 r3# configure terminal
-r3(config)# interface eth2
+r3(config)# interface Ethernet2
 r3(config-if)# ip ospf area 2
 r3(config-if)# end
 r3# write memory
@@ -196,7 +196,7 @@ After applying the fix, confirm the network is healthy:
 ! On any node — all three adjacencies should be Full
 show ip ospf neighbor
 
-! On r3 — should now show two areas: Area 0 (eth1, lo) and Area 2 (eth2)
+! On r3 — should now show two areas: Area 0 (Ethernet1, Loopback0) and Area 2 (Ethernet2)
 show ip ospf interface
 
 ! On r4 — should have OSPF routes including a default route 0.0.0.0/0
@@ -216,5 +216,5 @@ Expected neighbor table (all nodes):
 
 r4 should show a default route in `show ip route ospf`:
 ```
-O>* 0.0.0.0/0 [110/11] via 10.1.34.1, eth1
+O IA   0.0.0.0/0 [110/11] via 10.1.34.1, Ethernet1
 ```

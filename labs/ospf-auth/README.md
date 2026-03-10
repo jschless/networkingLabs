@@ -11,7 +11,7 @@ adjacencies and exchange LSAs.
 ## Topology
 
 ```
-[r1] eth1 --- eth1 [r2] eth2 --- eth1 [r3]
+[r1] Ethernet1 --- Ethernet1 [r2] Ethernet2 --- Ethernet1 [r3]
 ```
 
 | Segment       | Subnet        | r1/r2/r3 address |
@@ -47,7 +47,7 @@ router ospf
  ospf router-id 10.0.0.1
  network 10.0.0.1/32 area 0
  network 10.1.12.0/30 area 0
- passive-interface lo
+ passive-interface Loopback0
 ```
 
 On **r2**:
@@ -58,7 +58,7 @@ router ospf
  network 10.0.0.2/32 area 0
  network 10.1.12.0/30 area 0
  network 10.1.23.0/30 area 0
- passive-interface lo
+ passive-interface Loopback0
 ```
 
 On **r3**:
@@ -68,7 +68,7 @@ router ospf
  ospf router-id 10.0.0.3
  network 10.0.0.3/32 area 0
  network 10.1.23.0/30 area 0
- passive-interface lo
+ passive-interface Loopback0
 ```
 
 Verify adjacencies are up:
@@ -81,9 +81,9 @@ Expected output — all neighbors in `Full` state:
 ```
 r2# show ip ospf neighbor
 
-Neighbor ID     Pri State           Dead Time Address         Interface
-10.0.0.1          1 Full/DR         39.609s   10.1.12.1       eth1:10.1.12.2
-10.0.0.3          1 Full/BDR        37.014s   10.1.23.2       eth2:10.1.23.1
+Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
+10.0.0.1         1 default     1 Full/DR                  00:00:39   10.1.12.1       Ethernet1
+10.0.0.3         1 default     1 Full/BDR                 00:00:37   10.1.23.2       Ethernet2
 ```
 
 Verify end-to-end reachability:
@@ -99,36 +99,36 @@ ends** of each link — a mismatch prevents adjacency formation.
 The authentication key is **per-interface** and identified by a numeric key ID.
 Multiple keys can coexist on an interface (used for key rollover).
 
-On **r1** (eth1 only):
+On **r1** (Ethernet1 only):
 ```
 configure terminal
-interface eth1
+interface Ethernet1
  ip ospf authentication message-digest
  ip ospf message-digest-key 1 md5 SecretKey123
 ```
 
-On **r2** (both eth1 and eth2):
+On **r2** (both Ethernet1 and Ethernet2):
 ```
 configure terminal
-interface eth1
+interface Ethernet1
  ip ospf authentication message-digest
  ip ospf message-digest-key 1 md5 SecretKey123
-interface eth2
+interface Ethernet2
  ip ospf authentication message-digest
  ip ospf message-digest-key 1 md5 SecretKey123
 ```
 
-On **r3** (eth1 only):
+On **r3** (Ethernet1 only):
 ```
 configure terminal
-interface eth1
+interface Ethernet1
  ip ospf authentication message-digest
  ip ospf message-digest-key 1 md5 SecretKey123
 ```
 
 Verify authentication is configured on an interface:
 ```
-r2# show ip ospf interface eth1
+r2# show ip ospf interface Ethernet1
 ```
 
 Look for the line `Internet Address ... Area ... MTU ...` followed by:
@@ -149,7 +149,7 @@ This simulates a misconfiguration or a rogue router. Change the key on **r1 only
 
 ```
 r1# configure terminal
-r1(config)# interface eth1
+r1(config)# interface Ethernet1
 r1(config-if)# ip ospf message-digest-key 1 md5 WrongKeyHere
 ```
 
@@ -158,16 +158,7 @@ Wait about 40 seconds (the default dead interval). Observe on **r2**:
 r2# show ip ospf neighbor
 ```
 
-The neighbor `10.0.0.1` will disappear from the table. Check cEOS logs for the
-authentication failure message:
-```bash
-sudo docker exec clab-ospf-auth-r2 tail -20 /var/log/frr/frr.log
-```
-
-You should see lines like:
-```
-OSPF: Rcv pkt from 10.1.12.1 : MD5 authentication failed
-```
+The neighbor `10.0.0.1` will disappear from the table.
 
 Notice that r3 is **unaffected** — the mismatch is localized to the r1-r2 link.
 
@@ -176,7 +167,7 @@ Notice that r3 is **unaffected** — the mismatch is localized to the r1-r2 link
 Restore the correct key on r1:
 ```
 r1# configure terminal
-r1(config)# interface eth1
+r1(config)# interface Ethernet1
 r1(config-if)# ip ospf message-digest-key 1 md5 SecretKey123
 ```
 
@@ -192,7 +183,7 @@ There are two ways to enable OSPF authentication:
 
 **Per-interface** (what we did above — more flexible):
 ```
-interface eth1
+interface Ethernet1
  ip ospf authentication message-digest
  ip ospf message-digest-key 1 md5 MyKey
 ```
@@ -202,7 +193,7 @@ interface eth1
 router ospf
  area 0 authentication message-digest
 
-interface eth1
+interface Ethernet1
  ip ospf message-digest-key 1 md5 MyKey
 ```
 
@@ -218,7 +209,7 @@ exactly this purpose.
 
 **Step 1 — Add the new key (key ID 2) on ALL routers simultaneously:**
 ```
-interface eth1
+interface Ethernet1
  ip ospf message-digest-key 2 md5 NewSecretKey456
 ```
 
@@ -228,7 +219,7 @@ up throughout.
 
 **Step 2 — Remove the old key (key ID 1) on ALL routers:**
 ```
-interface eth1
+interface Ethernet1
  no ip ospf message-digest-key 1 md5 SecretKey123
 ```
 
@@ -243,7 +234,7 @@ adjacency will drop.
 | Command | What to look for |
 |---------|-----------------|
 | `show ip ospf neighbor` | Neighbor state (`Full` = healthy) |
-| `show ip ospf interface eth1` | Auth type, active key IDs |
+| `show ip ospf interface Ethernet1` | Auth type, active key IDs |
 | `show ip ospf database` | LSA count — should be consistent across all routers |
 | `show ip route ospf` | OSPF-learned routes with `O` prefix |
 | `debug ospf packet all` | Live packet events (verbose — disable after use) |
@@ -257,7 +248,7 @@ no debug ospf packet all
 
 cEOS also supports HMAC-SHA authentication as an extension beyond the standard:
 ```
-interface eth1
+interface Ethernet1
  ip ospf authentication hmac-sha-256
  ip ospf authentication-key MySharedKey
 ```

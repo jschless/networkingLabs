@@ -14,7 +14,7 @@ configuration point distributes default reachability to the entire domain.
 ## Topology
 
 ```
-[core] eth1 --- eth1 [asbr] eth2 --- eth1 [internet]
+[core] Ethernet1 --- Ethernet1 [asbr] Ethernet2 --- Ethernet1 [internet]
    (area 0)              (area 0 + external)   (no OSPF)
 ```
 
@@ -43,7 +43,7 @@ sudo docker exec -it clab-ospf-default-route-asbr Cli
 ## Step 1 — Configure Basic OSPF on core and asbr
 
 Configure OSPF on the two internal routers. Do **not** include the external
-interface (asbr's eth2 toward internet) in OSPF.
+interface (asbr's Ethernet2 toward internet) in OSPF.
 
 On **core**:
 ```
@@ -52,17 +52,17 @@ router ospf
  ospf router-id 10.0.0.1
  network 10.0.0.1/32 area 0
  network 10.1.12.0/30 area 0
- passive-interface lo
+ passive-interface Loopback0
 ```
 
-On **asbr** (eth2 is external — NOT in OSPF):
+On **asbr** (Ethernet2 is external — NOT in OSPF):
 ```
 configure terminal
 router ospf
  ospf router-id 10.0.0.2
  network 10.0.0.2/32 area 0
  network 10.1.12.0/30 area 0
- passive-interface lo
+ passive-interface Loopback0
 ```
 
 Verify adjacency:
@@ -95,10 +95,9 @@ asbr# show ip route
 
 You should see:
 ```
-S>* 0.0.0.0/0 [1/0] via 203.0.113.2, eth2
+S      0.0.0.0/0 [1/0] via 203.0.113.2, Ethernet2
 ```
 
-The `S>*` means: static route, selected as best, installed in FIB.
 core still has no default route — the static route on asbr is local to asbr.
 
 ## Step 3 — Inject the Default Route Into OSPF
@@ -121,12 +120,11 @@ core# show ip route
 
 You should now see:
 ```
-O*E2 0.0.0.0/0 [110/1] via 10.1.12.2, eth1
+O E2   0.0.0.0/0 [110/1] via 10.1.12.2, Ethernet1
 ```
 
-The `O*E2` notation means:
+The `O E2` notation means:
 - `O` = learned via OSPF
-- `*` = selected as best default route
 - `E2` = external type 2 (cost does not accumulate, explained below)
 
 Also verify the Type-5 LSA directly:
@@ -151,7 +149,7 @@ Check on **core**:
 core# show ip route
 ```
 
-The `O*E2 0.0.0.0/0` entry is gone. core can no longer reach the internet.
+The `O E2 0.0.0.0/0` entry is gone. core can no longer reach the internet.
 
 Restore the static default:
 ```
@@ -170,7 +168,7 @@ asbr(config-router)# default-information originate always
 ```
 
 Now even if you run `no ip route 0.0.0.0/0 203.0.113.2`, core will still see
-the `O*E2 0.0.0.0/0` route. However, traffic following that default will be
+the `O E2 0.0.0.0/0` route. However, traffic following that default will be
 **black-holed** at asbr (it has no idea where to send it).
 
 ### When is `always` appropriate?
@@ -220,7 +218,7 @@ asbr(config-router)# default-information originate always route-map CHECK-INTERN
 ```
 
 Now the default is only injected when 203.0.113.0/30 appears in the routing
-table. This prefix is the connected route on eth2 — it exists when the link is
+table. This prefix is the connected route on Ethernet2 — it exists when the link is
 up and disappears when the link goes down.
 
 **Test the condition:**
@@ -236,7 +234,7 @@ Watch core's routing table:
 core# show ip route
 ```
 
-Within the OSPF dead interval, the `O*E2 0.0.0.0/0` disappears because the
+Within the OSPF dead interval, the `O E2 0.0.0.0/0` disappears because the
 route-map condition (203.0.113.0/30 present) is no longer satisfied.
 
 Bring the link back up:
@@ -303,8 +301,8 @@ In modern networks, the correct approach is always:
 
 | Command | What to look for |
 |---------|-----------------|
-| `show ip route` | `O*E2 0.0.0.0/0` on core — the OSPF default |
-| `show ip route static` | `S>* 0.0.0.0/0` on asbr — prerequisite for origination |
+| `show ip route` | `O E2 0.0.0.0/0` on core — the OSPF default |
+| `show ip route static` | `S 0.0.0.0/0` on asbr — prerequisite for origination |
 | `show ip ospf database external` | Type-5 LSA for 0.0.0.0/0 originated by asbr |
 | `show ip ospf neighbor` | Adjacency state between core and asbr |
 | `show running-config` | Verify `default-information originate` is present |

@@ -16,15 +16,15 @@ A colleague was reviewing area configurations and changed a setting on r1, the A
 
 | Node | Interface | IP Address         | OSPF Area |
 |------|-----------|-------------------|-----------|
-| ext  | eth1      | 192.168.100.2/30  | —         |
-| r1   | lo        | 10.0.0.1/32       | area 1    |
-| r1   | eth1      | 192.168.100.1/30  | not in OSPF |
-| r1   | eth2      | 10.1.12.1/30      | area 1    |
-| r2   | lo        | 10.0.0.2/32       | area 0    |
-| r2   | eth1      | 10.1.12.2/30      | area 1    |
-| r2   | eth2      | 10.1.23.1/30      | area 0    |
-| r3   | lo        | 10.0.0.3/32       | area 0    |
-| r3   | eth1      | 10.1.23.2/30      | area 0    |
+| ext  | Ethernet1 | 192.168.100.2/30  | —         |
+| r1   | Loopback0 | 10.0.0.1/32       | area 1    |
+| r1   | Ethernet1 | 192.168.100.1/30  | not in OSPF |
+| r1   | Ethernet2 | 10.1.12.1/30      | area 1    |
+| r2   | Loopback0 | 10.0.0.2/32       | area 0    |
+| r2   | Ethernet1 | 10.1.12.2/30      | area 1    |
+| r2   | Ethernet2 | 10.1.23.1/30      | area 0    |
+| r3   | Loopback0 | 10.0.0.3/32       | area 0    |
+| r3   | Ethernet1 | 10.1.23.2/30      | area 0    |
 
 ## Expected Behavior
 
@@ -48,7 +48,7 @@ docker exec -it clab-debug-ospf-nssa-r3 Cli
 
 ```
 r2# show ip ospf neighbor
-Neighbor ID     Pri State           Dead Time Address         Interface
+Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
 (empty — r1 never appears)
 
 r3# show ip route ospf
@@ -72,7 +72,7 @@ The adjacency between r1 and r2 never forms. What OSPF parameter mismatch could 
 ```
 show ip ospf neighbor
 show ip ospf interface
-show ip ospf interface eth2
+show ip ospf interface Ethernet2
 show ip ospf database
 show ip ospf database nssa-external
 ```
@@ -87,7 +87,7 @@ The adjacency between r1 and r2 is completely absent. When OSPF neighbors fail t
 
 <details><summary>Hint 2 — Narrowing it down</summary>
 
-Run `show ip ospf interface eth2` on r1 and `show ip ospf interface eth1` on r2. Both should report the same area type for Area 1. Look at the "Area Type" or "Area" field in the output — does one say "Stub Area" while the other says "NSSA"?
+Run `show ip ospf interface Ethernet2` on r1 and `show ip ospf interface Ethernet1` on r2. Both should report the same area type for Area 1. Look at the "Area Type" or "Area" field in the output — does one say "Stub Area" while the other says "NSSA"?
 
 </details>
 
@@ -118,8 +118,8 @@ r1# write memory
 
 ```
 r2# show ip ospf neighbor
-Neighbor ID     Pri State     Dead Time  Address       Interface
-10.0.0.1          1 Full/DR   00:00:35   10.1.12.1     eth1
+Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
+10.0.0.1         1 default     1 Full/DR                  00:00:35   10.1.12.1       Ethernet1
 
 r2# show ip ospf database nssa-external
 OSPF Router with ID (10.0.0.2) (Process ID 1)
@@ -128,5 +128,5 @@ Link ID         ADV Router      Age  Seq#       CkSum  Route
 192.168.100.0   10.0.0.1        12   0x80000001 ...    E2 192.168.100.0/30
 
 r3# show ip route ospf
-O E2  192.168.100.0/30 [110/20] via 10.1.23.1, eth1
+O E2   192.168.100.0/30 [110/20] via 10.1.23.1, Ethernet1
 ```

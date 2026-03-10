@@ -10,9 +10,9 @@
 
 | Link | Subnet | Left | Right | OSPF Area |
 |------|--------|------|-------|-----------|
-| ext:eth1 - r1:eth1 | 192.168.100.0/30 | ext=.2 | r1=.1 | none (external) |
-| r1:eth2 - r2:eth1  | 10.1.12.0/30    | r1=.1  | r2=.2 | Area 1 (NSSA) |
-| r2:eth2 - r3:eth1  | 10.1.23.0/30    | r2=.1  | r3=.2 | Area 0 |
+| ext:Ethernet1 - r1:Ethernet1 | 192.168.100.0/30 | ext=.2 | r1=.1 | none (external) |
+| r1:Ethernet2 - r2:Ethernet1  | 10.1.12.0/30    | r1=.1  | r2=.2 | Area 1 (NSSA) |
+| r2:Ethernet2 - r3:Ethernet1  | 10.1.23.0/30    | r2=.1  | r3=.2 | Area 0 |
 
 Loopbacks: r1=10.0.0.1/32 (area1), r2=10.0.0.2/32 (area0), r3=10.0.0.3/32 (area0)
 
@@ -156,9 +156,9 @@ OSPF Router with ID (10.0.0.1) (Process ID 0)
 
         NSSA-external Link States (Area 1)
 
-LS age: 42
+ LS age: 42
 Options: (No TOS-capability, DC, Upward)
-LS Type: AS NSSA-external Link State
+ LS Type: AS NSSA-external Link State
 Link State ID: 192.168.100.0 (External Network Number For This Type)
 Advertising Router: 10.0.0.1
 ...
@@ -183,7 +183,7 @@ show ip route ospf
 
 Expected:
 ```
-O E2  192.168.100.0/30 [110/20] via 10.1.23.1, eth1
+O E2   192.168.100.0/30 [110/20] via 10.1.23.1, Ethernet1
 ```
 
 ### Step 6: Test end-to-end reachability

@@ -58,8 +58,8 @@ Wait ~15 seconds after deploy for OSPF to attempt adjacency formation.
 **On r2:**
 ```
 r2# show ip ospf neighbor
-Neighbor ID     Pri State           Up Time         Dead Time Address         Interface
-10.0.0.3          1 Full/DR         1m03s             37.421s 10.1.23.2       eth2:10.1.23.1
+Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
+10.0.0.3         1 default     1 Full/DR                  00:01:03   10.1.23.2       Ethernet2
 ```
 
 Only r3 is present. r1 is completely absent.
@@ -91,8 +91,8 @@ should have matching key configurations on their shared link. Something
 differs between what r1 has and what r2 has on that link.
 
 Work through the diagnostic questions:
-1. What does `show ip ospf interface eth1` say about auth type and key IDs on r1?
-2. What does `show ip ospf interface eth1` say on r2?
+1. What does `show ip ospf interface Ethernet1` say about auth type and key IDs on r1?
+2. What does `show ip ospf interface Ethernet1` say on r2?
 3. The auth type and key ID look the same — so what else could cause the failure?
 4. Where would you look for clues in the cEOS logs?
 
@@ -105,11 +105,7 @@ Work through the diagnostic questions:
 show ip ospf neighbor
 
 ! Check auth type, key ID, and cryptographic sequence on an interface
-show ip ospf interface eth1
-
-! cEOS log — authentication failure messages appear here
-! Run from a bash shell, not Cli:
-!   docker exec clab-debug-ospf-auth-r2 tail -30 /var/log/frr/frr.log
+show ip ospf interface Ethernet1
 ```
 
 ---
@@ -119,7 +115,7 @@ show ip ospf interface eth1
 <details>
 <summary>Hint 1 — Where to start</summary>
 
-Run `show ip ospf interface eth1` on both r1 and r2. Compare the output.
+Run `show ip ospf interface Ethernet1` on both r1 and r2. Compare the output.
 Pay attention to:
 - Authentication type (should say `MD5`)
 - Key ID in use (should match on both sides)
@@ -132,30 +128,26 @@ is the actual key *value*, which show commands don't reveal.
 <details>
 <summary>Hint 2 — Narrowing it down</summary>
 
-Check cEOS's log on r2 for authentication failure messages:
+Check the OSPF neighbor log on r2. You can look at the EOS logging output:
 
-```bash
-docker exec clab-debug-ospf-auth-r2 tail -30 /var/log/frr/frr.log
+```
+show logging | grep -i ospf
 ```
 
-You should see lines like:
-```
-OSPF: Rcv pkt from 10.1.12.1 : MD5 authentication failed
-```
-
+You should see lines indicating authentication failures from 10.1.12.1 (r1).
 This confirms: r2 is receiving OSPF packets from r1 (so the link is up),
 but the MD5 digest is wrong. The key value on one side doesn't match.
 
-Since r2–r3 is fine, the mismatch is on r2's eth1 key (not eth2).
+Since r2–r3 is fine, the mismatch is on r2's Ethernet1 key (not Ethernet2).
 
 </details>
 
 <details>
 <summary>Hint 3 — The specific problem</summary>
 
-r2's eth1 is configured with key `"SecretKey321"` (digits reversed) instead
+r2's Ethernet1 is configured with key `"SecretKey321"` (digits reversed) instead
 of `"SecretKey123"`. r1 and r3 both have the correct key. The key rotation
-script transposed the digits on r2's eth1 only.
+script transposed the digits on r2's Ethernet1 only.
 
 </details>
 
@@ -170,7 +162,7 @@ On **r2**:
 
 ```
 r2# configure terminal
-r2(config)# interface eth1
+r2(config)# interface Ethernet1
 r2(config-if)# ip ospf message-digest-key 1 md5 SecretKey123
 r2(config-if)# end
 r2# write memory
@@ -200,9 +192,9 @@ r1# ping 10.0.0.3 source 10.0.0.1
 Expected:
 ```
 r2# show ip ospf neighbor
-Neighbor ID     Pri State           Up Time         Dead Time Address         Interface
-10.0.0.1          1 Full/BDR        0m08s             38.210s 10.1.12.1       eth1:10.1.12.2
-10.0.0.3          1 Full/DR         4m21s             35.614s 10.1.23.2       eth2:10.1.23.1
+Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
+10.0.0.1         1 default     1 Full/BDR                 00:00:38   10.1.12.1       Ethernet1
+10.0.0.3         1 default     1 Full/DR                  00:00:35   10.1.23.2       Ethernet2
 ```
 
 Both adjacencies Full — all loopbacks reachable.

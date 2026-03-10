@@ -9,9 +9,9 @@
 
 | Link | Subnet | Left | Right | OSPF Area |
 |------|--------|------|-------|-----------|
-| r1:eth1 - r2:eth1 | 10.1.12.0/30 | r1=.1 | r2=.2 | Area 2 |
-| r2:eth2 - r3:eth1 | 10.1.23.0/30 | r2=.1 | r3=.2 | Area 1 (transit) |
-| r3:eth2 - r4:eth1 | 10.1.34.0/30 | r3=.1 | r4=.2 | Area 0 |
+| r1:Ethernet1 - r2:Ethernet1 | 10.1.12.0/30 | r1=.1 | r2=.2 | Area 2 |
+| r2:Ethernet2 - r3:Ethernet1 | 10.1.23.0/30 | r2=.1 | r3=.2 | Area 1 (transit) |
+| r3:Ethernet2 - r4:Ethernet1 | 10.1.34.0/30 | r3=.1 | r4=.2 | Area 0 |
 
 Loopbacks:
 - r1=10.0.0.1/32 (area 2)
@@ -167,7 +167,7 @@ show ip ospf virtual-links
 Expected on r2:
 ```
 Virtual Link OSPF_VL0 to router 10.0.0.3 is up
-  Transit area 1, via interface eth2, Cost of using 10
+  Transit area 1, via interface Ethernet2, Cost of using 10
   Transmit Delay is 1 sec, State Point-to-Point,
   ...
   Adjacency state Full
@@ -185,10 +185,10 @@ show ip route ospf
 
 Expected routing table on r1:
 ```
-O IA  10.1.23.0/30 [110/20] via 10.1.12.2, eth1
-O IA  10.1.34.0/30 [110/30] via 10.1.12.2, eth1
-O IA  10.0.0.3/32  [110/30] via 10.1.12.2, eth1
-O IA  10.0.0.4/32  [110/30] via 10.1.12.2, eth1
+O IA   10.1.23.0/30 [110/20] via 10.1.12.2, Ethernet1
+O IA   10.1.34.0/30 [110/30] via 10.1.12.2, Ethernet1
+O IA   10.0.0.3/32  [110/30] via 10.1.12.2, Ethernet1
+O IA   10.0.0.4/32  [110/30] via 10.1.12.2, Ethernet1
 ```
 
 From r4:
@@ -243,9 +243,9 @@ After virtual link is up, r2's neighbor table will show r3 twice:
 ```
 show ip ospf neighbor
 
-Neighbor ID  Pri  State     Dead Time  Address     Interface
-10.0.0.3       1  Full/DR   00:00:38   10.1.23.2   eth2:10.1.23.1
-10.0.0.3       1  Full/     00:00:38   10.1.23.2   OSPF_VL0
+Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
+10.0.0.3         1 default     1 Full/DR                  00:00:38   10.1.23.2       Ethernet2
+10.0.0.3         1 default     0 Full/                    00:00:38   10.1.23.2       OSPF_VL0
 ```
 
 The first entry is the physical area 1 adjacency. The second entry

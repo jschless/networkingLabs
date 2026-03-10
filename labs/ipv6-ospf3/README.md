@@ -9,8 +9,8 @@ link-local addresses for all neighbor communication and supports IPv6 topology.
 ## Topology
 
 ```
-[r1] --eth1-- [r2] --eth2-- [r3] --eth2-- [r4]
-     eth1          eth1          eth1
+[r1] --Ethernet1-- [r2] --Ethernet2-- [r3] --Ethernet2-- [r4]
+     Ethernet1          Ethernet1          Ethernet1
 ```
 
 All four routers are in OSPFv3 **area 0**.
@@ -88,18 +88,18 @@ On each router, in Cli:
 ```
 configure terminal
 
-interface eth1
+interface Ethernet1
  ipv6 ospf6 area 0
 
-interface lo
+interface Loopback0
  ipv6 ospf6 area 0
  ipv6 ospf6 passive
 ```
 
-Transit routers (r2, r3) also need eth2:
+Transit routers (r2, r3) also need Ethernet2:
 
 ```
-interface eth2
+interface Ethernet2
  ipv6 ospf6 area 0
 ```
 
@@ -168,7 +168,7 @@ traceroute6 2001:db8::4
 2. **OSPFv3 stub area**: Convert area 0 to another area and make area 0 stub — observe how
    Intra-Area-Prefix-LSAs change
 3. **Redistribute connected**: `redistribute connected` in `router ospf6` and observe AS-External-LSAs
-4. **Passive interfaces**: Make eth1 on r1 passive — what happens to the r1-r2 adjacency?
+4. **Passive interfaces**: Make Ethernet1 on r1 passive — what happens to the r1-r2 adjacency?
 5. **IPsec authentication**: OSPFv3 uses IPsec for security. Research how to configure
    `ipv6 ospf6 authentication ipsec spi` on an interface.
 
@@ -176,8 +176,8 @@ traceroute6 2001:db8::4
 
 **No neighbors forming:**
 - Check that both ends have `ipv6 ospf6 area 0` on the connecting interface
-- Verify IPv6 link-local addresses are assigned: `show interface eth1`
-- Check that ospf6d is running: `show daemons` in Cli
+- Verify IPv6 link-local addresses are assigned: `show interface Ethernet1`
+- Check that ospf6 is running: `show ip ospf6` in Cli
 
 **Routes missing:**
 - Check if loopback has `ipv6 ospf6 area 0`

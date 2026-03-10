@@ -53,7 +53,7 @@ To have multiple prefixes to summarize, add two more addresses to r1's loopback:
 
 ```
 r1# configure terminal
-r1(config)# interface lo
+r1(config)# interface Loopback0
 r1(config-if)# ip address 10.1.2.1/32
 r1(config-if)# ip address 10.1.3.1/32
 ```
@@ -76,10 +76,10 @@ router ospf
  network 10.1.2.1/32 area 1
  network 10.1.3.1/32 area 1
  network 10.1.12.0/30 area 1
- passive-interface lo
+ passive-interface Loopback0
 ```
 
-On **r2** (eth1 in area 1, loopback + eth2 in area 0):
+On **r2** (Ethernet1 in area 1, loopback + Ethernet2 in area 0):
 ```
 configure terminal
 router ospf
@@ -87,10 +87,10 @@ router ospf
  network 10.0.0.2/32 area 0
  network 10.1.12.0/30 area 1
  network 10.1.23.0/30 area 0
- passive-interface lo
+ passive-interface Loopback0
 ```
 
-On **r3** (loopback + eth1 in area 0, eth2 in area 2, eth3 is external):
+On **r3** (loopback + Ethernet1 in area 0, Ethernet2 in area 2, Ethernet3 is external):
 ```
 configure terminal
 router ospf
@@ -98,7 +98,7 @@ router ospf
  network 10.0.0.3/32 area 0
  network 10.1.23.0/30 area 0
  network 10.1.34.0/30 area 2
- passive-interface lo
+ passive-interface Loopback0
 ```
 
 On **r4** (all in area 2):
@@ -108,7 +108,7 @@ router ospf
  ospf router-id 10.2.0.1
  network 10.2.0.1/32 area 2
  network 10.1.34.0/30 area 2
- passive-interface lo
+ passive-interface Loopback0
 ```
 
 Verify all adjacencies are `Full`:

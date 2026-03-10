@@ -39,13 +39,13 @@ assignments, and stub-area configuration yourself.
 containerlab deploy --topo topology.yml
 
 # List nodes and their management IPs
-../../lab.sh list ospf-multiarea
+../../scripts/lab.sh list ospf-multiarea
 
 # Open the cEOS CLI on any node
-../../lab.sh Cli ospf-multiarea r1
+../../scripts/lab.sh Cli ospf-multiarea r1
 
 # Open a Linux shell (for ip/ping commands)
-../../lab.sh bash ospf-multiarea r1
+../../scripts/lab.sh bash ospf-multiarea r1
 ```
 
 Inside Cli, use `?` after any keyword for context-sensitive help,
@@ -81,50 +81,50 @@ advertised but do not attempt to form adjacencies.
 ### r1 (all interfaces in Area 1)
 
 ```
-interface lo
+interface Loopback0
  ip ospf passive
  ip ospf area 1
 !
-interface eth1
+interface Ethernet1
  ip ospf area 1
 ```
 
-### r2 (ABR: eth1 in Area 1, eth2 and lo in Area 0)
+### r2 (ABR: Ethernet1 in Area 1, Ethernet2 and Loopback0 in Area 0)
 
 ```
-interface lo
+interface Loopback0
  ip ospf passive
  ip ospf area 0
 !
-interface eth1
+interface Ethernet1
  ip ospf area 1
 !
-interface eth2
+interface Ethernet2
  ip ospf area 0
 ```
 
-### r3 (ABR: eth1 and lo in Area 0, eth2 in Area 2)
+### r3 (ABR: Ethernet1 and Loopback0 in Area 0, Ethernet2 in Area 2)
 
 ```
-interface lo
+interface Loopback0
  ip ospf passive
  ip ospf area 0
 !
-interface eth1
+interface Ethernet1
  ip ospf area 0
 !
-interface eth2
+interface Ethernet2
  ip ospf area 2
 ```
 
 ### r4 (all interfaces in Area 2)
 
 ```
-interface lo
+interface Loopback0
  ip ospf passive
  ip ospf area 2
 !
-interface eth1
+interface Ethernet1
  ip ospf area 2
 ```
 
@@ -217,8 +217,8 @@ summary 10.0.0.0/24 in the OSPF database.
 - Check that neither side has a mismatched hello/dead timer
 
 **No adjacency forming at all**
-- Verify the IP addresses are correct: `show interface eth1`
-- Check that OSPF is enabled on the interface: `show ip ospf interface eth1`
+- Verify the IP addresses are correct: `show interface Ethernet1`
+- Check that OSPF is enabled on the interface: `show ip ospf interface Ethernet1`
 
 **r4 does not have a default route**
 - Confirm `area 2 stub` is configured on both r3 and r4
@@ -228,7 +228,3 @@ summary 10.0.0.0/24 in the OSPF database.
 - Check the OSPF database on each router: `show ip ospf database`
 - Type-3 summary LSAs carry inter-area routes; confirm they appear on r2 and r3
 - If totally-stub is configured, Type-3 LSAs will not reach r4 — that is expected
-
-**OSPF process not starting**
-- Confirm the ospfd daemon is enabled in `/etc/frr/daemons`
-- Run `Cli -b` to reload config if changes were made to startup-config directly
