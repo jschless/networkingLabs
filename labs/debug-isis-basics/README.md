@@ -41,8 +41,8 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ```bash
 sudo containerlab deploy -t labs/debug-isis-basics/topology.yml
 
-docker exec -it clab-debug-isis-basics-r2 vtysh
-docker exec -it clab-debug-isis-basics-r3 vtysh
+docker exec -it clab-debug-isis-basics-r2 Cli
+docker exec -it clab-debug-isis-basics-r3 Cli
 ```
 
 Wait ~20 seconds after deploy for IS-IS hello timers to expire.

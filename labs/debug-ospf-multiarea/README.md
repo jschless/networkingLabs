@@ -50,11 +50,11 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ```bash
 sudo containerlab deploy -t labs/debug-ospf-multiarea/topology.yml
 
-# Open FRR CLI on any node
-docker exec -it clab-debug-ospf-multiarea-r1 vtysh
+# Open cEOS CLI on any node
+docker exec -it clab-debug-ospf-multiarea-r1 Cli
 
 # Or use the helper script
-./scripts/lab.sh vtysh debug-ospf-multiarea r3
+./scripts/lab.sh Cli debug-ospf-multiarea r3
 ```
 
 Wait ~15 seconds after deploy for OSPF to attempt adjacency formation.

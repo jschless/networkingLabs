@@ -41,21 +41,21 @@ containerlab deploy --topo topology.yml
 # List nodes and their management IPs
 ../../lab.sh list ospf-multiarea
 
-# Open the FRR CLI on any node
-../../lab.sh vtysh ospf-multiarea r1
+# Open the cEOS CLI on any node
+../../lab.sh Cli ospf-multiarea r1
 
 # Open a Linux shell (for ip/ping commands)
 ../../lab.sh bash ospf-multiarea r1
 ```
 
-Inside vtysh, use `?` after any keyword for context-sensitive help,
+Inside Cli, use `?` after any keyword for context-sensitive help,
 and `do show ...` to run show commands from config mode.
 
 ---
 
 ## Step 1 — Configure the OSPF process on each router
 
-Enter vtysh on each node and configure the OSPF process. Use the process
+Enter Cli on each node and configure the OSPF process. Use the process
 name "CORE" and set the router-id to match the loopback address.
 
 ```
@@ -231,4 +231,4 @@ summary 10.0.0.0/24 in the OSPF database.
 
 **OSPF process not starting**
 - Confirm the ospfd daemon is enabled in `/etc/frr/daemons`
-- Run `vtysh -b` to reload config if changes were made to frr.conf directly
+- Run `Cli -b` to reload config if changes were made to startup-config directly

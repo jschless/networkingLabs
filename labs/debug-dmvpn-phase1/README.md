@@ -15,7 +15,7 @@ A colleague deployed a DMVPN Phase 1 hub-and-spoke topology. spoke2 and spoke3 a
 
 ## IP / Node Reference
 
-| Node   | WAN IP (eth1)  | Tunnel IP (dmvpn0) | LAN (lo)       |
+| Node   | WAN IP (eth1)  | Tunnel IP (Tunnel0) | LAN (lo)       |
 |--------|---------------|-------------------|----------------|
 | hub    | 10.0.0.1/24   | 172.16.0.1/24     | 10.0.0.1/32    |
 | spoke1 | 10.0.0.11/24  | 172.16.0.11/24    | 192.168.1.1/24 |
@@ -34,9 +34,9 @@ A colleague deployed a DMVPN Phase 1 hub-and-spoke topology. spoke2 and spoke3 a
 ```bash
 sudo containerlab deploy -t topology.yml
 
-docker exec -it clab-debug-dmvpn-phase1-hub vtysh
-docker exec -it clab-debug-dmvpn-phase1-spoke1 vtysh
-docker exec -it clab-debug-dmvpn-phase1-spoke2 vtysh
+docker exec -it clab-debug-dmvpn-phase1-hub Cli
+docker exec -it clab-debug-dmvpn-phase1-spoke1 Cli
+docker exec -it clab-debug-dmvpn-phase1-spoke2 Cli
 ```
 
 ## Observed Symptoms
@@ -55,8 +55,8 @@ hub# show ip nhrp
 
 hub# show ip ospf neighbor
 Neighbor ID     Pri State           Dead Time  Address        Interface
-10.0.0.12         1 Full/-          00:01:58   172.16.0.12    dmvpn0
-10.0.0.13         1 Full/-          00:01:47   172.16.0.13    dmvpn0
+10.0.0.12         1 Full/-          00:01:58   172.16.0.12    Tunnel0
+10.0.0.13         1 Full/-          00:01:47   172.16.0.13    Tunnel0
 
 (spoke1 / 10.0.0.11 is MISSING from OSPF neighbors)
 
@@ -79,7 +79,7 @@ spoke2 and spoke3 work correctly. spoke1 has the same setup.sh and tunnel but it
 show ip nhrp
 show ip nhrp nhs
 show ip ospf neighbor
-show ip ospf interface dmvpn0
+show ip ospf interface Tunnel0
 show running-config
 ```
 
@@ -93,7 +93,7 @@ NHRP registration is the first thing that must succeed before OSPF runs over the
 
 <details><summary>Hint 2 — Narrowing it down</summary>
 
-On spoke1, run `show running-config` and look at the `ip nhrp nhs` line under `interface dmvpn0`. On spoke2, do the same. The NHS address format is:
+On spoke1, run `show running-config` and look at the `ip nhrp nhs` line under `interface Tunnel0`. On spoke2, do the same. The NHS address format is:
 
 ```
 ip nhrp nhs <tunnel-overlay-IP> nbma <physical-WAN-IP>
@@ -113,11 +113,11 @@ spoke1's config has `ip nhrp nhs 10.0.0.1 nbma 10.0.0.1` — both the NHS and NB
 
 <details><summary>Fix (don't peek!)</summary>
 
-On **spoke1** in vtysh:
+On **spoke1** in Cli:
 
 ```
 spoke1# configure terminal
-spoke1(config)# interface dmvpn0
+spoke1(config)# interface Tunnel0
 spoke1(config-if)# no ip nhrp nhs 10.0.0.1 nbma 10.0.0.1 multicast
 spoke1(config-if)# no ip nhrp map 10.0.0.1 10.0.0.1
 spoke1(config-if)# ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast
@@ -143,9 +143,9 @@ hub# show ip nhrp
 
 hub# show ip ospf neighbor
 Neighbor ID     Pri State    Dead Time  Address       Interface
-10.0.0.11         1 Full/-   00:01:58   172.16.0.11   dmvpn0
-10.0.0.12         1 Full/-   00:01:55   172.16.0.12   dmvpn0
-10.0.0.13         1 Full/-   00:01:52   172.16.0.13   dmvpn0
+10.0.0.11         1 Full/-   00:01:58   172.16.0.11   Tunnel0
+10.0.0.12         1 Full/-   00:01:55   172.16.0.12   Tunnel0
+10.0.0.13         1 Full/-   00:01:52   172.16.0.13   Tunnel0
 
 spoke2# ping 192.168.1.1
 64 bytes from 192.168.1.1: icmp_seq=1 ttl=63 time=1.2 ms

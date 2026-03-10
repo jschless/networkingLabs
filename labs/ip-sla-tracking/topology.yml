@@ -1,53 +1,21 @@
 name: ip-sla-tracking
 
-# IP SLA + Object Tracking + Floating Static Route Lab
-#
-# Topology:
-#
-#  [router] --eth1-- [isp1]
-#           --eth2-- [isp2]
-#
-# Both ISPs advertise a shared "internet" target: 10.99.0.1/32
-# router uses IP SLA to probe isp1. If isp1 goes down, the primary
-# static default route is withdrawn and the backup route via isp2 takes over.
-#
-# IP addressing:
-#   router:eth1 <-> isp1:eth1 = 10.0.1.0/30 (router=.1, isp1=.2)
-#   router:eth2 <-> isp2:eth1 = 10.0.2.0/30 (router=.1, isp2=.2)
-#   isp1 loopback: 10.99.0.1/32  (simulated internet destination)
-#   isp2 loopback: 10.99.0.1/32  (same IP — both paths reach same internet)
-#
-# What you configure:
-#   1. Two static default routes (primary AD=5, backup AD=10)
-#   2. IP SLA ICMP probe to 10.99.0.1 via eth1
-#   3. Track object tied to SLA reachability
-#   4. Primary route conditioned on track object
-#   5. Simulate isp1 failure; verify backup takes over
-
 topology:
-  defaults:
-    kind: linux
-    image: frr-lab:local
-    binds:
-      - configs/daemons:/etc/frr/daemons
-      - configs/vtysh.conf:/etc/frr/vtysh.conf
-    sysctls:
-      net.ipv4.ip_forward: "1"
-    exec:
-      - vtysh -b
-
   nodes:
-    router:
-      binds:
-        - configs/router/frr.conf:/etc/frr/frr.conf
-
     isp1:
-      binds:
-        - configs/isp1/frr.conf:/etc/frr/frr.conf
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/isp1/startup-config
 
     isp2:
-      binds:
-        - configs/isp2/frr.conf:/etc/frr/frr.conf
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/isp2/startup-config
+
+    router:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/router/startup-config
 
   links:
     - endpoints: ["router:eth1", "isp1:eth1"]    # 10.0.1.0/30

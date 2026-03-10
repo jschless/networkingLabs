@@ -83,7 +83,7 @@ on each router to bring up adjacencies and exchange routes.
 
 ### Step 1: Enable OSPFv3 on interfaces
 
-On each router, in vtysh:
+On each router, in Cli:
 
 ```
 configure terminal
@@ -177,7 +177,7 @@ traceroute6 2001:db8::4
 **No neighbors forming:**
 - Check that both ends have `ipv6 ospf6 area 0` on the connecting interface
 - Verify IPv6 link-local addresses are assigned: `show interface eth1`
-- Check that ospf6d is running: `show daemons` in vtysh
+- Check that ospf6d is running: `show daemons` in Cli
 
 **Routes missing:**
 - Check if loopback has `ipv6 ospf6 area 0`

@@ -44,7 +44,7 @@ sudo containerlab deploy -t topology.yml
 
 Connect to a router:
 ```bash
-sudo docker exec -it clab-ospf-summarization-r4 vtysh
+sudo docker exec -it clab-ospf-summarization-r4 Cli
 ```
 
 ## Step 1 — Add Extra Loopback Addresses on r1

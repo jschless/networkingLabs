@@ -1,6 +1,6 @@
 name: spine-leaf
 
-# BGP CLOS Spine-Leaf Fabric Lab
+# BGP CLOS Spine-Leaf Fabric Lab — Arista cEOS
 #
 # Classic data center underlay: eBGP with unique AS per device.
 # Each leaf connects to both spines for redundancy and ECMP.
@@ -17,62 +17,41 @@ name: spine-leaf
 #   leaf2-spine1: 10.1.0.2/31   leaf2-spine2: 10.2.0.2/31
 #   leaf3-spine1: 10.1.0.4/31   leaf3-spine2: 10.2.0.4/31
 #   leaf4-spine1: 10.1.0.6/31   leaf4-spine2: 10.2.0.6/31
+#
+# Pre-configured: all Ethernet interface IPs.
+# Your task: configure BGP (router bgp, neighbors, maximum-paths, ECMP).
 
 topology:
-  defaults:
-    kind: linux
-    image: frr-lab:local
-    sysctls:
-      net.ipv4.ip_forward: "1"
-
   nodes:
     spine1:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spine1/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spine1/startup-config
 
     spine2:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spine2/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spine2/startup-config
 
     leaf1:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/leaf1/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf1/startup-config
 
     leaf2:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/leaf2/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf2/startup-config
 
     leaf3:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/leaf3/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf3/startup-config
 
     leaf4:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/leaf4/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf4/startup-config
 
   links:
     - endpoints: ["leaf1:eth1",  "spine1:eth1"]   # 10.1.0.0/31

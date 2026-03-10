@@ -36,7 +36,7 @@ sudo containerlab destroy -t topology.yml
 On each router, configure IS-IS. Example for r1:
 
 ```
-vtysh
+Cli
 
 configure terminal
 
@@ -69,7 +69,7 @@ interface eth2
 ```bash
 # SSH into a node
 sudo containerlab inspect -t topology.yml
-docker exec -it clab-isis-basics-r1 vtysh
+docker exec -it clab-isis-basics-r1 Cli
 
 # Check IS-IS neighbors (should see adjacent routers)
 show isis neighbor
@@ -161,7 +161,7 @@ show isis neighbor detail       # timers, state, circuit type
 show isis database              # LSDB — all LSPs
 show isis database detail       # full TLV content of each LSP
 show isis route                 # IS-IS computed routes (before RIB install)
-show ip route isis              # routes installed in FRR RIB
+show ip route isis              # routes installed in cEOS RIB
 show isis interface             # per-interface IS-IS state
 ```
 

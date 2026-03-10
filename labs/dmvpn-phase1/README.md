@@ -1,222 +1,171 @@
-# Lab: dmvpn-phase1
+# DMVPN Phase 1 — Arista cEOS Practice Lab
 
-## Purpose
-Learn DMVPN (Dynamic Multipoint VPN) Phase 1 — a scalable hub-and-spoke VPN that uses
-mGRE (Multipoint GRE) and NHRP (Next Hop Resolution Protocol) to dynamically establish
-tunnels. Understand how spokes register with the hub, how OSPF runs over the DMVPN tunnel,
-and why DMVPN Phase 1 traffic always traverses the hub.
+Configure DMVPN Phase 1 hub-and-spoke VPN using mGRE tunnels and NHRP on Arista EOS. The hub is fully pre-configured; you configure NHRP registration and OSPF on each spoke.
+
+DMVPN Phase 1 is used by network operators deploying hub-and-spoke WAN topologies on Arista hardware. This lab uses native EOS `interface Tunnel`, `ip nhrp`, and `router ospf` commands.
+
+---
 
 ## Topology
 
 ```
-         [spoke1] (172.16.0.11)
-         /   WAN: 10.0.0.11
-        /
-[hub] (172.16.0.1) ---- [br-wan] ---- [spoke2] (172.16.0.12)
-WAN: 10.0.0.1                          WAN: 10.0.0.12
-        \
-         \
-         [spoke3] (172.16.0.13)
-         WAN: 10.0.0.13
+                        [br-wan]  10.0.0.0/24 (NBMA)
+                       /    |    \
+              eth1   eth2  eth3  eth4
+              hub   spoke1 spoke2 spoke3
+
+hub    WAN: 10.0.0.1/24   Tunnel0: 172.16.0.1/24   (mGRE — no fixed remote)
+spoke1 WAN: 10.0.0.11/24  Tunnel0: 172.16.0.11/24  LAN: 192.168.1.0/24
+spoke2 WAN: 10.0.0.12/24  Tunnel0: 172.16.0.12/24  LAN: 192.168.2.0/24
+spoke3 WAN: 10.0.0.13/24  Tunnel0: 172.16.0.13/24  LAN: 192.168.3.0/24
 ```
 
-| Node | WAN IP | DMVPN tunnel IP | Simulated LAN |
-|------|--------|-----------------|---------------|
-| hub | 10.0.0.1/24 | 172.16.0.1/24 | — |
-| spoke1 | 10.0.0.11/24 | 172.16.0.11/24 | 192.168.1.1/24 (lo) |
-| spoke2 | 10.0.0.12/24 | 172.16.0.12/24 | 192.168.2.1/24 (lo) |
-| spoke3 | 10.0.0.13/24 | 172.16.0.13/24 | 192.168.3.1/24 (lo) |
+`br-wan` is a Linux bridge simulating the NBMA WAN network (all spokes can reach the hub but not each other directly at the IP layer in Phase 1).
 
-## Deploy / Destroy
+---
+
+## Deploy and access
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml
+sudo containerlab deploy -t labs/dmvpn-phase1/topology.yml
+
+# EOS CLI
+docker exec -it clab-dmvpn-phase1-hub    Cli
+docker exec -it clab-dmvpn-phase1-spoke1 Cli
 ```
 
-## What Is Pre-Configured
+---
 
-The `setup.sh` scripts on each node configure:
-- WAN interface IP (eth1) on the shared WAN bridge
-- **mGRE tunnel (dmvpn0)** on hub — accepts tunnels from any spoke
-- **GRE tunnel (dmvpn0)** on each spoke — points to hub as remote
-- Tunnel IP addresses (172.16.0.x/24)
-- Simulated LAN loopbacks on spokes (192.168.x.1/24)
+## Step 1 — Verify hub baseline
 
-After deploy, the GRE/mGRE interfaces exist. Your task is to configure NHRP and OSPF.
+The hub is fully configured (mGRE Tunnel0, NHRP, OSPF). Check it before configuring spokes:
 
-## What You Configure
+```
+# On hub
+show interfaces Tunnel0
+show ip nhrp
+show ip ospf interface Tunnel0
+```
 
-### Step 1: Configure NHRP on the hub
+The hub's `show ip nhrp` output will be empty until spokes register.
+
+---
+
+## Step 2 — Configure spoke1 NHRP and OSPF
+
+Enter spoke1 CLI:
+```bash
+docker exec -it clab-dmvpn-phase1-spoke1 Cli
+```
+
+Configure Tunnel0 NHRP:
+```
+configure
+interface Tunnel0
+   ip nhrp network-id 1
+   ip nhrp holdtime 300
+   ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast
+   ip nhrp map 172.16.0.1 10.0.0.1
+   ip nhrp registration no-unique
+   ip ospf network point-to-point
+   ip ospf area 0
+```
+
+Configure OSPF process:
+```
+router ospf 1
+   router-id 10.0.0.11
+   passive-interface Loopback0
+   passive-interface Loopback1
+```
+
+### NHRP parameter explanation
+
+| Command | Purpose |
+|---------|---------|
+| `ip nhrp network-id 1` | Identifies the DMVPN cloud (must match hub) |
+| `ip nhrp holdtime 300` | How long the hub keeps this registration |
+| `ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast` | Register with hub: tunnel IP=172.16.0.1, WAN IP=10.0.0.1, enable multicast forwarding |
+| `ip nhrp map 172.16.0.1 10.0.0.1` | Static mapping so spoke knows how to reach hub |
+| `ip nhrp registration no-unique` | Allows re-registration (useful in lab environments) |
+
+---
+
+## Step 3 — Verify spoke1 registration
+
+On hub, check NHRP:
+```
+show ip nhrp
+```
+
+Expected output shows spoke1's tunnel IP (172.16.0.11) mapped to WAN IP (10.0.0.11).
+
+Check OSPF adjacency:
+```
+show ip ospf neighbor
+```
+
+Spoke1 should appear as `Full` neighbor.
+
+---
+
+## Step 4 — Configure spoke2 and spoke3
+
+Repeat Step 2 for spoke2 (router-id 10.0.0.12, tunnel IP 172.16.0.12) and spoke3 (router-id 10.0.0.13, tunnel IP 172.16.0.13). NHRP NHS parameters are the same for all spokes.
+
+---
+
+## Step 5 — Verify routing and connectivity
+
+After all spokes are configured, on hub:
+```
+show ip ospf neighbor
+show ip route
+```
+
+You should see routes to all spoke LANs (192.168.1/2/3.0/24) via OSPF.
+
+Test connectivity spoke-to-spoke via hub:
+```
+# On spoke1
+ping 192.168.2.1 repeat 5    ← spoke2 LAN
+ping 192.168.3.1 repeat 5    ← spoke3 LAN
+```
+
+---
+
+## Key EOS DMVPN concepts
+
+**`tunnel mode gre multipoint`** — creates an mGRE interface that can accept tunnels from any spoke (no single `tunnel destination`). Without this the hub would need a separate tunnel interface per spoke.
+
+**`ip nhrp redirect`** (hub only) — in Phase 1, hub-and-spoke only. In Phase 2/3, the hub sends NHRP redirect messages to tell spokes to build direct spoke-to-spoke tunnels.
+
+**OSPF network types on DMVPN:**
+- Hub: `point-to-multipoint` — hub sees all spokes as point-to-point segments, no DR/BDR election
+- Spokes: `point-to-point` — each spoke treats its tunnel as a p2p link to the hub
+
+---
+
+## Troubleshooting
+
+**NHRP not registering (`show ip nhrp` empty on hub)**
+- Confirm `ip nhrp nhs` and `ip nhrp map` on spoke point to hub's CORRECT IPs
+- Check physical WAN reachability: `ping 10.0.0.1` from spoke's WAN interface
+- Verify `ip nhrp network-id 1` matches on hub and spoke
+
+**OSPF not forming adjacency**
+- After NHRP registers, OSPF should form over the tunnel
+- Check `show ip ospf interface Tunnel0` — verify network type matches (p2mp on hub, p2p on spoke)
+- `show ip ospf neighbor detail` for timer/state info
+
+**Routes not propagated**
+- `show ip ospf database` — check if LSAs from all routers are present
+- Passive interfaces (Loopback0, Loopback1) must still be covered by the `network` statement or interface-level `ip ospf area 0`
+
+---
+
+## Cleanup
 
 ```bash
-docker exec -it clab-dmvpn-phase1-hub vtysh
-configure terminal
-
-interface dmvpn0
- ip nhrp network-id 1
- ip nhrp holdtime 300
- ip nhrp redirect
- ip ospf network point-to-multipoint
- ip ospf area 0
-
-router ospf
- ospf router-id 10.0.0.1
- passive-interface lo
- network 172.16.0.0/24 area 0
- network 10.0.0.1/32 area 0
-
-end
-write memory
+sudo containerlab destroy -t labs/dmvpn-phase1/topology.yml --cleanup
 ```
-
-### Step 2: Configure NHRP on spoke1
-
-```bash
-docker exec -it clab-dmvpn-phase1-spoke1 vtysh
-configure terminal
-
-interface dmvpn0
- ip nhrp network-id 1
- ip nhrp holdtime 300
- ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast
- ip nhrp map 172.16.0.1 10.0.0.1
- ip nhrp registration no-unique
- ip ospf network point-to-point
- ip ospf area 0
-
-router ospf
- ospf router-id 10.0.0.11
- passive-interface lo
- network 172.16.0.0/24 area 0
- network 10.0.0.11/32 area 0
- network 192.168.1.0/24 area 0
-
-end
-write memory
-```
-
-### Step 3: Configure NHRP on spoke2 and spoke3
-
-Same as spoke1, adjusting router-id and LAN network:
-
-**spoke2** (router-id 10.0.0.12, LAN 192.168.2.0/24):
-```
-interface dmvpn0
- ip nhrp network-id 1
- ip nhrp holdtime 300
- ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast
- ip nhrp map 172.16.0.1 10.0.0.1
- ip nhrp registration no-unique
- ip ospf network point-to-point
- ip ospf area 0
-
-router ospf
- ospf router-id 10.0.0.12
- passive-interface lo
- network 172.16.0.0/24 area 0
- network 10.0.0.12/32 area 0
- network 192.168.2.0/24 area 0
-```
-
-**spoke3** (router-id 10.0.0.13, LAN 192.168.3.0/24) — same pattern.
-
-### Step 4: Verify
-
-```bash
-# Check NHRP registrations on hub
-docker exec clab-dmvpn-phase1-hub vtysh -c "show ip nhrp"
-
-# Check OSPF neighbors (hub should see all 3 spokes)
-docker exec clab-dmvpn-phase1-hub vtysh -c "show ip ospf neighbor"
-
-# Check routes on spoke1 (should see 192.168.2.0/24 and 192.168.3.0/24 via hub)
-docker exec clab-dmvpn-phase1-spoke1 vtysh -c "show ip route ospf"
-
-# Ping from spoke1 to spoke2 LAN (goes via hub in Phase 1)
-docker exec clab-dmvpn-phase1-spoke1 ping -c3 192.168.2.1
-```
-
-## Verification Commands
-
-```
-# NHRP
-show ip nhrp                      # all registrations and mappings
-show ip nhrp summary              # count of NHRP entries
-show dmvpn                        # DMVPN summary (if available)
-
-# OSPF
-show ip ospf neighbor             # adjacency state
-show ip ospf interface dmvpn0     # OSPF interface state and DR/BDR
-show ip route ospf                # OSPF-learned routes
-
-# GRE tunnel
-ip tunnel show                    # tunnel interface details
-ip link show dmvpn0               # link state
-
-# Traffic path (Phase 1 — all through hub)
-traceroute 192.168.2.1 source 192.168.1.1
-```
-
-## Concepts
-
-### DMVPN Components
-
-**mGRE (Multipoint GRE)** — A single GRE interface on the hub that can accept tunnels
-from any spoke. The hub doesn't need a separate tunnel interface per spoke. Spokes use
-regular GRE with the hub as the fixed remote endpoint.
-
-**NHRP (Next Hop Resolution Protocol, RFC 2332)** — A protocol that maps overlay IP
-addresses (tunnel IPs) to underlay IP addresses (physical WAN IPs). It's analogous to
-ARP but for the tunnel overlay:
-
-```
-"What is the WAN IP for DMVPN IP 172.16.0.11?"
-→ NHRP query to NHS (hub at 172.16.0.1)
-← NHRP reply: 172.16.0.11 maps to 10.0.0.11
-```
-
-The hub is the **NHS (Next Hop Server)**. Spokes register themselves: "I am 172.16.0.11
-and my WAN (NBMA) address is 10.0.0.11."
-
-### Phase 1 vs Phase 2 vs Phase 3
-
-**Phase 1** (this lab): Hub-and-spoke only. All spoke-to-spoke traffic goes through the
-hub. Simple to configure but hub is a bottleneck.
-
-**Phase 2**: Spokes can resolve each other's WAN IPs via NHRP and create direct
-spoke-to-spoke tunnels. Requires nhrp shortcut on spokes.
-
-**Phase 3**: Dynamic routing protocols aware of DMVPN shortcuts (NHRP route injection).
-Most scalable.
-
-### OSPF Network Types over DMVPN
-
-Hub must use `point-to-multipoint` because it has multiple OSPF neighbors on one interface:
-- DR/BDR election is skipped
-- Each neighbor gets a host route in the OSPF LSDB
-
-Spokes use `point-to-point` because they only have one neighbor (hub) on dmvpn0.
-
-### NHRP Network-ID
-
-The `ip nhrp network-id 1` must match on hub and all spokes. It groups all DMVPN
-participants into the same NHRP domain.
-
-## Challenge Exercises
-
-1. Capture the NHRP registration packets: `tcpdump -i eth1 port 4791` on hub (or
-   use Wireshark). Observe the NHRP Registration Request from a spoke and the Reply.
-
-2. Verify Phase 1 behavior: use `traceroute 192.168.2.1 source 192.168.1.1` from
-   spoke1. How many hops are there? Why does traffic go through hub?
-
-3. Break NHRP by changing the network-id on one spoke. What happens to OSPF adjacency?
-   Can OSPF still form without NHRP?
-
-4. Add authentication to NHRP: `ip nhrp authentication SECRETKEY` (must match on all
-   nodes). What happens if spoke3 uses a different key?
-
-5. Try Phase 2: add `ip nhrp shortcut` on the spoke interfaces and `ip nhrp redirect`
-   on hub. After spoke1 pings spoke2, check `show ip nhrp` on spoke1 — do you see a
-   direct NHRP mapping for spoke2's WAN IP?

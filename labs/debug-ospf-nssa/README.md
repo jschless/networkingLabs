@@ -39,9 +39,9 @@ A colleague was reviewing area configurations and changed a setting on r1, the A
 ```bash
 sudo containerlab deploy -t topology.yml
 
-docker exec -it clab-debug-ospf-nssa-r1 vtysh
-docker exec -it clab-debug-ospf-nssa-r2 vtysh
-docker exec -it clab-debug-ospf-nssa-r3 vtysh
+docker exec -it clab-debug-ospf-nssa-r1 Cli
+docker exec -it clab-debug-ospf-nssa-r2 Cli
+docker exec -it clab-debug-ospf-nssa-r3 Cli
 ```
 
 ## Observed Symptoms
@@ -101,7 +101,7 @@ r1 has Area 1 configured as a **Stub** area; r2 has Area 1 configured as **NSSA*
 
 <details><summary>Fix (don't peek!)</summary>
 
-On **r1** in vtysh:
+On **r1** in Cli:
 
 ```
 r1# configure terminal

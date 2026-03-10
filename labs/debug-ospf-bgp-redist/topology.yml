@@ -1,41 +1,26 @@
 name: debug-ospf-bgp-redist
 
-# Debug lab — OSPF/BGP redistribution with an intentional misconfiguration.
-# Deploy, observe the symptoms, and diagnose the fault before looking at configs.
-#
-# Topology:
-#
-#   [r1] --OSPF area 0-- [asbr] --eBGP-- [bgp1] --iBGP-- [bgp2]
-#                        AS65100          AS65200
-#
-# Goal (when healthy): r1 and bgp2 can ping each other's loopbacks.
-# Something is wrong with the redistribution at the asbr.
-
 topology:
-  defaults:
-    kind: linux
-    image: frr-lab:local
-    binds:
-      - configs/daemons:/etc/frr/daemons
-      - configs/vtysh.conf:/etc/frr/vtysh.conf
-    sysctls:
-      net.ipv4.ip_forward: "1"
-    exec:
-      - vtysh -b
-
   nodes:
-    r1:
-      binds:
-        - configs/r1/frr.conf:/etc/frr/frr.conf
     asbr:
-      binds:
-        - configs/asbr/frr.conf:/etc/frr/frr.conf
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/asbr/startup-config
+
     bgp1:
-      binds:
-        - configs/bgp1/frr.conf:/etc/frr/frr.conf
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/bgp1/startup-config
+
     bgp2:
-      binds:
-        - configs/bgp2/frr.conf:/etc/frr/frr.conf
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/bgp2/startup-config
+
+    r1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/r1/startup-config
 
   links:
     - endpoints: ["r1:eth1",   "asbr:eth1"]   # 10.0.12.0/30  OSPF area 0

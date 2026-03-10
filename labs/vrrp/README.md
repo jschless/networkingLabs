@@ -42,7 +42,7 @@ sudo containerlab deploy -t topology.yml
 ### Task 1 — Configure VRRP on r1 (master, priority 110)
 
 ```
-vtysh -c "conf t" -c "interface eth1" \
+Cli -c "enable" -c "configure" -c "interface Ethernet1" \
       -c "vrrp 1 ip 192.168.1.254" \
       -c "vrrp 1 priority 110" \
       -c "vrrp 1 preempt"
@@ -50,7 +50,7 @@ vtysh -c "conf t" -c "interface eth1" \
 
 Or enter vtysh interactively:
 ```
-interface eth1
+interface Ethernet1
  vrrp 1 ip 192.168.1.254
  vrrp 1 priority 110
  vrrp 1 preempt
@@ -59,7 +59,7 @@ interface eth1
 ### Task 2 — Configure VRRP on r2 (backup, default priority 100)
 
 ```
-interface eth1
+interface Ethernet1
  vrrp 1 ip 192.168.1.254
 ```
 
@@ -70,7 +70,7 @@ Priority defaults to 100, which is lower than r1's 110 — r1 wins the election.
 On r1:
 ```
 show vrrp
-show vrrp interface eth1
+show vrrp interface Ethernet1
 ```
 
 Expected output for r1:
@@ -137,7 +137,7 @@ This is why ARP doesn't need to update on failover — the MAC is stable.
 - The IP address owner (router whose real IP equals the VIP) always wins (priority 255)
 
 ### Preemption
-When `vrrp X preempt` is set, a router that recovers and has a higher priority than the current master will take over. FRR enables preempt by default.
+When `vrrp X preempt` is set, a router that recovers and has a higher priority than the current master will take over. cEOS behavior depends on explicit configuration in this lab.
 
 ### Advertisement Interval
 The master sends VRRP advertisements every 1 second. If the backup misses 3 consecutive advertisements (3 seconds), it declares the master dead and transitions to Master state.
@@ -146,7 +146,7 @@ The master sends VRRP advertisements every 1 second. If the backup misses 3 cons
 
 ```
 show vrrp                          # summary of all VRRP instances
-show vrrp interface eth1           # detail for specific interface
+show vrrp interface Ethernet1           # detail for specific interface
 show vrrp 1                        # detail for VRID 1
 ```
 

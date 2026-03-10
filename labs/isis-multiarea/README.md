@@ -40,7 +40,7 @@ sudo containerlab destroy -t topology.yml
 ### Level-1 routers: r1, r4, r5
 
 ```
-vtysh
+Cli
 configure terminal
 
 interface lo
@@ -61,7 +61,7 @@ write memory
 ### Level-1/2 routers: r2, r3
 
 ```
-vtysh
+Cli
 configure terminal
 
 interface lo
@@ -87,7 +87,7 @@ r3 also has eth3 — configure it under IS-IS as well.
 ## Verification
 
 ```bash
-docker exec -it clab-isis-multiarea-r1 vtysh
+docker exec -it clab-isis-multiarea-r1 Cli
 
 # On r1 (L1 only) — should see only area 49.0001 neighbors
 show isis neighbor

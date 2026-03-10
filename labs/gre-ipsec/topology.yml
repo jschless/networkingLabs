@@ -61,14 +61,9 @@ topology:
         - bash /setup.sh
 
     internet:
-      image: frr-lab:local
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/internet/frr.conf:/etc/frr/frr.conf
-      exec:
-        - bash -c 'ip route del default dev eth0 2>/dev/null || true'
-        - vtysh -b
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/internet/startup-config
 
     gw-b:
       image: ipsec-lab:local

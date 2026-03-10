@@ -42,7 +42,7 @@ sudo containerlab destroy -t topology.yml
 Example for r1:
 
 ```
-vtysh
+Cli
 configure terminal
 
 interface lo
@@ -74,7 +74,7 @@ show ip ospf neighbor
 Add BFD to each interface on each router:
 
 ```
-vtysh
+Cli
 configure terminal
 
 interface eth1
@@ -123,9 +123,9 @@ You should see BFD sessions in UP state for each OSPF neighbor.
 Open two terminal windows. In one, watch OSPF:
 
 ```bash
-docker exec -it clab-bfd-ospf-r1 vtysh -c "show ip ospf neighbor"
+docker exec -it clab-bfd-ospf-r1 Cli -c "show ip ospf neighbor"
 # Run repeatedly with watch:
-watch -n0.5 'docker exec clab-bfd-ospf-r1 vtysh -c "show ip ospf neighbor"'
+watch -n0.5 'docker exec clab-bfd-ospf-r1 Cli -c "show ip ospf neighbor"'
 ```
 
 In the other, bring down a link:

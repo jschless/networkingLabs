@@ -36,7 +36,7 @@ sudo containerlab destroy -t topology.yml
 Example for r1:
 
 ```
-vtysh
+Cli
 configure terminal
 
 router bgp 65001
@@ -91,7 +91,7 @@ show bgp ipv4 unicast summary
 Open a watch window on r1:
 
 ```bash
-watch -n0.5 'docker exec clab-bfd-bgp-r1 vtysh -c "show bgp ipv4 unicast summary"'
+watch -n0.5 'docker exec clab-bfd-bgp-r1 Cli -c "show bgp ipv4 unicast summary"'
 ```
 
 Kill the link between r1 and r2:
@@ -112,7 +112,7 @@ docker exec clab-bfd-bgp-r2 ip link set eth1 up
 ### Step 3: Enable BFD per BGP neighbor
 
 ```
-vtysh
+Cli
 configure terminal
 
 router bgp 65001
@@ -146,7 +146,7 @@ Repeat the link-down test. BGP session should tear down in under 1 second.
 
 ```bash
 # Watch BGP summary
-watch -n0.5 'docker exec clab-bfd-bgp-r1 vtysh -c "show bgp ipv4 unicast summary"'
+watch -n0.5 'docker exec clab-bfd-bgp-r1 Cli -c "show bgp ipv4 unicast summary"'
 
 # Kill the link
 docker exec clab-bfd-bgp-r2 ip link set eth1 down
@@ -236,9 +236,9 @@ bfd
 BFD detects **forwarding plane** failures. Hold timer detects **control plane** failures.
 They are complementary, not mutually exclusive.
 
-### FRR Note: no bgp ebgp-requires-policy
+### cEOS Note: no bgp ebgp-requires-policy
 
-FRR 8.x requires explicit policy (route-maps) on eBGP sessions by default.
+cEOS 8.x requires explicit policy (route-maps) on eBGP sessions by default.
 Adding `no bgp ebgp-requires-policy` disables this requirement for the lab,
 allowing routes to be accepted and advertised without explicit route-maps.
 

@@ -1,84 +1,102 @@
 name: vxlan-evpn
 
-# VXLAN with BGP EVPN Control Plane
+# EVPN/VXLAN Capstone Lab — Arista cEOS
 #
-# Underlay: OSPF between VTEPs and spine (loopback reachability)
-# Overlay:  BGP EVPN type-2 (MAC/IP) and type-3 (IMET) routes
-# Forwarding: VXLAN UDP 4789 tunnels between VTEP loopbacks
+# Multi-tenant data center fabric: BGP EVPN control plane + VXLAN data plane.
+# Spines act as EVPN route reflectors (eBGP with next-hop-unchanged).
+# Leaves are VTEPs: they bridge tenant VLANs into VXLAN tunnels.
+# Hosts are cEOS nodes simulating servers in two tenant segments.
 #
-# [host1]--[vtep1]--[spine/RR]--[vtep2]--[host2]
-#           VTEP                  VTEP
-#           10.0.0.1             10.0.0.2
-#           |<---- VNI 100 L2 segment ---->|
-#           172.16.0.1 (host1)    172.16.0.2 (host2)
+# TENANT-A (VLAN 10, VNI 10010, 10.10.10.0/24): host-a1 on leaf1, host-a2 on leaf3
+# TENANT-B (VLAN 20, VNI 10020, 10.20.20.0/24): host-b1 on leaf2, host-b2 on leaf4
 #
-# vtep1 setup.sh:
-#   - Manually adds loopback 10.0.0.1 (needed before vxlan creation)
-#   - Creates vxlan100 (VNI 100, local=10.0.0.1, nolearning)
-#   - Creates bridge br100
-#   - Enslaves vxlan100 and eth2 (host-facing) to br100
-#   - Runs vtysh -b to load FRR OSPF+EVPN config
+# Underlay /31 point-to-point links:
+#   leaf1-spine1: 10.1.0.0/31   leaf1-spine2: 10.2.0.0/31
+#   leaf2-spine1: 10.1.0.2/31   leaf2-spine2: 10.2.0.2/31
+#   leaf3-spine1: 10.1.0.4/31   leaf3-spine2: 10.2.0.4/31
+#   leaf4-spine1: 10.1.0.6/31   leaf4-spine2: 10.2.0.6/31
 #
-# spine setup:
-#   - BGP Route Reflector for l2vpn evpn AF
-#   - OSPF for underlay only
+# Loopbacks (also VTEP IPs):
+#   spine1: 10.0.0.101   spine2: 10.0.0.102
+#   leaf1:  10.0.0.1     leaf2:  10.0.0.2
+#   leaf3:  10.0.0.3     leaf4:  10.0.0.4
+#
+#                  [spine1]              [spine2]
+#                  AS65100               AS65200
+#              /    /    \    \       /    /    \    \
+#         [leaf1] [leaf2] [leaf3] [leaf4]
+#         AS65001 AS65002 AS65003 AS65004
+#            |       |       |       |
+#         [host-a1][host-b1][host-a2][host-b2]
+#         VLAN 10  VLAN 20  VLAN 10  VLAN 20
 
 topology:
-  defaults:
-    kind: linux
-    sysctls:
-      net.ipv4.ip_forward: "1"
-
   nodes:
-    spine:
-      image: frr-lab:local
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spine/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+    spine1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spine1/startup-config
 
-    vtep1:
-      image: frr-lab:local
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/vtep1/frr.conf:/etc/frr/frr.conf
-        - configs/vtep1/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+    spine2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spine2/startup-config
 
-    vtep2:
-      image: frr-lab:local
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/vtep2/frr.conf:/etc/frr/frr.conf
-        - configs/vtep2/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+    leaf1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf1/startup-config
 
-    host1:
-      image: frr-lab:local
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/host1/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+    leaf2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf2/startup-config
 
-    host2:
-      image: frr-lab:local
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/host2/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+    leaf3:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf3/startup-config
+
+    leaf4:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf4/startup-config
+
+    host-a1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/host-a1/startup-config
+
+    host-b1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/host-b1/startup-config
+
+    host-a2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/host-a2/startup-config
+
+    host-b2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/host-b2/startup-config
 
   links:
-    - endpoints: ["vtep1:eth1", "spine:eth1"]   # 10.1.1.0/30 underlay
-    - endpoints: ["vtep2:eth1", "spine:eth2"]   # 10.1.2.0/30 underlay
-    - endpoints: ["host1:eth1", "vtep1:eth2"]   # host → vtep (enslaved to br100)
-    - endpoints: ["host2:eth1", "vtep2:eth2"]   # host → vtep (enslaved to br100)
+    # Underlay: leaves to spine1
+    - endpoints: ["leaf1:eth1", "spine1:eth1"]   # 10.1.0.0/31
+    - endpoints: ["leaf2:eth1", "spine1:eth2"]   # 10.1.0.2/31
+    - endpoints: ["leaf3:eth1", "spine1:eth3"]   # 10.1.0.4/31
+    - endpoints: ["leaf4:eth1", "spine1:eth4"]   # 10.1.0.6/31
+
+    # Underlay: leaves to spine2
+    - endpoints: ["leaf1:eth2", "spine2:eth1"]   # 10.2.0.0/31
+    - endpoints: ["leaf2:eth2", "spine2:eth2"]   # 10.2.0.2/31
+    - endpoints: ["leaf3:eth2", "spine2:eth3"]   # 10.2.0.4/31
+    - endpoints: ["leaf4:eth2", "spine2:eth4"]   # 10.2.0.6/31
+
+    # Host-facing (access ports — leaf eth3 is the VLAN access port)
+    - endpoints: ["host-a1:eth1", "leaf1:eth3"]  # Tenant-A, VLAN 10
+    - endpoints: ["host-b1:eth1", "leaf2:eth3"]  # Tenant-B, VLAN 20
+    - endpoints: ["host-a2:eth1", "leaf3:eth3"]  # Tenant-A, VLAN 10
+    - endpoints: ["host-b2:eth1", "leaf4:eth3"]  # Tenant-B, VLAN 20

@@ -8,7 +8,7 @@ the traditional 3-tier hierarchy: **Core / Distribution / Access**.
 ## Topology Diagram
 
 ```
-                  [isp]  AS65500 (FRR)
+                  [isp]  AS65500
                     | 203.0.113.0/30
                   [edge] AS65100
                   10.0.0.1  eBGP upstream
@@ -37,7 +37,7 @@ VLAN10                   VLAN20
 
 | Node     | Kind   | AS     | Loopback      | Role                          |
 |----------|--------|--------|---------------|-------------------------------|
-| isp      | FRR    | 65500  | 1.1.1.1/32    | Upstream ISP, eBGP peer       |
+| isp      | cEOS   | 65500  | 1.1.1.1/32    | Upstream ISP, eBGP peer       |
 | edge     | cEOS   | 65100  | 10.0.0.1/32   | Internet edge, BGP + OSPF     |
 | core1    | cEOS   | —      | 10.0.0.2/32   | Core backbone, OSPF area 0    |
 | core2    | cEOS   | —      | 10.0.0.3/32   | Core backbone, OSPF area 0    |
@@ -159,8 +159,8 @@ docker exec -it clab-enterprise-campus-acc1 Cli
 docker exec -it clab-enterprise-campus-client-a bash
 docker exec -it clab-enterprise-campus-client-b bash
 
-# FRR ISP
-docker exec -it clab-enterprise-campus-isp vtysh
+# cEOS ISP
+docker exec -it clab-enterprise-campus-isp Cli
 ```
 
 ### BGP Verification (edge, isp)
@@ -171,7 +171,7 @@ show ip bgp
 show ip bgp neighbors 203.0.113.1 received-routes
 show ip bgp neighbors 203.0.113.1 advertised-routes
 
-# On ISP (vtysh):
+# On ISP (Cli):
 show bgp summary
 show ip bgp
 show ip route
@@ -333,12 +333,12 @@ isp2:
   binds:
     - configs/isp2/frr.conf:/etc/frr/frr.conf
     - configs/isp2/daemons:/etc/frr/daemons
-    - configs/isp2/vtysh.conf:/etc/frr/vtysh.conf
+    - configs/isp2/Cli.conf:/etc/frr/Cli.conf
   sysctls:
     net.ipv4.ip_forward: "1"
   exec:
     - bash -c 'ip route del default dev eth0 2>/dev/null || true'
-    - vtysh -b
+    - Cli -b
 
 # Add link:
 - endpoints: ["isp2:eth1", "edge:eth4"]   # 203.0.114.0/30

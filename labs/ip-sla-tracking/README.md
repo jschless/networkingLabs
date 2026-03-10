@@ -37,15 +37,15 @@ sudo containerlab deploy -t topology.yml
 
 Verify both ISPs are reachable:
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- vtysh -c "ping 10.0.1.2"
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- vtysh -c "ping 10.0.2.2"
+sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "ping 10.0.1.2"
+sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "ping 10.0.2.2"
 ```
 
 ### Step 2: Configure floating static routes (no tracking yet)
 
 On **router**:
 ```
-vtysh
+Cli
 conf t
 ip route 0.0.0.0/0 10.0.1.2 5
 ip route 0.0.0.0/0 10.0.2.2 10
@@ -68,7 +68,7 @@ show ip route 0.0.0.0/0 longer-prefixes
 
 On **router**:
 ```
-vtysh
+Cli
 conf t
 ip sla 1
  icmp-echo 10.99.0.1 source-interface eth1
@@ -88,7 +88,7 @@ for ICMP echo probes to 10.99.0.1 via eth1.
 
 On **router**:
 ```
-vtysh
+Cli
 conf t
 track 1 ip sla 1 reachability
 ```
@@ -104,7 +104,7 @@ Output will show `State is Up` when the SLA probe succeeds.
 
 On **router** — remove the untracked primary route and replace with tracked version:
 ```
-vtysh
+Cli
 conf t
 no ip route 0.0.0.0/0 10.0.1.2 5
 ip route 0.0.0.0/0 10.0.1.2 5 track 1
@@ -125,13 +125,13 @@ sudo containerlab exec -t topology.yml --label clab-node-name=router -- ip link 
 Wait a few seconds (SLA frequency is 5 seconds), then check:
 
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- vtysh -c "show track 1"
+sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "show track 1"
 ```
 
 Track state changes to `Down`. Then check routing table:
 
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- vtysh -c "show ip route"
+sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "show ip route"
 ```
 
 The primary route (AD=5) should be gone. The backup (AD=10) should now be
@@ -150,8 +150,8 @@ sudo containerlab exec -t topology.yml --label clab-node-name=router -- ip link 
 
 Wait for the SLA probe to succeed (up to 5 seconds), then:
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- vtysh -c "show track 1"
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- vtysh -c "show ip route"
+sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "show track 1"
+sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "show ip route"
 ```
 
 Primary route reinstalls and backup returns to standby state.
@@ -166,7 +166,7 @@ Primary route reinstalls and backup returns to standby state.
 | tcp-connect  | `tcp-connect <target> <port>`     | Service availability check  |
 | udp-echo     | `udp-echo <target> <port>`        | UDP service check           |
 
-In FRR, only `icmp-echo` is fully supported in current versions.
+In cEOS, only `icmp-echo` is fully supported in current versions.
 
 ### Track object states
 
@@ -204,7 +204,7 @@ routing table.
 
 The `frequency` parameter sets the probe interval in seconds. The `ip sla schedule`
 command activates the probe. By default, a single probe failure does NOT
-immediately flip the track to Down — FRR uses configurable thresholds.
+immediately flip the track to Down — cEOS uses configurable thresholds.
 
 To check:
 ```

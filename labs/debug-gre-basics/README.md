@@ -40,9 +40,9 @@ A colleague configured GRE tunnels between two gateway routers (gw-a and gw-b) t
 ```bash
 sudo containerlab deploy -t topology.yml
 
-# Access gateways (tunnel config is in bash, not vtysh)
-docker exec -it clab-debug-gre-basics-gw-a bash
-docker exec -it clab-debug-gre-basics-gw-b bash
+# Access gateways (EOS CLI)
+docker exec -it clab-debug-gre-basics-gw-a Cli
+docker exec -it clab-debug-gre-basics-gw-b Cli
 
 # Access hosts
 docker exec -it clab-debug-gre-basics-host-a bash
@@ -81,36 +81,26 @@ The tunnel interfaces exist on both gateways. WAN routing is correct. Why does t
 
 ## Useful Show Commands
 
-```bash
-# Run inside container bash (docker exec -it clab-debug-gre-basics-gw-b bash)
-
-# Check tunnel configuration on each gateway:
-ip tunnel show
-ip tunnel show tun0
-ip addr show tun0
-
-# Test connectivity at each layer:
-ping 203.0.113.1       # WAN reachability from gw-b
-ping 172.16.0.1        # Tunnel reachability from gw-b
-
-# Trace the path:
+```text
+show interfaces Tunnel0
+show running-config section interface Tunnel0
+show ip route
+ping 203.0.113.1
+ping 172.16.0.1
 traceroute 172.16.0.1
-
-# Check routing:
-ip route show
 ```
 
 ## Hints
 
 <details><summary>Hint 1 — Where to start</summary>
 
-WAN reachability works fine — the physical path is correct. The tunnels are up but traffic doesn't flow. Start by comparing the tunnel configuration on **both** gateways. Use `ip tunnel show tun0` on gw-a and gw-b, and compare the output side by side.
+WAN reachability works fine. Compare `show running-config section interface Tunnel0` on **both** gateways.
 
 </details>
 
 <details><summary>Hint 2 — Narrowing it down</summary>
 
-Look at the `remote` field in `ip tunnel show tun0` on each gateway:
+Look at `tunnel destination` under `interface Tunnel0` on each gateway:
 - gw-a should show `remote 203.0.113.6` (gw-b's WAN IP)
 - gw-b should show `remote 203.0.113.1` (gw-a's WAN IP)
 
@@ -120,7 +110,7 @@ Do the `remote` addresses match what you'd expect? Cross-reference with `ip addr
 
 <details><summary>Hint 3 — The specific problem</summary>
 
-Run `ip tunnel show tun0` on gw-b. The `remote` field shows `192.168.1.1` — that's gw-a's **LAN** IP (192.168.1.1/24), not its **WAN** IP (203.0.113.1/30). GRE-encapsulated packets from gw-b are sent toward 192.168.1.1, which is unreachable from the WAN. Simultaneously, gw-b rejects incoming GRE packets from 203.0.113.1 because they don't match the expected remote (192.168.1.1).
+On gw-b, `tunnel destination` is `192.168.1.1` (gw-a LAN) instead of `203.0.113.1` (gw-a WAN), so GRE traffic is sent to the wrong endpoint.
 
 </details>
 
@@ -128,13 +118,12 @@ Run `ip tunnel show tun0` on gw-b. The `remote` field shows `192.168.1.1` — th
 
 <details><summary>Fix (don't peek!)</summary>
 
-On **gw-b** (inside container bash):
+On **gw-b** (EOS CLI):
 
-```bash
-ip tunnel del tun0
-ip tunnel add tun0 mode gre local 203.0.113.6 remote 203.0.113.1 ttl 255
-ip link set tun0 up
-ip addr add 172.16.0.2/30 dev tun0
+```text
+configure
+interface Tunnel0
+   tunnel destination 203.0.113.1
 ```
 
 The correct remote for gw-b's tunnel is gw-a's **WAN** IP: `203.0.113.1`.
@@ -145,16 +134,11 @@ The correct remote for gw-b's tunnel is gw-a's **WAN** IP: `203.0.113.1`.
 
 After applying the fix on gw-b:
 
-```bash
-# Confirm tunnel config:
-ip tunnel show tun0
-# tun0: gre/ip  remote 203.0.113.1  local 203.0.113.6  ttl 255
-
-# Test tunnel:
+```text
+show interfaces Tunnel0
 ping 172.16.0.1
-# 64 bytes from 172.16.0.1: icmp_seq=1 ttl=64 time=0.5 ms
+```
 
-# End-to-end test from host-b:
-ping 192.168.1.10
-# 64 bytes from 192.168.1.10: icmp_seq=1 ttl=64 time=0.8 ms
+```bash
+docker exec -it clab-debug-gre-basics-host-b ping -c 3 192.168.1.10
 ```

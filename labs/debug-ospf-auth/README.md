@@ -45,8 +45,8 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ```bash
 sudo containerlab deploy -t labs/debug-ospf-auth/topology.yml
 
-docker exec -it clab-debug-ospf-auth-r1 vtysh
-docker exec -it clab-debug-ospf-auth-r2 vtysh
+docker exec -it clab-debug-ospf-auth-r1 Cli
+docker exec -it clab-debug-ospf-auth-r2 Cli
 ```
 
 Wait ~15 seconds after deploy for OSPF to attempt adjacency formation.
@@ -94,7 +94,7 @@ Work through the diagnostic questions:
 1. What does `show ip ospf interface eth1` say about auth type and key IDs on r1?
 2. What does `show ip ospf interface eth1` say on r2?
 3. The auth type and key ID look the same — so what else could cause the failure?
-4. Where would you look for clues in the FRR logs?
+4. Where would you look for clues in the cEOS logs?
 
 ---
 
@@ -107,8 +107,8 @@ show ip ospf neighbor
 ! Check auth type, key ID, and cryptographic sequence on an interface
 show ip ospf interface eth1
 
-! FRR log — authentication failure messages appear here
-! Run from a bash shell, not vtysh:
+! cEOS log — authentication failure messages appear here
+! Run from a bash shell, not Cli:
 !   docker exec clab-debug-ospf-auth-r2 tail -30 /var/log/frr/frr.log
 ```
 
@@ -132,7 +132,7 @@ is the actual key *value*, which show commands don't reveal.
 <details>
 <summary>Hint 2 — Narrowing it down</summary>
 
-Check FRR's log on r2 for authentication failure messages:
+Check cEOS's log on r2 for authentication failure messages:
 
 ```bash
 docker exec clab-debug-ospf-auth-r2 tail -30 /var/log/frr/frr.log
@@ -176,7 +176,7 @@ r2(config-if)# end
 r2# write memory
 ```
 
-This overwrites the wrong key value with the correct one. FRR replaces the
+This overwrites the wrong key value with the correct one. cEOS replaces the
 key in-place when you configure the same key ID — no need to remove it first.
 
 The r1–r2 adjacency will re-establish within seconds once the digests match.

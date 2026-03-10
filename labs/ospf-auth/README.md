@@ -32,7 +32,7 @@ sudo containerlab deploy -t topology.yml
 
 Connect to a router:
 ```bash
-sudo docker exec -it clab-ospf-auth-r1 vtysh
+sudo docker exec -it clab-ospf-auth-r1 Cli
 ```
 
 ## Step 1 — Basic OSPF (No Authentication)
@@ -158,7 +158,7 @@ Wait about 40 seconds (the default dead interval). Observe on **r2**:
 r2# show ip ospf neighbor
 ```
 
-The neighbor `10.0.0.1` will disappear from the table. Check FRR logs for the
+The neighbor `10.0.0.1` will disappear from the table. Check cEOS logs for the
 authentication failure message:
 ```bash
 sudo docker exec clab-ospf-auth-r2 tail -20 /var/log/frr/frr.log
@@ -222,7 +222,7 @@ interface eth1
  ip ospf message-digest-key 2 md5 NewSecretKey456
 ```
 
-Both key 1 and key 2 are now active. FRR will accept packets signed with either
+Both key 1 and key 2 are now active. cEOS will accept packets signed with either
 key and will use the highest key ID to sign outgoing packets. Adjacencies remain
 up throughout.
 
@@ -253,9 +253,9 @@ To disable debug:
 no debug ospf packet all
 ```
 
-## SHA Authentication (FRR Extension)
+## SHA Authentication (cEOS Extension)
 
-FRR also supports HMAC-SHA authentication as an extension beyond the standard:
+cEOS also supports HMAC-SHA authentication as an extension beyond the standard:
 ```
 interface eth1
  ip ospf authentication hmac-sha-256

@@ -1,6 +1,8 @@
-# GRE Basics — Practice Lab
+# GRE Basics — Arista cEOS Practice Lab
 
-Create a GRE point-to-point tunnel between two gateway routers across a simulated WAN. Route traffic between private LANs through the tunnel. Physical IP addressing is pre-configured — you build the tunnel and add routing.
+Create a GRE point-to-point tunnel between two Arista EOS gateway routers across a simulated WAN. Route traffic between private LANs through the tunnel. Physical IP addressing is pre-configured — you configure `interface Tunnel0` and static routes using the native EOS CLI.
+
+Compare with the `gre-basics` lab which uses Linux `ip tunnel` commands; here you use the same `interface Tunnel` construct used on production Arista hardware.
 
 ---
 
@@ -9,55 +11,55 @@ Create a GRE point-to-point tunnel between two gateway routers across a simulate
 ```
 [host-a] --- [gw-a] ---WAN--- [internet] ---WAN--- [gw-b] --- [host-b]
  LAN A         |    203.0.113.0/30   203.0.113.4/30   |         LAN B
-          tun0: 172.16.0.1                        tun0: 172.16.0.2
+           Tunnel0: 172.16.0.1                    Tunnel0: 172.16.0.2
 ```
 
 ### Physical links (pre-configured)
 
-| Link              | Subnet          | Left          | Right         |
-|-------------------|-----------------|---------------|---------------|
-| host-a — gw-a     | 192.168.1.0/24  | 192.168.1.10  | 192.168.1.1   |
-| gw-a — internet   | 203.0.113.0/30  | 203.0.113.1   | 203.0.113.2   |
-| internet — gw-b   | 203.0.113.4/30  | 203.0.113.5   | 203.0.113.6   |
-| gw-b — host-b     | 192.168.2.0/24  | 192.168.2.1   | 192.168.2.10  |
+| Link              | Subnet          | Left            | Right           |
+|-------------------|-----------------|-----------------|-----------------|
+| host-a — gw-a     | 192.168.1.0/24  | 192.168.1.10    | 192.168.1.1     |
+| gw-a — internet   | 203.0.113.0/30  | 203.0.113.1     | 203.0.113.2     |
+| internet — gw-b   | 203.0.113.4/30  | 203.0.113.5     | 203.0.113.6     |
+| gw-b — host-b     | 192.168.2.0/24  | 192.168.2.1     | 192.168.2.10    |
 
 ### GRE tunnel (you create this)
 
-| Parameter       | gw-a         | gw-b         |
-|-----------------|--------------|--------------|
-| Tunnel local    | 203.0.113.1  | 203.0.113.6  |
-| Tunnel remote   | 203.0.113.6  | 203.0.113.1  |
-| Tunnel IP       | 172.16.0.1/30| 172.16.0.2/30|
-| Interface name  | tun0         | tun0         |
+| Parameter          | gw-a            | gw-b            |
+|--------------------|-----------------|-----------------|
+| Tunnel source      | Ethernet2       | Ethernet1       |
+| Tunnel destination | 203.0.113.6     | 203.0.113.1     |
+| Tunnel IP          | 172.16.0.1/30   | 172.16.0.2/30   |
+| Interface name     | Tunnel0         | Tunnel0         |
 
 ---
 
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy --topo topology.yml
+sudo containerlab deploy -t labs/gre-basics/topology.yml
 
-# Bash shell (for ip tunnel commands)
-docker exec -it clab-gre-basics-gw-a bash
+# EOS CLI on gw-a
+docker exec -it clab-gre-basics-gw-a Cli
 
-# FRR CLI (for routing config)
-docker exec -it clab-gre-basics-gw-a vtysh
+# Host shell (for ping tests)
+docker exec -it clab-gre-basics-host-a bash
 ```
 
 ---
 
-## Step 1 — Verify baseline WAN reachability
+## Step 1 — Verify WAN reachability
 
-Before creating the tunnel, confirm gw-a can reach gw-b over the WAN:
+Before building the tunnel, confirm gw-a can reach gw-b's WAN IP:
 
-```bash
-docker exec -it clab-gre-basics-gw-a bash
-ping 203.0.113.6 -c 3
+```
+# From gw-a EOS CLI (privileged exec mode)
+ping 203.0.113.6 repeat 3
 ```
 
-This should succeed — the internet router forwards between the two WAN subnets. If this fails, the tunnel cannot work either.
+This should succeed — the `internet` router forwards between the two WAN subnets. If this fails, check `show ip route` and `show interfaces status`.
 
-Also confirm that host-to-host traffic fails without the tunnel:
+Also confirm host-to-host traffic fails without the tunnel:
 ```bash
 docker exec -it clab-gre-basics-host-a bash
 ping 192.168.2.10 -c 3    # should FAIL — no route to LAN B
@@ -65,53 +67,64 @@ ping 192.168.2.10 -c 3    # should FAIL — no route to LAN B
 
 ---
 
-## Step 2 — Create the GRE tunnel on gw-a
+## Step 2 — Configure Tunnel0 on gw-a
 
-Open a bash shell on gw-a:
+Enter the EOS CLI on gw-a:
 ```bash
-docker exec -it clab-gre-basics-gw-a bash
+docker exec -it clab-gre-basics-gw-a Cli
 ```
 
-Create the tunnel interface:
-```bash
-ip tunnel add tun0 mode gre local 203.0.113.1 remote 203.0.113.6 ttl 255
-ip link set tun0 up
-ip addr add 172.16.0.1/30 dev tun0
+Configure the GRE tunnel interface:
+```
+configure
+interface Tunnel0
+   tunnel source Ethernet2
+   tunnel destination 203.0.113.6
+   ip address 172.16.0.1/30
+   no shutdown
 ```
 
-Verify the tunnel interface exists:
-```bash
-ip addr show tun0
-ip tunnel show tun0
+> **EOS vs Linux:** In Linux you run `ip tunnel add tun0 mode gre local 203.0.113.1 remote 203.0.113.6` from bash. In EOS you configure `interface Tunnel0` with `tunnel source` and `tunnel destination` — exactly the same model used on physical Arista routers.
+
+Verify the tunnel is up:
 ```
+show interfaces Tunnel0
+```
+
+Look for `line protocol is up` in the output. The tunnel comes up as soon as both endpoints have the GRE encap/decap in place.
 
 ---
 
-## Step 3 — Create the GRE tunnel on gw-b
+## Step 3 — Configure Tunnel0 on gw-b
 
 ```bash
-docker exec -it clab-gre-basics-gw-b bash
-
-ip tunnel add tun0 mode gre local 203.0.113.6 remote 203.0.113.1 ttl 255
-ip link set tun0 up
-ip addr add 172.16.0.2/30 dev tun0
+docker exec -it clab-gre-basics-gw-b Cli
 ```
 
-Test the tunnel endpoint reachability:
-```bash
-ping 172.16.0.1 -c 3   # from gw-b, should reach gw-a's tunnel IP
+```
+configure
+interface Tunnel0
+   tunnel source Ethernet1
+   tunnel destination 203.0.113.1
+   ip address 172.16.0.2/30
+   no shutdown
+```
+
+Test the tunnel endpoint reachability from gw-b:
+```
+ping 172.16.0.1 repeat 3    ← gw-a tunnel IP; should succeed now
 ```
 
 ---
 
 ## Step 4 — Add static routes through the tunnel
 
-In vtysh on **gw-a**:
+On **gw-a**:
 ```
 ip route 192.168.2.0/24 172.16.0.2
 ```
 
-In vtysh on **gw-b**:
+On **gw-b**:
 ```
 ip route 192.168.1.0/24 172.16.0.1
 ```
@@ -125,78 +138,149 @@ ip route 192.168.1.0/24 172.16.0.1
 docker exec -it clab-gre-basics-host-a bash
 ping 192.168.2.10 -c 3    # should now SUCCEED
 
-# Traceroute to see the tunnel path
+# Traceroute — WAN hops are invisible (tunnelled)
 traceroute 192.168.2.10
-# Path: 192.168.1.1 (gw-a LAN) -> 192.168.2.10 (host-b)
-# The WAN hops are invisible — traffic is tunnelled!
+# Expected path: 192.168.1.1 (gw-a) → 192.168.2.10 (host-b)
 ```
 
 ---
 
 ## Experiment A — OSPF over GRE
 
-Replace static routes with OSPF running directly over the tunnel. This is common when you want dynamic routing across a WAN.
-
-Remove the static LAN routes first (`no ip route 192.168.x.0/24 ...`), then add OSPF to gw-a (in vtysh). The tunnel interface must be configured as point-to-point (GRE is a point-to-point medium):
+Replace static routes with OSPF running over the tunnel. Remove the static LAN routes first, then configure OSPF on gw-a:
 
 ```
-interface tun0
- ip ospf area 0
- ip ospf network point-to-point
-!
-interface eth1
- ip ospf area 0
- ip ospf passive
-!
-router ospf
- ospf router-id 10.0.0.1
+configure
+no ip route 192.168.2.0/24 172.16.0.2
+
+interface Tunnel0
+   tunnel path-mtu-discovery
+   tunnel ttl 255
+   ip ospf area 0
+   ip ospf network point-to-point
+
+interface Ethernet1
+   ip ospf area 0
+   ip ospf passive
+
+router ospf 1
+   router-id 10.0.0.1
+   passive-interface Loopback0
+   tunnel routes
 ```
 
-Mirror on gw-b (router-id 10.0.0.2).
+Mirror on gw-b (router-id 10.0.0.2, `no ip route 192.168.1.0/24 172.16.0.1`).
 
-Check adjacency: `show ip ospf neighbor` — tun0 should show `Full/  -`.
+Check adjacency:
+```
+show ip ospf neighbor
+show ip route ospf
+```
 
-> **Warning — do not use `redistribute connected` here.** It will leak the WAN subnets (203.0.113.0/30, 203.0.113.4/30) into OSPF. The remote gateway will learn a route to the tunnel endpoint's WAN IP *via the tunnel*, creating a recursive routing loop that breaks the tunnel. The `ip ospf area 0` statement on the LAN interface already handles LAN advertisement — no redistribution is needed.
+> **Why point-to-point?** GRE is a point-to-point medium. Without `ip ospf network point-to-point`, OSPF defaults to broadcast mode and tries to elect a DR/BDR — which never succeeds over a GRE tunnel.
+
+> **EOS gotcha — TTL=1:** EOS copies the inner IP TTL to the outer GRE header. OSPF hellos have inner TTL=1, so the GRE packet arrives at the `internet` transit router with outer TTL=1, gets decremented to 0, and is dropped. You need `tunnel path-mtu-discovery` and `tunnel ttl 255` on Tunnel0 (in that order — EOS won't let you set the TTL without PMTUD enabled first).
+
+> **EOS gotcha — `tunnel routes`:** Even after the OSPF adjacency reaches Full state, EOS does not install routes learned over tunnel interfaces by default. Without `tunnel routes` under `router ospf 1`, you'll see `show ip ospf neighbor` show Full but `show ip route ospf` will be empty. Add it on both routers.
 
 ---
 
-## Experiment B — The recursive routing pitfall
+## Experiment B — Recursive routing pitfall
 
-This demonstrates a common GRE misconfiguration: accidentally routing the tunnel DESTINATION through the tunnel itself.
+This demonstrates a common GRE misconfiguration: routing the tunnel destination *through* the tunnel.
 
 On gw-a, add a bad route:
 ```
 ip route 203.0.113.6/32 172.16.0.2
 ```
 
-This tells gw-a "to reach gw-b's WAN IP, go through the tunnel." But the tunnel endpoint IS gw-b's WAN IP — creating an infinite loop. The tunnel interface will flap and traffic will fail.
+This tells gw-a "to reach gw-b's WAN IP, use the tunnel" — but the tunnel endpoint IS gw-b's WAN IP, creating an infinite loop. The tunnel line protocol will flap and traffic fails.
 
-Fix: always route the tunnel endpoint via the physical interface:
+Fix it by routing the tunnel destination via the physical interface:
 ```
 no ip route 203.0.113.6/32 172.16.0.2
 ip route 203.0.113.6/32 203.0.113.2
 ```
 
-The specific /32 host route for the remote tunnel endpoint must go out the physical interface, not the tunnel.
+The /32 host route for the remote tunnel endpoint must always go out the physical WAN interface.
+
+---
+
+## Verification commands (EOS)
+
+```
+show interfaces Tunnel0               # tunnel state, encaps/decaps counters
+show ip route                         # routing table — look for 192.168.x.0/24
+show ip ospf neighbor                 # (after Experiment A) should show Full/  -
+ping 172.16.0.2 repeat 5             # tunnel liveness
+ping 192.168.2.10 repeat 5           # end-to-end via tunnel
+traceroute 192.168.2.10               # path — should skip WAN hops
+```
 
 ---
 
 ## Troubleshooting
 
-**Tunnel interface created but ping across it fails**
-- `ip tunnel show tun0` — verify local/remote IPs are correct
-- `ping 203.0.113.6` from gw-a — confirm physical WAN reachability first
-- `tcpdump -i eth2 proto gre` on gw-a — check if GRE packets are being sent
+**`show interfaces Tunnel0` shows `line protocol is down`**
+- Check `ping 203.0.113.6` — physical WAN must be reachable before GRE can form
+- Verify `tunnel destination` on both ends matches the other side's WAN IP
+- `show interfaces Ethernet2` — confirm physical interface is up
 
-**Routes installed but traffic not flowing**
-- The tunnel persists only until the container is destroyed — if you redeployed, recreate it
-- `ip link show tun0` — verify the interface is UP
+**Traffic fails despite tunnel being up**
+- `show ip route 192.168.2.0/24` — is the static route installed?
+- Both ends need routes installed (gw-a routes to LAN B, gw-b routes to LAN A)
+- `ping 172.16.0.2` from gw-a — if this fails, the tunnel encap/decap is broken
+- If `ping 172.16.0.2` works from gw-a but host-a can't reach host-b, the iptables `EOS_FORWARD` drop rule is likely the culprit (see cEOS Caveats below — the topology already handles this via `exec`)
 
 **OSPF over GRE not forming adjacency**
-- Use `ip ospf network point-to-point` on the tun0 interface — without this, OSPF uses broadcast mode and tries to elect a DR/BDR on GRE (which fails)
-- `show ip ospf interface tun0` — check the network type and timer values
+- Confirm `ip ospf network point-to-point` on Tunnel0 on both ends
+- `show ip ospf interface Tunnel0` — check network type and hello/dead timers
+- Make sure you added `tunnel path-mtu-discovery` and `tunnel ttl 255` on Tunnel0 — without these, OSPF hellos (inner TTL=1) are dropped by the transit `internet` router
 
-**GRE vs IPsec**
-- GRE: no encryption, supports multicast and routing protocols, simpler
-- IPsec: encryption, harder to run routing protocols directly (needs GRE+IPsec)
-- See the `gre-ipsec` lab for combining both
+**OSPF adjacency is Full but no routes appear**
+- Check `show ip route ospf` — if empty despite Full neighbor, you're missing `tunnel routes` under `router ospf 1`
+- EOS does not install routes learned via tunnel interfaces by default; `tunnel routes` opts in
+
+---
+
+## cEOS-specific caveats
+
+These are behaviors unique to Arista EOS running in ContainerLab — you won't hit them on Linux `ip tunnel` or Cisco IOS.
+
+### 1. OSPF TTL=1 drop over multi-hop GRE
+
+EOS copies the **inner** IP TTL directly into the **outer** GRE encap header. OSPF hellos are sent with inner TTL=1. In this topology the `internet` router sits between the two tunnel endpoints, so the outer GRE packet arrives there with TTL=1, gets decremented to 0, and is silently discarded.
+
+Fix — add to `interface Tunnel0` on both gateways (order matters; EOS rejects `tunnel ttl` without PMTUD enabled first):
+```
+tunnel path-mtu-discovery
+tunnel ttl 255
+```
+
+### 2. OSPF `tunnel routes` disabled by default
+
+EOS OSPF will form a Full adjacency over a tunnel interface but will not install the learned routes into the routing table unless you explicitly opt in. Without `tunnel routes`, `show ip ospf neighbor` looks healthy but `show ip route ospf` stays empty.
+
+Fix — add to `router ospf 1` on both gateways:
+```
+tunnel routes
+```
+
+### 3. iptables `EOS_FORWARD` drops transit traffic
+
+cEOS installs a DROP rule in the `EOS_FORWARD` iptables chain for each data-plane interface. Traffic **originated by EOS itself** (e.g., self-ping across the tunnel) bypasses this via the OUTPUT chain. But **transit traffic** — a frame entering from the LAN port and being forwarded into the GRE tunnel — hits the DROP rule and is silently discarded.
+
+The `topology.yml` already handles this: the `exec:` block on gw-a and gw-b runs:
+```bash
+iptables -D EOS_FORWARD -i eth1 -j DROP 2>/dev/null || true   # gw-a
+iptables -D EOS_FORWARD -i eth2 -j DROP 2>/dev/null || true   # gw-b
+```
+This removes the DROP rule for the LAN-facing interface so host → tunnel forwarding works. The rule is added fresh each time the container starts, so it must be in `exec:` (not a one-time fix).
+
+---
+
+## Cleanup
+
+```bash
+sudo containerlab destroy -t labs/gre-basics/topology.yml --cleanup
+```

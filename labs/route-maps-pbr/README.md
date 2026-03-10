@@ -45,8 +45,8 @@ sudo containerlab deploy -t topology.yml
 
 Verify connectivity to each ISP from router:
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- vtysh -c "ping 10.0.1.2"
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- vtysh -c "ping 10.0.2.2"
+sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "ping 10.0.1.2"
+sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "ping 10.0.2.2"
 ```
 
 ### Step 2: Add default static route (baseline routing)
@@ -55,7 +55,7 @@ On **router** — establishes a default route so traffic without a PBR match
 can still reach the internet via isp1:
 
 ```
-vtysh
+Cli
 conf t
 ip route 0.0.0.0/0 10.0.1.2
 ```
@@ -75,12 +75,12 @@ ping 10.99.1.1
 
 From **host-a**, traceroute to isp2's loopback:
 ```
-vtysh -c "traceroute 10.99.2.1 source 192.168.1.1"
+Cli -c "traceroute 10.99.2.1 source 192.168.1.1"
 ```
 
 From **host-b**, traceroute to isp2's loopback:
 ```
-vtysh -c "traceroute 10.99.2.1 source 192.168.2.1"
+Cli -c "traceroute 10.99.2.1 source 192.168.2.1"
 ```
 
 Both will show the same path via 10.0.1.1 (isp1). This is the problem PBR solves.
@@ -88,7 +88,7 @@ Both will show the same path via 10.0.1.1 (isp1). This is the problem PBR solves
 ### Step 4: Configure PBR on router
 
 ```
-vtysh
+Cli
 conf t
 
 ! Match host-a source subnet
@@ -110,10 +110,10 @@ route-map PBR-ISP2 permit 10
  set ip next-hop 10.0.2.2
 
 ! Apply inbound on the interfaces where traffic arrives
-interface eth1
+interface Ethernet1
  ip policy route-map PBR-ISP1
 
-interface eth2
+interface Ethernet2
  ip policy route-map PBR-ISP2
 ```
 
@@ -121,14 +121,14 @@ interface eth2
 
 From **host-a**:
 ```
-vtysh -c "traceroute 10.99.2.1 source 192.168.1.1"
+Cli -c "traceroute 10.99.2.1 source 192.168.1.1"
 ```
 First hop should be 10.0.1.1 (router's eth3) -> isp1. Even though we are
 reaching isp2's address, traffic exits via isp1.
 
 From **host-b**:
 ```
-vtysh -c "traceroute 10.99.1.1 source 192.168.2.1"
+Cli -c "traceroute 10.99.1.1 source 192.168.2.1"
 ```
 First hop should be 10.0.2.1 (router's eth4) -> isp2.
 

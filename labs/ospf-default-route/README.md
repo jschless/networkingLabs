@@ -37,7 +37,7 @@ sudo containerlab deploy -t topology.yml
 
 Connect to a router:
 ```bash
-sudo docker exec -it clab-ospf-default-route-asbr vtysh
+sudo docker exec -it clab-ospf-default-route-asbr Cli
 ```
 
 ## Step 1 — Configure Basic OSPF on core and asbr
@@ -176,7 +176,7 @@ the `O*E2 0.0.0.0/0` route. However, traffic following that default will be
 ### When is `always` appropriate?
 
 - When asbr learns its default via BGP or another protocol that operates
-  independently of OSPF. FRR has the default in its table, but it came from
+  independently of OSPF. cEOS has the default in its table, but it came from
   BGP — `default-information originate` (without `always`) will still work
   because it checks the FIB, not specifically static routes.
 - When you want to use OSPF to distribute reachability during lab testing
@@ -227,7 +227,7 @@ up and disappears when the link goes down.
 
 Simulate the internet link going down:
 ```bash
-# From the lab host shell (not vtysh):
+# From the lab host shell (not Cli):
 sudo docker exec clab-ospf-default-route-asbr ip link set eth2 down
 ```
 
@@ -293,7 +293,7 @@ For the default route specifically, E2 is almost always correct.
 
 `ip default-network` is a legacy Cisco feature that marks a classful network
 as a candidate default route. It is not OSPF-specific and is not available in
-FRR. Always use `default-information originate` for OSPF-distributed defaults.
+cEOS. Always use `default-information originate` for OSPF-distributed defaults.
 In modern networks, the correct approach is always:
 1. Static default on the edge router
 2. `default-information originate` to distribute it
