@@ -16,9 +16,9 @@ sub-second failure detection — dramatically faster than OSPF's default 40-seco
 
 | Link              | Subnet        | Addresses       |
 |-------------------|---------------|-----------------|
-| r1:eth1 - r2:eth1 | 10.1.12.0/30  | r1:.1  r2:.2    |
-| r2:eth2 - r3:eth1 | 10.1.23.0/30  | r2:.1  r3:.2    |
-| r1:eth2 - r3:eth2 | 10.1.13.0/30  | r1:.1  r3:.2    |
+| r1:Ethernet1 - r2:Ethernet1 | 10.1.12.0/30  | r1:.1  r2:.2    |
+| r2:Ethernet2 - r3:Ethernet1 | 10.1.23.0/30  | r2:.1  r3:.2    |
+| r1:Ethernet2 - r3:Ethernet2 | 10.1.13.0/30  | r1:.1  r3:.2    |
 
 | Node | Loopback    |
 |------|-------------|
@@ -45,13 +45,13 @@ Example for r1:
 Cli
 configure terminal
 
-interface lo
+interface Loopback0
  ip ospf area 0
 
-interface eth1
+interface Ethernet1
  ip ospf area 0
 
-interface eth2
+interface Ethernet2
  ip ospf area 0
 
 router ospf
@@ -77,10 +77,10 @@ Add BFD to each interface on each router:
 Cli
 configure terminal
 
-interface eth1
+interface Ethernet1
  ip ospf bfd
 
-interface eth2
+interface Ethernet2
  ip ospf bfd
 
 end
@@ -93,7 +93,7 @@ Default BFD timers are 300ms tx/rx with multiplier 3 (failure = 900ms).
 You can tune them:
 
 ```
-interface eth1
+interface Ethernet1
  ip ospf bfd detect-multiplier 3
  ip ospf bfd min-rx 300
  ip ospf bfd min-tx 300
@@ -102,7 +102,7 @@ interface eth1
 Faster (more aggressive, more CPU):
 
 ```
-interface eth1
+interface Ethernet1
  ip ospf bfd detect-multiplier 3
  ip ospf bfd min-rx 100
  ip ospf bfd min-tx 100
@@ -155,7 +155,7 @@ show bfd peer 10.1.12.1           # specific peer
 show ip ospf neighbor             # OSPF neighbors + BFD state
 show ip ospf neighbor detail      # full neighbor state
 show ip route ospf                # OSPF-learned routes
-show ip ospf interface eth1       # interface-level OSPF state
+show ip ospf interface Ethernet1  # interface-level OSPF state
 ```
 
 ## Concepts
@@ -217,7 +217,7 @@ Failure detection time = `detect-multiplier × max(local min-rx, remote min-tx)`
 
 ```
 BFD Peers:
-    peer 10.1.12.2 local-address 10.1.12.1 vrf default interface eth1
+    peer 10.1.12.2 local-address 10.1.12.1 vrf default interface Ethernet1
         ID: 1234567890
         Remote ID: 987654321
         Active mode

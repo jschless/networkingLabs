@@ -82,18 +82,19 @@ advertised but do not attempt to form adjacencies.
 
 ```
 interface Loopback0
- ip ospf passive
  ip ospf area 1
 !
 interface Ethernet1
  ip ospf area 1
+!
+router ospf 1
+ passive-interface Loopback0
 ```
 
 ### r2 (ABR: Ethernet1 in Area 1, Ethernet2 and Loopback0 in Area 0)
 
 ```
 interface Loopback0
- ip ospf passive
  ip ospf area 0
 !
 interface Ethernet1
@@ -101,13 +102,15 @@ interface Ethernet1
 !
 interface Ethernet2
  ip ospf area 0
+!
+router ospf 1
+ passive-interface Loopback0
 ```
 
 ### r3 (ABR: Ethernet1 and Loopback0 in Area 0, Ethernet2 in Area 2)
 
 ```
 interface Loopback0
- ip ospf passive
  ip ospf area 0
 !
 interface Ethernet1
@@ -115,17 +118,22 @@ interface Ethernet1
 !
 interface Ethernet2
  ip ospf area 2
+!
+router ospf 1
+ passive-interface Loopback0
 ```
 
 ### r4 (all interfaces in Area 2)
 
 ```
 interface Loopback0
- ip ospf passive
  ip ospf area 2
 !
 interface Ethernet1
  ip ospf area 2
+!
+router ospf 1
+ passive-interface Loopback0
 ```
 
 ---
