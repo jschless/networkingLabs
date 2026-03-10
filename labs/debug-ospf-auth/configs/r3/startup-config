@@ -1,0 +1,20 @@
+hostname r3
+!
+ip routing
+!
+interface Loopback0
+ ip address 10.0.0.3/32
+!
+interface Ethernet1
+ no switchport
+ description to r2
+ ip address 10.1.23.2/30
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 SecretKey123
+!
+router ospf 1
+ ospf router-id 10.0.0.3
+ network 10.0.0.3/32 area 0
+ network 10.1.23.0/30 area 0
+ passive-interface Loopback0
+!

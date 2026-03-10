@@ -1,0 +1,48 @@
+hostname r3
+!
+ip routing
+!
+! ============================================================
+! r3 — rightmost router in the linear chain: r1 --- r2 --- r3
+! ============================================================
+
+interface Loopback0
+ ip address 10.0.0.3/32
+
+! Link to r2 — segment 10.1.23.0/30
+! r2 is .1, r3 is .2 on this segment
+interface Ethernet1
+ no switchport
+ description Link to r2 (10.1.23.0/30, r2=.1 r3=.2)
+ ip address 10.1.23.2/30
+
+! ============================================================
+! TODO: Configure OSPF
+!
+! Step 1 — Basic OSPF (no auth yet):
+!   router ospf 1
+!    ospf router-id 10.0.0.3
+!    network 10.0.0.3/32 area 0
+!    network 10.1.23.0/30 area 0
+!    passive-interface Loopback0
+!
+! Step 2 — Add MD5 authentication to Ethernet1:
+!   interface Ethernet1
+!    ip ospf authentication message-digest
+!    ip ospf message-digest-key 1 md5 SecretKey123
+!
+! Step 3 — Verify end-to-end reachability:
+!   ping 10.0.0.1 source 10.0.0.3   — r3 loopback to r1 loopback
+!
+! Step 4 — Area-level auth (alternative approach):
+!   Instead of per-interface config, you can set auth in the OSPF process:
+!   router ospf 1
+!    area 0 authentication message-digest
+!   Then only configure the key on each interface (not the auth type).
+!   Per-interface auth overrides area auth when both are configured.
+!
+! SHA authentication (FRR extension, not standard):
+!   ip ospf authentication hmac-sha-256
+!   ip ospf authentication-key <key>
+!   Note: both peers must support this — not interoperable with Cisco IOS.
+! ============================================================

@@ -1,0 +1,27 @@
+hostname asbr
+!
+interface Loopback0
+ ip address 10.0.0.2/32
+ ip ospf passive
+ ip ospf area 0
+!
+interface Ethernet1
+ description to r1
+ ip address 10.0.12.2/30
+ ip ospf area 0
+!
+interface Ethernet2
+ description to bgp1
+ ip address 10.0.23.1/30
+!
+router ospf 1
+ ospf router-id 10.0.0.2
+!
+router bgp 65100
+ no bgp ebgp-requires-policy
+ neighbor 10.0.23.2 remote-as 65200
+ address-family ipv4 unicast
+  neighbor 10.0.23.2 activate
+  redistribute ospf
+ exit-address-family
+!

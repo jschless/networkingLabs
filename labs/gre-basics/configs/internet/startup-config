@@ -1,0 +1,22 @@
+! internet — simulated WAN transit router  (Arista EOS)
+!
+! Both WAN subnets are directly connected; no additional configuration needed.
+! This router forwards packets between gw-a and gw-b.
+!
+hostname internet
+!
+interface Ethernet1
+   description to gw-a WAN-A
+   no switchport
+   ip address 203.0.113.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to gw-b WAN-B
+   no switchport
+   ip address 203.0.113.5/30
+   no shutdown
+!
+ip routing
+!
+end

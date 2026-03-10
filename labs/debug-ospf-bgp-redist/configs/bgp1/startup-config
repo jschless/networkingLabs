@@ -1,0 +1,23 @@
+hostname bgp1
+!
+interface Loopback0
+ ip address 10.0.0.3/32
+!
+interface Ethernet1
+ description to asbr
+ ip address 10.0.23.2/30
+!
+interface Ethernet2
+ description to bgp2
+ ip address 10.0.34.1/30
+!
+router bgp 65200
+ no bgp ebgp-requires-policy
+ neighbor 10.0.23.1 remote-as 65100
+ neighbor 10.0.34.2 remote-as 65200
+ address-family ipv4 unicast
+  neighbor 10.0.23.1 activate
+  neighbor 10.0.34.2 activate
+  neighbor 10.0.34.2 next-hop-self
+ exit-address-family
+!

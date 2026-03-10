@@ -1,0 +1,22 @@
+hostname leaf2
+
+interface Loopback0
+ ip address 10.0.0.2/32
+
+interface Ethernet1
+ ip address 10.1.0.2/31
+
+interface Ethernet2
+ ip address 10.2.0.2/31
+
+router bgp 65002
+ no bgp ebgp-requires-policy
+ bgp router-id 10.0.0.2
+ neighbor 10.1.0.3 remote-as 65100
+ neighbor 10.2.0.3 remote-as 65200
+ !
+ address-family ipv4 unicast
+  network 10.0.0.2/32
+  neighbor 10.1.0.3 activate
+  neighbor 10.2.0.3 activate
+ exit-address-family

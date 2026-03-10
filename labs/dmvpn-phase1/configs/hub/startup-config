@@ -1,0 +1,35 @@
+! hub — DMVPN hub router  (Arista EOS)
+!
+! Fully configured: mGRE Tunnel0, NHRP server, OSPF point-to-multipoint.
+! Spokes register via NHRP and learn routes via OSPF.
+!
+hostname hub
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description WAN NBMA network (10.0.0.0/24)
+   no switchport
+   ip address 10.0.0.1/24
+   no shutdown
+!
+interface Tunnel0
+   description DMVPN mGRE — hub endpoint
+   tunnel source Ethernet1
+   tunnel mode gre multipoint
+   ip address 172.16.0.1/24
+   ip nhrp network-id 1
+   ip nhrp holdtime 300
+   ip nhrp redirect
+   ip ospf network point-to-multipoint
+   ip ospf area 0
+   no shutdown
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.1
+   passive-interface Loopback0
+!
+end

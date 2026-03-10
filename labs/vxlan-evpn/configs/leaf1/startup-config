@@ -1,0 +1,111 @@
+! leaf1 — AS65001  (Arista EOS)
+! VTEP loopback: 10.0.0.1
+! Host: host-a1 (Tenant-A, VLAN 10, 10.10.10.11)
+!
+! Pre-configured: Ethernet interface IPs, Loopback0.
+!
+! ═══════════════════════════════════════════════════════════════
+! YOUR TASKS — configure each section below on all four leaves:
+!
+! TASK 1  Create VRF instances
+!   vrf instance TENANT-A
+!   vrf instance TENANT-B
+!   ip routing vrf TENANT-A
+!   ip routing vrf TENANT-B
+!
+! TASK 2  Set the anycast gateway MAC (one global command per leaf)
+!   ip virtual-router mac-address 00:1c:73:aa:aa:aa
+!
+! TASK 3  Put the host-facing port in the correct access VLAN
+!   interface Ethernet3
+!      switchport access vlan 10          ← VLAN 10 for Tenant-A (leaf1 and leaf3)
+!                                           VLAN 20 for Tenant-B (leaf2 and leaf4)
+!
+! TASK 4  Configure the VXLAN interface
+!   interface Vxlan1
+!      vxlan source-interface Loopback0
+!      vxlan udp-port 4789
+!      vxlan vlan 10 vni 10010           ← L2VNI: VLAN 10 ↔ VNI 10010
+!      vxlan vlan 20 vni 10020           ← L2VNI: VLAN 20 ↔ VNI 10020
+!      vxlan vrf TENANT-A vni 50001      ← L3VNI for Tenant-A (symmetric IRB)
+!      vxlan vrf TENANT-B vni 50002      ← L3VNI for Tenant-B (symmetric IRB)
+!
+! TASK 5  Configure SVIs (IRB anycast gateways)
+!   interface Vlan10
+!      vrf TENANT-A
+!      ip address virtual 10.10.10.1/24  ← same IP on all leaves (anycast)
+!      no autostate
+!   interface Vlan20
+!      vrf TENANT-B
+!      ip address virtual 10.20.20.1/24
+!      no autostate
+!
+! TASK 6  Configure BGP
+!   router bgp 65001                     ← use this leaf's AS number
+!      router-id 10.0.0.1               ← use this leaf's loopback IP
+!      maximum-paths 2 ecmp 2
+!      bgp bestpath as-path multipath-relax
+!      !
+!      neighbor 10.1.0.1 remote-as 65100      ← spine1 (via eth1)
+!      neighbor 10.1.0.1 send-community extended
+!      neighbor 10.2.0.1 remote-as 65200      ← spine2 (via eth2)
+!      neighbor 10.2.0.1 send-community extended
+!      !
+!      address-family ipv4
+!         neighbor 10.1.0.1 activate
+!         neighbor 10.2.0.1 activate
+!         network 10.0.0.1/32           ← advertise loopback as VTEP IP
+!      !
+!      address-family evpn
+!         neighbor 10.1.0.1 activate
+!         neighbor 10.2.0.1 activate
+!      !
+!      ! L2VNI EVPN instance — one per VLAN (same on all leaves)
+!      vlan 10
+!         rd auto
+!         route-target both 65000:10010
+!         redistribute learned
+!      !
+!      vlan 20
+!         rd auto
+!         route-target both 65000:10020
+!         redistribute learned
+!      !
+!      ! L3VPN EVPN instance — one per VRF (RD uses this leaf's loopback)
+!      vrf TENANT-A
+!         rd 10.0.0.1:50001             ← change per-leaf: 10.0.0.X:50001
+!         route-target import evpn 65000:50001
+!         route-target export evpn 65000:50001
+!         redistribute connected
+!      !
+!      vrf TENANT-B
+!         rd 10.0.0.1:50002             ← change per-leaf: 10.0.0.X:50002
+!         route-target import evpn 65000:50002
+!         route-target export evpn 65000:50002
+!         redistribute connected
+! ═══════════════════════════════════════════════════════════════
+!
+hostname leaf1
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to spine1  10.1.0.0/31
+   no switchport
+   ip address 10.1.0.0/31
+   no shutdown
+!
+interface Ethernet2
+   description to spine2  10.2.0.0/31
+   no switchport
+   ip address 10.2.0.0/31
+   no shutdown
+!
+interface Ethernet3
+   description to host-a1  (Tenant-A, VLAN 10)
+   no shutdown
+!
+ip routing
+!
+end

@@ -1,0 +1,17 @@
+hostname isp
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Ethernet1
+   description to edge 203.0.113.0/30
+   ip address 203.0.113.1/30
+!
+ip route 0.0.0.0/0 Null0
+!
+router bgp 65500
+   router-id 1.1.1.1
+   neighbor 203.0.113.2 remote-as 65100
+   neighbor 203.0.113.2 description edge
+   network 0.0.0.0/0
+   network 1.1.1.1/32

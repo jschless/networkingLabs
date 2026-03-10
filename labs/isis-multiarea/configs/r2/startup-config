@@ -1,0 +1,20 @@
+hostname r2
+
+interface Loopback0
+ ip address 10.0.0.2/32
+ ! TODO: ip router isis CORE
+ ! TODO: isis passive
+
+interface Ethernet1
+ ip address 10.1.12.2/30
+ ! TODO: ip router isis CORE
+
+interface Ethernet2
+ ip address 10.1.23.1/30
+ ! TODO: ip router isis CORE
+
+! TODO: configure IS-IS
+! r2 is Level-1/2, area 49.0001 — bridges area 49.0001 (L1) to the L2 backbone
+! router isis CORE
+!  net 49.0001.0100.0000.0002.00
+!  is-type level-1-2

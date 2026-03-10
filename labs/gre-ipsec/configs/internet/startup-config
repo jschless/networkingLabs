@@ -1,0 +1,9 @@
+hostname internet
+!
+interface Ethernet1
+   description WAN A link: 203.0.113.0/30, internet=.2
+   ip address 203.0.113.2/30
+!
+interface Ethernet2
+   description WAN B link: 203.0.113.4/30, internet=.5
+   ip address 203.0.113.5/30

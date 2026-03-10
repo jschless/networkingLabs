@@ -1,0 +1,51 @@
+hostname r4
+!
+ip routing
+!
+! -------------------------------------------------------------------
+! r4 — Internal Router in Area 0 (backbone)
+!
+! r4 is a normal area 0 router. It connects only to r3.
+! r4 is the reachability TARGET for this lab — we want r1 (area 2)
+! to be able to ping r4 (area 0) after the virtual link is established.
+!
+! Before virtual link: r4 has NO knowledge of area 2 routes.
+! After virtual link: r4 sees area 2 routes as O IA (inter-area).
+!
+! r4 does NOT participate in the virtual link configuration.
+! It simply benefits from area 0 being extended through area 1.
+!
+! Ethernet1: connects to r3 (10.1.34.0/30, r4=.2) — Area 0
+! Loopback0:   loopback 10.0.0.4/32 — Area 0
+! -------------------------------------------------------------------
+
+interface Loopback0
+ ip address 10.0.0.4/32
+
+interface Ethernet1
+ no switchport
+ description to-r3 (OSPF area 0)
+ ip address 10.1.34.2/30
+
+! -------------------------------------------------------------------
+! TASK: Configure OSPF on r4
+!
+! router ospf 1
+!  router-id 10.0.0.4
+!  network 10.0.0.4/32 area 0
+!  network 10.1.34.0/30 area 0
+!
+! r4 has the simplest configuration in this lab.
+!
+! Verify (before virtual link):
+!   show ip ospf neighbor     <- only r3
+!   show ip route ospf       <- area 0 routes only (no area 2 routes)
+!   ping 10.0.0.1 source 10.0.0.4  <- FAILS
+!
+! Verify (after virtual link on r2 and r3):
+!   show ip route ospf
+!   -> O IA 10.1.12.0/30 [110/30] via 10.1.34.1  <- area 2 route!
+!   -> O IA 10.0.0.1/32  [110/30] via 10.1.34.1  <- r1's loopback!
+!
+!   ping 10.0.0.1 source 10.0.0.4  <- SUCCEEDS
+! -------------------------------------------------------------------

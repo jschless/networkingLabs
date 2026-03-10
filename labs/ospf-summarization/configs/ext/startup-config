@@ -1,0 +1,38 @@
+hostname ext
+!
+ip routing
+!
+! ============================================================
+! ext — external node, NOT part of the OSPF domain
+!
+! This node simulates an external network that gets redistributed
+! into OSPF by r3 (the ASBR). ext itself runs NO OSPF.
+!
+! ext's subnet (192.168.100.0/30) is the target of redistribution.
+! r3 adds a static route to 192.168.100.0/24 pointing to ext's address
+! and then redistributes static routes into OSPF.
+! ============================================================
+
+interface Loopback0
+ ! External loopback — not in OSPF
+ ip address 192.168.100.2/30
+
+! Link to r3 — NOT in OSPF
+interface Ethernet1
+ no switchport
+ description Link to r3 (192.168.100.0/30, r3=.1 ext=.2) — external only
+ ip address 192.168.100.2/30
+
+! ============================================================
+! ext has NO OSPF configuration — it is intentionally outside
+! the OSPF domain to simulate an external network.
+!
+! To test reachability from OSPF routers to ext after redistribution:
+!   On r3: ip route 192.168.100.0/24 192.168.100.2
+!   On r3: router ospf 1 -> redistribute static
+!   Then from r1: ping 192.168.100.2 source 10.1.1.1
+!   (needs a return route on ext toward the OSPF domain)
+!
+! Add a static return route on ext:
+!   ip route 10.0.0.0/8 192.168.100.1
+! ============================================================

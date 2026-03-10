@@ -1,0 +1,26 @@
+hostname r1
+!
+ip routing
+!
+interface Loopback0
+ ip address 10.0.0.1/32
+ ! TODO: ip ospf area 0
+
+interface Ethernet1
+ no switchport
+ ip address 10.1.12.1/30
+ ! TODO: ip ospf area 0
+ ! TODO: ip ospf bfd
+ ! TODO (optional): ip ospf bfd detect-multiplier 3
+ ! TODO (optional): ip ospf bfd min-rx 300
+ ! TODO (optional): ip ospf bfd min-tx 300
+
+interface Ethernet2
+ no switchport
+ ip address 10.1.13.1/30
+ ! TODO: ip ospf area 0
+ ! TODO: ip ospf bfd
+
+! TODO: configure OSPF
+! router ospf 1
+!  router-id 10.0.0.1

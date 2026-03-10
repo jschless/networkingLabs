@@ -1,0 +1,72 @@
+hostname r1
+!
+ip routing
+!
+! -------------------------------------------------------------------
+! r1 — ASBR (Autonomous System Boundary Router) in NSSA Area 1
+!
+! r1 sits inside OSPF Area 1, which will be configured as an NSSA.
+! It has a connection to an external network (192.168.100.0/30 via ext)
+! that is NOT part of OSPF. r1 will redistribute this external route
+! into OSPF using "redistribute connected".
+!
+! In a normal OSPF area, redistributing external routes generates
+! Type-5 LSAs (AS External LSAs), which are flooded throughout the
+! entire OSPF domain. In a STUB area, Type-5 LSAs are blocked, so
+! redistribution is impossible from within the stub.
+!
+! NSSA solves this: r1 generates a Type-7 LSA (NSSA External LSA)
+! instead of Type-5. Type-7 LSAs are only flooded within the NSSA.
+! The ABR (r2) translates Type-7 to Type-5 at the area boundary,
+! making the external prefix visible to the rest of the OSPF domain.
+!
+! Ethernet1: connects to ext (192.168.100.0/30, r1=.1) — NOT in OSPF
+! Ethernet2: connects to r2  (10.1.12.0/30, r1=.1)     — OSPF Area 1 NSSA
+! Loopback0:   loopback 10.0.0.1/32
+! -------------------------------------------------------------------
+
+interface Loopback0
+ ip address 10.0.0.1/32
+
+interface Ethernet1
+ no switchport
+ description to-ext (external, not in OSPF)
+ ip address 192.168.100.1/30
+
+interface Ethernet2
+ no switchport
+ description to-r2 (OSPF NSSA area 1)
+ ip address 10.1.12.1/30
+
+! -------------------------------------------------------------------
+! TASK: Configure OSPF on r1
+!
+! Step 1 — Basic OSPF with area 1 as NSSA:
+!
+!   router ospf 1
+!    router-id 10.0.0.1
+!    network 10.0.0.1/32 area 1
+!    network 10.1.12.0/30 area 1
+!    area 1 nssa
+!
+!   NOTE: Ethernet1/192.168.100.0/30 is intentionally NOT in 'network' —
+!   we redistribute it as external rather than running OSPF on it.
+!
+! Step 2 — Redistribute connected to inject external routes:
+!
+!   router ospf 1
+!    redistribute connected
+!
+!   This causes r1 to originate a Type-7 LSA for 192.168.100.0/30.
+!   (It will also originate Type-7 for 10.0.0.1/32 and 10.1.12.0/30,
+!   but those are already in OSPF as intra-area routes.)
+!
+! Verify:
+!   show ip ospf database             <- look for Type-7 (NSSA-external)
+!   show ip ospf database nssa-external <- see r1's Type-7 LSA
+!   show ip ospf neighbor             <- should see r2
+!
+! On r3 after full config:
+!   show ip ospf database external    <- should see Type-5 (translated by r2)
+!   show ip route ospf               <- should see O E2 192.168.100.0/30
+! -------------------------------------------------------------------

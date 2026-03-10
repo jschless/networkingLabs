@@ -1,0 +1,46 @@
+hostname r2
+!
+ip routing
+!
+! -------------------------------------------------------
+! Node: r2  (ABR — Area 0 and Area 1)
+!
+! This router is an Area Border Router (ABR).
+! Ethernet1 connects to r1 in Area 1.
+! Ethernet2 connects to r3 in Area 0 (backbone).
+! The loopback should be in Area 0 (backbone ABRs
+! must participate in the backbone).
+!
+! What you need to configure here:
+!   - OSPF process "CORE" with router-id 10.0.0.2
+!   - ip ospf area 1 on Ethernet1 (link to r1, Area 1 side)
+!   - ip ospf area 0 on Ethernet2 (link to r3, backbone side)
+!   - ip ospf area 0 on Loopback0, marked passive
+! Hint:
+!   interface Loopback0
+!    ip ospf area 0
+!   !
+!   interface Ethernet1
+!    ip ospf area 1
+!   !
+!   interface Ethernet2
+!    ip ospf area 0
+!   !
+!   router ospf 1
+!    ospf router-id 10.0.0.2
+!    passive-interface Loopback0
+! -------------------------------------------------------
+!
+interface Loopback0
+ ip address 10.0.0.2/32
+!
+interface Ethernet1
+ no switchport
+ description to r1
+ ip address 10.1.12.2/30
+!
+interface Ethernet2
+ no switchport
+ description to r3
+ ip address 10.1.23.1/30
+!

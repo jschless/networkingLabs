@@ -1,0 +1,40 @@
+hostname r4
+!
+ip routing
+!
+! -------------------------------------------------------
+! Node: r4  (Stub Area 2 router)
+!
+! This router lives entirely in OSPF Area 2, which is a stub area.
+! In a stub area, external LSAs (Type-5) are not flooded; instead
+! r3 (the ABR) injects a default route into the area.
+! Both r3 and r4 must agree on the stub configuration.
+!
+! What you need to configure here:
+!   - OSPF process "CORE" with router-id 10.0.0.4
+!   - ip ospf area 2 on Ethernet1 (link to r3)
+!   - ip ospf area 2 on Loopback0, marked passive
+!   - Declare Area 2 as a stub area in the OSPF process:
+!       area 2 stub
+!     (must match r3's configuration)
+! Hint:
+!   interface Loopback0
+!    ip ospf area 2
+!   !
+!   interface Ethernet1
+!    ip ospf area 2
+!   !
+!   router ospf 1
+!    ospf router-id 10.0.0.4
+!    passive-interface Loopback0
+!    area 2 stub
+! -------------------------------------------------------
+!
+interface Loopback0
+ ip address 10.0.0.4/32
+!
+interface Ethernet1
+ no switchport
+ description to r3
+ ip address 10.1.34.2/30
+!

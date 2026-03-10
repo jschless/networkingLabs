@@ -1,0 +1,54 @@
+hostname r1
+!
+ip routing
+!
+! -------------------------------------------------------------------
+! r1 — Internal Router in Area 2
+!
+! r1 is entirely within OSPF Area 2. Area 2 is not directly connected
+! to Area 0 (the backbone) — it connects only to Area 1 via r2.
+!
+! In OSPF, ALL inter-area traffic must transit Area 0. An area that
+! is not attached to Area 0 is called a "partitioned" or "disconnected"
+! area. Routes from Area 2 will NOT reach Area 0 routers (like r4)
+! and vice versa, until a virtual link is configured.
+!
+! r1 will observe this problem directly:
+!   - Before virtual link: cannot reach r4 (10.0.0.4/32)
+!   - After virtual link on r2 and r3: full reachability restored
+!
+! Ethernet1: connects to r2 (10.1.12.0/30, r1=.1, r2=.2) — Area 2
+! Loopback0:   loopback 10.0.0.1/32 — Area 2
+! -------------------------------------------------------------------
+
+interface Loopback0
+ ip address 10.0.0.1/32
+
+interface Ethernet1
+ no switchport
+ description to-r2 (OSPF area 2)
+ ip address 10.1.12.1/30
+
+! -------------------------------------------------------------------
+! TASK: Configure OSPF on r1 (area 2 only)
+!
+! router ospf 1
+!  router-id 10.0.0.1
+!  network 10.0.0.1/32 area 2
+!  network 10.1.12.0/30 area 2
+!
+! Step 1 — Basic OSPF without virtual link:
+!   After configuring r1, r2, r3, r4 (areas only, no virtual link):
+!
+!   show ip ospf neighbor             <- r2 should be neighbor
+!   show ip route ospf               <- area 2 routes only visible
+!   ping 10.0.0.4 source 10.0.0.1   <- FAILS (area 2 not connected to 0)
+!
+! Step 2 — After virtual link is configured on r2 and r3:
+!   ping 10.0.0.4 source 10.0.0.1   <- should now SUCCEED
+!   show ip route ospf               <- O IA routes to area 0 now visible
+!   show ip ospf border-routers      <- r2 and r3 visible as ABRs
+!
+! r1 does NOT configure the virtual link — it only benefits from it.
+! The virtual link is configured on r2 and r3 (the ABRs).
+! -------------------------------------------------------------------

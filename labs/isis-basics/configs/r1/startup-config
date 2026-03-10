@@ -1,0 +1,17 @@
+hostname r1
+
+interface Loopback0
+ ip address 10.0.0.1/32
+ ! TODO: add IS-IS passive on loopback
+ !   ip router isis CORE
+ !   isis passive
+
+interface Ethernet1
+ ip address 10.1.12.1/30
+ ! TODO: enable IS-IS on this interface
+ !   ip router isis CORE
+
+! TODO: configure IS-IS
+! router isis CORE
+!  net 49.0001.0100.0000.0001.00
+!  is-type level-2-only

@@ -1,0 +1,40 @@
+! leaf2 — AS65002  (Arista EOS)
+! VTEP loopback: 10.0.0.2
+! Host: host-b1 (Tenant-B, VLAN 20, 10.20.20.11)
+!
+! Pre-configured: Ethernet interface IPs, Loopback0.
+! See leaf1 startup-config for the full task guide.
+!
+! Per-leaf differences from leaf1:
+!   - BGP AS: 65002
+!   - Router-ID / VTEP IP: 10.0.0.2
+!   - Uplink IPs: eth1=10.1.0.2/31 (spine1 side .3), eth2=10.2.0.2/31 (spine2 side .3)
+!   - Spine neighbors: 10.1.0.3 (spine1), 10.2.0.3 (spine2) — both need send-community extended
+!   - BGP network statement: 10.0.0.2/32
+!   - VRF RDs: 10.0.0.2:50001 / 10.0.0.2:50002
+!   - Ethernet3: switchport access vlan 20  ← Tenant-B
+!
+hostname leaf2
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to spine1  10.1.0.2/31
+   no switchport
+   ip address 10.1.0.2/31
+   no shutdown
+!
+interface Ethernet2
+   description to spine2  10.2.0.2/31
+   no switchport
+   ip address 10.2.0.2/31
+   no shutdown
+!
+interface Ethernet3
+   description to host-b1  (Tenant-B, VLAN 20)
+   no shutdown
+!
+ip routing
+!
+end

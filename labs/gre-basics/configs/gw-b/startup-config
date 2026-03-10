@@ -1,0 +1,47 @@
+! gw-b — Site B gateway  (Arista EOS)
+!
+! Mirror of gw-a. YOUR TASK: Configure Tunnel0 and add a route to LAN A.
+!
+! -------------------------------------------------------
+! Step 1 — Enter the EOS CLI:
+!   docker exec -it clab-gre-ceos-gw-b Cli
+!
+! Step 2 — Configure the GRE tunnel:
+!   configure
+!   interface Tunnel0
+!      tunnel source Ethernet1
+!      tunnel destination 203.0.113.1
+!      ip address 172.16.0.2/30
+!      no shutdown
+!
+! Step 3 — Add a static route to LAN A:
+!   ip route 192.168.1.0/24 172.16.0.1
+!
+! GRE tunnel parameters:
+!   Tunnel source:      Ethernet1  (203.0.113.6 — our WAN IP)
+!   Tunnel destination: 203.0.113.1 (gw-a WAN IP)
+!   Tunnel IP:          172.16.0.2/30
+! -------------------------------------------------------
+!
+hostname gw-b
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to internet WAN-B
+   no switchport
+   ip address 203.0.113.6/30
+   no shutdown
+!
+interface Ethernet2
+   description to host-b LAN-B
+   no switchport
+   ip address 192.168.2.1/24
+   no shutdown
+!
+ip routing
+!
+ip route 0.0.0.0/0 203.0.113.5
+!
+end

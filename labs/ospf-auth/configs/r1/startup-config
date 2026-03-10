@@ -1,0 +1,49 @@
+hostname r1
+!
+ip routing
+!
+! ============================================================
+! r1 — leftmost router in the linear chain: r1 --- r2 --- r3
+! ============================================================
+
+interface Loopback0
+ ! Loopback: 10.0.0.1/32
+ ! Hint: ip address 10.0.0.1/32
+ ip address 10.0.0.1/32
+
+! Link to r2 — segment 10.1.12.0/30
+! r1 is .1, r2 is .2 on this segment
+! Hint: ip address 10.1.12.1/30
+interface Ethernet1
+ no switchport
+ description Link to r2 (10.1.12.0/30, r1=.1 r2=.2)
+ ip address 10.1.12.1/30
+
+! ============================================================
+! TODO: Configure OSPF
+!
+! Step 1 — Basic OSPF (no auth yet):
+!   router ospf 1
+!    ospf router-id 10.0.0.1
+!    network 10.0.0.1/32 area 0
+!    network 10.1.12.0/30 area 0
+!    passive-interface Loopback0
+!
+! Step 2 — Add MD5 authentication to Ethernet1:
+!   interface Ethernet1
+!    ip ospf authentication message-digest
+!    ip ospf message-digest-key 1 md5 SecretKey123
+!
+! Step 3 — Experiment: change the key on r1 only (e.g. "WrongKey")
+!   Observe: adjacency with r2 drops (check: show ip ospf neighbor)
+!   The mismatch appears in logs: "OSPF: Rcv pkt from ... : MD5 auth failed"
+!
+! Step 4 — Restore the matching key "SecretKey123" on both sides
+!   Adjacency should recover within the dead interval (40 s by default)
+!
+! Key rollover procedure (production-safe, no downtime):
+!   1. Add new key (key ID 2) on both sides simultaneously
+!   2. Wait for adjacencies to re-establish using new key
+!   3. Remove old key (key ID 1) on both sides
+!   This avoids any authentication blackout window.
+! ============================================================

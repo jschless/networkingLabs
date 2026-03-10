@@ -1,0 +1,34 @@
+hostname r1
+!
+ip routing
+!
+! -------------------------------------------------------
+! Node: r1  (Regular Area 1 router)
+!
+! This router lives entirely in OSPF Area 1.
+! It has no ABR responsibilities.
+!
+! What you need to configure here:
+!   - OSPF process "CORE" with router-id 10.0.0.1
+!   - ip ospf area 1 on Ethernet1 (link to r2)
+!   - ip ospf area 1 on Loopback0, marked passive
+! Hint:
+!   interface Loopback0
+!    ip ospf area 1
+!   !
+!   interface Ethernet1
+!    ip ospf area 1
+!   !
+!   router ospf 1
+!    ospf router-id 10.0.0.1
+!    passive-interface Loopback0
+! -------------------------------------------------------
+!
+interface Loopback0
+ ip address 10.0.0.1/32
+!
+interface Ethernet1
+ no switchport
+ description to r2
+ ip address 10.1.12.1/30
+!

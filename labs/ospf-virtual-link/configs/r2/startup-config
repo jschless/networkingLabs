@@ -1,0 +1,83 @@
+hostname r2
+!
+ip routing
+!
+! -------------------------------------------------------------------
+! r2 — ABR between Area 2 and Area 1 (transit area for virtual link)
+!
+! r2 has interfaces in:
+!   - Area 2: the "disconnected" area that needs backbone access
+!   - Area 1: the transit area used by the virtual link
+!
+! WITHOUT virtual link:
+!   r2 is an ABR between area 2 and area 1, but area 1 is itself
+!   not connected to area 0 through r2. Area 2 routes cannot reach
+!   area 0 routers like r4.
+!
+! WITH virtual link:
+!   r2 and r3 form a virtual link through area 1.
+!   The virtual link extends area 0 logically through area 1.
+!   r2 becomes an ABR between area 2 AND area 0 (via the virtual link).
+!   Area 2 can now exchange routes with area 0.
+!
+! The virtual link configuration on r2:
+!   area 1 virtual-link 10.0.0.3
+!   (10.0.0.3 is r3's router-id — the other end of the virtual link)
+!
+! Ethernet1: connects to r1 (10.1.12.0/30, r2=.2) — Area 2
+! Ethernet2: connects to r3 (10.1.23.0/30, r2=.1) — Area 1 (transit)
+! Loopback0:   loopback 10.0.0.2/32 — Area 1 (or Area 2; see note below)
+! -------------------------------------------------------------------
+
+interface Loopback0
+ ip address 10.0.0.2/32
+
+interface Ethernet1
+ no switchport
+ description to-r1 (OSPF area 2)
+ ip address 10.1.12.2/30
+
+interface Ethernet2
+ no switchport
+ description to-r3 (OSPF area 1, transit for virtual link)
+ ip address 10.1.23.1/30
+
+! -------------------------------------------------------------------
+! TASK: Configure OSPF on r2 (ABR: area 2 and area 1)
+!
+! Step 1 — Basic OSPF without virtual link:
+!
+!   router ospf 1
+!    router-id 10.0.0.2
+!    network 10.0.0.2/32 area 1
+!    network 10.1.12.0/30 area 2
+!    network 10.1.23.0/30 area 1
+!
+!   Note: loopback is placed in area 1 so it is reachable from r3
+!   for the virtual link peer address lookup.
+!
+!   Verify (before virtual link):
+!     show ip ospf neighbor     <- r1 (area 2) and r3 (area 1)
+!     show ip route ospf       <- area 2 and area 1 routes, but NOT area 0
+!
+! Step 2 — Add virtual link to r3 (through area 1):
+!
+!   router ospf 1
+!    area 1 virtual-link 10.0.0.3
+!
+!   This creates a logical link between r2 and r3.
+!   The virtual link runs OSPF over the area 1 path as if r2 and r3
+!   share an area 0 link.
+!
+!   Verify:
+!     show ip ospf virtual-links
+!     -> should show "Virtual Link OSPF_VL0 to router 10.0.0.3"
+!     -> state should be "Point-to-Point, OI"
+!
+!   After virtual link is up:
+!     show ip ospf neighbor
+!     -> r3 appears TWICE: as area 1 neighbor AND as virtual-link neighbor
+!
+!   From r1 (after virtual link):
+!     ping 10.0.0.4 source 10.0.0.1  <- should now work
+! -------------------------------------------------------------------

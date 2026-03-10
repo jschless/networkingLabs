@@ -1,0 +1,46 @@
+hostname internet
+!
+ip routing
+!
+! ============================================================
+! internet — simulated upstream provider, NOT in OSPF
+!
+! Topology: [core] --OSPF area 0-- [asbr] --NOT in OSPF-- [internet]
+!
+! internet represents the upstream ISP or internet gateway.
+! It runs NO OSPF. It simply provides a target for the default route
+! that asbr will inject into the OSPF domain.
+!
+! internet needs a return route toward the internal network
+! if you want end-to-end ping to work.
+! ============================================================
+
+interface Loopback0
+ ip address 10.99.0.1/32
+
+! Link to asbr — segment 203.0.113.0/30 — NOT in OSPF
+! asbr is .1, internet is .2
+interface Ethernet1
+ no switchport
+ description Link to asbr (203.0.113.0/30, asbr=.1 internet=.2) — no OSPF
+ ip address 203.0.113.2/30
+
+! ============================================================
+! internet has NO OSPF configuration.
+!
+! To test end-to-end reachability (core -> internet):
+!   1. Configure OSPF on core and asbr (Steps 1-3 in asbr's frr.conf)
+!   2. core should have: O*E2 0.0.0.0/0 via 10.1.12.2 (asbr's Ethernet1 IP)
+!   3. Add a return route on internet so replies can get back:
+!      In vtysh on internet:
+!        ip route 10.0.0.0/8 203.0.113.1
+!   4. From core, ping internet's loopback:
+!        ping 10.99.0.1 source 10.0.0.1
+!
+! To simulate internet going down (test conditional default):
+!   On the lab host (bash):
+!     sudo docker exec clab-ospf-default-route-internet ip link set Ethernet1 down
+!   Watch asbr lose the 203.0.113.0/30 route.
+!   If route-map condition is configured, asbr should stop advertising default.
+!   core's O*E2 default should disappear within the OSPF dead interval.
+! ============================================================

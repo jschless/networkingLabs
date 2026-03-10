@@ -1,0 +1,38 @@
+hostname r3
+!
+ip routing
+ipv6 unicast-routing
+
+interface Loopback0
+ ! IPv4 loopback — used as OSPFv3 router-id
+ ip address 10.0.0.3/32
+ ! IPv6 loopback — advertise into OSPFv3
+ ipv6 address 2001:db8::3/128
+
+interface Ethernet1
+ no switchport
+ ! Link to r2: 2001:db8:23::/64
+ ipv6 address 2001:db8:23::2/64
+
+interface Ethernet2
+ no switchport
+ ! Link to r4: 2001:db8:34::/64
+ ipv6 address 2001:db8:34::1/64
+
+! -------------------------------------------------------
+! YOUR TASK: Configure OSPFv3
+!
+! r3 is a transit router between r2 and r4.
+! Enable OSPFv3 on Ethernet1, Ethernet2, and Loopback0.
+!
+!   interface Ethernet1
+!    ipv6 ospf6 area 0
+!   interface Ethernet2
+!    ipv6 ospf6 area 0
+!   interface Loopback0
+!    ipv6 ospf6 area 0
+!    ipv6 ospf6 passive
+!
+!   router ospf6
+!    ospf6 router-id 10.0.0.3
+! -------------------------------------------------------

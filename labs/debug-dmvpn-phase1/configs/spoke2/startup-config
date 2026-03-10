@@ -1,0 +1,34 @@
+hostname spoke2
+!
+interface Loopback0
+   ip address 10.0.0.12/32
+!
+interface Loopback1
+   ip address 192.168.2.1/24
+!
+interface Ethernet1
+   no switchport
+   ip address 10.0.0.12/24
+   no shutdown
+!
+interface Tunnel0
+   tunnel source Ethernet1
+   tunnel mode gre multipoint
+   ip address 172.16.0.12/24
+   ip nhrp network-id 1
+   ip nhrp holdtime 300
+   ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast
+   ip nhrp map 172.16.0.1 10.0.0.1
+   ip nhrp registration no-unique
+   ip ospf network point-to-point
+   ip ospf area 0
+   no shutdown
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.12
+   passive-interface Loopback0
+   passive-interface Loopback1
+!
+end

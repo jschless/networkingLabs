@@ -1,0 +1,27 @@
+hostname r2
+
+interface Loopback0
+ ip address 10.0.0.2/32
+
+interface Ethernet1
+ ip address 10.1.12.2/30
+
+interface Ethernet2
+ ip address 10.1.23.1/30
+
+! TODO: configure BGP (AS 65002)
+! router bgp 65002
+!  bgp router-id 10.0.0.2
+!  no bgp ebgp-requires-policy
+!  neighbor 10.1.12.1 remote-as 65001
+!  neighbor 10.1.12.1 description r1
+!  neighbor 10.1.23.2 remote-as 65003
+!  neighbor 10.1.23.2 description r3
+!
+!  ! TODO: enable BFD for both neighbors
+!  neighbor 10.1.12.1 bfd
+!  neighbor 10.1.23.2 bfd
+!
+!  address-family ipv4 unicast
+!   network 10.0.0.2/32
+!  exit-address-family

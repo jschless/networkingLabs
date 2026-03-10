@@ -1,0 +1,18 @@
+hostname r1
+!
+ip routing
+!
+interface Loopback0
+ ip address 10.0.0.1/32
+ ip ospf area 1
+!
+interface Ethernet1
+ no switchport
+ description to r2
+ ip address 10.1.12.1/30
+ ip ospf area 1
+!
+router ospf 1
+ ospf router-id 10.0.0.1
+ passive-interface Loopback0
+!

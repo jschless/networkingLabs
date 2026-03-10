@@ -1,0 +1,49 @@
+hostname router
+!
+interface Ethernet1
+   description Link to host-a: 192.168.1.0/30, router=.2
+   no switchport
+   ip address 192.168.1.2/30
+!
+interface Ethernet2
+   description Link to host-b: 192.168.2.0/30, router=.2
+   no switchport
+   ip address 192.168.2.2/30
+!
+interface Ethernet3
+   description Link to isp1: 10.0.1.0/30, router=.1
+   no switchport
+   ip address 10.0.1.1/30
+!
+interface Ethernet4
+   description Link to isp2: 10.0.2.0/30, router=.1
+   no switchport
+   ip address 10.0.2.1/30
+!
+ip routing
+!
+! TODO: Step 1 - Default static route via isp1 (normal routing baseline)
+!   ip route 0.0.0.0/0 10.0.1.2
+!
+! TODO: Step 2 - PBR configuration
+!
+!   ip access-list HOST-A
+!      10 permit ip 192.168.1.0/30 any
+!   ip access-list HOST-B
+!      10 permit ip 192.168.2.0/30 any
+!
+!   route-map PBR-ISP1 permit 10
+!      match ip address access-list HOST-A
+!      set ip next-hop 10.0.1.2
+!
+!   route-map PBR-ISP2 permit 10
+!      match ip address access-list HOST-B
+!      set ip next-hop 10.0.2.2
+!
+!   interface Ethernet1
+!      ip policy route-map PBR-ISP1
+!
+!   interface Ethernet2
+!      ip policy route-map PBR-ISP2
+!
+end

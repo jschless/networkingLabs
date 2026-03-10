@@ -1,0 +1,17 @@
+hostname r2
+!
+interface Ethernet1
+   ip address 192.168.1.2/24
+!
+interface Ethernet2
+   ip address 10.0.2.1/30
+!
+ip routing
+!
+ip route 10.99.0.1/32 10.0.2.2
+!
+! TODO: Configure VRRP on Ethernet1:
+! interface Ethernet1
+!    vrrp 1 ip 192.168.1.254
+!
+end
