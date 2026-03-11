@@ -39,7 +39,7 @@ routing protocols and redistribution.
 
 ```bash
 # Deploy the lab
-sudo containerlab deploy --topo topology.yml
+sudo containerlab deploy --topo topology.clab.yml
 
 # Open the EOS CLI on any node
 docker exec -it clab-ospf-bgp-redist-asbr Cli

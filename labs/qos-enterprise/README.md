@@ -82,7 +82,7 @@ grants borrows in priority order — voice borrows first, then video, then data.
 
 ```bash
 # Deploy the lab
-sudo containerlab deploy -t labs/qos-enterprise/topology.yml
+sudo containerlab deploy -t labs/qos-enterprise/topology.clab.yml
 
 # Wait ~15 seconds for iperf3 clients to start, then watch the server logs
 docker exec -it clab-qos-enterprise-server tail -f /tmp/iperf3-server.log
@@ -262,5 +262,5 @@ tc filter add dev eth3 parent ffff: protocol ip prio 1 \
 ## Destroy the lab
 
 ```bash
-sudo containerlab destroy -t labs/qos-enterprise/topology.yml --cleanup
+sudo containerlab destroy -t labs/qos-enterprise/topology.clab.yml --cleanup
 ```

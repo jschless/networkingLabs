@@ -37,7 +37,7 @@ Compare with the `gre-basics` lab which uses Linux `ip tunnel` commands; here yo
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/gre-basics/topology.yml
+sudo containerlab deploy -t labs/gre-basics/topology.clab.yml
 
 # EOS CLI on gw-a
 docker exec -it clab-gre-basics-gw-a Cli
@@ -270,7 +270,7 @@ tunnel routes
 
 cEOS installs a DROP rule in the `EOS_FORWARD` iptables chain for each data-plane interface. Traffic **originated by EOS itself** (e.g., self-ping across the tunnel) bypasses this via the OUTPUT chain. But **transit traffic** — a frame entering from the LAN port and being forwarded into the GRE tunnel — hits the DROP rule and is silently discarded.
 
-The `topology.yml` already handles this: the `exec:` block on gw-a and gw-b runs:
+The `topology.clab.yml` already handles this: the `exec:` block on gw-a and gw-b runs:
 ```bash
 iptables -D EOS_FORWARD -i eth1 -j DROP 2>/dev/null || true   # gw-a
 iptables -D EOS_FORWARD -i eth2 -j DROP 2>/dev/null || true   # gw-b
@@ -282,5 +282,5 @@ This removes the DROP rule for the LAN-facing interface so host → tunnel forwa
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/gre-basics/topology.yml --cleanup
+sudo containerlab destroy -t labs/gre-basics/topology.clab.yml --cleanup
 ```

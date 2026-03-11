@@ -65,8 +65,8 @@ fabric, Tenant-B hosts can reach each other, and that no cross-tenant traffic is
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml --cleanup
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml --cleanup
 ```
 
 Allow ~60 seconds after deploy for EOS to boot and BGP to converge before testing.

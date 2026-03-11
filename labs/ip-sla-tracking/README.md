@@ -32,13 +32,13 @@ Both ISPs loopback: 10.99.0.1/32 (simulated internet)
 ### Step 1: Start the lab
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 Verify both ISPs are reachable:
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "ping 10.0.1.2"
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "ping 10.0.2.2"
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "ping 10.0.1.2"
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "ping 10.0.2.2"
 ```
 
 ### Step 2: Configure floating static routes (no tracking yet)
@@ -119,19 +119,19 @@ show ip route
 
 On the **router** node, bring down eth1:
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- ip link set eth1 down
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- ip link set eth1 down
 ```
 
 Wait a few seconds (SLA frequency is 5 seconds), then check:
 
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "show track 1"
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "show track 1"
 ```
 
 Track state changes to `Down`. Then check routing table:
 
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "show ip route"
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "show ip route"
 ```
 
 The primary route (AD=5) should be gone. The backup (AD=10) should now be
@@ -139,19 +139,19 @@ installed: `S>* 0.0.0.0/0 [10/0] via 10.0.2.2`.
 
 Test connectivity via backup path:
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- ping 10.0.2.2
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- ping 10.0.2.2
 ```
 
 ### Step 7: Restore isp1 and verify recovery
 
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- ip link set eth1 up
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- ip link set eth1 up
 ```
 
 Wait for the SLA probe to succeed (up to 5 seconds), then:
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "show track 1"
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "show ip route"
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "show track 1"
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "show ip route"
 ```
 
 Primary route reinstalls and backup returns to standby state.
@@ -216,5 +216,5 @@ show track
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

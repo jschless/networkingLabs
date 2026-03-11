@@ -53,7 +53,7 @@ A fully-working MPLS SR-MPLS / BGP L3VPN lab using Nokia SR-Linux — the platfo
 # Pull SR-Linux image first if not already present
 docker pull ghcr.io/nokia/srlinux:latest
 
-sudo containerlab deploy -t labs/mpls-sr-srlinux/topology.yml
+sudo containerlab deploy -t labs/mpls-sr-srlinux/topology.clab.yml
 
 # SR-Linux CLI
 docker exec -it clab-mpls-sr-srlinux-rr1  sr_cli
@@ -160,5 +160,5 @@ commit now
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/mpls-sr-srlinux/topology.yml --cleanup
+sudo containerlab destroy -t labs/mpls-sr-srlinux/topology.clab.yml --cleanup
 ```

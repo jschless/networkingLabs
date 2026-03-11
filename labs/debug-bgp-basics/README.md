@@ -47,7 +47,7 @@ AS65001       AS65002        AS65002        AS65003
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-bgp-basics/topology.yml
+sudo containerlab deploy -t labs/debug-bgp-basics/topology.clab.yml
 
 docker exec -it clab-debug-bgp-basics-r1 Cli
 docker exec -it clab-debug-bgp-basics-r3 Cli

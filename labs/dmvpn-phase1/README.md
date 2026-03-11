@@ -27,7 +27,7 @@ spoke3 WAN: 10.0.0.13/24  Tunnel0: 172.16.0.13/24  LAN: 192.168.3.0/24
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/dmvpn-phase1/topology.yml
+sudo containerlab deploy -t labs/dmvpn-phase1/topology.clab.yml
 
 # EOS CLI
 docker exec -it clab-dmvpn-phase1-hub    Cli
@@ -167,5 +167,5 @@ ping 192.168.3.1 repeat 5    ← spoke3 LAN
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/dmvpn-phase1/topology.yml --cleanup
+sudo containerlab destroy -t labs/dmvpn-phase1/topology.clab.yml --cleanup
 ```

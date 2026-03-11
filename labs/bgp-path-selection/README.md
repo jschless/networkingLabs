@@ -41,7 +41,7 @@ Two paths between ce1 and ce2: via isp1 or via isp2. Both ISPs are in the same A
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy --topo topology.yml
+sudo containerlab deploy --topo topology.clab.yml
 docker exec -it clab-bgp-path-selection-ce1 Cli
 ```
 

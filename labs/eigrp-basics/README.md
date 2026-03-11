@@ -37,7 +37,7 @@ All routers in EIGRP AS 100. Two paths from r1 to r4: via r2 or via r3.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy --topo topology.yml
+sudo containerlab deploy --topo topology.clab.yml
 docker exec -it clab-eigrp-basics-r1 vtysh
 ```
 

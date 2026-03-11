@@ -32,7 +32,7 @@ A colleague deployed a DMVPN Phase 1 hub-and-spoke topology. spoke2 and spoke3 a
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 
 docker exec -it clab-debug-dmvpn-phase1-hub Cli
 docker exec -it clab-debug-dmvpn-phase1-spoke1 Cli

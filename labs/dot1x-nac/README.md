@@ -37,10 +37,10 @@ the matching server.
 docker build -t nac-lab:local labs/dot1x-nac/
 
 # Deploy
-sudo containerlab deploy -t labs/dot1x-nac/topology.yml
+sudo containerlab deploy -t labs/dot1x-nac/topology.clab.yml
 
 # Destroy
-sudo containerlab destroy -t labs/dot1x-nac/topology.yml --cleanup
+sudo containerlab destroy -t labs/dot1x-nac/topology.clab.yml --cleanup
 ```
 
 ## What to observe

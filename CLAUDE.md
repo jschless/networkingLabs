@@ -6,12 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Deploy a lab (requires sudo)
-sudo containerlab deploy -t labs/<name>/topology.yml
+sudo containerlab deploy -t labs/<name>/topology.clab.yml
 # OR using the helper (no sudo needed — script calls containerlab which handles it):
 ./scripts/lab.sh deploy <name>
 
 # Destroy a lab
-sudo containerlab destroy -t labs/<name>/topology.yml --cleanup
+sudo containerlab destroy -t labs/<name>/topology.clab.yml --cleanup
 ./scripts/lab.sh destroy <name>
 
 # List running nodes and IPs
@@ -43,7 +43,7 @@ docker build -t wireguard-lab:local labs/wireguard/   # used by: wireguard
 
 ```
 labs/<name>/
-  topology.yml          # ContainerLab topology — nodes, links, binds, exec, sysctls
+  topology.clab.yml          # ContainerLab topology — nodes, links, binds, exec, sysctls
   README.md             # Lab guide: tasks and verification commands
   configs/
     daemons             # Which FRR daemons to enable (often shared across all nodes)
@@ -60,7 +60,7 @@ labs/<name>/
 
 ### Topology patterns
 
-All nodes use `kind: linux` with `image: frrouting/frr:latest` (or a custom image). The `defaults:` block in `topology.yml` avoids repetition — `kind`, `image`, `sysctls`, and `exec` can all be set there and inherited by every node.
+All nodes use `kind: linux` with `image: frrouting/frr:latest` (or a custom image). The `defaults:` block in `topology.clab.yml` avoids repetition — `kind`, `image`, `sysctls`, and `exec` can all be set there and inherited by every node.
 
 Key topology fields:
 - `binds`: bind-mounts host files into the container (FRR configs, setup scripts)
@@ -81,7 +81,7 @@ FRR 8.4 (`frrouting/frr:latest`). Notable syntax:
 
 ### Container naming
 
-ContainerLab names containers `clab-<topology-name>-<node-name>`. The topology name comes from the `name:` field at the top of `topology.yml`, not the directory name (though they always match here).
+ContainerLab names containers `clab-<topology-name>-<node-name>`. The topology name comes from the `name:` field at the top of `topology.clab.yml`, not the directory name (though they always match here).
 
 ### MPLS labs
 

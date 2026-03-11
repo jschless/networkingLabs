@@ -52,7 +52,7 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-ospf-bgp-redist/topology.yml
+sudo containerlab deploy -t labs/debug-ospf-bgp-redist/topology.clab.yml
 
 docker exec -it clab-debug-ospf-bgp-redist-r1    Cli
 docker exec -it clab-debug-ospf-bgp-redist-asbr  Cli

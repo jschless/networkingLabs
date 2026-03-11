@@ -43,7 +43,7 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-ospf-auth/topology.yml
+sudo containerlab deploy -t labs/debug-ospf-auth/topology.clab.yml
 
 docker exec -it clab-debug-ospf-auth-r1 Cli
 docker exec -it clab-debug-ospf-auth-r2 Cli

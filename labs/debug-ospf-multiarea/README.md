@@ -48,7 +48,7 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-ospf-multiarea/topology.yml
+sudo containerlab deploy -t labs/debug-ospf-multiarea/topology.clab.yml
 
 # Open cEOS CLI on any node
 docker exec -it clab-debug-ospf-multiarea-r1 Cli

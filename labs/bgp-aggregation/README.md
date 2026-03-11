@@ -35,8 +35,8 @@ management, Loopback1–4 for the four customer /24 prefixes.
 ## Deploy and Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml
 ```
 
 ## Access Nodes

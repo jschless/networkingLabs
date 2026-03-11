@@ -1,6 +1,6 @@
 #!/bin/bash
 # router/setup.sh — Configure IP addresses and enable IP forwarding
-# This runs automatically at container start via exec in topology.yml
+# This runs automatically at container start via exec in topology.clab.yml
 
 # Bring up interfaces and assign IPs
 ip link set eth1 up && ip addr add 10.1.1.2/30 dev eth1

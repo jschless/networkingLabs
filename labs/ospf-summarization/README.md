@@ -39,7 +39,7 @@ the domain. With `summary-address`, it becomes a single LSA.
 ## Lab Setup
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 Connect to a router:
@@ -247,9 +247,14 @@ Use E2 when the external path cost dominates and intra-domain cost is irrelevant
 Use E1 when you have multiple ASBRs redistributing the same external prefix and
 you want routers to prefer the topologically closer ASBR.
 
-Change the metric type:
+Change the metric type using a route-map (EOS does not support inline `metric-type` on the `redistribute` command):
+
 ```
-r3(config-router)# redistribute static metric-type 1
+r3(config)# route-map OSPF-E1 permit 10
+r3(config-route-map)# set metric-type type-1
+r3(config-route-map)# exit
+r3(config)# router ospf 1
+r3(config-router)# redistribute static route-map OSPF-E1
 ```
 
 Observe the change in `show ip route ospf` on r4:
@@ -270,5 +275,5 @@ Observe the change in `show ip route ospf` on r4:
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

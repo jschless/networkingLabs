@@ -40,13 +40,13 @@ and host-b traffic is steered to isp2 regardless of the routing table.
 ### Step 1: Start the lab
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 Verify connectivity to each ISP from router:
 ```
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "ping 10.0.1.2"
-sudo containerlab exec -t topology.yml --label clab-node-name=router -- Cli -c "ping 10.0.2.2"
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "ping 10.0.1.2"
+sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "ping 10.0.2.2"
 ```
 
 ### Step 2: Add default static route (baseline routing)
@@ -206,5 +206,5 @@ debug ip pbr                      ! Real-time PBR decisions (noisy)
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

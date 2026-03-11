@@ -83,7 +83,7 @@ This lab demonstrates the **L3-everywhere** (also called "routed access") campus
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/enterprise-routed-access/topology.yml
+sudo containerlab deploy -t labs/enterprise-routed-access/topology.clab.yml
 # or
 ./scripts/lab.sh deploy enterprise-routed-access
 ```
@@ -300,7 +300,7 @@ Should show two equal-cost paths: via 10.2.0.0 (dist1) and via 10.2.0.2 (dist2).
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t labs/enterprise-routed-access/topology.yml --cleanup
+sudo containerlab destroy -t labs/enterprise-routed-access/topology.clab.yml --cleanup
 # or
 ./scripts/lab.sh destroy enterprise-routed-access
 ```

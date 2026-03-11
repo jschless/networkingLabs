@@ -36,7 +36,7 @@ A colleague deployed a VXLAN/BGP EVPN fabric. host1 and host2 should be on the s
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 
 docker exec -it clab-debug-vxlan-evpn-vtep1 vtysh
 docker exec -it clab-debug-vxlan-evpn-vtep2 bash

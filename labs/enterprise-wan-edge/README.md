@@ -102,7 +102,7 @@ gateway, even during BGP convergence.
 docker build -t frr-lab:local images/frr/
 
 # Deploy
-sudo containerlab deploy -t labs/enterprise-wan-edge/topology.yml
+sudo containerlab deploy -t labs/enterprise-wan-edge/topology.clab.yml
 
 # Access nodes
 docker exec -it clab-enterprise-wan-edge-edge  Cli       # EOS CLI on edge
@@ -113,7 +113,7 @@ docker exec -it clab-enterprise-wan-edge-core2 Cli       # EOS CLI on core2
 docker exec -it clab-enterprise-wan-edge-server bash     # Linux shell on server
 
 # Destroy
-sudo containerlab destroy -t labs/enterprise-wan-edge/topology.yml --cleanup
+sudo containerlab destroy -t labs/enterprise-wan-edge/topology.clab.yml --cleanup
 ```
 
 ## Verification Commands

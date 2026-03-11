@@ -36,7 +36,7 @@ assignments, and stub-area configuration yourself.
 
 ```bash
 # Deploy the lab (run from this directory)
-containerlab deploy --topo topology.yml
+containerlab deploy --topo topology.clab.yml
 
 # List nodes and their management IPs
 ../../scripts/lab.sh list ospf-multiarea

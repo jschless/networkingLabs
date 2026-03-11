@@ -32,7 +32,7 @@ End-to-end host encryption. host-a and host-b share a different CAK+CKN pair. Th
 
 ```bash
 docker build -t macsec-lab:local labs/macsec-basics/
-sudo containerlab deploy -t labs/macsec-basics/topology.yml
+sudo containerlab deploy -t labs/macsec-basics/topology.clab.yml
 ```
 
 ## Verification

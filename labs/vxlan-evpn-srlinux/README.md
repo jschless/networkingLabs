@@ -30,7 +30,7 @@ A fully-working VXLAN/BGP EVPN lab using Nokia SR-Linux. No Linux bridge setup s
 # Pull SR-Linux image if not present
 docker pull ghcr.io/nokia/srlinux:latest
 
-sudo containerlab deploy -t labs/vxlan-evpn-srlinux/topology.yml
+sudo containerlab deploy -t labs/vxlan-evpn-srlinux/topology.clab.yml
 
 # SR-Linux CLI
 docker exec -it clab-vxlan-evpn-srlinux-spine  sr_cli
@@ -142,5 +142,5 @@ You should see host2's MAC address learned via EVPN (remote entry from vtep2).
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/vxlan-evpn-srlinux/topology.yml --cleanup
+sudo containerlab destroy -t labs/vxlan-evpn-srlinux/topology.clab.yml --cleanup
 ```

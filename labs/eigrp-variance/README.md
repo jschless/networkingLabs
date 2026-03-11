@@ -77,7 +77,7 @@ This is set with `traffic-share balanced` (the default).
 ## Deployment
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 ## Tasks
@@ -164,5 +164,5 @@ Where YYYYY > XXXXX (higher metric via slow path).
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

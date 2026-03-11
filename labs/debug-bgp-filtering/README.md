@@ -50,7 +50,7 @@ AS65001       AS65002       AS65003       AS65004
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-bgp-filtering/topology.yml
+sudo containerlab deploy -t labs/debug-bgp-filtering/topology.clab.yml
 
 docker exec -it clab-debug-bgp-filtering-r2 Cli
 docker exec -it clab-debug-bgp-filtering-r3 Cli

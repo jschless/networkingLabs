@@ -37,7 +37,7 @@ A colleague was reviewing area configurations and changed a setting on r1, the A
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 
 docker exec -it clab-debug-ospf-nssa-r1 Cli
 docker exec -it clab-debug-ospf-nssa-r2 Cli

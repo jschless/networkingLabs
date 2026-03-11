@@ -33,8 +33,8 @@ r1 originates three prefixes:
 ## Deploy and Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml --cleanup
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml --cleanup
 ```
 
 ## Access Nodes

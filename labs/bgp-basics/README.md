@@ -35,7 +35,7 @@ AS65001       AS65002        AS65002        AS65003
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy --topo topology.yml
+sudo containerlab deploy --topo topology.clab.yml
 
 # EOS CLI
 docker exec -it clab-bgp-basics-r1 Cli

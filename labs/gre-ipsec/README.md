@@ -32,8 +32,8 @@ docker build -t ipsec-lab:local labs/ipsec-basics/
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml
 ```
 
 ## What Is Pre-Configured

@@ -47,7 +47,7 @@ are pre-configured. You implement each protocol layer yourself.
 
 ```bash
 # Deploy the lab (from this directory)
-containerlab deploy --topo topology.yml
+containerlab deploy --topo topology.clab.yml
 
 # List nodes and their management IPs
 ./../../scripts/lab.sh list mpls-sr-blank

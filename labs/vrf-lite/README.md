@@ -40,7 +40,7 @@ pe1 and pe2 each maintain two VRFs. Two separate inter-PE links carry each VRF (
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/vrf-lite/topology.yml
+sudo containerlab deploy -t labs/vrf-lite/topology.clab.yml
 
 # Access PE nodes (EOS CLI)
 docker exec -it clab-vrf-lite-pe1 Cli

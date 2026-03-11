@@ -46,10 +46,10 @@ Deploy and explore — everything works out of the box.
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 # Wait 30–60 seconds for IS-IS and BGP to converge
 
-sudo containerlab destroy -t topology.yml --cleanup
+sudo containerlab destroy -t topology.clab.yml --cleanup
 ```
 
 ## Quick Verification

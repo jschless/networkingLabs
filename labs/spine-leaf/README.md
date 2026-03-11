@@ -37,7 +37,7 @@ Loopbacks: spine1=10.0.0.101/32, spine2=10.0.0.102/32, leaf1-4=10.0.0.1-4/32
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/spine-leaf/topology.yml
+sudo containerlab deploy -t labs/spine-leaf/topology.clab.yml
 
 # EOS CLI
 docker exec -it clab-spine-leaf-spine1 Cli
@@ -475,5 +475,5 @@ Failure test examples:
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/spine-leaf/topology.yml --cleanup
+sudo containerlab destroy -t labs/spine-leaf/topology.clab.yml --cleanup
 ```

@@ -27,7 +27,7 @@ All interfaces are in OSPF area 0.
 ## Lab Setup
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 Connect to a router:
@@ -260,5 +260,5 @@ older Cisco IOS. Use MD5 when interoperability is required.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

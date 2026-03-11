@@ -40,8 +40,8 @@ docker build -t wireguard-lab:local labs/wireguard/
 # Build image first (only needed once)
 docker build -t wireguard-lab:local labs/wireguard/
 
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml --cleanup
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml --cleanup
 ```
 
 ## What You Configure

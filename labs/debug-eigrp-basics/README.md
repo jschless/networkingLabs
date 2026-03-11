@@ -43,7 +43,7 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-eigrp-basics/topology.yml
+sudo containerlab deploy -t labs/debug-eigrp-basics/topology.clab.yml
 
 docker exec -it clab-debug-eigrp-basics-r1 vtysh
 docker exec -it clab-debug-eigrp-basics-r3 vtysh

@@ -39,7 +39,7 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-isis-basics/topology.yml
+sudo containerlab deploy -t labs/debug-isis-basics/topology.clab.yml
 
 docker exec -it clab-debug-isis-basics-r2 Cli
 docker exec -it clab-debug-isis-basics-r3 Cli

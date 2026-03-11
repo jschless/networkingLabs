@@ -38,7 +38,7 @@ A colleague configured GRE tunnels between two gateway routers (gw-a and gw-b) t
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 
 # Access gateways (EOS CLI)
 docker exec -it clab-debug-gre-basics-gw-a Cli

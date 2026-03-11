@@ -91,7 +91,7 @@ This lab demonstrates the **screened subnet** (dual-firewall DMZ) pattern — th
 docker build -t frr-lab:local images/frr/
 
 # Deploy
-sudo containerlab deploy -t labs/enterprise-dmz/topology.yml
+sudo containerlab deploy -t labs/enterprise-dmz/topology.clab.yml
 
 # Access nodes
 docker exec -it clab-enterprise-dmz-fw-outside bash
@@ -321,5 +321,5 @@ permitted flow. With stateful filtering, only the initial connection direction n
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/enterprise-dmz/topology.yml --cleanup
+sudo containerlab destroy -t labs/enterprise-dmz/topology.clab.yml --cleanup
 ```

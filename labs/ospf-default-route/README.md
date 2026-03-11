@@ -32,7 +32,7 @@ the internal network. The asbr is the boundary between the two worlds.
 ## Lab Setup
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 Connect to a router:
@@ -310,5 +310,5 @@ In modern networks, the correct approach is always:
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

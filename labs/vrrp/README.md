@@ -27,7 +27,7 @@ host default gateway: 192.168.1.254
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 ## Pre-configured
@@ -170,5 +170,5 @@ Preemption back to master is immediate (first advertisement with higher priority
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

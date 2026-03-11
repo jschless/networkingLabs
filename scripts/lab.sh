@@ -28,7 +28,7 @@ CMD="$1"
 LAB="$2"
 NODE="${3:-}"
 
-TOPO="$LABS_DIR/$LAB/topology.yml"
+TOPO="$LABS_DIR/$LAB/topology.clab.yml"
 [[ ! -f "$TOPO" ]] && { echo "ERROR: topology not found: $TOPO"; exit 1; }
 
 # Derive the container name prefix from the topology name field

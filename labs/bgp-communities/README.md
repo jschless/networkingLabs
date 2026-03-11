@@ -29,8 +29,8 @@ AS65001               AS65002               AS65003               AS65004
 ## Deploy and Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml
 ```
 
 ## Access Nodes

@@ -65,7 +65,7 @@ AS65001 AS65002 AS65003 AS65004
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-spine-leaf/topology.yml
+sudo containerlab deploy -t labs/debug-spine-leaf/topology.clab.yml
 
 docker exec -it clab-debug-spine-leaf-leaf2  Cli
 docker exec -it clab-debug-spine-leaf-leaf1  Cli

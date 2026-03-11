@@ -27,8 +27,8 @@ area configuration, Level-1/Level-2 operation, DIS election, and LSP flooding.
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml
 ```
 
 ## What You Configure
@@ -68,7 +68,7 @@ interface eth2
 
 ```bash
 # SSH into a node
-sudo containerlab inspect -t topology.yml
+sudo containerlab inspect -t topology.clab.yml
 docker exec -it clab-isis-basics-r1 Cli
 
 # Check IS-IS neighbors (should see adjacent routers)

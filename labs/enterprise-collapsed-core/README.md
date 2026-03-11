@@ -98,7 +98,7 @@ chmod +x labs/enterprise-collapsed-core/configs/client-a/setup.sh
 chmod +x labs/enterprise-collapsed-core/configs/client-b/setup.sh
 
 # Deploy
-sudo containerlab deploy -t labs/enterprise-collapsed-core/topology.yml
+sudo containerlab deploy -t labs/enterprise-collapsed-core/topology.clab.yml
 
 # Or with the helper script
 ./scripts/lab.sh deploy enterprise-collapsed-core
@@ -107,7 +107,7 @@ sudo containerlab deploy -t labs/enterprise-collapsed-core/topology.yml
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t labs/enterprise-collapsed-core/topology.yml --cleanup
+sudo containerlab destroy -t labs/enterprise-collapsed-core/topology.clab.yml --cleanup
 ./scripts/lab.sh destroy enterprise-collapsed-core
 ```
 
@@ -323,7 +323,7 @@ Practice adding a client to the guest network without disrupting production VLAN
 The VLAN 30 SVI already exists on cc1 (10.30.30.2/24) and cc2 (10.30.30.3/24)
 with VRRP VIP 10.30.30.1. To add a client:
 
-1. Edit `topology.yml` — add a `client-c` Linux node and link it to acc2:eth2.
+1. Edit `topology.clab.yml` — add a `client-c` Linux node and link it to acc2:eth2.
 2. Create `configs/client-c/setup.sh` with IP 10.30.30.11/24, gateway 10.30.30.1.
 3. On acc2: `interface Ethernet2 / switchport access vlan 30 / switchport mode access`.
 4. Redeploy or reconfigure acc2 manually via `Cli`.

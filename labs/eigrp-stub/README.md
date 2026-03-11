@@ -90,7 +90,7 @@ advertise ce's networks to the hub.
 ## Deployment
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 ## Tasks
@@ -218,5 +218,5 @@ received the stub flag from the spoke.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

@@ -41,7 +41,7 @@ Two separate OSPF area 0 domains, one EIGRP AS 100 domain in the middle.
 ### Step 1: Start the lab
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 ### Step 2: Configure OSPF (left domain — r1 and asbr1)
@@ -273,5 +273,5 @@ show route-map                         ! Route-map hit counters
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

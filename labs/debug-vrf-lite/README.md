@@ -46,7 +46,7 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-vrf-lite/topology.yml
+sudo containerlab deploy -t labs/debug-vrf-lite/topology.clab.yml
 
 docker exec -it clab-debug-vrf-lite-pe1  Cli
 docker exec -it clab-debug-vrf-lite-ce-a1 Cli

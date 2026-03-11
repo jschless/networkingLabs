@@ -19,8 +19,8 @@ is mounted into containers, and how basic OSPF adjacency forms.
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml
 ```
 
 ## Connect to Nodes
@@ -47,7 +47,7 @@ ping 10.0.0.2               # basic connectivity
 
 This lab demonstrates the core ContainerLab + cEOS workflow:
 
-- **topology.yml**: defines nodes and links; ContainerLab creates veth pairs between containers
+- **topology.clab.yml**: defines nodes and links; ContainerLab creates veth pairs between containers
 - **startup-config**: bind-mounted into `/etc/frr/startup-config`; cEOS reads this at startup
 - **daemons**: controls which cEOS daemons run (zebra, ospfd, bgpd, etc.)
 - **Cli.conf**: `service integrated-Cli-config` writes `Cli -w` changes to startup-config

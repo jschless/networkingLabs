@@ -44,7 +44,7 @@ Demonstrate how BGP route hijacking works in practice and how to defend against 
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 ## Access
@@ -227,5 +227,5 @@ show bgp neighbors 10.1.12.2 routes                    # what peer sent after fi
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t topology.yml --cleanup
+sudo containerlab destroy -t topology.clab.yml --cleanup
 ```

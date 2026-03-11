@@ -71,7 +71,7 @@ You will implement and test:
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/ha-network-design-ceos/topology.yml
+sudo containerlab deploy -t labs/ha-network-design-ceos/topology.clab.yml
 ```
 
 Access examples:
@@ -426,5 +426,5 @@ Lab mapping:
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t labs/ha-network-design-ceos/topology.yml
+sudo containerlab destroy -t labs/ha-network-design-ceos/topology.clab.yml
 ```

@@ -74,7 +74,7 @@ through the ABR's default route.
 ## Deployment
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 ## Tasks
@@ -235,5 +235,5 @@ Expected: `O N2 0.0.0.0/0` (default from ABR) instead of specific Type-3 routes.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

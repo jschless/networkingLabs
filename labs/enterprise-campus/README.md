@@ -142,7 +142,7 @@ ensuring traffic doesn't hairpin across the distribution-core-distribution path.
 docker build -t frr-lab:local images/frr/
 
 # Deploy the lab
-sudo containerlab deploy -t labs/enterprise-campus/topology.yml
+sudo containerlab deploy -t labs/enterprise-campus/topology.clab.yml
 # or via helper:
 ./scripts/lab.sh deploy enterprise-campus
 ```
@@ -326,7 +326,7 @@ Extend the topology with a second ISP for redundant internet connectivity.
 4. Verify failover: shut isp1 link, traffic should route via isp2
 
 ```yaml
-# In topology.yml, add to nodes:
+# In topology.clab.yml, add to nodes:
 isp2:
   kind: linux
   image: frr-lab:local
@@ -385,7 +385,7 @@ Verify neighbors still form, then test with a wrong key to see OSPF drop.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/enterprise-campus/topology.yml --cleanup
+sudo containerlab destroy -t labs/enterprise-campus/topology.clab.yml --cleanup
 # or:
 ./scripts/lab.sh destroy enterprise-campus
 ```

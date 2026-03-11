@@ -37,7 +37,7 @@ Labels: SRGB base 16000; node label = 16000 + index.
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 
 docker exec -it clab-debug-mpls-sr-isis-bgp-pe1 vtysh
 docker exec -it clab-debug-mpls-sr-isis-bgp-pe2 vtysh

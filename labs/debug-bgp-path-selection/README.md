@@ -57,7 +57,7 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-bgp-path-selection/topology.yml
+sudo containerlab deploy -t labs/debug-bgp-path-selection/topology.clab.yml
 
 docker exec -it clab-debug-bgp-path-selection-isp1 Cli
 docker exec -it clab-debug-bgp-path-selection-isp2 Cli

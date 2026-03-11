@@ -81,7 +81,7 @@ endpoint, NOT an IP address. Both routers must be reachable within area 1.
 ## Deployment
 
 ```bash
-sudo containerlab deploy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
 ```
 
 ## Tasks
@@ -255,5 +255,5 @@ area 1.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.yml
+sudo containerlab destroy -t topology.clab.yml
 ```

@@ -60,7 +60,7 @@ See `configs/bleaf1/startup-config` for detailed hints on each task.
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/evpn-border-ceos/topology.yml
+sudo containerlab deploy -t labs/evpn-border-ceos/topology.clab.yml
 ```
 
 ## Access nodes

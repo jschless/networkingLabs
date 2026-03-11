@@ -4,8 +4,8 @@
 
 ```bash
 # From the lab directory:
-sudo containerlab deploy --topo topology.yml --reconfigure
-sudo containerlab destroy --topo topology.yml --cleanup
+sudo containerlab deploy --topo topology.clab.yml --reconfigure
+sudo containerlab destroy --topo topology.clab.yml --cleanup
 ```
 
 ## Attach to a node

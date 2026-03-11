@@ -40,7 +40,7 @@ Demonstrates four core network observability mechanisms using Linux containers w
 
 ```bash
 docker build -t assurance-lab:local labs/network-assurance/
-sudo containerlab deploy -t labs/network-assurance/topology.yml
+sudo containerlab deploy -t labs/network-assurance/topology.clab.yml
 ```
 
 ## Assurance Mechanisms

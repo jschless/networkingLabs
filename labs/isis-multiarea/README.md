@@ -31,8 +31,8 @@ Area 49.0001                Level-2 Backbone            Area 49.0002
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.yml
-sudo containerlab destroy -t topology.yml
+sudo containerlab deploy -t topology.clab.yml
+sudo containerlab destroy -t topology.clab.yml
 ```
 
 ## What You Configure
