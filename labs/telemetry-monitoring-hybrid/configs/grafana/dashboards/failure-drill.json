@@ -1,0 +1,285 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "content": "<h2>Failure Drill</h2><p>Use this view while running <code>scripts/link-down-campus-pe.sh</code> and <code>scripts/link-up-campus-pe.sh</code>. Watch how the counters behave before, during, and after the failure, then compare that with OpenNMS events and outages.</p><p>Questions to answer: what changed first, what disappeared entirely, and what became an outage versus just a metric change?</p>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.2.0",
+      "title": "How To Use This Dashboard",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 5
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "up{job=\"gnmic\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Prometheus -> gNMIc",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 9,
+        "x": 6,
+        "y": 5
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "hidden",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=\"Ethernet1\"}[1m]) * 8",
+          "legendFormat": "Ethernet1",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Ethernet1 Egress",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 9,
+        "x": 15,
+        "y": 5
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "hidden",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=\"Ethernet2\"}[1m]) * 8",
+          "legendFormat": "Ethernet2",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Ethernet2 Egress",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "rate(interfaces_interface_state_counters_in_octets{target=\"campus1\",interface_name=~\"Ethernet1|Ethernet2\"}[1m]) * 8",
+          "legendFormat": "{{interface_name}} ingress",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Critical Path Ingress",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=~\"Ethernet1|Ethernet2\"}[1m]) * 8",
+          "legendFormat": "{{interface_name}} egress",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Critical Path Egress",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 7,
+      "options": {
+        "content": "<p>Expected workflow: use Grafana to confirm the fast symptom, then switch to OpenNMS to inspect node detail, interfaces, recent events, and outages. The teaching goal is to separate immediate telemetry change from durable NMS state.</p>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.2.0",
+      "title": "Operator Lesson",
+      "type": "text"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "gnmi",
+    "telemetry",
+    "failure"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "title": "Failure Drill",
+  "uid": "failure-drill",
+  "version": 1
+}
