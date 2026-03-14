@@ -1,0 +1,24 @@
+hostname r3
+!
+no aaa root
+!
+ip routing
+!
+interface Loopback0
+ ip address 10.0.0.3/32
+!
+interface Ethernet1
+ no switchport
+ description to r2 (OSPF area 0)
+ ip address 10.1.23.2/30
+!
+router ospf 1
+ router-id 10.0.0.3
+ passive-interface Loopback0
+!
+interface Ethernet1
+ ip ospf area 0
+!
+interface Loopback0
+ ip ospf area 0
+ ip ospf passive
