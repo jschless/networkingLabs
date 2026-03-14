@@ -12,7 +12,17 @@
       "Bash(docker ps:*)",
       "Bash(for lab in bgp-aggregation bgp-filtering bgp-communities bgp-prefix-security)",
       "Bash(do echo -n \"$lab — kind: \" grep -m1 \"kind\" labs/$lab/topology.yml echo -n \" frr files remaining: \" find labs/$lab/configs -name \"frr.conf\" -o -name \"daemons\" -o -name \"vtysh.conf\")",
-      "Bash(for lab:*)"
+      "Bash(for lab:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $lab ===\")",
+      "Read(//home/joe/containerlab/labs/$lab/**)",
+      "Read(//usr/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(python3.10 -m pip install -r /home/joe/containerlab/requirements-docs.txt -q 2>&1 | tail -10)",
+      "Bash(python3.10 -m pip install -r /home/joe/containerlab/requirements-docs.txt 2>&1 | grep -E \"error:|Error:|Successfully|Collecting\" | head -20)",
+      "WebFetch(domain:squidfunk.github.io)",
+      "WebFetch(domain:docs.github.com)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

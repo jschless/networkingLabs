@@ -11,6 +11,6 @@ mkdir -p /var/log/remote
 
 chronyd -f /etc/chrony/chrony.conf
 rsyslogd
-dnsmasq --conf-file=/etc/dnsmasq.d/lab.conf
+dnsmasq --conf-file=/etc/dnsmasq.d/lab.conf >/tmp/dnsmasq.log 2>&1 &
 
 echo "[services1] DNS/DHCP/NTP/syslog services ready on 192.168.99.10"

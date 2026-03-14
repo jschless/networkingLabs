@@ -24,3 +24,6 @@ Thumbs.db
 # Shell history / scratch files
 *.bak
 *.tmp
+
+# MkDocs generated site
+site/

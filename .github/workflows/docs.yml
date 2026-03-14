@@ -1,0 +1,44 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'labs/*/README.md'
+      - 'mkdocs.yml'
+      - 'requirements-docs.txt'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'labs/*/README.md'
+      - 'mkdocs.yml'
+      - 'requirements-docs.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-docs.txt
+
+      - name: Build (PR check)
+        if: github.event_name == 'pull_request'
+        run: mkdocs build --strict
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push'
+        run: mkdocs gh-deploy --force --clean

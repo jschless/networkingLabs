@@ -1,0 +1,197 @@
+site_name: ContainerLab Networking Labs
+site_description: 93 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, and more.
+site_url: https://joelburger.github.io/containerlab/
+repo_url: https://github.com/joelburger/containerlab
+repo_name: joelburger/containerlab
+edit_uri: edit/main/
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - include-markdown
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - How It Works: how-it-works.md
+  - Study Paths: study-paths.md
+  - Quick Reference: quick-reference.md
+  - Labs:
+    - OSPF:
+      - tracks/ospf/index.md
+      - two-routers: tracks/ospf/two-routers.md
+      - ospf-multiarea: tracks/ospf/ospf-multiarea.md
+      - ospf-auth: tracks/ospf/ospf-auth.md
+      - ospf-summarization: tracks/ospf/ospf-summarization.md
+      - ospf-default-route: tracks/ospf/ospf-default-route.md
+      - ospf-nssa: tracks/ospf/ospf-nssa.md
+      - ospf-virtual-link: tracks/ospf/ospf-virtual-link.md
+      - ospf-bgp-redist: tracks/ospf/ospf-bgp-redist.md
+      - ipv6-ospf3: tracks/ospf/ipv6-ospf3.md
+    - EIGRP:
+      - tracks/eigrp/index.md
+      - eigrp-basics: tracks/eigrp/eigrp-basics.md
+      - eigrp-variance: tracks/eigrp/eigrp-variance.md
+      - eigrp-stub: tracks/eigrp/eigrp-stub.md
+    - BGP:
+      - tracks/bgp/index.md
+      - bgp-basics: tracks/bgp/bgp-basics.md
+      - bgp-path-selection: tracks/bgp/bgp-path-selection.md
+      - bgp-filtering: tracks/bgp/bgp-filtering.md
+      - bgp-communities: tracks/bgp/bgp-communities.md
+      - bgp-aggregation: tracks/bgp/bgp-aggregation.md
+      - bgp-prefix-security: tracks/bgp/bgp-prefix-security.md
+      - bgp-rpki: tracks/bgp/bgp-rpki.md
+      - bgp-labeled-unicast: tracks/bgp/bgp-labeled-unicast.md
+      - ipv6-bgp: tracks/bgp/ipv6-bgp.md
+    - IS-IS:
+      - tracks/isis/index.md
+      - isis-basics: tracks/isis/isis-basics.md
+      - isis-multiarea: tracks/isis/isis-multiarea.md
+    - Route Control:
+      - tracks/route-control/index.md
+      - redistribution-tags: tracks/route-control/redistribution-tags.md
+      - route-maps-pbr: tracks/route-control/route-maps-pbr.md
+      - ip-sla-tracking: tracks/route-control/ip-sla-tracking.md
+    - Tunnels & VPN:
+      - tracks/tunnels-vpn/index.md
+      - gre-basics: tracks/tunnels-vpn/gre-basics.md
+      - gre-ceos: tracks/tunnels-vpn/gre-ceos.md
+      - gre-ipsec: tracks/tunnels-vpn/gre-ipsec.md
+      - ipsec-basics: tracks/tunnels-vpn/ipsec-basics.md
+      - dmvpn-phase1: tracks/tunnels-vpn/dmvpn-phase1.md
+      - dmvpn-phase2: tracks/tunnels-vpn/dmvpn-phase2.md
+      - dmvpn-phase3: tracks/tunnels-vpn/dmvpn-phase3.md
+      - dmvpn-ceos: tracks/tunnels-vpn/dmvpn-ceos.md
+      - flexvpn-basics: tracks/tunnels-vpn/flexvpn-basics.md
+      - wireguard: tracks/tunnels-vpn/wireguard.md
+      - vrf-lite: tracks/tunnels-vpn/vrf-lite.md
+    - MPLS & SP:
+      - tracks/mpls-sp/index.md
+      - mpls-sr-blank: tracks/mpls-sp/mpls-sr-blank.md
+      - mpls-sr-isis-bgp: tracks/mpls-sp/mpls-sr-isis-bgp.md
+      - mpls-sr-srlinux: tracks/mpls-sp/mpls-sr-srlinux.md
+      - mpls-l2vpn: tracks/mpls-sp/mpls-l2vpn.md
+      - ipv6-transition: tracks/mpls-sp/ipv6-transition.md
+    - Data Center:
+      - tracks/data-center/index.md
+      - spine-leaf: tracks/data-center/spine-leaf.md
+      - spine-leaf-ceos: tracks/data-center/spine-leaf-ceos.md
+      - vxlan-evpn: tracks/data-center/vxlan-evpn.md
+      - vxlan-evpn-srlinux: tracks/data-center/vxlan-evpn-srlinux.md
+      - evpn-vxlan-ceos: tracks/data-center/evpn-vxlan-ceos.md
+      - evpn-border-ceos: tracks/data-center/evpn-border-ceos.md
+    - High Availability:
+      - tracks/high-availability/index.md
+      - bfd-ospf: tracks/high-availability/bfd-ospf.md
+      - bfd-bgp: tracks/high-availability/bfd-bgp.md
+      - vrrp: tracks/high-availability/vrrp.md
+      - ha-network-design-ceos: tracks/high-availability/ha-network-design-ceos.md
+      - graceful-restart: tracks/high-availability/graceful-restart.md
+    - Enterprise Design:
+      - tracks/enterprise/index.md
+      - enterprise-collapsed-core: tracks/enterprise/enterprise-collapsed-core.md
+      - enterprise-campus: tracks/enterprise/enterprise-campus.md
+      - enterprise-routed-access: tracks/enterprise/enterprise-routed-access.md
+      - enterprise-dmz: tracks/enterprise/enterprise-dmz.md
+      - enterprise-wan-edge: tracks/enterprise/enterprise-wan-edge.md
+      - enterprise-access-security: tracks/enterprise/enterprise-access-security.md
+      - enterprise-edge-nat-firewall: tracks/enterprise/enterprise-edge-nat-firewall.md
+      - enterprise-multicast: tracks/enterprise/enterprise-multicast.md
+      - enterprise-services-infra: tracks/enterprise/enterprise-services-infra.md
+      - enterprise-wireless-architecture: tracks/enterprise/enterprise-wireless-architecture.md
+      - enterprise-campus-capstone: tracks/enterprise/enterprise-campus-capstone.md
+      - enterprise-collapsed-core-capstone: tracks/enterprise/enterprise-collapsed-core-capstone.md
+      - enterprise-routed-access-capstone: tracks/enterprise/enterprise-routed-access-capstone.md
+      - enterprise-wan-edge-capstone: tracks/enterprise/enterprise-wan-edge-capstone.md
+    - Layer 2:
+      - tracks/layer2/index.md
+      - stp-operations: tracks/layer2/stp-operations.md
+      - lacp-etherchannel: tracks/layer2/lacp-etherchannel.md
+    - Security:
+      - tracks/security/index.md
+      - macsec-basics: tracks/security/macsec-basics.md
+      - dot1x-nac: tracks/security/dot1x-nac.md
+      - urpf-antispoofing: tracks/security/urpf-antispoofing.md
+      - copp-basics: tracks/security/copp-basics.md
+      - dot1x-ceos-practice: tracks/security/dot1x-ceos-practice.md
+    - Network Operations:
+      - tracks/operations/index.md
+      - network-assurance: tracks/operations/network-assurance.md
+      - qos-enterprise: tracks/operations/qos-enterprise.md
+      - network-automation-netbox: tracks/operations/network-automation-netbox.md
+      - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
+    - Debug Labs:
+      - tracks/debug/index.md
+      - debug-ospf-multiarea: tracks/debug/debug-ospf-multiarea.md
+      - debug-ospf-auth: tracks/debug/debug-ospf-auth.md
+      - debug-ospf-nssa: tracks/debug/debug-ospf-nssa.md
+      - debug-ospf-bgp-redist: tracks/debug/debug-ospf-bgp-redist.md
+      - debug-eigrp-basics: tracks/debug/debug-eigrp-basics.md
+      - debug-isis-basics: tracks/debug/debug-isis-basics.md
+      - debug-bgp-basics: tracks/debug/debug-bgp-basics.md
+      - debug-bgp-path-selection: tracks/debug/debug-bgp-path-selection.md
+      - debug-bgp-filtering: tracks/debug/debug-bgp-filtering.md
+      - debug-gre-basics: tracks/debug/debug-gre-basics.md
+      - debug-dmvpn-phase1: tracks/debug/debug-dmvpn-phase1.md
+      - debug-vrf-lite: tracks/debug/debug-vrf-lite.md
+      - debug-spine-leaf: tracks/debug/debug-spine-leaf.md
+      - debug-mpls-sr-isis-bgp: tracks/debug/debug-mpls-sr-isis-bgp.md
+      - debug-vxlan-evpn: tracks/debug/debug-vxlan-evpn.md
+  - Platforms:
+    - FRR: platforms/frr.md
+    - Arista cEOS: platforms/ceos.md
+    - Nokia SR-Linux: platforms/srlinux.md
+  - Contributing: contributing.md

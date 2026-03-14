@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **55 hands-on networking labs** covering OSPF, BGP, MPLS,
+A self-hosted lab environment with **93 hands-on networking labs** covering OSPF, BGP, MPLS,
 VPN, data center, enterprise design, security, and more. All labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
 [Arista cEOS](https://www.arista.com/en/support/software-download), and
@@ -153,6 +153,7 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 | [bgp-communities](labs/bgp-communities/) | Practice | Standard/extended communities, route-map tagging |
 | [bgp-aggregation](labs/bgp-aggregation/) | Practice | `aggregate-address`, summary-only, selective suppression |
 | [bgp-prefix-security](labs/bgp-prefix-security/) | Practice | Route hijacking demo, prefix-list defenses, RPKI concepts |
+| [bgp-rpki](labs/bgp-rpki/) | Practice | BGP RPKI, Route Origin Validation, ROA validation with rpkid |
 | [bgp-labeled-unicast](labs/bgp-labeled-unicast/) | Practice | BGP-LU (RFC 3107), inter-AS MPLS label distribution |
 | [ipv6-bgp](labs/ipv6-bgp/) | Practice | Dual-stack BGP, extended next-hop, native IPv6 sessions |
 
@@ -187,6 +188,9 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 | [ipsec-basics](labs/ipsec-basics/) | Practice | IKEv2 site-to-site IPsec, PSK, tunnel mode |
 | [dmvpn-phase1](labs/dmvpn-phase1/) | Practice | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel (FRR) |
 | [dmvpn-ceos](labs/dmvpn-ceos/) | Practice | DMVPN hub-and-spoke on Arista cEOS |
+| [dmvpn-phase2](labs/dmvpn-phase2/) | Practice | DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts (cEOS) |
+| [dmvpn-phase3](labs/dmvpn-phase3/) | Practice | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp (cEOS) |
+| [flexvpn-basics](labs/flexvpn-basics/) | Practice | IKEv2 FlexVPN, Virtual Tunnel Interfaces, strongSwan |
 | [wireguard](labs/wireguard/) | Practice | WireGuard VPN, key pairs, hub-and-spoke topology |
 | [vrf-lite](labs/vrf-lite/) | Practice | VRF-Lite on cEOS, per-VRF routing tables, route leaking |
 
@@ -199,6 +203,8 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 | [mpls-sr-blank](labs/mpls-sr-blank/) | Practice | Build the full SP stack yourself from scratch (FRR) |
 | [mpls-sr-isis-bgp](labs/mpls-sr-isis-bgp/) | **Reference** | IS-IS + SR-MPLS + BGP VPNv4 + L3VPN (FRR) |
 | [mpls-sr-srlinux](labs/mpls-sr-srlinux/) | **Reference** | Same SP stack on Nokia SR-Linux — compare platforms |
+| [mpls-l2vpn](labs/mpls-l2vpn/) | Practice | MPLS pseudowire L2VPN (VPWS), transparent Ethernet over MPLS |
+| [ipv6-transition](labs/ipv6-transition/) | Practice | 6PE (RFC 4798) — IPv6 over IPv4 MPLS/SR core |
 
 ---
 
@@ -223,6 +229,7 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 | [bfd-bgp](labs/bfd-bgp/) | Practice | BFD with BGP, fast session teardown vs hold timer |
 | [vrrp](labs/vrrp/) | Practice | VRRP master/backup, virtual IP, priority, preemption |
 | [ha-network-design-ceos](labs/ha-network-design-ceos/) | Practice | MLAG, VRRP tracking, OSPF+BFD+ECMP, dual-ISP BGP combined |
+| [graceful-restart](labs/graceful-restart/) | Practice | Graceful Restart for BGP/OSPF, stale route forwarding during restart |
 
 ---
 
@@ -235,6 +242,20 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 | [enterprise-routed-access](labs/enterprise-routed-access/) | **Reference** | L3-everywhere: routed access layer, no STP, OSPF+BFD |
 | [enterprise-dmz](labs/enterprise-dmz/) | **Reference** | Screened-subnet DMZ, dual-firewall, nftables policy |
 | [enterprise-wan-edge](labs/enterprise-wan-edge/) | Practice | Dual-ISP BGP edge, LP inbound policy, AS-path prepend outbound |
+| [enterprise-access-security](labs/enterprise-access-security/) | Practice | DHCP snooping, dynamic ARP inspection, port security |
+| [enterprise-edge-nat-firewall](labs/enterprise-edge-nat-firewall/) | Practice | PAT, nftables firewall policy, internet edge |
+| [enterprise-multicast](labs/enterprise-multicast/) | Practice | IGMP, PIM-SM, multicast routing, RP configuration |
+| [enterprise-services-infra](labs/enterprise-services-infra/) | Practice | DHCP relay, NTP, DNS, syslog, SNMP — supporting services |
+| [enterprise-wireless-architecture](labs/enterprise-wireless-architecture/) | Practice | Enterprise WLAN design, controller modes, WLC architectures |
+
+#### Capstone Labs
+
+| Lab | Type | What You Build |
+|-----|------|----------------|
+| [enterprise-campus-capstone](labs/enterprise-campus-capstone/) | Practice | Configure full 3-tier campus from scratch (OSPF, VRRP, STP) |
+| [enterprise-collapsed-core-capstone](labs/enterprise-collapsed-core-capstone/) | Practice | Configure 2-tier collapsed-core campus from scratch |
+| [enterprise-routed-access-capstone](labs/enterprise-routed-access-capstone/) | Practice | Configure L3-everywhere campus — OSPF multi-area, BFD |
+| [enterprise-wan-edge-capstone](labs/enterprise-wan-edge-capstone/) | Practice | Configure dual-homed BGP with traffic engineering from scratch |
 
 ---
 
@@ -244,6 +265,9 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 |-----|------|----------------|
 | [macsec-basics](labs/macsec-basics/) | Practice | IEEE 802.1AE MACsec, MKA key agreement, infrastructure + endpoint modes |
 | [dot1x-nac](labs/dot1x-nac/) | Practice | 802.1X port authentication, RADIUS, EAP, NAC enforcement |
+| [urpf-antispoofing](labs/urpf-antispoofing/) | Practice | Unicast RPF, source IP anti-spoofing, strict vs loose mode |
+| [copp-basics](labs/copp-basics/) | Practice | Control Plane Policing, traffic classification, rate limiting |
+| [dot1x-ceos-practice](labs/dot1x-ceos-practice/) | Practice | 802.1X wired NAC on Arista EOS, RADIUS, MAB |
 
 ---
 
@@ -253,6 +277,17 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 |-----|------|----------------|
 | [network-assurance](labs/network-assurance/) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |
 | [qos-enterprise](labs/qos-enterprise/) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
+| [network-automation-netbox](labs/network-automation-netbox/) | Practice | NetBox inventory, automation workflow, programmatic config |
+| [telemetry-monitoring-hybrid](labs/telemetry-monitoring-hybrid/) | Practice | gNMI telemetry, Prometheus, Grafana, classic NMS |
+
+---
+
+### Track 13 — Layer 2
+
+| Lab | Type | What You Learn |
+|-----|------|----------------|
+| [stp-operations](labs/stp-operations/) | Practice | Spanning Tree operations, port states, failure handling |
+| [lacp-etherchannel](labs/lacp-etherchannel/) | Practice | 802.3ad LACP EtherChannel, Port-Channel, link aggregation |
 
 ---
 

@@ -45,7 +45,7 @@ topology:
         DB_PASSWORD: netbox
         REDIS_HOST: 172.31.40.22
         REDIS_CACHE_HOST: 172.31.40.22
-        SECRET_KEY: netboxsecretkey1234567890
+        SECRET_KEY: netboxsecretkey1234567890abcdefghijklmnopqrstuvwxyzAB
         SUPERUSER_NAME: admin
         SUPERUSER_EMAIL: admin@example.com
         SUPERUSER_PASSWORD: admin
