@@ -1,0 +1,28 @@
+! isp — AS65500  (Arista EOS) — fully configured, do not modify
+hostname isp
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Ethernet1
+   description to-edge  203.0.113.0/30
+   no switchport
+   ip address 203.0.113.1/30
+   no shutdown
+!
+ip routing
+!
+ip route 0.0.0.0/0 Null0
+!
+router bgp 65500
+   router-id 1.1.1.1
+   !
+   neighbor 203.0.113.2 remote-as 65100
+   neighbor 203.0.113.2 description edge
+   !
+   address-family ipv4
+      neighbor 203.0.113.2 activate
+      network 1.1.1.1/32
+      network 0.0.0.0/0
+!
+end

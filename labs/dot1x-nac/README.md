@@ -16,8 +16,8 @@ and RADIUS accounting.
                                            eth8 ── [iot-server]        10.30.30.1
 ```
 
-The **authenticator** runs `hostapd` in wired mode on eth1–eth4. Pre-auth, `ebtables`
-blocks all non-EAPOL traffic on those ports. On successful auth, the port is moved from
+The **authenticator** runs `hostapd` in wired mode on eth1–eth4. Pre-auth, `nftables`
+bridge filtering blocks all non-EAPOL traffic on those ports. On successful auth, the port is moved from
 the quarantine VLAN (99) to the authorized VLAN (10/20/30), opening L2 connectivity to
 the matching server.
 
@@ -206,7 +206,7 @@ docker exec clab-dot1x-nac-radius \
 ## Architecture notes
 
 **Why containers can't do hardware port-blocking**: Real 802.1X switches block traffic
-at the ASIC before the CPU even sees it. Here we use Linux `ebtables` on the bridge to
+at the ASIC before the CPU even sees it. Here we use Linux `nftables` bridge filtering to
 DROP all non-EAPOL frames on unauthenticated ports — functionally equivalent for L2
 frame blocking, but enforced in software.
 
@@ -217,7 +217,7 @@ frame blocking, but enforced in software.
 4. RADIUS returns Access-Accept with `Tunnel-Type=VLAN`, `Tunnel-Medium-Type=IEEE-802`,
    `Tunnel-Private-Group-ID=<vlan>`
 5. hostapd emits `AP-STA-CONNECTED` event via control interface
-6. `hostapd_cli -a vlan-action.sh` receives event → runs `bridge vlan` + `ebtables -D`
+6. `hostapd_cli -a vlan-action.sh` receives event → runs `bridge vlan` + `nft delete element`
 7. Port is now on the authorized VLAN — supplicant can reach its server
 
 **Certificate chain** (EAP-TLS):

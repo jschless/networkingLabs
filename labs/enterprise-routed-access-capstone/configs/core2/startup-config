@@ -1,0 +1,81 @@
+! core2 — Arista EOS
+! Core switch, OSPF area 0 + BFD
+! Loopback: 10.0.0.2/32
+! iBGP peer: core1 (10.0.0.1)
+!
+hostname core2
+!
+ip routing
+!
+interface Loopback0
+   description router-id
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to-dist1
+   no switchport
+   ip address 10.1.1.0/31
+   no shutdown
+!
+interface Ethernet2
+   description to-dist2
+   no switchport
+   ip address 10.1.1.2/31
+   no shutdown
+!
+interface Ethernet3
+   description to-dist3
+   no switchport
+   ip address 10.1.1.4/31
+   no shutdown
+!
+interface Ethernet4
+   description to-dist4
+   no switchport
+   ip address 10.1.1.6/31
+   no shutdown
+!
+interface Ethernet5
+   description to-core1
+   no switchport
+   ip address 10.1.2.1/31
+   no shutdown
+!
+! ================================================
+! core2  —  Capstone Tasks
+!
+! Role: Redundant core area 0 router with BFD and iBGP
+!
+! Task 1 — OSPF Area 0 with BFD
+!   All 5 Ethernet interfaces active. Enable BFD under OSPF.
+!   Hint:
+!     router ospf 1
+!        router-id 10.0.0.2
+!        passive-interface default
+!        no passive-interface Ethernet1
+!        no passive-interface Ethernet2
+!        no passive-interface Ethernet3
+!        no passive-interface Ethernet4
+!        no passive-interface Ethernet5
+!        bfd default
+!        max-lsa 12000
+!        network 10.0.0.2/32 area 0.0.0.0
+!        network 10.1.1.0/31 area 0.0.0.0
+!        network 10.1.1.2/31 area 0.0.0.0
+!        network 10.1.1.4/31 area 0.0.0.0
+!        network 10.1.1.6/31 area 0.0.0.0
+!        network 10.1.2.0/31 area 0.0.0.0
+!
+! Task 2 — iBGP stub peer with core1
+!   Configure iBGP AS 65000 peering with core1 (10.0.0.1) using Loopback0.
+!   Hint:
+!     router bgp 65000
+!        router-id 10.0.0.2
+!        neighbor 10.0.0.1 remote-as 65000
+!        neighbor 10.0.0.1 update-source Loopback0
+!        neighbor 10.0.0.1 description core1
+!        address-family ipv4
+!           neighbor 10.0.0.1 activate
+! ================================================
+!
+end

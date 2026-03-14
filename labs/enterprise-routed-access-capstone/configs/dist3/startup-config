@@ -1,0 +1,55 @@
+! dist3 — Arista EOS
+! Distribution switch, OSPF ABR (area 0 uplinks, area 1 downlink + stub)
+! Loopback: 10.0.1.3/32
+! Uplinks: core1 (10.1.0.4/31), core2 (10.1.1.4/31) — area 0
+! Downlink: acc2 (10.2.1.0/31) — area 1 stub
+!
+hostname dist3
+!
+ip routing
+!
+interface Loopback0
+   description router-id
+   ip address 10.0.1.3/32
+!
+interface Ethernet1
+   description to-core1
+   no switchport
+   ip address 10.1.0.5/31
+   no shutdown
+!
+interface Ethernet2
+   description to-core2
+   no switchport
+   ip address 10.1.1.5/31
+   no shutdown
+!
+interface Ethernet3
+   description to-acc2
+   no switchport
+   ip address 10.2.1.0/31
+   no shutdown
+!
+! ================================================
+! dist3  —  Capstone Tasks
+!
+! Role: ABR bridging area 0 (uplinks to core) and area 1 stub (downlink to acc2)
+!
+! Task 1 — OSPF ABR with stub area 1
+!   Hint:
+!     router ospf 1
+!        router-id 10.0.1.3
+!        passive-interface default
+!        no passive-interface Ethernet1
+!        no passive-interface Ethernet2
+!        no passive-interface Ethernet3
+!        bfd default
+!        max-lsa 12000
+!        network 10.0.1.3/32 area 0.0.0.0
+!        network 10.1.0.4/31 area 0.0.0.0
+!        network 10.1.1.4/31 area 0.0.0.0
+!        network 10.2.1.0/31 area 0.0.0.1
+!        area 0.0.0.1 stub
+! ================================================
+!
+end

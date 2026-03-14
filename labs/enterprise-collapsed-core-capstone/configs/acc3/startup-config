@@ -1,0 +1,43 @@
+! acc3 — access layer switch #3  (Arista EOS)
+!
+! Pure L2 switch. No ip routing.
+! Uplink to cc2 (trunk). Downlink to client-b (VLAN 20 access).
+!
+hostname acc3
+!
+spanning-tree mode rstp
+!
+vlan 10
+   name corporate
+!
+vlan 20
+   name voice
+!
+vlan 30
+   name guest
+!
+vlan 99
+   name management
+!
+interface Ethernet1
+   description to-cc2-trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-client-b  access-vlan20
+   switchport access vlan 20
+   switchport mode access
+   no shutdown
+!
+! ================================================
+! acc3  —  Capstone Tasks
+!
+! Task 1 — STP PortFast on client-facing port
+!   Enable portfast on Ethernet2 so client-b transitions immediately.
+!   Hint (under interface Ethernet2):
+!     spanning-tree portfast
+! ================================================
+!
+end

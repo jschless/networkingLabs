@@ -1,0 +1,80 @@
+! edge — AS65100  (Arista EOS)
+!
+! Internet edge router.
+! - eBGP to ISP (AS65500): receives default route, advertises 198.51.100.0/24
+! - OSPF area 0 toward core1 and core2
+! - Redistributes BGP default into OSPF via "default-information originate always"
+! - Loopback: 10.0.0.1/32
+!
+hostname edge
+!
+ip routing
+!
+interface Loopback0
+   description router-id
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to-isp  203.0.113.0/30
+   no switchport
+   ip address 203.0.113.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-core1  10.255.1.0/30
+   no switchport
+   ip address 10.255.1.1/30
+   no shutdown
+!
+interface Ethernet3
+   description to-core2  10.255.2.0/30
+   no switchport
+   ip address 10.255.2.1/30
+   no shutdown
+!
+! ================================================
+! edge  —  Capstone Tasks
+!
+! Role: Internet edge router — OSPF area 0 backbone + eBGP to ISP
+!
+! Task 1 — OSPF Area 0
+!   Configure OSPF process 1, make Ethernet1 (WAN) passive, activate
+!   Ethernet2/3 (to core1/core2), advertise loopback + both core links
+!   in area 0, and inject a default route into OSPF.
+!   Hint:
+!     router ospf 1
+!        router-id 10.0.0.1
+!        passive-interface default
+!        no passive-interface Ethernet2
+!        no passive-interface Ethernet3
+!        network 10.0.0.1/32 area 0.0.0.0
+!        network 10.255.1.0/30 area 0.0.0.0
+!        network 10.255.2.0/30 area 0.0.0.0
+!        default-information originate always
+!
+! Task 2 — BGP prefix-list + route-map
+!   Define a prefix-list matching the enterprise public block and a
+!   route-map to apply it outbound toward the ISP.
+!   Hint:
+!     ip prefix-list ENTERPRISE-OUT seq 10 permit 198.51.100.0/24
+!     route-map BGP-TO-ISP permit 10
+!        match ip address prefix-list ENTERPRISE-OUT
+!
+! Task 3 — eBGP to ISP + originate enterprise prefix
+!   Add a black-hole static route so BGP can originate 198.51.100.0/24,
+!   configure router bgp 65100, peer with the ISP, and apply the
+!   outbound route-map.
+!   Hint:
+!     ip route 198.51.100.0/24 Null0
+!     router bgp 65100
+!        router-id 10.0.0.1
+!        no bgp ebgp-requires-policy
+!        neighbor 203.0.113.1 remote-as 65500
+!        neighbor 203.0.113.1 description isp
+!        address-family ipv4
+!           neighbor 203.0.113.1 activate
+!           neighbor 203.0.113.1 route-map BGP-TO-ISP out
+!           network 198.51.100.0/24
+! ================================================
+!
+end

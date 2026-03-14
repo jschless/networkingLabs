@@ -16,14 +16,16 @@ log() { echo "[mab-eth3] $*" | tee -a "$LOG"; }
 
 log "Starting — waiting for first Ethernet frame on eth3 (timeout 90s)"
 
-# Capture the source MAC of the first unicast frame from eth3.
+# Capture the source MAC of the first non-EAPOL frame from eth3.
+# The first trigger is usually a broadcast ARP request, so we must not
+# ignore broadcast traffic here.
 # tcpdump uses raw sockets below the bridge, so it sees frames even if
-# the ebtables FORWARD DROP rule would block them from being bridged.
+# the pre-auth bridge filter would block them from being bridged.
 RAW_LINE=$(timeout 90 tcpdump -i eth3 -c 1 -e -n \
-    'not ether broadcast and not ether multicast' 2>/dev/null || true)
+    'not ether proto 0x888e' 2>/dev/null || true)
 
 if [ -z "$RAW_LINE" ]; then
-    log "No unicast frame received within 90s — giving up"
+    log "No frame received within 90s — giving up"
     exit 1
 fi
 
@@ -51,7 +53,7 @@ if echo "$RESPONSE" | grep -q "Access-Accept"; then
     log "Access-Accept → moving eth3 from VLAN 99 to VLAN 30"
     bridge vlan del dev eth3 vid 99  2>/dev/null || true
     bridge vlan add dev eth3 vid 30 pvid untagged master
-    ebtables -D FORWARD -i eth3 -j DROP 2>/dev/null || true
+    nft delete element bridge nac blocked_ifaces '{ "eth3" }' 2>/dev/null || true
     log "eth3 is now on VLAN 30 — supplicant-mab can reach iot-server (10.30.30.1)"
 else
     log "No Access-Accept — eth3 stays quarantined on VLAN 99"

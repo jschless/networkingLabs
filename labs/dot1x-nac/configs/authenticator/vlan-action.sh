@@ -13,9 +13,22 @@
 
 INTERFACE="$1"
 EVENT="$2"
+NFT_TABLE_FAMILY="bridge"
+NFT_TABLE_NAME="nac"
+NFT_SET_NAME="blocked_ifaces"
 
 log() {
     echo "[vlan-action] $*" | tee -a /var/log/vlan-action.log
+}
+
+unblock_interface() {
+    nft delete element "$NFT_TABLE_FAMILY" "$NFT_TABLE_NAME" "$NFT_SET_NAME" "{ \"$1\" }" \
+        2>/dev/null || true
+}
+
+block_interface() {
+    nft add element "$NFT_TABLE_FAMILY" "$NFT_TABLE_NAME" "$NFT_SET_NAME" "{ \"$1\" }" \
+        2>/dev/null || true
 }
 
 case "$INTERFACE" in
@@ -38,7 +51,7 @@ case "$EVENT" in
         bridge vlan add dev "$INTERFACE" vid "$AUTH_VLAN" pvid untagged master
 
         # Remove the pre-auth DROP rule for this interface
-        ebtables -D FORWARD -i "$INTERFACE" -j DROP 2>/dev/null || true
+        unblock_interface "$INTERFACE"
 
         log "$INTERFACE: now on VLAN $AUTH_VLAN — port open for traffic"
         ;;
@@ -54,8 +67,8 @@ case "$EVENT" in
 
         # Re-add pre-auth DROP rule
         # (delete first to avoid duplicates, then re-add)
-        ebtables -D FORWARD -i "$INTERFACE" -j DROP 2>/dev/null || true
-        ebtables -A FORWARD -i "$INTERFACE" -j DROP
+        unblock_interface "$INTERFACE"
+        block_interface "$INTERFACE"
 
         log "$INTERFACE: reverted to VLAN 99 quarantine"
         ;;

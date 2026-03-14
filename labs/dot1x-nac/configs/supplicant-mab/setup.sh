@@ -17,7 +17,7 @@ echo "[supplicant-mab] No wpa_supplicant — sending ARP to trigger MAB detectio
 
 # Give authenticator time to complete setup, then send an ARP frame.
 # The authenticator's mab-eth3.sh sees this frame via tcpdump raw socket
-# (captured before the bridge's ebtables DROP), extracts our MAC,
+# (captured before the bridge's nftables filter), extracts our MAC,
 # authenticates us with RADIUS, and moves eth3 to VLAN 30.
 sleep 6
 ping -c 2 -W 2 10.30.30.1 2>/dev/null || true  # sends ARP + ICMP (ARP is enough)

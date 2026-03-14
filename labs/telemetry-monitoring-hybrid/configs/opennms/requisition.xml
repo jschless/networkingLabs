@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model-import foreign-source="telemetry-hybrid"
+              xmlns="http://xmlns.opennms.org/xsd/config/model-import">
+  <node foreign-id="branch1" node-label="branch1">
+    <interface ip-addr="172.31.30.11" snmp-primary="P">
+      <monitored-service service-name="ICMP"/>
+      <monitored-service service-name="SNMP"/>
+    </interface>
+  </node>
+  <node foreign-id="campus1" node-label="campus1">
+    <interface ip-addr="172.31.30.12" snmp-primary="P">
+      <monitored-service service-name="ICMP"/>
+      <monitored-service service-name="SNMP"/>
+    </interface>
+  </node>
+  <node foreign-id="pe1" node-label="pe1">
+    <interface ip-addr="172.31.30.13" snmp-primary="P">
+      <monitored-service service-name="ICMP"/>
+      <monitored-service service-name="SNMP"/>
+    </interface>
+  </node>
+  <node foreign-id="core1" node-label="core1">
+    <interface ip-addr="172.31.30.14" snmp-primary="P">
+      <monitored-service service-name="ICMP"/>
+      <monitored-service service-name="SNMP"/>
+    </interface>
+  </node>
+  <node foreign-id="dc1" node-label="dc1">
+    <interface ip-addr="172.31.30.15" snmp-primary="P">
+      <monitored-service service-name="ICMP"/>
+      <monitored-service service-name="SNMP"/>
+    </interface>
+  </node>
+</model-import>

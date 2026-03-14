@@ -1,0 +1,31 @@
+username: admin
+password: admin
+insecure: true
+timeout: 10s
+
+targets:
+  campus1:
+    address: 172.31.30.12:6030
+
+subscriptions:
+  interface_counters:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+    paths:
+      - /interfaces/interface/state/counters/in-octets
+      - /interfaces/interface/state/counters/out-octets
+
+outputs:
+  prom-output:
+    type: prometheus
+    listen: :9804
+    path: /metrics
+    cache: {}
+    strings-as-labels: true
+
+processors:
+  event-tags:
+    event-strings:
+      value-names:
+        - interface_name

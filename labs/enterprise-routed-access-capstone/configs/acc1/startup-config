@@ -1,0 +1,64 @@
+! acc1 — Arista EOS
+! Access switch, OSPF area 1 (stub) + BFD
+! Loopback: 10.0.2.1/32
+! Uplinks: dist1 (10.2.0.0/31), dist2 (10.2.0.2/31) — dual-homed
+! Hosts: h1 (10.10.1.0/30), h2 (10.10.1.4/30)
+!
+hostname acc1
+!
+ip routing
+!
+interface Loopback0
+   description router-id
+   ip address 10.0.2.1/32
+!
+interface Ethernet1
+   description to-dist1
+   no switchport
+   ip address 10.2.0.1/31
+   no shutdown
+!
+interface Ethernet2
+   description to-dist2
+   no switchport
+   ip address 10.2.0.3/31
+   no shutdown
+!
+interface Ethernet3
+   description to-h1
+   no switchport
+   ip address 10.10.1.1/30
+   no shutdown
+!
+interface Ethernet4
+   description to-h2
+   no switchport
+   ip address 10.10.1.5/30
+   no shutdown
+!
+! ================================================
+! acc1  —  Capstone Tasks
+!
+! Role: Area 1 stub access switch — dual-homed to dist1/dist2, hosts h1/h2
+!
+! Task 1 — OSPF Area 1 stub with BFD
+!   Ethernet1/2 (to dist) are active; Ethernet3/4 (host-facing) are passive.
+!   All networks go in area 1. Mark area 1 as stub (receives default from ABRs).
+!   Enable BFD so dist1/dist2 detect link failures sub-second.
+!   Hint:
+!     router ospf 1
+!        router-id 10.0.2.1
+!        passive-interface default
+!        no passive-interface Ethernet1
+!        no passive-interface Ethernet2
+!        bfd default
+!        max-lsa 12000
+!        network 10.0.2.1/32 area 0.0.0.1
+!        network 10.2.0.0/31 area 0.0.0.1
+!        network 10.2.0.2/31 area 0.0.0.1
+!        network 10.10.1.0/30 area 0.0.0.1
+!        network 10.10.1.4/30 area 0.0.0.1
+!        area 0.0.0.1 stub
+! ================================================
+!
+end

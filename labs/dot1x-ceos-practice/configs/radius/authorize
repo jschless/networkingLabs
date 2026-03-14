@@ -1,0 +1,20 @@
+alice-tls
+        Tunnel-Type = VLAN,
+        Tunnel-Medium-Type = IEEE-802,
+        Tunnel-Private-Group-ID = "10",
+        Reply-Message = "Welcome employee (EAP-TLS) - VLAN 10"
+
+alice   Cleartext-Password := "password123"
+        Tunnel-Type = VLAN,
+        Tunnel-Medium-Type = IEEE-802,
+        Tunnel-Private-Group-ID = "20",
+        Reply-Message = "Welcome contractor (PEAP) - VLAN 20"
+
+bob-fail Cleartext-Password := "correctpassword"
+        Reply-Message = "Access granted to bob-fail"
+
+DEFAULT Auth-Type := Accept
+        Tunnel-Type = VLAN,
+        Tunnel-Medium-Type = IEEE-802,
+        Tunnel-Private-Group-ID = "30",
+        Reply-Message = "MAB accepted - VLAN 30"

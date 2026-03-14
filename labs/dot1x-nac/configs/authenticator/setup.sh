@@ -1,9 +1,20 @@
 #!/bin/bash
 # authenticator/setup.sh
-# Sets up the Linux bridge with VLAN filtering, ebtables pre-auth blocking,
+# Sets up the Linux bridge with VLAN filtering, nftables pre-auth blocking,
 # and launches hostapd on each supplicant port.
 
 set -e
+
+init_preauth_filter() {
+    nft add table bridge nac 2>/dev/null || true
+    nft 'add set bridge nac blocked_ifaces { type ifname; }' 2>/dev/null || true
+    nft 'add chain bridge nac forward { type filter hook forward priority 0; policy accept; }' 2>/dev/null || true
+    nft add rule bridge nac forward iifname @blocked_ifaces ether type != 0x888e drop 2>/dev/null || true
+}
+
+block_interface() {
+    nft add element bridge nac blocked_ifaces "{ \"$1\" }" 2>/dev/null || true
+}
 
 # ── RADIUS link ──────────────────────────────────────────────────────────────
 ip link set eth5 up
@@ -39,12 +50,13 @@ for eth in eth1 eth2 eth3 eth4; do
     bridge vlan add dev "$eth" vid 99 pvid untagged master
 done
 
-# ── ebtables: block all non-EAPOL frames from supplicant ports (pre-auth) ────
+# ── nftables: block all non-EAPOL frames from supplicant ports (pre-auth) ─────
 # EAPOL frames (0x888e) are NOT forwarded by Linux bridges (reserved 01:80:c2:00:00:03
 # MAC). hostapd receives them via raw socket even with bridge enslavement.
 # Only non-EAPOL data frames are in the FORWARD chain and need blocking.
+init_preauth_filter
 for eth in eth1 eth2 eth3 eth4; do
-    ebtables -A FORWARD -i "$eth" -j DROP
+    block_interface "$eth"
 done
 
 # ── Enable IP forwarding (needed for RADIUS UDP routing via eth5) ─────────────

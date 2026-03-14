@@ -1,0 +1,18 @@
+! acc4  (Arista EOS)
+!
+! Access layer — L2 only, no IP routing.
+! Uplink to dist2 (trunk). No end hosts attached in this topology.
+!
+hostname acc4
+!
+spanning-tree mode rstp
+!
+vlan 10,20,30,99
+!
+interface Ethernet1
+   description to-dist2  trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+end

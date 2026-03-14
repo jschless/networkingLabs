@@ -1,0 +1,62 @@
+! core2  (Arista EOS)
+!
+! Core layer — OSPF area 0 backbone router.
+! Connects to: edge (uplink), core1 (peer link), dist1 and dist2 (downlinks).
+! Loopback: 10.0.0.3/32
+!
+hostname core2
+!
+ip routing
+!
+interface Loopback0
+   description router-id
+   ip address 10.0.0.3/32
+!
+interface Ethernet1
+   description to-edge  10.255.2.0/30
+   no switchport
+   ip address 10.255.2.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-core1  10.255.3.0/30
+   no switchport
+   ip address 10.255.3.2/30
+   no shutdown
+!
+interface Ethernet3
+   description to-dist1  10.0.23.0/30
+   no switchport
+   ip address 10.0.23.1/30
+   no shutdown
+!
+interface Ethernet4
+   description to-dist2  10.0.24.0/30
+   no switchport
+   ip address 10.0.24.1/30
+   no shutdown
+!
+! ================================================
+! core2  —  Capstone Tasks
+!
+! Role: Core OSPF area 0 backbone router
+!
+! Task 1 — OSPF Area 0
+!   Configure OSPF process 1 with all 4 Ethernet interfaces active.
+!   Advertise loopback + all 4 point-to-point links in area 0.
+!   Hint:
+!     router ospf 1
+!        router-id 10.0.0.3
+!        passive-interface default
+!        no passive-interface Ethernet1
+!        no passive-interface Ethernet2
+!        no passive-interface Ethernet3
+!        no passive-interface Ethernet4
+!        network 10.0.0.3/32 area 0.0.0.0
+!        network 10.255.2.0/30 area 0.0.0.0
+!        network 10.255.3.0/30 area 0.0.0.0
+!        network 10.0.23.0/30 area 0.0.0.0
+!        network 10.0.24.0/30 area 0.0.0.0
+! ================================================
+!
+end

@@ -1,0 +1,132 @@
+! cc2 — collapsed core switch #2  (Arista EOS)
+!
+! Dual-role: L3 routing (OSPF) + L2 distribution (STP root + VRRP)
+!
+! VRRP roles (to configure):
+!   VLAN 10: standby (priority 100)  VIP 10.10.10.1
+!   VLAN 20: ACTIVE  (priority 120)  VIP 10.20.20.1
+!   VLAN 30: standby (priority 100)  VIP 10.30.30.1
+!
+! STP roles (to configure, RSTP):
+!   VLAN 20: root bridge (priority 4096)
+!   VLAN 10: non-root   (priority 32768)
+!   VLAN 30: non-root   (priority 32768)
+!   VLAN 99: non-root   (priority 32768)
+!
+! OSPF area 0: Ethernet1 (to edge), Ethernet2 (to cc1 interlink)
+!
+hostname cc2
+!
+spanning-tree mode rstp
+!
+vlan 10
+   name corporate
+!
+vlan 20
+   name voice
+!
+vlan 30
+   name guest
+!
+vlan 99
+   name management
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.4/32
+!
+interface Ethernet1
+   description to-edge  10.0.22.0/30
+   no switchport
+   ip address 10.0.22.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-cc1-interlink  10.0.99.0/30
+   no switchport
+   ip address 10.0.99.2/30
+   no shutdown
+!
+interface Ethernet3
+   description to-acc3-trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet4
+   description to-acc4-trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+! SVI IPs pre-configured — add VRRP under each SVI
+interface Vlan10
+   description corporate-gw
+   ip address 10.10.10.3/24
+   no shutdown
+!
+interface Vlan20
+   description voice-gw
+   ip address 10.20.20.3/24
+   no shutdown
+!
+interface Vlan30
+   description guest-gw
+   ip address 10.30.30.3/24
+   no shutdown
+!
+interface Vlan99
+   description management-gw
+   ip address 192.168.99.3/24
+   no shutdown
+!
+! ================================================
+! cc2  —  Capstone Tasks
+!
+! Role: Collapsed-core L3 switch — OSPF + VRRP active for VLAN 20
+!
+! Task 1 — STP Root Bridge Priorities
+!   cc2 is primary root for VLAN 20 (priority 4096).
+!   cc2 is non-root for VLANs 10, 30, 99 (priority 32768).
+!   Hint:
+!     spanning-tree vlan-id 20 priority 4096
+!     spanning-tree vlan-id 10 priority 32768
+!     spanning-tree vlan-id 30 priority 32768
+!     spanning-tree vlan-id 99 priority 32768
+!
+! Task 2 — VRRP on all SVIs
+!   cc2 is ACTIVE (120) for VLAN 20, standby (100) for VLANs 10 and 30.
+!   Hint:
+!     interface Vlan10
+!        vrrp 10 ip 10.10.10.1
+!        vrrp 10 priority 100
+!        vrrp 10 preempt
+!     interface Vlan20
+!        vrrp 20 ip 10.20.20.1
+!        vrrp 20 priority 120
+!        vrrp 20 preempt
+!     interface Vlan30
+!        vrrp 30 ip 10.30.30.1
+!        vrrp 30 priority 100
+!        vrrp 30 preempt
+!
+! Task 3 — OSPF Area 0
+!   Ethernet1 (to edge) and Ethernet2 (to cc1 interlink) are active.
+!   Advertise loopback + all routed links + all VLAN subnets in area 0.
+!   Hint:
+!     router ospf 1
+!        router-id 10.0.0.4
+!        passive-interface default
+!        no passive-interface Ethernet1
+!        no passive-interface Ethernet2
+!        network 10.0.0.4/32 area 0.0.0.0
+!        network 10.0.22.0/30 area 0.0.0.0
+!        network 10.0.99.0/30 area 0.0.0.0
+!        network 10.10.10.0/24 area 0.0.0.0
+!        network 10.20.20.0/24 area 0.0.0.0
+!        network 10.30.30.0/24 area 0.0.0.0
+!        network 192.168.99.0/24 area 0.0.0.0
+! ================================================
+!
+end

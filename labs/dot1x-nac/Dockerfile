@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     freeradius \
     freeradius-utils \
     openssl \
-    ebtables \
+    nftables \
     bridge-utils \
     iproute2 \
     iputils-ping \

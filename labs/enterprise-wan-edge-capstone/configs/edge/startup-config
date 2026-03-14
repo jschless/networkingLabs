@@ -1,0 +1,106 @@
+! edge — AS65300  (Arista EOS)
+!
+! Enterprise WAN edge router — dual-homed to two ISPs.
+! Outbound: prefer isp1 via higher local-preference (200 vs 100)
+! Inbound:  AS-path prepend on isp2 advertisements to attract traffic via isp1
+! Internal: OSPF area 0 to core1/core2, default-information originate always
+!
+! Links:
+!   Ethernet1: 203.0.113.2/30  (to isp1 — primary WAN)
+!   Ethernet2: 203.0.114.2/30  (to isp2 — backup WAN)
+!   Ethernet3: 10.255.1.1/30   (to core1)
+!   Ethernet4: 10.255.2.1/30   (to core2)
+!   Loopback0: 10.0.0.1/32
+!
+hostname edge
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to-isp1-primary  203.0.113.0/30
+   no switchport
+   ip address 203.0.113.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-isp2-backup  203.0.114.0/30
+   no switchport
+   ip address 203.0.114.2/30
+   no shutdown
+!
+interface Ethernet3
+   description to-core1  10.255.1.0/30
+   no switchport
+   ip address 10.255.1.1/30
+   no shutdown
+!
+interface Ethernet4
+   description to-core2  10.255.2.0/30
+   no switchport
+   ip address 10.255.2.1/30
+   no shutdown
+!
+ip routing
+!
+! ================================================
+! edge  —  Capstone Tasks
+!
+! Role: Dual-homed WAN edge — BGP policy + OSPF default propagation
+!
+! Task 1 — eBGP to isp1 (primary) with LP 200 inbound
+!   Set local-preference 200 on all routes received from isp1.
+!   This makes isp1 the preferred exit for all outbound traffic.
+!   Hint:
+!     route-map LP-HIGH permit 10
+!        set local-preference 200
+!
+! Task 2 — eBGP to isp2 (backup) with LP 100 inbound + AS-path prepend outbound
+!   Set local-preference 100 on routes from isp2 (cold standby outbound).
+!   Prepend AS 65300 three times on advertisements to isp2 to make isp1
+!   appear as the shorter AS path for inbound traffic from the internet.
+!   Hint:
+!     route-map LP-LOW permit 10
+!        set local-preference 100
+!     ip prefix-list OWN-PREFIXES seq 5 permit 198.51.100.0/24
+!     route-map PREPEND-ISP2 permit 10
+!        match ip address prefix-list OWN-PREFIXES
+!        set as-path prepend 65300 65300 65300
+!     route-map PREPEND-ISP2 permit 20
+!
+! Task 3 — router bgp 65300 with dual eBGP sessions
+!   Configure BGP, peer with both ISPs, apply route-maps, originate
+!   the enterprise public prefix via a black-hole static backing route.
+!   Hint:
+!     ip route 198.51.100.0/24 Null0
+!     router bgp 65300
+!        router-id 10.0.0.1
+!        no bgp ebgp-requires-policy
+!        neighbor 203.0.113.1 remote-as 65100
+!        neighbor 203.0.113.1 description isp1-primary
+!        neighbor 203.0.113.1 route-map LP-HIGH in
+!        neighbor 203.0.114.1 remote-as 65200
+!        neighbor 203.0.114.1 description isp2-backup
+!        neighbor 203.0.114.1 route-map LP-LOW in
+!        neighbor 203.0.114.1 route-map PREPEND-ISP2 out
+!        address-family ipv4
+!           neighbor 203.0.113.1 activate
+!           neighbor 203.0.114.1 activate
+!           network 198.51.100.0/24
+!
+! Task 4 — OSPF area 0 + default-information originate
+!   Run OSPF on Ethernet3/4 (internal links). WAN interfaces stay passive.
+!   Inject a default route into OSPF so core routers learn the internet default.
+!   Hint:
+!     router ospf 1
+!        router-id 10.0.0.1
+!        passive-interface default
+!        no passive-interface Ethernet3
+!        no passive-interface Ethernet4
+!        network 10.0.0.1/32 area 0.0.0.0
+!        network 10.255.1.0/30 area 0.0.0.0
+!        network 10.255.2.0/30 area 0.0.0.0
+!        default-information originate always
+! ================================================
+!
+end

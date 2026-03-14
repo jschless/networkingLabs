@@ -1,0 +1,89 @@
+! access1 - Arista cEOS wired access switch
+!
+! This node is intentionally only partially configured.
+! Your task is to add AAA, RADIUS, and dot1x/MAB on the access ports.
+!
+! Suggested workflow:
+!   1. Verify Et5 can ping 192.168.100.2
+!   2. Add:
+!        radius-server host 192.168.100.2 key 0 testing123
+!        aaa authentication dot1x default group radius
+!        aaa accounting dot1x default start-stop group radius
+!   3. Enable:
+!        dot1x system-auth-control
+!        dot1x
+!           radius av-pair tunnel-private-group-id
+!   4. Configure Et1 / Et2 as wired authenticators:
+!        dot1x pae authenticator
+!        dot1x port-control auto
+!        dot1x host-mode single-host
+!   5. Configure Et3 for MAB:
+!        dot1x mac based authentication
+!   6. Configure Et4 auth-fail handling:
+!        dot1x authentication failure action traffic allow vlan 99
+!
+hostname access1
+!
+vlan 10
+   name EMPLOYEE
+!
+vlan 20
+   name CONTRACTOR
+!
+vlan 30
+   name IOT
+!
+vlan 99
+   name QUARANTINE
+!
+interface Ethernet1
+   description supplicant-tls
+   switchport access vlan 99
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet2
+   description supplicant-peap
+   switchport access vlan 99
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet3
+   description supplicant-mab
+   switchport access vlan 99
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet4
+   description supplicant-fail
+   switchport access vlan 99
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet5
+   description radius-server
+   no switchport
+   ip address 192.168.100.1/24
+   no shutdown
+!
+interface Ethernet6
+   description employee-server
+   switchport access vlan 10
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet7
+   description contractor-server
+   switchport access vlan 20
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet8
+   description iot-server
+   switchport access vlan 30
+   spanning-tree portfast
+   no shutdown
+!
+ip routing
+!
+end

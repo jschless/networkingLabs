@@ -1,0 +1,28 @@
+! isp2 — AS65200  (Arista EOS) — fully configured, do not modify
+hostname isp2
+!
+interface Loopback0
+   ip address 2.2.2.2/32
+!
+interface Ethernet1
+   description to-edge  203.0.114.0/30
+   no switchport
+   ip address 203.0.114.1/30
+   no shutdown
+!
+ip routing
+!
+ip route 0.0.0.0/0 Null0
+!
+router bgp 65200
+   router-id 2.2.2.2
+   no bgp ebgp-requires-policy
+   neighbor 203.0.114.2 remote-as 65300
+   neighbor 203.0.114.2 description edge-backup
+   !
+   address-family ipv4
+      neighbor 203.0.114.2 activate
+      network 0.0.0.0/0
+      network 2.2.2.2/32
+!
+end

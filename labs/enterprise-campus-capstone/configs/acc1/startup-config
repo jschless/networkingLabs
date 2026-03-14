@@ -1,0 +1,36 @@
+! acc1  (Arista EOS)
+!
+! Access layer — L2 only, no IP routing.
+! Uplink to dist1 (trunk), client-a on access port VLAN 10.
+!
+hostname acc1
+!
+spanning-tree mode rstp
+!
+vlan 10,20,30,99
+!
+interface Ethernet1
+   description to-dist1  trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-client-a  access-vlan10
+   switchport access vlan 10
+   switchport mode access
+   no shutdown
+!
+! ================================================
+! acc1  —  Capstone Tasks
+!
+! Role: Access switch — L2 only, no routing
+!
+! Task 1 — STP PortFast on client-facing port
+!   Enable portfast on Ethernet2 so the client port skips the STP
+!   listening/learning states and comes up immediately.
+!   Hint (under interface Ethernet2):
+!     spanning-tree portfast
+! ================================================
+!
+end
