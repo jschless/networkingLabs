@@ -17,10 +17,17 @@ on:
       - 'requirements-docs.txt'
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,10 +42,23 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-docs.txt
 
-      - name: Build (PR check)
-        if: github.event_name == 'pull_request'
+      - name: Build
         run: mkdocs build --strict
 
-      - name: Deploy to GitHub Pages
+      - name: Upload pages artifact
         if: github.event_name == 'push'
-        run: mkdocs gh-deploy --force --clean
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
