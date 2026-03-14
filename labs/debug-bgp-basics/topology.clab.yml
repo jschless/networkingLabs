@@ -1,0 +1,28 @@
+name: debug-bgp-basics
+
+# Debug lab — BGP basics with an intentional misconfiguration.
+# Deploy, observe the symptoms, and diagnose the fault.
+#
+# Topology:
+#   [r1] --eBGP-- [r2] --iBGP-- [r3] --eBGP-- [r4]
+#   AS65001       AS65002        AS65002        AS65003
+
+topology:
+  defaults:
+    kind: ceos
+    image: ceos:4.35.2F
+
+  nodes:
+    r1:
+      startup-config: configs/r1/startup-config
+    r2:
+      startup-config: configs/r2/startup-config
+    r3:
+      startup-config: configs/r3/startup-config
+    r4:
+      startup-config: configs/r4/startup-config
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]   # 10.1.12.0/30  eBGP
+    - endpoints: ["r2:eth2", "r3:eth1"]   # 10.1.23.0/30  iBGP
+    - endpoints: ["r3:eth2", "r4:eth1"]   # 10.1.34.0/30  eBGP

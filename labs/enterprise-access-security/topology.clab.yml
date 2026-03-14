@@ -1,0 +1,63 @@
+name: enterprise-access-security
+
+topology:
+  defaults:
+    kind: linux
+    image: enterprise-access-tools:local
+
+  nodes:
+    dist1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist1/startup-config
+
+    acc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc1/startup-config
+
+    acc2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc2/startup-config
+
+    client-a:
+      binds:
+        - configs/client-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    client-b:
+      binds:
+        - configs/client-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    dhcp-server:
+      binds:
+        - configs/dhcp-server/setup.sh:/setup.sh
+        - configs/dhcp-server/dnsmasq.conf:/etc/dnsmasq.d/lab.conf
+      exec:
+        - bash /setup.sh
+
+    rogue-dhcp:
+      binds:
+        - configs/rogue-dhcp/setup.sh:/setup.sh
+        - configs/rogue-dhcp/dnsmasq.conf:/etc/dnsmasq.d/lab.conf
+      exec:
+        - bash /setup.sh
+
+    attacker:
+      binds:
+        - configs/attacker/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["dist1:eth3", "acc1:eth1"]
+    - endpoints: ["dist1:eth4", "acc2:eth1"]
+    - endpoints: ["acc1:eth2", "client-a:eth1"]
+    - endpoints: ["acc1:eth3", "dhcp-server:eth1"]
+    - endpoints: ["acc2:eth2", "rogue-dhcp:eth1"]
+    - endpoints: ["acc2:eth3", "attacker:eth1"]
+    - endpoints: ["acc2:eth4", "client-b:eth1"]

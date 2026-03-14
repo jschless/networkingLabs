@@ -6,14 +6,21 @@ timeout: 10s
 targets:
   campus1:
     address: 172.31.30.12:6030
+  core1:
+    address: 172.31.30.14:6030
 
 subscriptions:
-  interface_counters:
+  interface_counters_in:
     mode: stream
     stream-mode: sample
     sample-interval: 10s
     paths:
       - /interfaces/interface/state/counters/in-octets
+  interface_counters_out:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+    paths:
       - /interfaces/interface/state/counters/out-octets
 
 outputs:

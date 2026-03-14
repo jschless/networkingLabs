@@ -1,0 +1,49 @@
+name: vrf-lite
+
+# VRF-Lite segmentation practice lab — Arista cEOS
+#
+# VRF creation and routing are configured entirely in the EOS CLI.
+# No Linux ip link manipulation — everything is done on the router.
+#
+# Topology:
+#
+#   [ce-a1] --RED-- [pe1] --RED-- [pe2] --RED-- [ce-a2]
+#   [ce-b1] --BLUE- [pe1] --BLUE- [pe2] --BLUE- [ce-b2]
+#
+# pe1 and pe2 each have two VRFs: VRF-RED and VRF-BLUE.
+# Two separate inter-PE links carry each VRF independently (VRF-Lite, no MPLS).
+# CE nodes cannot reach each other across VRFs — isolation is the whole point.
+
+topology:
+  defaults:
+    kind: ceos
+    image: ceos:4.35.2F
+
+  nodes:
+    pe1:
+      startup-config: configs/pe1/startup-config
+
+    pe2:
+      startup-config: configs/pe2/startup-config
+
+    ce-a1:
+      startup-config: configs/ce-a1/startup-config
+
+    ce-a2:
+      startup-config: configs/ce-a2/startup-config
+
+    ce-b1:
+      startup-config: configs/ce-b1/startup-config
+
+    ce-b2:
+      startup-config: configs/ce-b2/startup-config
+
+  links:
+    # VRF-RED links
+    - endpoints: ["ce-a1:eth1", "pe1:eth1"]   # 10.10.12.0/30  RED
+    - endpoints: ["pe1:eth2",   "pe2:eth1"]   # 10.10.99.0/30  RED inter-PE
+    - endpoints: ["pe2:eth2",   "ce-a2:eth1"] # 10.10.34.0/30  RED
+    # VRF-BLUE links
+    - endpoints: ["ce-b1:eth1", "pe1:eth3"]   # 10.20.12.0/30  BLUE
+    - endpoints: ["pe1:eth4",   "pe2:eth3"]   # 10.20.99.0/30  BLUE inter-PE
+    - endpoints: ["pe2:eth4",   "ce-b2:eth1"] # 10.20.34.0/30  BLUE

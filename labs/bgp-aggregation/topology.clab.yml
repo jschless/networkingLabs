@@ -1,0 +1,20 @@
+name: bgp-aggregation
+
+topology:
+  defaults:
+    kind: ceos
+    image: ceos:4.35.2F
+
+  nodes:
+    originator:
+      startup-config: configs/originator/startup-config
+
+    aggregator:
+      startup-config: configs/aggregator/startup-config
+
+    receiver:
+      startup-config: configs/receiver/startup-config
+
+  links:
+    - endpoints: ["originator:eth1", "aggregator:eth1"]
+    - endpoints: ["aggregator:eth2", "receiver:eth1"]

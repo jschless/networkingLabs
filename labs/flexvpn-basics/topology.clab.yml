@@ -1,0 +1,87 @@
+name: flexvpn-basics
+
+# FlexVPN Basics — IKEv2 + Virtual Tunnel Interface (VTI) Hub-and-Spoke
+# Uses strongSwan on Linux containers (ipsec-lab:local image).
+#
+# FlexVPN is Cisco's IKEv2-based VPN framework. This lab implements the same
+# concepts on Linux using strongSwan + kernel VTI interfaces:
+#   - IKEv2 key exchange (RFC 7296) with PSK authentication
+#   - Virtual Tunnel Interfaces (VTI): routable, point-to-point tunnel endpoints
+#   - One dedicated VTI per spoke on the hub (vs DMVPN's single mGRE interface)
+#   - OSPF routing over VTIs for dynamic reachability
+#
+# Topology:
+#
+#   [host-a]─────[gw-a HUB]─────[internet]─────[gw-b spoke1]─────[host-b]
+#   192.168.1.10  192.168.1.1  .2       .5      .6  192.168.2.1   192.168.2.10
+#                 203.0.113.1/30        203.0.113.4/30
+#                                   |
+#                                   └───────────[gw-c spoke2]─────[host-c]
+#                                         .9    .10 192.168.3.1   192.168.3.10
+#                                   203.0.113.8/30
+#
+# VTI tunnel addresses:
+#   hub vti1 ↔ spoke1 vti0:   10.10.1.1/30   ↔   10.10.1.2/30
+#   hub vti2 ↔ spoke2 vti0:   10.10.2.1/30   ↔   10.10.2.2/30
+#
+# Pre-configured (auto-starts on deploy):
+#   gw-a (hub): VTI interfaces, IKEv2 config, ipsec started, OSPF config in /etc/frr/
+#   internet:   IP addressing and forwarding
+#   host-a/b/c: IP addressing and default routes
+#
+# Your task:
+#   gw-b (spoke1) and gw-c (spoke2): IPs are pre-configured.
+#   You create the VTI interface, write the IKEv2 config, and start ipsec.
+#   See README.md for step-by-step tasks.
+
+topology:
+  defaults:
+    kind: linux
+    image: ipsec-lab:local
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - bash /setup.sh
+
+  nodes:
+    host-a:
+      binds:
+        - configs/host-a/setup.sh:/setup.sh
+
+    gw-a:
+      binds:
+        - configs/gw-a/setup.sh:/setup.sh
+        - configs/gw-a/ipsec.conf:/etc/ipsec.conf
+        - configs/gw-a/ipsec.secrets:/etc/ipsec.secrets
+
+    internet:
+      binds:
+        - configs/internet/setup.sh:/setup.sh
+
+    gw-b:
+      binds:
+        - configs/gw-b/setup.sh:/setup.sh
+        - configs/gw-b/ipsec.conf:/etc/ipsec.conf
+        - configs/gw-b/ipsec.secrets:/etc/ipsec.secrets
+
+    host-b:
+      binds:
+        - configs/host-b/setup.sh:/setup.sh
+
+    gw-c:
+      binds:
+        - configs/gw-c/setup.sh:/setup.sh
+        - configs/gw-c/ipsec.conf:/etc/ipsec.conf
+        - configs/gw-c/ipsec.secrets:/etc/ipsec.secrets
+
+    host-c:
+      binds:
+        - configs/host-c/setup.sh:/setup.sh
+
+  links:
+    - endpoints: ["host-a:eth1",   "gw-a:eth1"]       # 192.168.1.0/24
+    - endpoints: ["gw-a:eth2",     "internet:eth1"]    # 203.0.113.0/30
+    - endpoints: ["internet:eth2", "gw-b:eth1"]        # 203.0.113.4/30
+    - endpoints: ["internet:eth3", "gw-c:eth1"]        # 203.0.113.8/30
+    - endpoints: ["gw-b:eth2",     "host-b:eth1"]      # 192.168.2.0/24
+    - endpoints: ["gw-c:eth2",     "host-c:eth1"]      # 192.168.3.0/24

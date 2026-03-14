@@ -1,0 +1,66 @@
+name: dmvpn-phase1
+
+# DMVPN Phase 1 — Hub-and-Spoke VPN using mGRE + NHRP  (Arista cEOS)
+#
+# Topology:
+#
+#   [spoke1] (10.0.0.11) --\
+#   [spoke2] (10.0.0.12) ---[hub] (10.0.0.1)    WAN: 10.0.0.0/24 (br-wan bridge)
+#   [spoke3] (10.0.0.13) --/
+#
+# WAN IPs (on Ethernet1):
+#   hub:    10.0.0.1/24      Tunnel0 IP: 172.16.0.1/24   (mGRE, multipoint)
+#   spoke1: 10.0.0.11/24     Tunnel0 IP: 172.16.0.11/24  (GRE, remote=hub)
+#   spoke2: 10.0.0.12/24     Tunnel0 IP: 172.16.0.12/24
+#   spoke3: 10.0.0.13/24     Tunnel0 IP: 172.16.0.13/24
+#
+# Simulated LANs (Loopback1 on spokes):
+#   spoke1: 192.168.1.0/24
+#   spoke2: 192.168.2.0/24
+#   spoke3: 192.168.3.0/24
+#
+# Pre-configured:
+#   hub: Tunnel0 (mGRE), NHRP server, OSPF point-to-multipoint (fully working)
+# Your task:
+#   1. Configure NHRP on each spoke (ip nhrp nhs, ip nhrp map)
+#   2. Configure OSPF on each spoke (point-to-point on Tunnel0, router ospf)
+#   3. Verify: show ip nhrp, show ip ospf neighbor, ping across tunnel
+
+topology:
+  nodes:
+    br-wan:
+      kind: linux
+      image: frr-lab:local
+      exec:
+        - ip link add name br0 type bridge
+        - ip link set br0 up
+        - ip link set eth1 master br0
+        - ip link set eth2 master br0
+        - ip link set eth3 master br0
+        - ip link set eth4 master br0
+
+    hub:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/hub/startup-config
+
+    spoke1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spoke1/startup-config
+
+    spoke2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spoke2/startup-config
+
+    spoke3:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spoke3/startup-config
+
+  links:
+    - endpoints: ["hub:eth1",    "br-wan:eth1"]
+    - endpoints: ["spoke1:eth1", "br-wan:eth2"]
+    - endpoints: ["spoke2:eth1", "br-wan:eth3"]
+    - endpoints: ["spoke3:eth1", "br-wan:eth4"]

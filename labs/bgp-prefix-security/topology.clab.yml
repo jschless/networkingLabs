@@ -1,0 +1,24 @@
+name: bgp-prefix-security
+
+topology:
+  defaults:
+    kind: ceos
+    image: ceos:4.35.2F
+
+  nodes:
+    legitimate:
+      startup-config: configs/legitimate/startup-config
+
+    isp:
+      startup-config: configs/isp/startup-config
+
+    hijacker:
+      startup-config: configs/hijacker/startup-config
+
+    victim:
+      startup-config: configs/victim/startup-config
+
+  links:
+    - endpoints: ["legitimate:eth1", "isp:eth1"]
+    - endpoints: ["isp:eth2", "hijacker:eth1"]
+    - endpoints: ["isp:eth3", "victim:eth1"]

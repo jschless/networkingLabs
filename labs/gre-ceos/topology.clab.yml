@@ -1,0 +1,68 @@
+name: gre-ceos
+
+# GRE tunnel practice lab — Arista cEOS
+#
+# Physical IP addressing is pre-configured on all cEOS router nodes.
+# You configure the Tunnel0 interface on gw-a and gw-b, then add
+# static routes (or OSPF) to route LAN traffic across the tunnel.
+#
+# Topology:
+#
+#   [host-a] --- [gw-a] ---WAN--- [internet] ---WAN--- [gw-b] --- [host-b]
+#    LAN A         |    203.0.113.0/30  203.0.113.4/30   |          LAN B
+#              Tunnel0                                Tunnel0
+#              172.16.0.1                             172.16.0.2
+#
+# Pre-configured: Ethernet IPs on gw-a/gw-b/internet, default routes on hosts.
+# You configure: interface Tunnel0 on gw-a and gw-b, routes over the tunnel.
+#
+# Access:
+#   docker exec -it clab-gre-ceos-gw-a Cli          # EOS CLI
+#   docker exec -it clab-gre-ceos-host-a bash        # host shell
+
+topology:
+  nodes:
+    host-a:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/host-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    gw-a:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/gw-a/startup-config
+      exec:
+        # cEOS drops LAN→tunnel transit traffic via iptables EOS_FORWARD by default.
+        # Remove the DROP rule for the LAN-facing interface (eth1 = Ethernet1) so
+        # forwarded traffic can reach the GRE tunnel.
+        - bash -c "iptables -D EOS_FORWARD -i eth1 -j DROP 2>/dev/null || true"
+
+    internet:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/internet/startup-config
+
+    gw-b:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/gw-b/startup-config
+      exec:
+        # gw-b's LAN is Ethernet2 (eth2 in Linux).
+        - bash -c "iptables -D EOS_FORWARD -i eth2 -j DROP 2>/dev/null || true"
+
+    host-b:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/host-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["host-a:eth1",   "gw-a:eth1"]      # 192.168.1.0/24  LAN A
+    - endpoints: ["gw-a:eth2",     "internet:eth1"]   # 203.0.113.0/30  WAN A
+    - endpoints: ["internet:eth2", "gw-b:eth1"]       # 203.0.113.4/30  WAN B
+    - endpoints: ["gw-b:eth2",     "host-b:eth1"]     # 192.168.2.0/24  LAN B

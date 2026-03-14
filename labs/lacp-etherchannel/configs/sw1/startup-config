@@ -1,0 +1,62 @@
+! sw1 — EtherChannel practice switch  (Arista EOS)
+!
+! LACP Port-Channel configuration practice.
+! Ethernet1 and Ethernet2 are the two links to sw2 that will form the bundle.
+! Ethernet3 connects to host1 (pre-configured).
+!
+! YOUR TASK: Configure LACP EtherChannel between sw1 and sw2
+!
+! Step 1 — Create the Port-Channel interface:
+!   configure
+!   interface Port-Channel1
+!      description to sw2 (LACP bundle)
+!      no switchport
+!      ip address 10.12.0.1/30
+!
+! Step 2 — Add physical members (LACP active mode):
+!   interface Ethernet1
+!      channel-group 1 mode active
+!   interface Ethernet2
+!      channel-group 1 mode active
+!
+! Step 3 — Verify:
+!   show etherchannel summary
+!   show etherchannel detail
+!   show interfaces Port-Channel1
+!   ping 10.12.0.2                   <- sw2 Port-Channel IP
+!   ping 10.0.1.2                    <- host2 (after OSPF or static route)
+!
+! LACP modes:
+!   active  — initiates LACP negotiation (prefer this on both sides)
+!   passive — responds to LACP negotiation (will not initiate)
+!   on      — static bundle, no LACP negotiation (must be "on" on both sides)
+!
+! Load-balancing (global setting):
+!   port-channel load-balance src-dst-mac    <- default for L2
+!   port-channel load-balance src-dst-ip     <- use for routed traffic
+!
+hostname sw1
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to sw2 link-1 (future Port-Channel1 member)
+   no switchport
+   ! YOUR TASK: Add channel-group 1 mode active
+!
+interface Ethernet2
+   description to sw2 link-2 (future Port-Channel1 member)
+   no switchport
+   ! YOUR TASK: Add channel-group 1 mode active
+!
+interface Ethernet3
+   description to host1
+   no switchport
+   ip address 10.0.1.253/24
+!
+ip routing
+!
+! YOUR TASK: Create Port-Channel1 with ip address 10.12.0.1/30
+!
+end

@@ -1,0 +1,44 @@
+! hub — DMVPN Phase 3 hub router  (Arista EOS)
+!
+! Fully configured. Key differences from Phase 1:
+!   - ip nhrp redirect     (tells spoke A to resolve spoke B when spoke-to-spoke traffic transits hub)
+!   - OSPF point-to-multipoint (unchanged from Phase 1 — hub-and-spoke routing)
+!   - summary-address 192.168.0.0/16 (aggregates all spoke LANs into one OSPF route)
+!
+! The summary means spokes learn one route: 192.168.0.0/16 -> hub.
+! When spoke1 sends to spoke2's LAN (via hub per routing), hub sends NHRP redirect.
+! spoke1 installs shortcut: 192.168.2.0/24 via 172.16.0.12.
+! The /24 shortcut is more specific than the /16 summary, so it wins in the routing table.
+! Subsequent packets skip the hub.
+!
+hostname hub
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description WAN NBMA network (10.0.0.0/24)
+   no switchport
+   ip address 10.0.0.1/24
+   no shutdown
+!
+interface Tunnel0
+   description DMVPN mGRE — hub endpoint
+   tunnel source Ethernet1
+   tunnel mode gre multipoint
+   ip address 172.16.0.1/24
+   ip nhrp network-id 1
+   ip nhrp holdtime 300
+   ip nhrp redirect
+   ip ospf network point-to-multipoint
+   ip ospf area 0
+   no shutdown
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.1
+   passive-interface Loopback0
+   summary-address 192.168.0.0/16
+!
+end

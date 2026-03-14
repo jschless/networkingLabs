@@ -1,0 +1,23 @@
+hostname acc1
+!
+spanning-tree mode rstp
+!
+vlan 99
+!
+vlan 110
+!
+vlan 120
+!
+interface Ethernet1
+   description to-dist1
+   switchport trunk allowed vlan 99,110,120
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-ap1
+   switchport trunk allowed vlan 99,110,120
+   switchport mode trunk
+   no shutdown
+!
+end

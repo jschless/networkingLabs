@@ -1,0 +1,55 @@
+name: enterprise-wireless-architecture
+
+topology:
+  defaults:
+    kind: linux
+    image: enterprise-wireless-architecture:local
+
+  nodes:
+    dist1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist1/startup-config
+
+    acc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc1/startup-config
+
+    wlc:
+      binds:
+        - configs/wlc/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    radius:
+      binds:
+        - configs/radius/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    ap1:
+      binds:
+        - configs/ap1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    corp-sta:
+      binds:
+        - configs/corp-sta/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    guest-sta:
+      binds:
+        - configs/guest-sta/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["dist1:eth1", "acc1:eth1"]
+    - endpoints: ["dist1:eth2", "wlc:eth1"]
+    - endpoints: ["dist1:eth3", "radius:eth1"]
+    - endpoints: ["acc1:eth2", "ap1:eth1"]
+    - endpoints: ["ap1:eth2", "corp-sta:eth1"]
+    - endpoints: ["ap1:eth3", "guest-sta:eth1"]

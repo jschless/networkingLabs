@@ -1,0 +1,41 @@
+! acc2 — access layer switch #2  (Arista EOS)
+!
+! Pure L2 switch. No ip routing.
+! Dual-homed uplinks to cc1/cc2. Edge port used for hostile-switch drills.
+!
+hostname acc2
+!
+spanning-tree mode rstp
+!
+vlan 10
+   name corporate
+!
+vlan 20
+   name voice
+!
+vlan 30
+   name guest
+!
+vlan 99
+   name management
+!
+interface Ethernet1
+   description to-cc1-trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-cc2-trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet3
+   description to-rogue-switch  access-vlan10
+   switchport access vlan 10
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+end

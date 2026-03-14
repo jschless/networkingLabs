@@ -1,0 +1,36 @@
+hostname dist1
+!
+ip routing
+!
+vlan 20
+   name video-source
+!
+interface Loopback0
+   ip address 10.0.0.11/32
+!
+interface Ethernet1
+   no switchport
+   ip address 10.255.12.1/30
+   no shutdown
+!
+interface Ethernet2
+   switchport access vlan 20
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet3
+   switchport access vlan 20
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Vlan20
+   ip address 10.20.20.1/24
+   no shutdown
+!
+! Learner tasks:
+!  - enable IGMP and PIM on Vlan20
+!  - configure PIM on the core-facing routed link
+!
+end

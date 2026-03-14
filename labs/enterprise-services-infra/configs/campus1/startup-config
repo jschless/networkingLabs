@@ -1,0 +1,63 @@
+hostname campus1
+!
+ip routing
+!
+vlan 10
+   name users
+!
+vlan 99
+   name management
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description to-edge1
+   no switchport
+   ip address 10.255.0.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-client1
+   switchport access vlan 10
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet3
+   description to-services1
+   switchport trunk allowed vlan 99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet4
+   description to-mgmt1
+   switchport access vlan 99
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet5
+   description to-tacacs1
+   switchport access vlan 99
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Vlan10
+   ip address 10.10.10.1/24
+   no shutdown
+!
+interface Vlan99
+   ip address 192.168.99.1/24
+   no shutdown
+!
+ip route 0.0.0.0/0 10.255.0.1
+!
+! Learner tasks:
+!  - create a MGMT VRF if desired
+!  - configure ip helper-address for DHCP relay to 192.168.99.10
+!  - configure TACACS+ toward 192.168.99.20 and SNMPv3, syslog, and NTP toward services1
+!  - verify local-auth fallback when TACACS is unreachable
+!
+end

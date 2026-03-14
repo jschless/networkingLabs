@@ -1,0 +1,43 @@
+name: debug-spine-leaf
+
+topology:
+  nodes:
+    leaf1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf1/startup-config
+
+    leaf2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf2/startup-config
+
+    leaf3:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf3/startup-config
+
+    leaf4:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/leaf4/startup-config
+
+    spine1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spine1/startup-config
+
+    spine2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/spine2/startup-config
+
+  links:
+    - endpoints: ["leaf1:eth1",  "spine1:eth1"]   # 10.1.0.0/31
+    - endpoints: ["leaf2:eth1",  "spine1:eth2"]   # 10.1.0.2/31
+    - endpoints: ["leaf3:eth1",  "spine1:eth3"]   # 10.1.0.4/31
+    - endpoints: ["leaf4:eth1",  "spine1:eth4"]   # 10.1.0.6/31
+    - endpoints: ["leaf1:eth2",  "spine2:eth1"]   # 10.2.0.0/31
+    - endpoints: ["leaf2:eth2",  "spine2:eth2"]   # 10.2.0.2/31
+    - endpoints: ["leaf3:eth2",  "spine2:eth3"]   # 10.2.0.4/31
+    - endpoints: ["leaf4:eth2",  "spine2:eth4"]   # 10.2.0.6/31

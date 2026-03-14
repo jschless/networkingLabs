@@ -1,0 +1,144 @@
+name: telemetry-monitoring-full
+
+mgmt:
+  network: telemetry-full-mgmt
+  ipv4-subnet: 172.31.30.0/24
+
+topology:
+  defaults:
+    kind: linux
+    image: telemetry-lab:local
+
+  nodes:
+    branch1:
+      mgmt-ipv4: 172.31.30.11
+      binds:
+        - configs/branch1/frr.conf:/etc/frr/frr.conf
+        - configs/shared/daemons:/etc/frr/daemons
+        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/branch1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    campus1:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.30.12
+      startup-config: configs/campus1/startup-config
+
+    pe1:
+      mgmt-ipv4: 172.31.30.13
+      binds:
+        - configs/pe1/frr.conf:/etc/frr/frr.conf
+        - configs/shared/daemons:/etc/frr/daemons
+        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/pe1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    core1:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.30.14
+      startup-config: configs/core1/startup-config
+
+    dc1:
+      mgmt-ipv4: 172.31.30.15
+      binds:
+        - configs/dc1/frr.conf:/etc/frr/frr.conf
+        - configs/shared/daemons:/etc/frr/daemons
+        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/dc1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    client:
+      mgmt-ipv4: 172.31.30.21
+      binds:
+        - configs/client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    server:
+      mgmt-ipv4: 172.31.30.22
+      binds:
+        - configs/server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    gnmic:
+      kind: linux
+      image: ghcr.io/openconfig/gnmic:0.45.0
+      mgmt-ipv4: 172.31.30.31
+      ports:
+        - 127.0.0.1:9804:9804
+      binds:
+        - configs/gnmic/gnmic.yaml:/gnmic.yaml
+      cmd: --config /gnmic.yaml subscribe
+
+    prometheus:
+      kind: linux
+      image: prom/prometheus:v2.54.1
+      mgmt-ipv4: 172.31.30.32
+      ports:
+        - 127.0.0.1:9090:9090
+      binds:
+        - configs/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      cmd: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus
+
+    grafana:
+      kind: linux
+      image: grafana/grafana:11.2.0
+      mgmt-ipv4: 172.31.30.33
+      ports:
+        - 127.0.0.1:3000:3000
+      env:
+        GF_SECURITY_ADMIN_USER: admin
+        GF_SECURITY_ADMIN_PASSWORD: admin
+      binds:
+        - configs/grafana/provisioning/datasources/prometheus.yaml:/etc/grafana/provisioning/datasources/prometheus.yaml
+        - configs/grafana/provisioning/dashboards/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+        - configs/grafana/dashboards/telemetry-overview.json:/var/lib/grafana/dashboards/telemetry-overview.json
+        - configs/grafana/dashboards/traffic-investigation.json:/var/lib/grafana/dashboards/traffic-investigation.json
+        - configs/grafana/dashboards/failure-drill.json:/var/lib/grafana/dashboards/failure-drill.json
+
+    syslog:
+      mgmt-ipv4: 172.31.30.34
+      binds:
+        - configs/syslog/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    postgres:
+      kind: linux
+      image: postgres:15
+      mgmt-ipv4: 172.31.30.41
+      env:
+        POSTGRES_DB: opennms
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+
+    opennms:
+      kind: linux
+      image: opennms/horizon:35.0.3
+      mgmt-ipv4: 172.31.30.42
+      ports:
+        - 127.0.0.1:8980:8980
+      env:
+        POSTGRES_HOST: 172.31.30.41
+        POSTGRES_PORT: "5432"
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        OPENNMS_DBNAME: opennms
+        OPENNMS_DBUSER: postgres
+        OPENNMS_DBPASS: postgres
+        JAVA_OPTS: -Xms512m -Xmx1024m
+      cmd: -s
+
+  links:
+    - endpoints: ["client:eth1", "branch1:eth1"]
+    - endpoints: ["branch1:eth2", "campus1:eth1"]
+    - endpoints: ["campus1:eth2", "pe1:eth1"]
+    - endpoints: ["pe1:eth2", "core1:eth1"]
+    - endpoints: ["core1:eth2", "dc1:eth1"]
+    - endpoints: ["dc1:eth2", "server:eth1"]

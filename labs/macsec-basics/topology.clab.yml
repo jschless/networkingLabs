@@ -1,0 +1,56 @@
+name: macsec-basics
+
+# IEEE 802.1AE MACsec lab — two scenarios:
+#
+#   Scenario A — Infrastructure MACsec (sw-a ↔ sw-b, pre-shared CAK via MKA)
+#   Scenario B — Endpoint MACsec     (host-a ↔ host-b, MKA key agreement)
+#
+# Topology:
+#
+#   [host-a] eth1 ──── eth1 [sw-a] eth2 ──── eth2 [sw-b] eth1 ──── eth1 [host-b]
+#
+# MACsec interfaces (created by wpa_supplicant macsec_linux driver):
+#
+#   host-a  macsec0 (over eth1)  10.0.0.1/24   — Scenario B endpoint
+#   sw-a    macsec0 (over eth2)  192.168.1.1/30 — Scenario A infra link
+#   sw-b    macsec0 (over eth2)  192.168.1.2/30 — Scenario A infra link
+#   host-b  macsec0 (over eth1)  10.0.0.2/24   — Scenario B endpoint
+#
+# Both scenarios use MKA (802.1X MKA) with the macsec_linux wpa_supplicant
+# driver. Both peers share the same CAK+CKN; MKA elects a key server and
+# derives SAKs automatically — no static per-peer MAC configuration needed.
+
+topology:
+  defaults:
+    kind: linux
+    image: macsec-lab:local
+
+  nodes:
+    host-a:
+      binds:
+        - configs/host-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    sw-a:
+      binds:
+        - configs/sw-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    sw-b:
+      binds:
+        - configs/sw-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    host-b:
+      binds:
+        - configs/host-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["host-a:eth1", "sw-a:eth1"]   # Scenario B: endpoint MACsec
+    - endpoints: ["sw-a:eth2",   "sw-b:eth2"]   # Scenario A: infrastructure MACsec
+    - endpoints: ["sw-b:eth1",   "host-b:eth1"] # Scenario B: endpoint MACsec

@@ -1,0 +1,89 @@
+name: dot1x-nac
+
+topology:
+  defaults:
+    kind: linux
+    image: nac-lab:local
+
+  nodes:
+    radius:
+      binds:
+        - configs/radius/setup.sh:/setup.sh
+        - configs/radius/clients.conf:/etc/freeradius/3.0/clients.conf
+        - configs/radius/authorize:/etc/freeradius/3.0/mods-config/files/authorize
+        - configs/radius/eap:/etc/freeradius/3.0/mods-available/eap
+        - configs/certs/ca.pem:/etc/freeradius/3.0/certs/ca.pem
+        - configs/certs/server.pem:/etc/freeradius/3.0/certs/server.pem
+        - configs/certs/server.key:/etc/freeradius/3.0/certs/server.key
+        - configs/certs/dh:/etc/freeradius/3.0/certs/dh
+      exec:
+        - bash /setup.sh
+
+    authenticator:
+      binds:
+        - configs/authenticator/setup.sh:/setup.sh
+        - configs/authenticator/hostapd-eth1.conf:/etc/hostapd/hostapd-eth1.conf
+        - configs/authenticator/hostapd-eth2.conf:/etc/hostapd/hostapd-eth2.conf
+        - configs/authenticator/hostapd-eth3.conf:/etc/hostapd/hostapd-eth3.conf
+        - configs/authenticator/hostapd-eth4.conf:/etc/hostapd/hostapd-eth4.conf
+        - configs/authenticator/vlan-action.sh:/etc/hostapd/vlan-action.sh
+        - configs/authenticator/mab-eth3.sh:/etc/hostapd/mab-eth3.sh
+      exec:
+        - bash /setup.sh
+
+    supplicant-tls:
+      binds:
+        - configs/supplicant-tls/setup.sh:/setup.sh
+        - configs/certs/ca.pem:/etc/certs/ca.pem
+        - configs/certs/client.pem:/etc/certs/client.pem
+        - configs/certs/client.key:/etc/certs/client.key
+      exec:
+        - bash /setup.sh
+
+    supplicant-peap:
+      binds:
+        - configs/supplicant-peap/setup.sh:/setup.sh
+        - configs/certs/ca.pem:/etc/certs/ca.pem
+      exec:
+        - bash /setup.sh
+
+    supplicant-mab:
+      binds:
+        - configs/supplicant-mab/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    supplicant-fail:
+      binds:
+        - configs/supplicant-fail/setup.sh:/setup.sh
+        - configs/certs/ca.pem:/etc/certs/ca.pem
+      exec:
+        - bash /setup.sh
+
+    employee-server:
+      binds:
+        - configs/employee-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    contractor-server:
+      binds:
+        - configs/contractor-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    iot-server:
+      binds:
+        - configs/iot-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["supplicant-tls:eth1",  "authenticator:eth1"]
+    - endpoints: ["supplicant-peap:eth1", "authenticator:eth2"]
+    - endpoints: ["supplicant-mab:eth1",  "authenticator:eth3"]
+    - endpoints: ["supplicant-fail:eth1", "authenticator:eth4"]
+    - endpoints: ["authenticator:eth5",   "radius:eth1"]
+    - endpoints: ["authenticator:eth6",   "employee-server:eth1"]
+    - endpoints: ["authenticator:eth7",   "contractor-server:eth1"]
+    - endpoints: ["authenticator:eth8",   "iot-server:eth1"]

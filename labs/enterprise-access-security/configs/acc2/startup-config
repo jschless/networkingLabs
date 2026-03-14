@@ -1,0 +1,42 @@
+! acc2  (Arista EOS)
+!
+! Access layer — L2 only, no IP routing.
+! Uplink to dist1 (trunk). No end hosts attached in this topology.
+! Available for connecting additional VLAN 10/20/30 devices.
+!
+! STP: inherits dist1 as root for all VLANs.
+!
+hostname acc2
+!
+spanning-tree mode rstp
+!
+vlan 10,20,30,99
+!
+interface Ethernet1
+   description to-dist1  trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-rogue-dhcp  access-vlan10
+   switchport access vlan 10
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet3
+   description to-attacker  access-vlan10
+   switchport access vlan 10
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet4
+   description to-client-b  access-vlan20
+   switchport access vlan 20
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+end

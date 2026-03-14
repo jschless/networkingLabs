@@ -1,0 +1,14 @@
+- name: Backup running config
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Collect running config
+      arista.eos.eos_command:
+        commands:
+          - show running-config
+      register: running
+
+    - name: Save backup
+      copy:
+        dest: "/workspace/backups/{{ inventory_hostname }}.cfg"
+        content: "{{ running.stdout[0] }}"

@@ -3,7 +3,7 @@ clab-*/
 labs/*/clab-*/
 
 # ContainerLab generated files
-*.clab.yml
+# *.clab.yml
 .clab_cache/
 
 # FRR runtime files that may appear in bind-mounted config dirs

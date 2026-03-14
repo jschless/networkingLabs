@@ -1,0 +1,9 @@
+devices:
+  - name: leaf1
+    role: access-leaf
+    loopback: 10.0.0.11/32
+    p2p_ip: 10.0.12.1/30
+  - name: leaf2
+    role: access-leaf
+    loopback: 10.0.0.12/32
+    p2p_ip: 10.0.12.2/30

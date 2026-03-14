@@ -29,11 +29,10 @@ router ospf 10
    network 10.0.12.0/30 area 0.0.0.0
    network 10.0.23.0/30 area 0.0.0.0
 !
-snmp-server community public ro
-snmp-server location telemetry-monitoring-hybrid
-!
-management api gnmi
-   transport grpc default
-   provider eos-native
+! Learner tasks:
+!  - configure SNMP for OpenNMS inventory
+!  - enable gNMI for telemetry collection
+!  - enable LLDP for topology learning
+!  - configure syslog export to 172.31.30.34
 !
 end

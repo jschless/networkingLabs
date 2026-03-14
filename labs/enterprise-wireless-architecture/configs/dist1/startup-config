@@ -1,0 +1,51 @@
+hostname dist1
+!
+ip routing
+!
+vlan 99
+   name wlan-mgmt
+!
+vlan 110
+   name corp-ssid
+!
+vlan 120
+   name guest-ssid
+!
+interface Ethernet1
+   description to-acc1
+   switchport trunk allowed vlan 99,110,120
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-wlc
+   switchport access vlan 99
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet3
+   description to-radius
+   switchport access vlan 99
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Vlan99
+   ip address 192.168.99.1/24
+   no shutdown
+!
+interface Vlan110
+   ip address 10.110.0.1/24
+   no shutdown
+!
+interface Vlan120
+   ip address 10.120.0.1/24
+   no shutdown
+!
+! Learner tasks:
+!  - document corp vs guest SSID policy
+!  - verify AP management stays in VLAN 99
+!  - add ACL/QoS/policy treatment between corp and guest if desired
+!
+end

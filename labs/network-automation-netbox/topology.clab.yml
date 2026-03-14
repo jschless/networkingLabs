@@ -1,0 +1,62 @@
+name: network-automation-netbox
+
+mgmt:
+  network: netbox-lab-mgmt
+  ipv4-subnet: 172.31.40.0/24
+
+topology:
+  nodes:
+    leaf1:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.40.11
+      startup-config: configs/leaf1/startup-config
+
+    leaf2:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.40.12
+      startup-config: configs/leaf2/startup-config
+
+    postgres:
+      kind: linux
+      image: postgres:15
+      mgmt-ipv4: 172.31.40.21
+      env:
+        POSTGRES_DB: netbox
+        POSTGRES_USER: netbox
+        POSTGRES_PASSWORD: netbox
+
+    redis:
+      kind: linux
+      image: redis:7-alpine
+      mgmt-ipv4: 172.31.40.22
+
+    netbox:
+      kind: linux
+      image: netboxcommunity/netbox:v4.1.11
+      mgmt-ipv4: 172.31.40.23
+      ports:
+        - 127.0.0.1:8001:8080
+      env:
+        DB_HOST: 172.31.40.21
+        DB_NAME: netbox
+        DB_USER: netbox
+        DB_PASSWORD: netbox
+        REDIS_HOST: 172.31.40.22
+        REDIS_CACHE_HOST: 172.31.40.22
+        SECRET_KEY: netboxsecretkey1234567890
+        SUPERUSER_NAME: admin
+        SUPERUSER_EMAIL: admin@example.com
+        SUPERUSER_PASSWORD: admin
+
+    automation:
+      kind: linux
+      image: netbox-automation:local
+      mgmt-ipv4: 172.31.40.24
+      binds:
+        - automation:/workspace
+      cmd: sleep infinity
+
+  links:
+    - endpoints: ["leaf1:eth1", "leaf2:eth1"]

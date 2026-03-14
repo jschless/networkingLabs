@@ -1,0 +1,13 @@
+- name: Gather interface facts
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Gather EOS facts
+      arista.eos.eos_facts:
+        gather_subset: all
+      register: facts
+
+    - name: Save summary
+      copy:
+        dest: "/workspace/facts/{{ inventory_hostname }}.json"
+        content: "{{ facts.ansible_facts | to_nice_json }}"

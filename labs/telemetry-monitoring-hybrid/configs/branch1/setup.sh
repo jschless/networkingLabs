@@ -11,11 +11,13 @@ sleep 2
 vtysh -b
 
 cat > /etc/snmp/snmpd.conf << 'EOF'
+master agentx
 agentAddress udp:0.0.0.0:161
 rocommunity public
 sysName branch1
 sysLocation "telemetry-monitoring-hybrid"
 EOF
 snmpd -C -c /etc/snmp/snmpd.conf -Lf /var/log/snmpd.log
+lldpd -x -I eth1,eth2
 
-echo "[branch1] FRR + SNMP ready"
+echo "[branch1] FRR + SNMP + LLDP ready"

@@ -1,0 +1,143 @@
+name: enterprise-campus
+
+# Enterprise Campus — Full 3-Tier Hierarchical Design
+#
+# Classic Cisco-style campus hierarchy:
+#   Core layer    — high-speed backbone, OSPF area 0, iBGP with edge
+#   Distribution  — OSPF ABR (area 0 + area 1), VRRP first-hop redundancy
+#   Access        — L2 only, VLAN trunks, RSTP edge ports
+#
+# Internet edge: eBGP to upstream ISP (AS65500), OSPF default propagation
+#
+#                         [isp]  AS65500
+#                           |
+#                        [edge]  AS65100  (BGP + OSPF area 0)
+#                        /    \
+#                   [core1]  [core2]      (OSPF area 0)
+#                    / \      / \
+#               [dist1]--[dist1] [dist2]  (ABR: area 0 + area 1, VRRP)
+#               /    \      /    \
+#          [acc1] [acc2]  [acc3] [acc4]   (L2 only, RSTP)
+#            |                |
+#        [client-a]        [client-b]     (Linux, VLAN10/VLAN20)
+#
+# Loopbacks:
+#   isp:   1.1.1.1/32
+#   edge:  10.0.0.1/32
+#   core1: 10.0.0.2/32   core2: 10.0.0.3/32
+#   dist1: 10.0.0.4/32   dist2: 10.0.0.5/32
+#
+# WAN link: 203.0.113.0/30
+# Core P2P links: 10.255.x.0/30
+# Core-Dist P2P links: 10.0.xy.0/30
+#
+# VLANs:
+#   10 = corporate  10.10.10.0/24  VRRP VIP 10.10.10.1
+#   20 = voice      10.20.20.0/24  VRRP VIP 10.20.20.1
+#   30 = guest      10.30.30.0/24  VRRP VIP 10.30.30.1
+#   99 = mgmt       192.168.99.0/24
+
+topology:
+  nodes:
+    # --- ISP (cEOS) ---
+    isp:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/isp/startup-config
+
+    # --- Edge router (cEOS, AS65100) ---
+    edge:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/edge/startup-config
+
+    # --- Core layer (cEOS) ---
+    core1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/core1/startup-config
+
+    core2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/core2/startup-config
+
+    # --- Distribution layer (cEOS, ABR + VRRP) ---
+    dist1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist1/startup-config
+
+    dist2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist2/startup-config
+
+    # --- Access layer (cEOS, L2 only) ---
+    acc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc1/startup-config
+
+    acc2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc2/startup-config
+
+    acc3:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc3/startup-config
+
+    acc4:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc4/startup-config
+
+    # --- Linux clients ---
+    client-a:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/client-a/setup.sh:/setup.sh
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - bash /setup.sh
+
+    client-b:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/client-b/setup.sh:/setup.sh
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - bash /setup.sh
+
+  links:
+    # --- WAN: isp <-> edge ---
+    - endpoints: ["isp:eth1",   "edge:eth1"]    # 203.0.113.0/30: isp=.1  edge=.2
+
+    # --- Core uplinks: edge <-> core ---
+    - endpoints: ["edge:eth2",  "core1:eth1"]   # 10.255.1.0/30: edge=.1  core1=.2
+    - endpoints: ["edge:eth3",  "core2:eth1"]   # 10.255.2.0/30: edge=.1  core2=.2
+
+    # --- Core interconnect ---
+    - endpoints: ["core1:eth2", "core2:eth2"]   # 10.255.3.0/30: core1=.1 core2=.2
+
+    # --- Core <-> Distribution ---
+    - endpoints: ["core1:eth3", "dist1:eth1"]   # 10.0.13.0/30: core1=.1  dist1=.2
+    - endpoints: ["core1:eth4", "dist2:eth1"]   # 10.0.14.0/30: core1=.1  dist2=.2
+    - endpoints: ["core2:eth3", "dist1:eth2"]   # 10.0.23.0/30: core2=.1  dist1=.2
+    - endpoints: ["core2:eth4", "dist2:eth2"]   # 10.0.24.0/30: core2=.1  dist2=.2
+
+    # --- Distribution <-> Access (trunk VLANs 10,20,30,99) ---
+    - endpoints: ["dist1:eth3", "acc1:eth1"]
+    - endpoints: ["dist1:eth4", "acc2:eth1"]
+    - endpoints: ["dist2:eth3", "acc3:eth1"]
+    - endpoints: ["dist2:eth4", "acc4:eth1"]
+
+    # --- Access <-> Clients ---
+    - endpoints: ["acc1:eth2",  "client-a:eth1"]  # VLAN 10 access
+    - endpoints: ["acc3:eth2",  "client-b:eth1"]  # VLAN 20 access

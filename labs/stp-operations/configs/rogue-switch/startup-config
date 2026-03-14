@@ -1,0 +1,13 @@
+hostname rogue-switch
+!
+spanning-tree mode rstp
+!
+vlan 10
+!
+interface Ethernet1
+   description to-acc2
+   switchport access vlan 10
+   switchport mode access
+   no shutdown
+!
+end

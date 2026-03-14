@@ -1,0 +1,65 @@
+name: ipsec-basics
+
+# IPsec site-to-site tunnel practice lab
+#
+# Topology:
+#
+#  [host-a] ---eth1--- [gw-a] ---eth2--- [internet] ---eth2--- [gw-b] ---eth2--- [host-b]
+#
+# IP addressing (pre-configured by setup.sh):
+#
+#   LAN A:   192.168.1.0/24
+#     host-a eth1: 192.168.1.10   default route -> 192.168.1.1
+#     gw-a   eth1: 192.168.1.1
+#
+#   WAN (simulated internet):
+#     gw-a   eth2: 203.0.113.1/30
+#     internet eth1: 203.0.113.2/30
+#     internet eth2: 203.0.113.5/30
+#     gw-b   eth1: 203.0.113.6/30
+#
+#   LAN B:   192.168.2.0/24
+#     gw-b   eth2: 192.168.2.1
+#     host-b eth1: 192.168.2.10   default route -> 192.168.2.1
+#
+# What you configure:
+#   - /etc/ipsec.conf    on gw-a and gw-b  (IKEv2 tunnel definition)
+#   - /etc/ipsec.secrets on gw-a and gw-b  (pre-shared key)
+#   - Run `ipsec start` to bring up the tunnel
+#   - Test with ping from host-a (192.168.1.10) to host-b (192.168.2.10)
+
+topology:
+  defaults:
+    kind: linux
+    image: ipsec-lab:local
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - bash /setup.sh
+
+  nodes:
+    host-a:
+      binds:
+        - configs/host-a/setup.sh:/setup.sh
+
+    gw-a:
+      binds:
+        - configs/gw-a/setup.sh:/setup.sh
+
+    internet:
+      binds:
+        - configs/internet/setup.sh:/setup.sh
+
+    gw-b:
+      binds:
+        - configs/gw-b/setup.sh:/setup.sh
+
+    host-b:
+      binds:
+        - configs/host-b/setup.sh:/setup.sh
+
+  links:
+    - endpoints: ["host-a:eth1",   "gw-a:eth1"]      # 192.168.1.0/24
+    - endpoints: ["gw-a:eth2",     "internet:eth1"]   # 203.0.113.0/30
+    - endpoints: ["internet:eth2", "gw-b:eth1"]       # 203.0.113.4/30
+    - endpoints: ["gw-b:eth2",     "host-b:eth1"]     # 192.168.2.0/24

@@ -1,0 +1,38 @@
+hostname core1
+!
+username admin privilege 15 role network-admin secret admin
+!
+interface Loopback0
+   ip address 10.255.0.4/32
+!
+interface Ethernet1
+   description pe1
+   no switchport
+   ip address 10.0.34.2/30
+   ip ospf area 0.0.0.0
+   ip ospf network point-to-point
+   no shutdown
+!
+interface Ethernet2
+   description dc1
+   no switchport
+   ip address 10.0.45.1/30
+   ip ospf area 0.0.0.0
+   ip ospf network point-to-point
+   no shutdown
+!
+ip routing
+!
+router ospf 10
+   router-id 10.255.0.4
+   network 10.255.0.4/32 area 0.0.0.0
+   network 10.0.34.0/30 area 0.0.0.0
+   network 10.0.45.0/30 area 0.0.0.0
+!
+! Learner tasks:
+!  - configure SNMP for OpenNMS inventory
+!  - enable gNMI for telemetry
+!  - enable LLDP for topology learning
+!  - configure syslog export to 172.31.30.34
+!
+end

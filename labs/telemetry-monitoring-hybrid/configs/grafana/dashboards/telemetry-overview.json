@@ -6,6 +6,22 @@
   "graphTooltip": 0,
   "panels": [
     {
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "content": "<h2>Telemetry Overview</h2><p>This dashboard is your quick operational summary. It compares the two telemetry-capable nodes, shows whether Prometheus is scraping the collector, and answers a simple question first: do I have live metrics from the devices I expect?</p>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.2.0",
+      "title": "How To Use This Dashboard",
+      "type": "text"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "grafana"
@@ -20,12 +36,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 5
       },
-      "id": 1,
+      "id": 2,
       "options": {
         "legend": {
           "displayMode": "table",
@@ -38,13 +54,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(interfaces_interface_state_counters_in_octets{target=\"campus1\",interface_name=~\"Ethernet.*\"}[1m]) * 8",
-          "legendFormat": "{{interface_name}} in",
+          "expr": "sum by (target) (rate(interfaces_interface_state_counters_in_octets{target=~\"campus1|core1\",interface_name=~\"Ethernet.*\"}[1m])) * 8",
+          "legendFormat": "{{target}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Campus1 Ingress Throughput",
+      "title": "Aggregate Path Rate By Device",
       "type": "timeseries"
     },
     {
@@ -62,12 +78,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 5
       },
-      "id": 2,
+      "id": 3,
       "options": {
         "legend": {
           "displayMode": "table",
@@ -80,13 +96,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=~\"Ethernet.*\"}[1m]) * 8",
-          "legendFormat": "{{interface_name}} out",
+          "expr": "rate(interfaces_interface_state_counters_in_octets{target=~\"campus1|core1\",interface_name=~\"Ethernet.*\"}[1m]) * 8",
+          "legendFormat": "{{target}} {{interface_name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Campus1 Egress Throughput",
+      "title": "Ethernet Interface Activity",
       "type": "timeseries"
     },
     {
@@ -118,12 +134,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 8,
         "x": 0,
-        "y": 9
+        "y": 13
       },
-      "id": 3,
+      "id": 4,
       "options": {
         "colorMode": "background",
         "graphMode": "none",
@@ -145,8 +161,83 @@
           "refId": "A"
         }
       ],
-      "title": "Prometheus -> gNMIc Scrape",
+      "title": "Prometheus To gNMIc",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 13
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "count(count by (target) (interfaces_interface_state_counters_in_octets{target=~\"campus1|core1\",interface_name=~\"Ethernet.*\"}))",
+          "refId": "A"
+        }
+      ],
+      "title": "Telemetry Targets With Data",
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 13
+      },
+      "id": 6,
+      "options": {
+        "content": "<p>If this dashboard is mostly empty, work backwards in this order: 1. Is <code>up{job=\"gnmic\"}</code> green? 2. Did you enable gNMI on <code>campus1</code> and <code>core1</code>? 3. Do you have Ethernet counters in Prometheus for each target?</p>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.2.0",
+      "title": "Operator Habit",
+      "type": "text"
     }
   ],
   "refresh": "15s",
@@ -154,7 +245,8 @@
   "style": "dark",
   "tags": [
     "gnmi",
-    "telemetry"
+    "telemetry",
+    "operations"
   ],
   "templating": {
     "list": []
@@ -165,5 +257,5 @@
   },
   "title": "Telemetry Overview",
   "uid": "telemetry-overview",
-  "version": 1
+  "version": 2
 }

@@ -1,0 +1,12 @@
+! host1 — simulated LAN host  (Arista EOS)
+!
+hostname host1
+!
+interface Ethernet1
+   no switchport
+   ip address 10.0.1.1/24
+!
+ip routing
+ip route 0.0.0.0/0 10.0.1.253
+!
+end

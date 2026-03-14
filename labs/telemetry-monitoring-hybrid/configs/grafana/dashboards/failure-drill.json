@@ -14,7 +14,7 @@
       },
       "id": 1,
       "options": {
-        "content": "<h2>Failure Drill</h2><p>Use this view while running <code>scripts/link-down-campus-pe.sh</code> and <code>scripts/link-up-campus-pe.sh</code>. Watch how the counters behave before, during, and after the failure, then compare that with OpenNMS events and outages.</p><p>Questions to answer: what changed first, what disappeared entirely, and what became an outage versus just a metric change?</p>",
+        "content": "<h2>Failure Drill</h2><p>Run <code>scripts/link-down-campus-pe.sh</code> and then <code>scripts/link-up-campus-pe.sh</code>. This is the fast symptom dashboard. Use it to confirm what changed immediately, then switch to OpenNMS for events, outages, and interface state.</p>",
         "mode": "html"
       },
       "pluginVersion": "11.2.0",
@@ -76,7 +76,7 @@
           "refId": "A"
         }
       ],
-      "title": "Prometheus -> gNMIc",
+      "title": "Prometheus To gNMIc",
       "type": "stat"
     },
     {
@@ -112,13 +112,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=\"Ethernet1\"}[1m]) * 8",
-          "legendFormat": "Ethernet1",
+          "expr": "rate(interfaces_interface_state_counters_in_octets{target=\"campus1\",interface_name=\"Ethernet1\"}[1m]) * 8",
+          "legendFormat": "campus1 Ethernet1",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Ethernet1 Egress",
+      "title": "Campus1 Ethernet1",
       "type": "timeseries"
     },
     {
@@ -154,13 +154,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=\"Ethernet2\"}[1m]) * 8",
-          "legendFormat": "Ethernet2",
+          "expr": "rate(interfaces_interface_state_counters_in_octets{target=\"campus1\",interface_name=\"Ethernet2\"}[1m]) * 8",
+          "legendFormat": "campus1 Ethernet2",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Ethernet2 Egress",
+      "title": "Campus1 Ethernet2",
       "type": "timeseries"
     },
     {
@@ -197,12 +197,12 @@
         {
           "editorMode": "code",
           "expr": "rate(interfaces_interface_state_counters_in_octets{target=\"campus1\",interface_name=~\"Ethernet1|Ethernet2\"}[1m]) * 8",
-          "legendFormat": "{{interface_name}} ingress",
+          "legendFormat": "{{interface_name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Critical Path Ingress",
+      "title": "Campus1 Critical Path Interfaces",
       "type": "timeseries"
     },
     {
@@ -238,13 +238,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=~\"Ethernet1|Ethernet2\"}[1m]) * 8",
-          "legendFormat": "{{interface_name}} egress",
+          "expr": "sum by (target) (rate(interfaces_interface_state_counters_in_octets{target=~\"campus1|core1\",interface_name=~\"Ethernet.*\"}[1m])) * 8",
+          "legendFormat": "{{target}} total",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Critical Path Egress",
+      "title": "Telemetry Targets During Failure",
       "type": "timeseries"
     },
     {
@@ -256,7 +256,7 @@
       },
       "id": 7,
       "options": {
-        "content": "<p>Expected workflow: use Grafana to confirm the fast symptom, then switch to OpenNMS to inspect node detail, interfaces, recent events, and outages. The teaching goal is to separate immediate telemetry change from durable NMS state.</p>",
+        "content": "<p>Expected operator workflow: confirm the metric symptom here, inspect syslog with <code>scripts/syslog-summary.sh</code>, then move to OpenNMS for events, outages, node detail, and interfaces. Fast telemetry answers \"what changed now?\" Classical NMS answers \"what object failed and what record do I keep?\"</p>",
         "mode": "html"
       },
       "pluginVersion": "11.2.0",
@@ -281,5 +281,5 @@
   },
   "title": "Failure Drill",
   "uid": "failure-drill",
-  "version": 1
+  "version": 2
 }

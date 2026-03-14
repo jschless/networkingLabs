@@ -1,0 +1,22 @@
+name: ospf-default-route
+
+topology:
+  nodes:
+    asbr:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/asbr/startup-config
+
+    core:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/core/startup-config
+
+    internet:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/internet/startup-config
+
+  links:
+    - endpoints: ["core:eth1", "asbr:eth1"]
+    - endpoints: ["asbr:eth2", "internet:eth1"]

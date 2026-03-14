@@ -1,0 +1,47 @@
+! sw2 — EtherChannel practice switch  (Arista EOS)
+!
+! YOUR TASK: Configure LACP EtherChannel between sw2 and sw1
+!
+! Step 1 — Create the Port-Channel interface:
+!   configure
+!   interface Port-Channel1
+!      description to sw1 (LACP bundle)
+!      no switchport
+!      ip address 10.12.0.2/30
+!
+! Step 2 — Add physical members (LACP active mode):
+!   interface Ethernet1
+!      channel-group 1 mode active
+!   interface Ethernet2
+!      channel-group 1 mode active
+!
+! Step 3 — Verify:
+!   show etherchannel summary
+!   show etherchannel detail
+!   ping 10.12.0.1                   <- sw1 Port-Channel IP
+!
+hostname sw2
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to sw1 link-1 (future Port-Channel1 member)
+   no switchport
+   ! YOUR TASK: Add channel-group 1 mode active
+!
+interface Ethernet2
+   description to sw1 link-2 (future Port-Channel1 member)
+   no switchport
+   ! YOUR TASK: Add channel-group 1 mode active
+!
+interface Ethernet3
+   description to host2
+   no switchport
+   ip address 10.0.1.254/24
+!
+ip routing
+!
+! YOUR TASK: Create Port-Channel1 with ip address 10.12.0.2/30
+!
+end

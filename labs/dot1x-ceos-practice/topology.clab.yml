@@ -1,0 +1,82 @@
+name: dot1x-ceos-practice
+
+topology:
+  defaults:
+    kind: linux
+    image: nac-practice:local
+
+  nodes:
+    access1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/access1/startup-config
+
+    radius:
+      binds:
+        - configs/radius/setup.sh:/setup.sh
+        - configs/radius/clients.conf:/etc/freeradius/3.0/clients.conf
+        - configs/radius/authorize:/etc/freeradius/3.0/mods-config/files/authorize
+        - configs/radius/eap:/etc/freeradius/3.0/mods-available/eap
+        - ../dot1x-nac/configs/certs/ca.pem:/lab-certs/ca.pem
+        - ../dot1x-nac/configs/certs/server.pem:/lab-certs/server.pem
+        - ../dot1x-nac/configs/certs/server.key:/lab-certs/server.key
+        - ../dot1x-nac/configs/certs/dh:/lab-certs/dh
+      exec:
+        - bash /setup.sh
+
+    supplicant-tls:
+      binds:
+        - configs/supplicant-tls/setup.sh:/setup.sh
+        - ../dot1x-nac/configs/certs/ca.pem:/etc/certs/ca.pem
+        - ../dot1x-nac/configs/certs/client.pem:/etc/certs/client.pem
+        - ../dot1x-nac/configs/certs/client.key:/etc/certs/client.key
+      exec:
+        - bash /setup.sh
+
+    supplicant-peap:
+      binds:
+        - configs/supplicant-peap/setup.sh:/setup.sh
+        - ../dot1x-nac/configs/certs/ca.pem:/etc/certs/ca.pem
+      exec:
+        - bash /setup.sh
+
+    supplicant-mab:
+      binds:
+        - configs/supplicant-mab/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    supplicant-fail:
+      binds:
+        - configs/supplicant-fail/setup.sh:/setup.sh
+        - ../dot1x-nac/configs/certs/ca.pem:/etc/certs/ca.pem
+      exec:
+        - bash /setup.sh
+
+    employee-server:
+      binds:
+        - configs/employee-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    contractor-server:
+      binds:
+        - configs/contractor-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    iot-server:
+      binds:
+        - configs/iot-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["supplicant-tls:eth1", "access1:eth1"]
+    - endpoints: ["supplicant-peap:eth1", "access1:eth2"]
+    - endpoints: ["supplicant-mab:eth1", "access1:eth3"]
+    - endpoints: ["supplicant-fail:eth1", "access1:eth4"]
+    - endpoints: ["access1:eth5", "radius:eth1"]
+    - endpoints: ["access1:eth6", "employee-server:eth1"]
+    - endpoints: ["access1:eth7", "contractor-server:eth1"]
+    - endpoints: ["access1:eth8", "iot-server:eth1"]

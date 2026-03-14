@@ -14,7 +14,7 @@
       },
       "id": 1,
       "options": {
-        "content": "<h2>Traffic Investigation</h2><p>Use this view while running <code>scripts/traffic-start.sh</code>. Start with the total throughput panels, then drill into Ethernet1 and Ethernet2 to see where the path is carrying traffic.</p><p>Questions to answer: which interface is moving, how fast is it moving, and does the path behavior match the traffic you generated?</p>",
+        "content": "<h2>Traffic Investigation</h2><p>Run <code>scripts/traffic-start.sh 30</code>, then compare edge and core behavior. This is where you practice moving from an operator question like \"Where is the traffic?\" to a Prometheus query and a dashboard panel.</p>",
         "mode": "html"
       },
       "pluginVersion": "11.2.0",
@@ -44,23 +44,23 @@
       "id": 2,
       "options": {
         "legend": {
-          "displayMode": "hidden",
+          "displayMode": "table",
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "multi"
         }
       },
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(rate(interfaces_interface_state_counters_in_octets{target=\"campus1\",interface_name=~\"Ethernet.*\"}[1m])) * 8",
-          "legendFormat": "aggregate ingress",
+          "expr": "rate(interfaces_interface_state_counters_in_octets{target=\"campus1\",interface_name=~\"Ethernet.*\"}[1m]) * 8",
+          "legendFormat": "{{interface_name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Campus1 Total Ingress",
+      "title": "Campus1 Per-Interface Ingress",
       "type": "timeseries"
     },
     {
@@ -86,23 +86,23 @@
       "id": 3,
       "options": {
         "legend": {
-          "displayMode": "hidden",
+          "displayMode": "table",
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "multi"
         }
       },
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=~\"Ethernet.*\"}[1m])) * 8",
-          "legendFormat": "aggregate egress",
+          "expr": "rate(interfaces_interface_state_counters_in_octets{target=\"core1\",interface_name=~\"Ethernet.*\"}[1m]) * 8",
+          "legendFormat": "{{interface_name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Campus1 Total Egress",
+      "title": "Core1 Per-Interface Ingress",
       "type": "timeseries"
     },
     {
@@ -120,7 +120,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 12,
         "x": 0,
         "y": 13
@@ -138,13 +138,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(interfaces_interface_state_counters_in_octets{target=\"campus1\",interface_name=~\"Ethernet.*\"}[1m]) * 8",
-          "legendFormat": "{{interface_name}} ingress",
+          "expr": "sum by (target) (rate(interfaces_interface_state_counters_in_octets{target=~\"campus1|core1\",interface_name=~\"Ethernet.*\"}[1m])) * 8",
+          "legendFormat": "{{target}} total",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Per-Interface Ingress",
+      "title": "Aggregate Path Rate By Telemetry Target",
       "type": "timeseries"
     },
     {
@@ -162,7 +162,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 12,
         "x": 12,
         "y": 13
@@ -180,13 +180,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=~\"Ethernet.*\"}[1m]) * 8",
-          "legendFormat": "{{interface_name}} egress",
+          "expr": "rate(interfaces_interface_state_counters_in_octets{target=~\"campus1|core1\",interface_name=~\"Ethernet.*\"}[1m]) * 8",
+          "legendFormat": "{{target}} {{interface_name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Per-Interface Egress",
+      "title": "All Ethernet Counters",
       "type": "timeseries"
     },
     {
@@ -217,10 +217,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 6,
         "x": 0,
-        "y": 22
+        "y": 21
       },
       "id": 6,
       "options": {
@@ -248,46 +248,20 @@
       "type": "stat"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "grafana"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 18,
         "x": 6,
-        "y": 22
+        "y": 21
       },
       "id": 7,
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
+        "content": "<p>Suggested operator questions:</p><ul><li>Does the traffic show up first at <code>campus1</code> and then at <code>core1</code>?</li><li>Which interface is hottest on each device?</li><li>What does <code>sum by (target) (rate(...))</code> tell you that a raw counter does not?</li></ul>",
+        "mode": "html"
       },
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "rate(interfaces_interface_state_counters_out_octets{target=\"campus1\",interface_name=~\"Ethernet1|Ethernet2\"}[1m]) * 8",
-          "legendFormat": "{{interface_name}} active path",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Critical Path Interfaces",
-      "type": "timeseries"
+      "pluginVersion": "11.2.0",
+      "title": "PromQL Learning Prompt",
+      "type": "text"
     }
   ],
   "refresh": "15s",
@@ -307,5 +281,5 @@
   },
   "title": "Traffic Investigation",
   "uid": "traffic-investigation",
-  "version": 1
+  "version": 2
 }

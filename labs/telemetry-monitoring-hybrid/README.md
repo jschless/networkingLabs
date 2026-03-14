@@ -1,64 +1,85 @@
 # telemetry-monitoring-hybrid
 
-This lab is a guided introduction to two different monitoring styles used in real networks:
+This lab is a small but realistic network monitoring practicum. It is built to run on a laptop, but it is opinionated enough to teach how a network engineer actually uses monitoring platforms:
 
-- a classic NMS workflow built around SNMP polling and inventory, using OpenNMS
-- a modern telemetry workflow built around streamed metrics, using gNMIc, Prometheus, and Grafana
+- onboard devices into a classic NMS
+- configure routers for SNMP, telemetry, LLDP, and syslog
+- compare inventory/polling against streaming telemetry
+- correlate faults across Grafana, Prometheus, OpenNMS, and logs
 
-The lab is intentionally small enough to run on a laptop, but it is opinionated enough to teach how these tools are actually used.
+The lab has one main path: `full`.
 
-## What You Are Learning
+## What This Lab Is For
 
-This lab is not mainly about configuring routers. It is about learning how operators answer questions like:
+This is not meant to be a router configuration grind. Routing is already there. The useful work is the management plane:
 
-- What devices do I have?
-- Are they up?
-- Which interfaces exist on them?
-- What changed recently?
-- Is traffic rising on a key link?
-- Did a link flap, or did traffic simply drop?
-- Which tool is best for inventory, polling, alarms, dashboards, and drill-down?
+- getting devices under management
+- deciding what the NMS should watch
+- configuring telemetry targets
+- making topology and logs visible
+- learning which tool answers which question best
 
-You should come away with a mental model like this:
+Think of the tools this way:
 
-- OpenNMS is the broad, inventory-and-polling-oriented NMS
-- Prometheus is a time-series database and query engine
-- Grafana is the visualization layer
-- gNMIc is the collector translating streaming telemetry into Prometheus-style metrics
+- OpenNMS: discovery, node inventory, interfaces, polling, outages, events, long-lived operational state
+- Prometheus: raw time-series storage and query engine
+- Grafana: dashboards and rapid visual confirmation
+- gNMIc: collector that turns gNMI telemetry into Prometheus metrics
+- syslog collector: device-generated event context
 
 ## Topology
 
 ```text
 [client]
    |
-[branch1 - FRR] --- [campus1 - cEOS] --- [pe1 - FRR] --- [core1 - FRR] --- [dc1 - FRR] --- [server]
+[branch1 - FRR] --- [campus1 - cEOS] --- [pe1 - FRR] --- [core1 - cEOS] --- [dc1 - FRR] --- [server]
 ```
 
 Roles:
 
-- `branch1`: enterprise branch edge
-- `campus1`: campus/distribution router and native gNMI target
+- `branch1`: enterprise edge
+- `campus1`: campus/distribution and telemetry-capable edge
 - `pe1`: provider edge
-- `core1`: provider/core transit
+- `core1`: provider/core and telemetry-capable core
 - `dc1`: data-center edge
 - `client`: traffic source
 - `server`: traffic sink and `iperf3` server
 
-Design choice:
+Management stack:
 
-- most network nodes are FRR/Linux to keep compute usage low
-- only `campus1` is cEOS, because it gives a realistic native gNMI telemetry target
+- `gnmic`
+- `prometheus`
+- `grafana`
+- `syslog`
+- `postgres`
+- `opennms`
 
-## Profiles
+Why this shape:
 
-There are two deployment profiles over the same network:
+- FRR/Linux keeps the footprint small
+- two cEOS nodes provide more realistic network management features without overrunning the laptop
+- one end-to-end path is enough to teach inventory, telemetry, alerts, and failure drills
 
-- `lite`: `gNMIc + Prometheus + Grafana`
-- `full`: `OpenNMS Horizon + PostgreSQL + gNMIc + Prometheus + Grafana`
+## What Is Prebuilt
 
-Use `lite` first if you are tight on RAM. Use `full` when you want the complete comparison between classic polling and streaming telemetry.
+Prebuilt network state:
 
-Run only one profile at a time. They are alternative views of the same lab.
+- client to server routing via OSPF
+- FRR nodes already forwarding and exporting SNMP
+- FRR nodes already advertising LLDP
+- `server` already running `iperf3`
+
+Intentionally left for you:
+
+- SNMP on `campus1` and `core1`
+- gNMI on `campus1` and `core1`
+- LLDP on `campus1` and `core1`
+- syslog export on `campus1` and `core1`
+- OpenNMS discovery ranges and credentials
+- OpenNMS inventory organization and surveillance views
+- Grafana query interpretation and dashboard extension
+
+That split is deliberate. This is a monitoring lab, not just a prewired demo.
 
 ## Build
 
@@ -68,23 +89,15 @@ docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/
 
 ## Deploy
 
-Lite:
-
-```bash
-sudo containerlab deploy -t labs/telemetry-monitoring-hybrid/topology-lite.clab.yml
-```
-
-Full:
-
 ```bash
 sudo containerlab deploy -t labs/telemetry-monitoring-hybrid/topology-full.clab.yml
 ```
 
-The full profile needs more time on first boot because OpenNMS must initialize its database and services.
+OpenNMS takes a little longer than the rest of the stack on first boot.
 
 ## Access
 
-Direct from the lab host:
+From the lab host:
 
 - Grafana: `http://127.0.0.1:3000`
 - Prometheus: `http://127.0.0.1:9090`
@@ -94,59 +107,17 @@ Credentials:
 
 - Grafana: `admin` / `admin`
 - OpenNMS: `admin` / `admin`
+- cEOS: `admin` / `admin`
 
-## Access From Another Machine
-
-If the lab runs on a headless host and you are browsing from your laptop, use SSH local port forwarding:
+From another machine, use SSH port forwarding:
 
 ```bash
 ssh -L 3000:127.0.0.1:3000 -L 9090:127.0.0.1:9090 -L 8980:127.0.0.1:8980 joe@LAB_HOST
 ```
 
-Then open on your laptop:
+## Useful Helper Scripts
 
-- `http://127.0.0.1:3000`
-- `http://127.0.0.1:9090`
-- `http://127.0.0.1:8980/opennms`
-
-The lab publishes these services only on the lab host loopback. That is deliberate. SSH forwarding is safer than binding them to the host LAN interface.
-
-## What Is Prebuilt
-
-On the network:
-
-- OSPF end-to-end routing between all routed nodes
-- SNMP enabled on the routed nodes
-- gNMI enabled on `campus1`
-- `iperf3` server running on `server`
-
-On the telemetry stack:
-
-- gNMIc subscribes to `campus1` interface counters
-- Prometheus scrapes gNMIc
-- Grafana has preprovisioned dashboards:
-  - `Telemetry Overview`
-  - `Traffic Investigation`
-  - `Failure Drill`
-
-On the OpenNMS side in the full profile:
-
-- the five routed nodes are imported automatically into a requisition
-- OpenNMS learns basic node identity and SNMP data
-
-Important limitation:
-
-- this lab does not prebuild an OpenNMS topology map workflow
-- OpenNMS is useful here for node inventory, availability, interfaces, polling, and classical NMS exploration
-- Grafana is the quickest place to see live changing telemetry
-
-That split is intentional and worth learning.
-
-## Scenario Helpers
-
-The lab includes helper scripts in `scripts/` so you can focus on interpretation rather than retyping long commands.
-
-Useful entry points:
+The main path is through the products, not the scripts. The scripts are there to reduce friction during drills.
 
 - `scripts/scenario-status.sh`
 - `scripts/traffic-start.sh 30`
@@ -154,461 +125,396 @@ Useful entry points:
 - `scripts/link-up-campus-pe.sh`
 - `scripts/opennms-summary.sh`
 - `scripts/prom-query.sh 'up{job="gnmic"}'`
+- `scripts/check-discovery.sh`
+- `scripts/check-campus1.sh`
+- `scripts/check-core1.sh`
+- `scripts/syslog-summary.sh`
+- `scripts/restart-gnmic.sh`
+- `scripts/ceos-cli.sh campus1`
+- `scripts/ceos-cli.sh core1`
 
-## Product Walkthrough
+## Lab Workflow
 
-### OpenNMS: what it is good at
+Use the lab in this order:
 
-OpenNMS answers questions like:
+1. Bring the lab up and confirm basic reachability.
+2. Configure management features on `campus1` and `core1`.
+3. Discover the routed nodes in OpenNMS.
+4. Make SNMP useful in OpenNMS.
+5. Explore telemetry in Prometheus and Grafana.
+6. Generate traffic and investigate it.
+7. Trigger a failure and compare telemetry, logs, and NMS state.
+8. Organize inventory and build a critical-path operator view.
 
-- Which nodes exist?
-- What are their identities, interfaces, and SNMP properties?
-- Are they up or down?
-- Which services are being monitored?
-- What outages or events have been recorded?
+## 1. Baseline Checks
 
-OpenNMS is strongest when you want broad coverage across many devices, even if the data is less immediate than a telemetry stream.
-
-In this lab, think of OpenNMS as:
-
-- the NMS of record
-- the inventory and polling engine
-- the place to explore nodes, services, outages, and interface state
-
-### Grafana: what it is good at
-
-Grafana answers questions like:
-
-- Is traffic rising right now?
-- Which interface saw the change?
-- How did a metric behave over the last minute, hour, or day?
-
-Grafana is strongest when you want fast, visual understanding of time-series behavior.
-
-In this lab, think of Grafana as:
-
-- the place where live link behavior is easiest to see
-- the consumer of Prometheus metrics
-- the quickest feedback loop during experiments
-
-### Prometheus: what it is doing here
-
-Prometheus is not polling the routers directly in this lab. It is scraping gNMIc.
-
-That means the flow is:
-
-1. `campus1` streams telemetry to gNMIc
-2. gNMIc exposes those values as Prometheus-format metrics
-3. Prometheus scrapes those metrics
-4. Grafana queries Prometheus
-
-This is a common pattern in modern telemetry stacks.
-
-### gNMIc: what it is doing here
-
-gNMIc is the telemetry collector and adapter.
-
-In this lab it subscribes to:
-
-- `/interfaces/interface/state/counters/in-octets`
-- `/interfaces/interface/state/counters/out-octets`
-
-Those are exported as metrics such as:
-
-- `interfaces_interface_state_counters_in_octets`
-- `interfaces_interface_state_counters_out_octets`
-
-The important lesson is that gNMIc is not a dashboard and not a database. It is the bridge between streaming telemetry and the metrics stack.
-
-## Guided Exploration
-
-Start with the full profile if you want to compare both worlds side by side. Use the lite profile if your laptop is tight on resources.
-
-### Exercise 1: establish a baseline
-
-First confirm the network is alive:
-
-Full:
+Run:
 
 ```bash
-docker exec clab-telemetry-monitoring-full-client ping -c 3 10.20.20.11
+cd /home/joe/containerlab/labs/telemetry-monitoring-hybrid
+./scripts/scenario-status.sh
 ```
 
-Lite:
+What to expect:
+
+- all containers running
+- `client -> server` ping succeeds
+- Prometheus can scrape `gnmic`
+- telemetry may be thin until you enable gNMI on both EOS nodes
+
+OpenNMS expectation at this stage:
+
+- only the self-monitoring localhost node is present
+
+Verify:
 
 ```bash
-docker exec clab-telemetry-monitoring-lite-client ping -c 3 10.20.20.11
+./scripts/check-discovery.sh
 ```
 
-What this proves:
+You should see the routed lab nodes reported as missing. That is correct at this point.
 
-- the routed path from `client` to `server` is working
-- OSPF converged
-- the environment is ready for monitoring experiments
+## 2. Configure The EOS Devices For Management
 
-Now open:
-
-- Grafana and load `Telemetry Overview`
-- Grafana and note that `Traffic Investigation` and `Failure Drill` are also available
-- Prometheus and keep the targets page handy
-- OpenNMS if you are using the full profile
-
-### Exercise 2: understand what each UI is showing
-
-#### In Grafana
-
-Open `Telemetry Overview`.
-
-You should see:
-
-- `Campus1 Ingress Throughput`
-- `Campus1 Egress Throughput`
-- `Prometheus -> gNMIc Scrape`
-
-Interpretation:
-
-- the throughput graphs are rates derived from octet counters on `campus1`
-- they are filtered to `Ethernet*` interfaces
-- the scrape stat tells you whether Prometheus can collect from gNMIc
-
-This is near-real-time telemetry.
-
-#### In Prometheus
-
-Open the expression browser and try:
-
-```promql
-up
-```
-
-Then:
-
-```promql
-interfaces_interface_state_counters_in_octets
-```
-
-Then:
-
-```promql
-rate(interfaces_interface_state_counters_in_octets{target="campus1",interface_name=~"Ethernet.*"}[1m]) * 8
-```
-
-What to notice:
-
-- Prometheus stores samples, not diagrams or device inventory
-- the labels on the metrics are how you slice the data
-- Grafana is just visualizing the same queries
-
-#### In OpenNMS
-
-Do not expect a fancy topology map on first load.
-
-Instead, use OpenNMS like an operator exploring monitored objects:
-
-1. Go to the node list
-2. Find `branch1`, `campus1`, `pe1`, `core1`, and `dc1`
-3. Open a node detail page, starting with `campus1`
-4. Look for:
-   - node identity
-   - interfaces
-   - SNMP system information
-   - service status
-   - events or outages
-
-What to notice:
-
-- OpenNMS has a richer concept of a node than Grafana does
-- it stores discovery, identity, services, and polling state
-- it is better at “what is this thing?” and “is it generally healthy?”
-
-### Exercise 3: generate traffic and compare the products
-
-Run a traffic burst from `client` to `server`.
-
-Full:
+Use:
 
 ```bash
-scripts/traffic-start.sh 30
+./scripts/ceos-cli.sh campus1
+./scripts/ceos-cli.sh core1
 ```
 
-Lite:
+### Configure `campus1`
+
+Apply this in the `campus1` CLI:
+
+```text
+enable
+configure
+snmp-server community public ro
+snmp-server location telemetry-monitoring-hybrid
+management api gnmi
+   transport grpc default
+      no ssl profile
+      no shutdown
+lldp run
+interface Ethernet1
+   lldp transmit
+   lldp receive
+interface Ethernet2
+   lldp transmit
+   lldp receive
+logging host 172.31.30.34
+logging local-interface Management0
+end
+copy running-config startup-config
+```
+
+### Configure `core1`
+
+Apply this in the `core1` CLI:
+
+```text
+enable
+configure
+snmp-server community public ro
+snmp-server location telemetry-monitoring-hybrid
+management api gnmi
+   transport grpc default
+      no ssl profile
+      no shutdown
+lldp run
+interface Ethernet1
+   lldp transmit
+   lldp receive
+interface Ethernet2
+   lldp transmit
+   lldp receive
+logging host 172.31.30.34
+logging local-interface Management0
+end
+copy running-config startup-config
+```
+
+What you are learning:
+
+- NMS and telemetry platforms depend on device-side configuration
+- not all visibility appears by magic
+- syslog, SNMP, LLDP, and telemetry are separate management features
+
+Quick checks:
 
 ```bash
-scripts/traffic-start.sh 30
+./scripts/restart-gnmic.sh
+./scripts/prom-query.sh 'count by (target) (interfaces_interface_state_counters_in_octets{interface_name=~"Ethernet.*"})'
+./scripts/syslog-summary.sh
 ```
 
-Now watch the tools.
+Expected result:
 
-In Grafana:
+- after the collector restart, Prometheus begins showing Ethernet counters for `campus1` and `core1`
+- syslog files for the EOS nodes appear after they generate messages
 
-- `Telemetry Overview` gives you the baseline quickly
-- `Traffic Investigation` is the best dashboard for this drill
-- the aggregate and per-interface charts should move clearly
+## 3. Discover The Network In OpenNMS
 
-In Prometheus:
-
-- rerun the rate query and inspect the raw values
+OpenNMS does not pre-import the routed nodes. You onboard them yourself.
 
 In OpenNMS:
 
-- look at the relevant node and interface pages
-- expect slower, more inventory-oriented updates rather than immediate graph movement
+1. Go to the discovery configuration area.
+2. Add the routed management addresses:
+   - `172.31.30.11`
+   - `172.31.30.12`
+   - `172.31.30.13`
+   - `172.31.30.14`
+   - `172.31.30.15`
+3. Trigger discovery or wait for the discovery cycle.
 
-Lesson:
-
-- Grafana/Prometheus excels at showing changing metrics over time
-- OpenNMS is not trying to be a low-latency streaming dashboard here
-
-### Exercise 4: query SNMP directly
-
-Use `snmpwalk` to see the sort of raw data classical NMS platforms ingest.
-
-Full:
+Verify:
 
 ```bash
-docker exec clab-telemetry-monitoring-full-branch1 snmpwalk -v2c -c public 172.31.30.12 1.3.6.1.2.1.2.2
+./scripts/check-discovery.sh
 ```
 
-Lite:
+What you are learning:
+
+- discovery starts with scope
+- the NMS only sees what you tell it to scan
+
+## 4. Make SNMP Useful
+
+In OpenNMS:
+
+1. Add the SNMP community `public`.
+2. Associate it with the discovered nodes.
+3. Rescan `campus1` and `core1` after you configured SNMP on them.
+
+Verify:
 
 ```bash
-docker exec clab-telemetry-monitoring-lite-branch1 snmpwalk -v2c -c public 172.31.30.12 1.3.6.1.2.1.2.2
+./scripts/check-campus1.sh
+./scripts/check-core1.sh
 ```
 
-What to notice:
+What to look for in the UI:
 
-- SNMP exposes device state via MIBs and OIDs
-- it is broad and mature
-- it is not pleasant to read directly
-- an NMS like OpenNMS makes this consumable
+- node detail page
+- IP interfaces
+- SNMP interfaces
+- system identity and metadata
 
-This is an important conceptual contrast:
+What you are learning:
 
-- SNMP is often “wide but old”
-- gNMI streaming is often “cleaner and faster, but more targeted”
+- reachability gives you a node
+- SNMP gives you usable network inventory
 
-### Exercise 5: inspect the live telemetry source directly
+## 5. Explore Telemetry
 
-Check what gNMIc is exporting:
+Start with Prometheus before Grafana:
 
 ```bash
-curl -s http://127.0.0.1:9804/metrics | rg 'interfaces_interface_state_counters'
+./scripts/prom-query.sh 'up{job="gnmic"}'
+./scripts/prom-query.sh 'sum by (target) (rate(interfaces_interface_state_counters_in_octets{target=~"campus1|core1",interface_name=~"Ethernet.*"}[1m])) * 8'
 ```
 
-What to notice:
+Then open Grafana:
 
-- gNMIc already transformed the streaming updates into metrics
-- the labels, such as `interface_name` and `target`, matter a lot
-- Prometheus and Grafana depend on stable metric naming
+- `Telemetry Overview`
+- `Traffic Investigation`
+- `Failure Drill`
 
-### Exercise 6: create a fault and observe who notices what
+What each dashboard is for:
 
-Shut the `campus1 -> pe1` link.
+- `Telemetry Overview`: quick health and “do I have live metrics from the targets I expect?”
+- `Traffic Investigation`: drill into traffic across `campus1` and `core1`
+- `Failure Drill`: confirm what changed immediately during a fault
 
-Full:
+What you are learning:
+
+- Prometheus is query-first
+- Grafana is interpretation-first
+- telemetry is strongest for fast-moving behavior
+
+## 6. Generate Traffic
+
+Run:
 
 ```bash
-scripts/link-down-campus-pe.sh
+./scripts/traffic-start.sh 30
 ```
 
-Lite:
+Then in Grafana:
+
+1. Open `Traffic Investigation`.
+2. Set the time range to `Last 15 minutes`.
+3. Compare:
+   - `Campus1 Per-Interface Ingress`
+   - `Core1 Per-Interface Ingress`
+   - `Aggregate Path Rate By Telemetry Target`
+
+Questions to answer:
+
+- Which interface on `campus1` is carrying the traffic?
+- Which interface on `core1` is carrying the traffic?
+- Does the traffic appear on both devices as expected?
+- Which view is more useful for “what is happening right now?”: OpenNMS or Grafana?
+
+What you are learning:
+
+- counters become operationally useful after `rate()`
+- labels such as `target` and `interface_name` are how you slice telemetry data
+
+## 7. Trigger A Failure
+
+Run:
 
 ```bash
-scripts/link-down-campus-pe.sh
+./scripts/link-down-campus-pe.sh
 ```
 
-While it is down, check:
+While the link is down:
 
-- Grafana
-- OpenNMS node/interface state
-- reachability from `client` to `server`
-
-Ping test:
-
-Full:
+- refresh `Failure Drill` in Grafana
+- inspect OpenNMS node detail, interfaces, events, and outages
+- inspect logs:
 
 ```bash
-docker exec clab-telemetry-monitoring-full-client ping -c 3 10.20.20.11
+./scripts/syslog-summary.sh
 ```
 
-Lite:
+Restore:
 
 ```bash
-docker exec clab-telemetry-monitoring-lite-client ping -c 3 10.20.20.11
+./scripts/link-up-campus-pe.sh
 ```
 
-Expected learning:
+Questions to answer:
 
-- Grafana shows the counters stop changing on the affected path
-- OpenNMS may take longer, but it should reflect degraded availability or service state
-- telemetry is often best for seeing rapid change
-- classical NMS is often best for tracking managed objects and durable operational state
+- Which signal changed first?
+- Which tool was best for immediate confirmation?
+- Which tool gave the most durable record of the incident?
+- Did you see a log, a metric change, an OpenNMS event, or all three?
 
-Restore the link:
+What you are learning:
 
-Full:
+- telemetry is fast symptom confirmation
+- syslog gives device-side event context
+- OpenNMS gives node/service/interface state and history
 
-```bash
-scripts/link-up-campus-pe.sh
-```
+## 8. Organize OpenNMS For Operations
 
-Lite:
+OpenNMS becomes much more useful after you shape the inventory.
 
-```bash
-scripts/link-up-campus-pe.sh
-```
+Create categories such as:
 
-### Exercise 7: learn the OpenNMS mindset
+- `branch`
+- `campus`
+- `pe`
+- `core`
+- `datacenter`
+- `telemetry-native`
 
-OpenNMS will make more sense if you use it like this:
+Assign:
 
-1. Start at node inventory, not dashboards
-2. Open one node and inspect its discovered interfaces
-3. Look at the services attached to those interfaces
-4. Check whether outages or events were recorded
-5. Use the NMS to answer “what exists?” and “what is down?”
+- `branch1` -> `branch`
+- `campus1` -> `campus`, `telemetry-native`
+- `pe1` -> `pe`
+- `core1` -> `core`, `telemetry-native`
+- `dc1` -> `datacenter`
 
-This lab still does not prebuild advanced OpenNMS views such as:
+Then create a critical-path operational view around:
 
-- custom surveillance dashboards
-- business-service mapping
-- topology presentation layers
-- elaborate threshold and alarm policies
+- `branch1`
+- `campus1`
+- `pe1`
+- `core1`
+- `dc1`
 
-That is why Grafana feels more immediately rewarding. The lab is currently stronger at teaching the contrast between polling and streaming than at teaching the full OpenNMS UX.
+What you are learning:
 
-### Exercise 8: learn the Prometheus mindset
+- a real NMS is shaped for operators
+- raw discovery is not the same as usable operations views
 
-Prometheus becomes useful when you think in terms of:
+## 9. Topology Learning
 
-- metrics
-- labels
-- queries
-- rates
+This lab includes LLDP on the FRR nodes and asks you to enable it on both EOS nodes.
 
-Try these queries:
+The important lesson is not “the map is always perfect.” The important lesson is:
 
-```promql
-up{job="gnmic"}
-```
+- topology systems infer links from management data
+- if LLDP is not enabled or not collected, the topology view will be sparse
+- discovery and topology are related, but they are not the same feature
 
-```promql
-interfaces_interface_state_counters_in_octets{target="campus1"}
-```
+Use this lab to ask:
 
-```promql
-rate(interfaces_interface_state_counters_out_octets{target="campus1",interface_name="Ethernet2"}[1m]) * 8
-```
+- did OpenNMS learn the nodes?
+- did it learn useful interfaces?
+- did LLDP make the topology story better?
 
-What to notice:
+If topology feels incomplete, that is still instructive. Real systems often have partial topology because the input data is partial.
 
-- Prometheus is excellent for deriving meaning from counters
-- counter rates are often more useful than the raw counters themselves
-- labels are the main navigation mechanism
+## Suggested Exercises
 
-### Exercise 9: connect the tools mentally
+### Exercise A: Discovery First
 
-By this point you should be able to map the stack like this:
+Goal:
 
-- Device inventory and node health: OpenNMS
-- Raw time-series storage and query engine: Prometheus
-- Graphs and operator-facing visualization: Grafana
-- Streaming collector and exporter: gNMIc
+- learn how an NMS goes from empty to useful
 
-That is the core lesson of this lab.
+Do:
 
-## How To Influence The Environment
+- deploy the lab
+- configure SNMP on both EOS nodes
+- add discovery scope in OpenNMS
+- verify nodes appear
 
-These are the most useful knobs for experiments.
+### Exercise B: Inventory Quality
 
-### Generate more traffic
+Goal:
 
-```bash
-docker exec clab-telemetry-monitoring-full-client iperf3 -c 10.20.20.11 -t 60
-```
+- learn what SNMP changes in the NMS
 
-Change `-t` to run longer.
+Do:
 
-### Verify reachability
+- compare `campus1` before and after SNMP credential setup
+- inspect interfaces and metadata
 
-```bash
-docker exec clab-telemetry-monitoring-full-client ping -c 3 10.20.20.11
-```
+### Exercise C: Real-Time Traffic Question
 
-### Break and restore the key cEOS uplink
+Goal:
 
-Down:
+- answer “where is the traffic right now?”
 
-```bash
-docker exec clab-telemetry-monitoring-full-campus1 bash -lc "printf 'enable\nconfigure\ninterface Ethernet2\nshutdown\nend\n' | Cli"
-```
+Do:
 
-Up:
+- run `./scripts/traffic-start.sh 30`
+- use `Traffic Investigation`
+- verify your understanding with a Prometheus query
 
-```bash
-docker exec clab-telemetry-monitoring-full-campus1 bash -lc "printf 'enable\nconfigure\ninterface Ethernet2\nno shutdown\nend\n' | Cli"
-```
+### Exercise D: Fault Correlation
 
-### Inspect the gNMI collector metrics
+Goal:
 
-```bash
-curl -s http://127.0.0.1:9804/metrics | head -n 40
-```
+- compare telemetry, logs, and NMS state for the same failure
 
-### Inspect Prometheus scrape targets
+Do:
 
-```bash
-curl -s http://127.0.0.1:9090/api/v1/targets | jq
-```
+- run `./scripts/link-down-campus-pe.sh`
+- inspect Grafana
+- inspect `./scripts/syslog-summary.sh`
+- inspect OpenNMS events and outages
+- restore with `./scripts/link-up-campus-pe.sh`
 
-### Inspect imported OpenNMS nodes
+## Residual Limitations
 
-```bash
-docker exec clab-telemetry-monitoring-full-opennms-bootstrap \
-  sh -lc 'curl -s -u admin:admin "http://172.31.30.42:8980/opennms/rest/nodes?limit=20"'
-```
+- The lab is deliberately small; it teaches workflows, not scale.
+- The telemetry pipeline is built around interface ingress counters because that path is stable in this environment.
+- OpenNMS topology learning is educational here, but not guaranteed to be perfect or fully mapped on first boot.
+- OpenNMS is stronger in this lab for node/interface/service thinking than for polished topology visualization.
 
-## What To Expect In OpenNMS
-
-If you open OpenNMS and think “I don’t see much,” that is partly normal in this lab.
-
-You should expect:
-
-- imported nodes
-- interface and SNMP identity data
-- outages and service state after you create failures
-
-You should not expect:
-
-- a polished topology graph on first load
-- highly visual streaming charts like Grafana
-- instant insight without clicking into nodes and services
-
-That difference is exactly part of the lesson.
-
-## Where To Look First
-
-If you only have 20 minutes, do this:
-
-1. Open Grafana and observe baseline traffic
-2. Run `scripts/traffic-start.sh 30` and watch `Traffic Investigation`
-3. Open OpenNMS and inspect `campus1`
-4. Run `scripts/link-down-campus-pe.sh`
-5. Compare what `Failure Drill` shows immediately versus what OpenNMS records over time
-6. Run `scripts/link-up-campus-pe.sh`
-
-If you do that carefully, you will understand more about these tools than by just clicking around randomly.
-
-## Cleanup
-
-Lite:
-
-```bash
-sudo containerlab destroy -t labs/telemetry-monitoring-hybrid/topology-lite.clab.yml --cleanup
-```
-
-Full:
+## Fast Reset
 
 ```bash
 sudo containerlab destroy -t labs/telemetry-monitoring-hybrid/topology-full.clab.yml --cleanup
+docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/
+sudo containerlab deploy -t labs/telemetry-monitoring-hybrid/topology-full.clab.yml
 ```

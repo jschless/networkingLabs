@@ -1,0 +1,36 @@
+name: eigrp-stub
+
+topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    exec:
+      - vtysh -b
+
+  nodes:
+    hub:
+      binds:
+        - configs/hub/frr.conf:/etc/frr/frr.conf
+    spoke1:
+      binds:
+        - configs/spoke1/frr.conf:/etc/frr/frr.conf
+    spoke2:
+      binds:
+        - configs/spoke2/frr.conf:/etc/frr/frr.conf
+    spoke3:
+      binds:
+        - configs/spoke3/frr.conf:/etc/frr/frr.conf
+    ce:
+      binds:
+        - configs/ce/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["hub:eth1", "spoke1:eth1"]
+    - endpoints: ["hub:eth2", "spoke2:eth1"]
+    - endpoints: ["hub:eth3", "spoke3:eth1"]
+    - endpoints: ["spoke3:eth2", "ce:eth1"]

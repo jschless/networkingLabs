@@ -2,6 +2,8 @@ FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     frr \
+    lldpd \
+    rsyslog \
     snmpd \
     snmp \
     iproute2 \

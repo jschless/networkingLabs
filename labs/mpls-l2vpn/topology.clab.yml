@@ -1,0 +1,103 @@
+name: mpls-l2vpn
+
+# MPLS L2VPN Practice Lab (FRR 8.x + Linux kernel MPLS)
+#
+# Teaches MPLS Layer 2 VPN services:
+#   - Pseudowire (VPWS): point-to-point L2 circuit over MPLS
+#   - VPLS: multipoint L2 bridging over MPLS (extension tasks)
+#
+# Architecture:
+#   ce1 and ce2 share a /24 subnet (10.100.0.0/24) as if they are on the same
+#   Ethernet segment, even though they are separated by an MPLS core.
+#   The PE routers bridge the CE-facing attachment circuit to an LDP-signaled
+#   pseudowire (FEC 128, targeted LDP session between pe1 and pe2).
+#
+# Topology:
+#
+#   [ce1] ──eth1── [pe1] ──eth2── [p1] ──eth2── [pe2] ──eth2── [ce2]
+#                   lo                  lo                lo
+#                10.0.0.1/32        10.0.0.2/32       10.0.0.3/32
+#
+#   MPLS core links (/30):
+#     pe1:eth2 <-> p1:eth1   10.1.0.0/30  (pe1=.1, p1=.2)
+#     p1:eth2  <-> pe2:eth1  10.1.0.4/30  (p1=.5, pe2=.6)
+#
+#   CE attachment circuits (L2, no IP on PE side):
+#     ce1:eth1 <-> pe1:eth1   (pe1 bridges into pseudowire)
+#     ce2:eth1 <-> pe2:eth2   (pe2 bridges into pseudowire)
+#
+#   CE addresses (same subnet – visible L2 adjacency):
+#     ce1: 10.100.0.1/24
+#     ce2: 10.100.0.2/24
+#
+# Pseudowire (LDP FEC 128):
+#   Targeted LDP session: pe1 (10.0.0.1) <-> pe2 (10.0.0.3)
+#   PW-ID: 100
+#   Each PE: Linux bridge br-l2vpn  bridges  eth1/eth2(CE port) + pw0(pseudowire iface)
+#
+# Pre-configured (reference lab — fully working out of the box):
+#   - IS-IS level-2 routing on all core nodes
+#   - LDP link sessions on core interfaces + targeted LDP session pe1<->pe2
+#   - Linux bridge + pseudowire interface on each PE
+#   - CE IP addressing
+#
+# Practice tasks in README.md
+
+topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+    sysctls:
+      net.mpls.platform_labels: "1048575"
+      net.ipv4.ip_forward: "1"
+
+  nodes:
+    ce1:
+      binds:
+        - configs/ce1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+      sysctls:
+        net.mpls.platform_labels: "0"
+        net.ipv4.ip_forward: "1"
+
+    pe1:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/pe1/frr.conf:/etc/frr/frr.conf
+        - configs/pe1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    p1:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/p1/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    pe2:
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/pe2/frr.conf:/etc/frr/frr.conf
+        - configs/pe2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    ce2:
+      binds:
+        - configs/ce2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+      sysctls:
+        net.mpls.platform_labels: "0"
+        net.ipv4.ip_forward: "1"
+
+  links:
+    - endpoints: ["ce1:eth1",  "pe1:eth1"]   # L2VPN attachment circuit
+    - endpoints: ["pe1:eth2",  "p1:eth1"]    # MPLS core 10.1.0.0/30
+    - endpoints: ["p1:eth2",   "pe2:eth1"]   # MPLS core 10.1.0.4/30
+    - endpoints: ["pe2:eth2",  "ce2:eth1"]   # L2VPN attachment circuit

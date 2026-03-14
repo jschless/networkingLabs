@@ -1,0 +1,29 @@
+! acc3  (Arista EOS)
+!
+! Access layer — L2 only, no IP routing.
+! Uplink to dist2 (trunk), client-b on access port VLAN 20.
+!
+! STP: inherits dist2 as root for VLAN 20 (priority 4096),
+!      dist1 as root for VLANs 10/30 (traffic traverses dist2→core→dist1).
+! portfast on client-facing port to speed up convergence.
+!
+hostname acc3
+!
+spanning-tree mode rstp
+!
+vlan 10,20,30,99
+!
+interface Ethernet1
+   description to-dist2  trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-client-b  access-vlan20
+   switchport access vlan 20
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+end

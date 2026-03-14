@@ -11,7 +11,8 @@
       "Bash(docker run:*)",
       "Bash(docker ps:*)",
       "Bash(for lab in bgp-aggregation bgp-filtering bgp-communities bgp-prefix-security)",
-      "Bash(do echo -n \"$lab — kind: \" grep -m1 \"kind\" labs/$lab/topology.yml echo -n \" frr files remaining: \" find labs/$lab/configs -name \"frr.conf\" -o -name \"daemons\" -o -name \"vtysh.conf\")"
+      "Bash(do echo -n \"$lab — kind: \" grep -m1 \"kind\" labs/$lab/topology.yml echo -n \" frr files remaining: \" find labs/$lab/configs -name \"frr.conf\" -o -name \"daemons\" -o -name \"vtysh.conf\")",
+      "Bash(for lab:*)"
     ]
   }
 }

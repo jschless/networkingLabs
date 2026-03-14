@@ -1,0 +1,22 @@
+name: debug-ospf-auth
+
+topology:
+  nodes:
+    r1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/r1/startup-config
+
+    r2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/r2/startup-config
+
+    r3:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/r3/startup-config
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]   # 10.1.12.0/30
+    - endpoints: ["r2:eth2", "r3:eth1"]   # 10.1.23.0/30

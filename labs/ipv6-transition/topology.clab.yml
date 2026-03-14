@@ -1,0 +1,83 @@
+name: ipv6-transition
+
+# IPv6 Transition — 6PE (IPv6 over MPLS)  Reference Lab
+#
+# 6PE (RFC 4798): Carry IPv6 prefixes across an IPv4-only MPLS/SR core.
+# CE routers are IPv6-only. PE routers bridge the IPv6 CE world to the
+# IPv4 SR-MPLS core using BGP IPv6 labeled-unicast.
+#
+# Topology:
+#
+#   [ce1]───eth1──[pe1]───eth2──[p1]───eth2──[pe2]───eth2──[ce2]
+#   AS65001              AS65000  IS-IS + SR-MPLS              AS65002
+#                       iBGP: pe1 <──RR(p1)──> pe2
+#
+# IPv4 MPLS Core addresses:
+#   pe1 lo: 10.0.0.1/32   SID-index 1  -> label 16001
+#   p1  lo: 10.0.0.2/32   SID-index 2  -> label 16002  (Route Reflector)
+#   pe2 lo: 10.0.0.3/32   SID-index 3  -> label 16003
+#
+#   pe1:eth2 <-> p1:eth1  : 10.1.0.0/30  (pe1=.1, p1=.2)
+#   p1:eth2  <-> pe2:eth1 : 10.1.0.4/30  (p1=.5, pe2=.6)
+#
+# IPv6 CE links (no IPv4):
+#   pe1:eth1 <-> ce1:eth1 : fd00:10::/127  (pe1=::0, ce1=::1)
+#   pe2:eth2 <-> ce2:eth1 : fd00:20::/127  (pe2=::0, ce2=::1)
+#
+# CE prefixes advertised via 6PE:
+#   ce1: fd00:1::1/128 (loopback), fd00:1::/48 (aggregate)
+#   ce2: fd00:2::1/128 (loopback), fd00:2::/48 (aggregate)
+#
+# 6PE mechanism (end-to-end):
+#   1. ce1 peers eBGP IPv6 with pe1, advertises fd00:1::/48
+#   2. pe1 imports ce1's IPv6 prefix into BGP ipv6 labeled-unicast
+#      and assigns a BGP label (the "6PE label")
+#   3. p1 (RR) reflects pe1's IPv6 labeled route to pe2
+#      with the iBGP next-hop = pe1's loopback (10.0.0.1)
+#   4. pe2 receives fd00:1::/48 with:
+#        - 6PE label (inner, assigned by pe1)
+#        - SR tunnel label for 10.0.0.1/32 via IS-IS (outer, computed by SR)
+#   5. pe2 forwards IPv6 packets toward ce2: push [SR-label | 6PE-label]
+#   6. p1 swaps SR label; pe1 pops SR label, sees 6PE label, delivers to ce1
+#   7. ce1 sends native IPv6 packets to fd00:2::/48 via pe1 in the same way
+
+topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+    binds:
+      - configs/daemons:/etc/frr/daemons
+      - configs/vtysh.conf:/etc/frr/vtysh.conf
+    sysctls:
+      net.mpls.platform_labels: "1048575"
+      net.ipv4.ip_forward: "1"
+      net.ipv6.conf.all.forwarding: "1"
+    exec:
+      - vtysh -b
+
+  nodes:
+    ce1:
+      binds:
+        - configs/ce1/frr.conf:/etc/frr/frr.conf
+
+    pe1:
+      binds:
+        - configs/pe1/frr.conf:/etc/frr/frr.conf
+
+    p1:
+      binds:
+        - configs/p1/frr.conf:/etc/frr/frr.conf
+
+    pe2:
+      binds:
+        - configs/pe2/frr.conf:/etc/frr/frr.conf
+
+    ce2:
+      binds:
+        - configs/ce2/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["ce1:eth1",  "pe1:eth1"]   # IPv6 only: fd00:10::/127
+    - endpoints: ["pe1:eth2",  "p1:eth1"]    # IPv4 MPLS core: 10.1.0.0/30
+    - endpoints: ["p1:eth2",   "pe2:eth1"]   # IPv4 MPLS core: 10.1.0.4/30
+    - endpoints: ["pe2:eth2",  "ce2:eth1"]   # IPv6 only: fd00:20::/127

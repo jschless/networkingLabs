@@ -1,0 +1,47 @@
+name: enterprise-multicast
+
+topology:
+  defaults:
+    kind: linux
+    image: enterprise-multicast:local
+
+  nodes:
+    dist1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist1/startup-config
+
+    core1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/core1/startup-config
+
+    dist2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist2/startup-config
+
+    source1:
+      binds:
+        - configs/source1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    recv-local:
+      binds:
+        - configs/recv-local/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    recv-remote:
+      binds:
+        - configs/recv-remote/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["dist1:eth1", "core1:eth1"]
+    - endpoints: ["core1:eth2", "dist2:eth1"]
+    - endpoints: ["dist1:eth2", "source1:eth1"]
+    - endpoints: ["dist1:eth3", "recv-local:eth1"]
+    - endpoints: ["dist2:eth2", "recv-remote:eth1"]

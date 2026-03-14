@@ -1,0 +1,114 @@
+name: enterprise-collapsed-core
+
+# Enterprise Collapsed Core (2-Tier) Campus Lab — Arista cEOS + Linux clients
+#
+# Merges the traditional core + distribution layers into a single switch pair.
+# Common for medium campuses (50-500 users) where a full 3-tier design is
+# overkill. The collapsed core pair provides:
+#   - L3 routing (OSPF to edge, inter-VLAN routing)
+#   - VRRP first-hop redundancy (active/standby per VLAN)
+#   - STP root bridge role (load-balanced by VLAN)
+#   - Uplinks to edge router (OSPF area 0)
+#
+# Topology:
+#
+#          [isp]  AS65500
+#            | 203.0.113.0/30
+#          [edge] AS65100  (eBGP + OSPF, default-information originate)
+#         /         \
+#  10.0.12.0/30  10.0.22.0/30
+#       /               \
+#    [cc1]------[cc2]    (10.0.99.0/30 interlink)
+#  STP root:  STP root:
+#  VLAN10,30  VLAN20
+#   /   \       /   \
+# [acc1][acc2][acc3][acc4]   (L2 only, trunk uplinks)
+#   |               |
+# [client-a]    [client-b]
+# VLAN10         VLAN20
+# 10.10.10.11    10.20.20.11
+#
+# VLAN Design:
+#   VLAN 10  corporate  10.10.10.0/24   VRRP VIP 10.10.10.1  (cc1 active)
+#   VLAN 20  voice      10.20.20.0/24   VRRP VIP 10.20.20.1  (cc2 active)
+#   VLAN 30  guest      10.30.30.0/24   VRRP VIP 10.30.30.1  (cc1 active)
+#   VLAN 99  mgmt       192.168.99.0/24
+#
+# Loopbacks:
+#   isp:  10.0.0.1/32   edge: 10.0.0.2/32
+#   cc1:  10.0.0.3/32   cc2:  10.0.0.4/32
+
+topology:
+  nodes:
+    isp:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/isp/startup-config
+
+    edge:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/edge/startup-config
+
+    cc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/cc1/startup-config
+
+    cc2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/cc2/startup-config
+
+    acc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc1/startup-config
+
+    acc2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc2/startup-config
+
+    acc3:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc3/startup-config
+
+    acc4:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc4/startup-config
+
+    client-a:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/client-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    client-b:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/client-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    # WAN / uplink
+    - endpoints: ["isp:eth1",  "edge:eth1"]    # 203.0.113.0/30
+    # Edge to collapsed core
+    - endpoints: ["edge:eth2", "cc1:eth1"]     # 10.0.12.0/30
+    - endpoints: ["edge:eth3", "cc2:eth1"]     # 10.0.22.0/30
+    # CC interlink
+    - endpoints: ["cc1:eth2",  "cc2:eth2"]     # 10.0.99.0/30
+    # CC to access layer (trunk uplinks)
+    - endpoints: ["cc1:eth3",  "acc1:eth1"]    # trunk VLANs 10,20,30,99
+    - endpoints: ["cc1:eth4",  "acc2:eth1"]    # trunk VLANs 10,20,30,99
+    - endpoints: ["cc2:eth3",  "acc3:eth1"]    # trunk VLANs 10,20,30,99
+    - endpoints: ["cc2:eth4",  "acc4:eth1"]    # trunk VLANs 10,20,30,99
+    # Access to clients
+    - endpoints: ["acc1:eth2", "client-a:eth1"]  # access VLAN 10
+    - endpoints: ["acc3:eth2", "client-b:eth1"]  # access VLAN 20

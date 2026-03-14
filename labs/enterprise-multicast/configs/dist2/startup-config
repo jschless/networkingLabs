@@ -1,0 +1,30 @@
+hostname dist2
+!
+ip routing
+!
+vlan 30
+   name video-receivers
+!
+interface Loopback0
+   ip address 10.0.0.22/32
+!
+interface Ethernet1
+   no switchport
+   ip address 10.255.23.2/30
+   no shutdown
+!
+interface Ethernet2
+   switchport access vlan 30
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Vlan30
+   ip address 10.20.30.1/24
+   no shutdown
+!
+! Learner tasks:
+!  - enable IGMP and PIM on Vlan30
+!  - configure PIM on the core-facing routed link
+!
+end
