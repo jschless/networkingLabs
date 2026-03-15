@@ -46,9 +46,17 @@ Import the cEOS image once (requires a free Arista account to download):
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```
 
-Used by: `gre-ceos`, `dmvpn-ceos`, `dmvpn-phase2`, `dmvpn-phase3`, `spine-leaf-ceos`,
+Used by: `gre-ceos`, `spine-leaf-ceos`,
 `evpn-vxlan-ceos`, `evpn-border-ceos`, `vrf-lite`, `ha-network-design-ceos`, all `enterprise-*` labs,
 `stp-operations`, `lacp-etherchannel`, `dot1x-ceos-practice`.
+
+## VyOS
+
+```bash
+docker build -t vyos:local -f Dockerfile.vyos .
+```
+
+Used by: `dmvpn-phase1`, `dmvpn-phase2`, `dmvpn-phase3`, `debug-dmvpn-phase1`.
 
 ## Nokia SR-Linux
 

@@ -23,7 +23,8 @@
       "WebFetch(domain:squidfunk.github.io)",
       "WebFetch(domain:docs.github.com)",
       "WebFetch(domain:github.com)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "WebFetch(domain:containerlab.dev)"
     ]
   }
 }

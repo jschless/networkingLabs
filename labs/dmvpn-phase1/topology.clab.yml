@@ -1,42 +1,29 @@
 name: dmvpn-phase1
 
-# DMVPN Phase 1 — Hub-and-Spoke VPN using mGRE + NHRP  (Linux/FRR)
+# DMVPN Phase 1 — Hub-and-Spoke VPN using mGRE + NHRP  (VyOS)
 #
 # Topology:
 #
 #   [spoke1] (10.0.0.11) --\
-#   [spoke2] (10.0.0.12) ---[hub] (10.0.0.1)    WAN: 10.0.0.0/24 (br-wan bridge)
+#   [spoke2] (10.0.0.12) ---[br-wan]--- [hub] (10.0.0.1)   WAN: 10.0.0.0/24
 #   [spoke3] (10.0.0.13) --/
 #
-# WAN IPs (on eth1):
-#   hub:    10.0.0.1/24      tun0 IP: 172.16.0.1/24   (mGRE, no fixed remote)
-#   spoke1: 10.0.0.11/24     tun0 IP: 172.16.0.11/24  (GRE, remote=hub)
-#   spoke2: 10.0.0.12/24     tun0 IP: 172.16.0.12/24
-#   spoke3: 10.0.0.13/24     tun0 IP: 172.16.0.13/24
+# WAN IPs (eth1):    hub: 10.0.0.1     spokes: 10.0.0.11-13
+# Tunnel IPs (tun0): hub: 172.16.0.1   spokes: 172.16.0.11-13/24
+# Simulated LANs (lo): spoke1: 192.168.1.1/24  spoke2: 192.168.2.1/24  spoke3: 192.168.3.1/24
 #
-# Simulated LANs (on lo):
-#   spoke1: 192.168.1.1/24
-#   spoke2: 192.168.2.1/24
-#   spoke3: 192.168.3.1/24
-#
-# Pre-configured:
-#   hub: tun0 (mGRE), NHRP server (nhrpd), OSPF point-to-multipoint
-# Your task:
-#   1. Configure NHRP on each spoke (ip nhrp nhs, ip nhrp registration)
-#   2. Configure OSPF on each spoke (point-to-multipoint on tun0, router ospf)
-#   3. Verify: show ip nhrp, show ip ospf neighbor, ping across tunnel
+# Pre-configured:  hub (mGRE tunnel, NHRP NHS, OSPF p2mp)
+# Your task:       configure NHRP + OSPF on each spoke in VyOS configure mode
 #
 # Access:
-#   ./scripts/lab.sh cli dmvpn-phase1 hub       # vtysh
-#   ./scripts/lab.sh cli dmvpn-phase1 spoke1    # vtysh
+#   ./scripts/lab.sh cli dmvpn-phase1 hub
+#   ./scripts/lab.sh cli dmvpn-phase1 spoke1
 
 topology:
-  defaults:
-    kind: linux
-    image: frr-lab:local
-
   nodes:
     br-wan:
+      kind: linux
+      image: frrouting/frr:latest
       exec:
         - ip link add name br0 type bridge
         - ip link set br0 up
@@ -46,40 +33,24 @@ topology:
         - ip link set eth4 master br0
 
     hub:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/hub/frr.conf:/etc/frr/frr.conf
-        - configs/hub/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/hub/config.boot
 
     spoke1:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spoke1/frr.conf:/etc/frr/frr.conf
-        - configs/spoke1/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke1/config.boot
 
     spoke2:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spoke2/frr.conf:/etc/frr/frr.conf
-        - configs/spoke2/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke2/config.boot
 
     spoke3:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spoke3/frr.conf:/etc/frr/frr.conf
-        - configs/spoke3/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke3/config.boot
 
   links:
     - endpoints: ["hub:eth1",    "br-wan:eth1"]

@@ -12,12 +12,13 @@ labs/<name>/
     <node>/
       frr.conf               # FRR routing config for this node
       startup-config         # cEOS EOS startup config
+      config.boot            # VyOS startup config
       setup.sh               # (some nodes) Linux network setup script
 ```
 
 ## Two Lab Types
 
-**Practice labs** — IP addressing is pre-configured. You implement the routing protocol or feature using `vtysh` (FRR) or `Cli` (cEOS). Each config file contains commented hints showing the expected configuration.
+**Practice labs** — IP addressing is pre-configured. You implement the routing protocol or feature using `vtysh` (FRR), `Cli` (cEOS), or VyOS configure mode. Each config file contains commented hints showing the expected configuration.
 
 **Reference labs** — Fully working out of the box. Deploy and observe or explore.
 
@@ -25,7 +26,7 @@ labs/<name>/
 
 When ContainerLab deploys a topology:
 
-1. Containers start with `kind: linux` (or `ceos` / `srl`)
+1. Containers start with `kind: linux` (or `ceos` / `srl` / `vyosnetworks_vyos`)
 2. `sysctls:` are applied **before** the container process starts — used for `net.mpls.platform_labels`
 3. veth pairs connecting nodes are created
 4. `exec:` commands run **after** interfaces exist — always includes `vtysh -b` to reload FRR config
@@ -62,6 +63,18 @@ nodes:
 ```
 
 ContainerLab handles environment variables, management interface, and EOS startup automatically. No `binds:` needed for cEOS config.
+
+## VyOS Node Pattern
+
+```yaml
+nodes:
+  hub:
+    kind: vyosnetworks_vyos
+    image: vyos:local
+    startup-config: configs/hub/config.boot
+```
+
+VyOS labs use router-image startup configuration via `config.boot`. Operational commands can be run through the admin shell or via `vbash` for non-interactive checks.
 
 ## When to Use setup.sh
 

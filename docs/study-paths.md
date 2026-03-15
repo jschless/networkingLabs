@@ -62,7 +62,7 @@ urpf-antispoofing → copp-basics
 ## DMVPN Progression
 
 ```
-dmvpn-phase1 (FRR) → dmvpn-ceos → dmvpn-phase2 → dmvpn-phase3
+dmvpn-phase1 (VyOS) → dmvpn-phase2 → dmvpn-phase3
 ```
 
 ## Troubleshooting Practice

@@ -2,6 +2,10 @@
 
 ## Practice Lab README
 
+The README is the primary guide — it's read on the docs page. The intent is:
+- **Explanations and parameter tables are always visible** — users can read why and what
+- **Actual CLI commands are hidden by default** in `<details>` toggles — users attempt the config themselves first, then reveal if stuck
+
 ```markdown
 # <Protocol/Feature> — Practice Lab
 
@@ -35,51 +39,52 @@
 sudo containerlab deploy -t labs/<name>/topology.yml
 
 # Open CLI on any node
-docker exec -it clab-<name>-r1 Cli
-
-# Or use helper
-./scripts/lab.sh Cli <name> r1
+./scripts/lab.sh cli <name> r1
 ```
 
 ---
 
 ## Step 1 — <first task>
 
-<explanation>
+<Explanation of what to configure and why. Keep this visible — it's the guide.>
 
-### r1
+### Parameter reference
+
+| Command | Purpose |
+|---------|---------|
+| `command x` | what it does |
+
+<details>
+<summary>Configuration — reveal if stuck</summary>
+
+```bash
+./scripts/lab.sh cli <name> r1
+```
 
 ```
-<config commands>
+<config commands for r1>
 ```
 
-### r2
+```bash
+./scripts/lab.sh cli <name> r2
+```
 
 ```
-<config commands>
+<config commands for r2>
 ```
+
+</details>
 
 ---
 
-## Step 2 — <next task>
+## Step 2 — Verify
 
-...
-
----
-
-## Verification
+<Verification commands are always visible — these are the goal, not the solution.>
 
 ```
-<show commands with expected output descriptions>
+<show commands>
+<expected output>
 ```
-
----
-
-## Experiments
-
-### <optional extension 1>
-
-<description and commands>
 
 ---
 
@@ -91,6 +96,15 @@ docker exec -it clab-<name>-r1 Cli
 **<symptom>**
 - <cause and fix>
 ```
+
+### Key rules for `<details>` usage
+
+- Wrap **all node configuration commands** (the actual CLI input) in `<details>`
+- Leave **verification/show commands** outside — they're the guide, not the answer
+- Leave **parameter explanation tables** outside — they help users understand what to type
+- Leave **conceptual explanations** outside — reading is allowed, typing is the challenge
+- Use summary text: `<summary>Configuration — reveal if stuck</summary>`
+- Include the access command (`./scripts/lab.sh cli ...`) inside the `<details>` block so the whole "how to configure this node" section is self-contained
 
 ---
 

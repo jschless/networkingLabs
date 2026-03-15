@@ -28,6 +28,11 @@ eos()  { docker exec "clab-${TOPO_NAME}-$1" Cli -c "$2" 2>/dev/null; }
 frr()  { docker exec "clab-${TOPO_NAME}-$1" vtysh -c "$2" 2>/dev/null; }
 srl()  { docker exec "clab-${TOPO_NAME}-$1" sr_cli -c "$2" 2>/dev/null; }
 node() { docker exec "clab-${TOPO_NAME}-$1" bash -c "$2" 2>/dev/null; }
+vyos_op() {
+  docker exec "clab-${TOPO_NAME}-$1" su - admin -c \
+    "/bin/vbash -ic '$2'" 2>/dev/null
+}
+vyos_frr() { docker exec "clab-${TOPO_NAME}-$1" vtysh -c "$2" 2>/dev/null; }
 
 # --- Assertions ---
 pass() { printf '  \033[32mPASS\033[0m %s\n' "$1"; (( PASS++ )) || true; }
@@ -69,6 +74,24 @@ check_ping_linux() {
   [[ -n "${4:-}" ]] && src_arg="-I $4"
   if docker exec "clab-${TOPO_NAME}-$2" ping -c3 -W2 $src_arg "$3" &>/dev/null
   then pass "$1"; else fail "$1" "ping $3 failed from $2"; fi
+}
+
+check_ping_vyos() {
+  # check_ping_vyos <test-name> <node> <dest> [<source-ip>]
+  local cmd="ping $3 count 3"
+  [[ -n "${4:-}" ]] && cmd="ping $3 source-address $4 count 3"
+  local out; out=$(vyos_op "$2" "$cmd")
+  if echo "$out" | grep -qE '0% packet loss|bytes from'; then pass "$1"
+  else fail "$1" "ping $3 failed from $2"; fi
+}
+
+check_no_ping_vyos() {
+  # check_no_ping_vyos <test-name> <node> <dest> [<source-ip>]
+  local cmd="ping $3 count 3"
+  [[ -n "${4:-}" ]] && cmd="ping $3 source-address $4 count 3"
+  local out; out=$(vyos_op "$2" "$cmd")
+  if echo "$out" | grep -qE '100% packet loss|Network is unreachable|Name or service not known'; then pass "$1"
+  else fail "$1" "ping $3 unexpectedly succeeded from $2"; fi
 }
 
 check_no_ping_linux() {

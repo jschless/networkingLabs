@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-**93 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+**93 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 No cloud account. No license fees. Deploy, break things, learn.
 
@@ -36,6 +36,21 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     # Destroy
     sudo containerlab destroy -t labs/spine-leaf-ceos/topology.clab.yml --cleanup
+    ```
+
+=== "VyOS Lab"
+    ```bash
+    # Build the VyOS router image (one-time)
+    docker build -t vyos:local -f Dockerfile.vyos .
+
+    # Deploy
+    sudo containerlab deploy -t labs/dmvpn-phase1/topology.clab.yml
+
+    # Open VyOS CLI
+    docker exec -it clab-dmvpn-phase1-hub su - admin
+
+    # Destroy
+    sudo containerlab destroy -t labs/dmvpn-phase1/topology.clab.yml --cleanup
     ```
 
 === "Nokia SR-Linux Lab"

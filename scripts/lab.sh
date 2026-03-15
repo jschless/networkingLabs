@@ -184,6 +184,10 @@ resolve_cli_command() {
             printf '%s\n' "Cli"
             return 0
             ;;
+        vyosnetworks_vyos)
+            printf '%s\n' "__vyos__"
+            return 0
+            ;;
         srl)
             printf '%s\n' "sr_cli"
             return 0
@@ -289,6 +293,12 @@ cmd_cli() {
     container="clab-${lab_name}-${node}"
     require_container "$container"
     cli_cmd="$(resolve_cli_command "$topo" "$node" "$container")"
+
+    if [[ "$cli_cmd" == "__vyos__" ]]; then
+        echo "Connecting to $node (VyOS)"
+        docker exec -it "$container" su - admin
+        return
+    fi
 
     echo "Connecting to $node via $cli_cmd"
     docker exec -it "$container" "$cli_cmd"

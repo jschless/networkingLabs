@@ -1,12 +1,10 @@
 name: dmvpn-phase2
 
-# DMVPN Phase 2 — Dynamic Spoke-to-Spoke Shortcuts  (Linux/FRR)
+# DMVPN Phase 2 — Dynamic Spoke-to-Spoke Shortcuts  (VyOS)
 #
 # Phase 2 enables direct spoke-to-spoke tunnels via NHRP resolution.
 # Unlike Phase 1 (all traffic via hub), Phase 2 creates dynamic shortcuts
 # directly between spokes after NHRP resolves the remote spoke's WAN IP.
-#
-# Platform note: FRR nhrpd v8.4 provides NHS/NHC and shortcut route injection.
 #
 # Tunnel IPs:
 #   hub:    172.16.0.1/24   spoke1: 172.16.0.11/24
@@ -21,16 +19,14 @@ name: dmvpn-phase2
 # Your task: Configure NHRP + OSPF broadcast + ip nhrp shortcut on each spoke
 #
 # Access:
-#   ./scripts/lab.sh cli dmvpn-phase2 hub       # vtysh
-#   ./scripts/lab.sh cli dmvpn-phase2 spoke1    # vtysh
+#   ./scripts/lab.sh cli dmvpn-phase2 hub
+#   ./scripts/lab.sh cli dmvpn-phase2 spoke1
 
 topology:
-  defaults:
-    kind: linux
-    image: frr-lab:local
-
   nodes:
     br-wan:
+      kind: linux
+      image: frrouting/frr:latest
       exec:
         - ip link add name br0 type bridge
         - ip link set br0 up
@@ -40,40 +36,24 @@ topology:
         - ip link set eth4 master br0
 
     hub:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/hub/frr.conf:/etc/frr/frr.conf
-        - configs/hub/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/hub/config.boot
 
     spoke1:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spoke1/frr.conf:/etc/frr/frr.conf
-        - configs/spoke1/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke1/config.boot
 
     spoke2:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spoke2/frr.conf:/etc/frr/frr.conf
-        - configs/spoke2/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke2/config.boot
 
     spoke3:
-      binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/spoke3/frr.conf:/etc/frr/frr.conf
-        - configs/spoke3/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke3/config.boot
 
   links:
     - endpoints: ["hub:eth1",    "br-wan:eth1"]

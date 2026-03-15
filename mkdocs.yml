@@ -197,5 +197,6 @@ nav:
   - Platforms:
     - FRR: platforms/frr.md
     - Arista cEOS: platforms/ceos.md
+    - VyOS: platforms/vyos.md
     - Nokia SR-Linux: platforms/srlinux.md
   - Contributing: contributing.md

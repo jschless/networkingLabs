@@ -3,9 +3,9 @@ title: dmvpn-phase2
 ---
 
 !!! tip "Practice Lab"
-    DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts (cEOS)
+    DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts (VyOS)
 
-!!! note "Image" Arista cEOS — `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
+!!! note "Image" VyOS — `docker build -t vyos:local -f Dockerfile.vyos .`
 
 {%
   include-markdown "../../../labs/dmvpn-phase2/README.md"

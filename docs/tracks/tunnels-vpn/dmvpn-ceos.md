@@ -2,10 +2,8 @@
 title: dmvpn-ceos
 ---
 
-!!! tip "Practice Lab"
-    DMVPN hub-and-spoke on Arista cEOS
-
-!!! note "Image" Arista cEOS — `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
+!!! warning "Deprecated"
+    DMVPN is no longer maintained on cEOS in this repository. Use `dmvpn-phase1`, `dmvpn-phase2`, and `dmvpn-phase3` on VyOS.
 
 {%
   include-markdown "../../../labs/dmvpn-ceos/README.md"

@@ -4,7 +4,7 @@ topology:
   nodes:
     br-wan:
       kind: linux
-      image: frr-lab:local
+      image: frrouting/frr:latest
       exec:
         - ip link add name br0 type bridge
         - ip link set br0 up
@@ -14,24 +14,24 @@ topology:
         - ip link set eth4 master br0
 
     hub:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/hub/startup-config
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/hub/config.boot
 
     spoke1:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/spoke1/startup-config
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke1/config.boot
 
     spoke2:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/spoke2/startup-config
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke2/config.boot
 
     spoke3:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/spoke3/startup-config
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke3/config.boot
 
   links:
     - endpoints: ["hub:eth1", "br-wan:eth1"]

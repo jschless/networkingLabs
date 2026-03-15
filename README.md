@@ -103,8 +103,16 @@ Import the cEOS image once:
 ```bash
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```
-Used by: `gre-ceos`, `dmvpn-ceos`, `spine-leaf-ceos`, `evpn-vxlan-ceos`,
+Used by: `gre-ceos`, `spine-leaf-ceos`, `evpn-vxlan-ceos`,
 `evpn-border-ceos`, `vrf-lite`, `enterprise-*`, `ha-network-design-ceos`.
+
+### Labs requiring VyOS
+
+Build the local VyOS router image:
+```bash
+docker build -t vyos:local -f Dockerfile.vyos .
+```
+Used by: `dmvpn-phase1`, `dmvpn-phase2`, `dmvpn-phase3`, `debug-dmvpn-phase1`.
 
 ### Labs requiring Nokia SR-Linux
 
@@ -186,10 +194,9 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 | [gre-ceos](labs/gre-ceos/) | Practice | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
 | [gre-ipsec](labs/gre-ipsec/) | Practice | GRE + IPsec transport mode, strongSwan |
 | [ipsec-basics](labs/ipsec-basics/) | Practice | IKEv2 site-to-site IPsec, PSK, tunnel mode |
-| [dmvpn-phase1](labs/dmvpn-phase1/) | Practice | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel (FRR) |
-| [dmvpn-ceos](labs/dmvpn-ceos/) | Practice | DMVPN hub-and-spoke on Arista cEOS |
-| [dmvpn-phase2](labs/dmvpn-phase2/) | Practice | DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts (cEOS) |
-| [dmvpn-phase3](labs/dmvpn-phase3/) | Practice | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp (cEOS) |
+| [dmvpn-phase1](labs/dmvpn-phase1/) | Practice | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel (VyOS) |
+| [dmvpn-phase2](labs/dmvpn-phase2/) | Practice | DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts (VyOS) |
+| [dmvpn-phase3](labs/dmvpn-phase3/) | Practice | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp (VyOS) |
 | [flexvpn-basics](labs/flexvpn-basics/) | Practice | IKEv2 FlexVPN, Virtual Tunnel Interfaces, strongSwan |
 | [wireguard](labs/wireguard/) | Practice | WireGuard VPN, key pairs, hub-and-spoke topology |
 | [vrf-lite](labs/vrf-lite/) | Practice | VRF-Lite on cEOS, per-VRF routing tables, route leaking |
