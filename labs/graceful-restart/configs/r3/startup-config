@@ -1,0 +1,28 @@
+hostname r3
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.3/32
+!
+interface Loopback1
+   ip address 172.16.3.1/32
+!
+interface Ethernet1
+   description to r2
+   no switchport
+   ip address 10.0.23.2/30
+!
+router bgp 65000
+   router-id 10.0.0.3
+   graceful-restart
+   graceful-restart restart-time 120
+   graceful-restart stalepath-time 360
+   neighbor 10.0.23.1 remote-as 65000
+   !
+   address-family ipv4
+      neighbor 10.0.23.1 activate
+      network 172.16.3.1/32
+   !
+!
+end

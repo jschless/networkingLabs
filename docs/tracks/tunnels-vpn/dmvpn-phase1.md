@@ -3,9 +3,9 @@ title: dmvpn-phase1
 ---
 
 !!! tip "Practice Lab"
-    Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel (FRR)
+    Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel (VyOS)
 
-!!! note "Image" `frr-lab:local` — `docker build -t frr-lab:local images/frr/`
+!!! note "Image" `vyos:local` — `docker build -t vyos:local -f Dockerfile.vyos .`
 
 {%
   include-markdown "../../../labs/dmvpn-phase1/README.md"

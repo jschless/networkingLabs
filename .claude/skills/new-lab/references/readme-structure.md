@@ -105,6 +105,8 @@ sudo containerlab deploy -t labs/<name>/topology.yml
 - Leave **conceptual explanations** outside — reading is allowed, typing is the challenge
 - Use summary text: `<summary>Configuration — reveal if stuck</summary>`
 - Include the access command (`./scripts/lab.sh cli ...`) inside the `<details>` block so the whole "how to configure this node" section is self-contained
+- Do not make an exception during platform migrations; a VyOS or cEOS rewrite still hides config by default
+- If the lab is being migrated to a router image, validate the feature on the actual local image before rebuilding the lab
 
 ---
 

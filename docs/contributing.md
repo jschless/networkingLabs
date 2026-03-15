@@ -39,6 +39,27 @@ A good lab README includes:
 - **Verification**: `show` commands and expected output to confirm success
 - **Hints**: Commented config snippets (for practice labs)
 
+README interaction rules:
+
+- Practice labs keep explanations, addressing, and verification visible.
+- Practice labs hide all actual node configuration commands inside `<details>` blocks.
+- Use `<summary>Configuration — reveal if stuck</summary>` for practice config.
+- Debug labs keep symptoms and diagnostic commands visible, but hide the exact fix in a solution `<details>` block.
+- Do not expose the answer by default just because the platform changed.
+
+## Platform Validation Before Rebuild
+
+Before migrating a lab from FRR to a router image:
+
+1. Identify the exact behaviors the lab needs, not just the protocol name.
+2. Spin up the target image locally in a minimal probe topology.
+3. Validate the feature on the running image:
+   - single-node CLI acceptance for pure syntax/control-plane features
+   - multi-node validation for adjacency or signaling features such as DMVPN, EVPN, LDP pseudowires, or 6PE
+4. Only rebuild the lab after the live probe passes.
+
+If the local image lacks the feature or only supports part of it, keep the lab on FRR and document that choice.
+
 ## Debug Lab Pattern
 
 Debug labs always have:

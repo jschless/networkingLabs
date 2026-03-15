@@ -24,7 +24,7 @@ lab_init() {
 }
 
 # --- Node exec helpers ---
-eos()  { docker exec "clab-${TOPO_NAME}-$1" Cli -c "$2" 2>/dev/null; }
+eos()  { docker exec "clab-${TOPO_NAME}-$1" Cli -p 15 -c "enable" -c "$2" 2>/dev/null; }
 frr()  { docker exec "clab-${TOPO_NAME}-$1" vtysh -c "$2" 2>/dev/null; }
 srl()  { docker exec "clab-${TOPO_NAME}-$1" sr_cli -c "$2" 2>/dev/null; }
 node() { docker exec "clab-${TOPO_NAME}-$1" bash -c "$2" 2>/dev/null; }

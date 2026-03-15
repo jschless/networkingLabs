@@ -86,6 +86,9 @@ Expected before spoke work:
 
 On `spoke1`:
 
+<details>
+<summary>Configuration — reveal if stuck</summary>
+
 ```vyos
 configure
 
@@ -106,6 +109,8 @@ commit
 save
 exit
 ```
+
+</details>
 
 Key values:
 
@@ -150,6 +155,55 @@ The hub NHS values remain the same for every spoke:
 
 - tunnel IP `172.16.0.1`
 - NBMA IP `10.0.0.1`
+
+<details>
+<summary>Configuration — reveal if stuck</summary>
+
+```vyos
+# spoke2
+configure
+
+set protocols nhrp tunnel tun0 network-id '1'
+set protocols nhrp tunnel tun0 holdtime '300'
+set protocols nhrp tunnel tun0 nhs tunnel-ip '172.16.0.1' nbma '10.0.0.1'
+set protocols nhrp tunnel tun0 map tunnel-ip '172.16.0.1' nbma '10.0.0.1'
+set protocols nhrp tunnel tun0 multicast '10.0.0.1'
+set protocols nhrp tunnel tun0 registration-no-unique
+
+set protocols ospf parameters router-id '10.0.0.12'
+set protocols ospf area 0 network '172.16.0.12/32'
+set protocols ospf area 0 network '192.168.2.0/24'
+set protocols ospf interface eth1 passive
+set protocols ospf interface tun0 network 'point-to-multipoint'
+
+commit
+save
+exit
+```
+
+```vyos
+# spoke3
+configure
+
+set protocols nhrp tunnel tun0 network-id '1'
+set protocols nhrp tunnel tun0 holdtime '300'
+set protocols nhrp tunnel tun0 nhs tunnel-ip '172.16.0.1' nbma '10.0.0.1'
+set protocols nhrp tunnel tun0 map tunnel-ip '172.16.0.1' nbma '10.0.0.1'
+set protocols nhrp tunnel tun0 multicast '10.0.0.1'
+set protocols nhrp tunnel tun0 registration-no-unique
+
+set protocols ospf parameters router-id '10.0.0.13'
+set protocols ospf area 0 network '172.16.0.13/32'
+set protocols ospf area 0 network '192.168.3.0/24'
+set protocols ospf interface eth1 passive
+set protocols ospf interface tun0 network 'point-to-multipoint'
+
+commit
+save
+exit
+```
+
+</details>
 
 ## Step 5 — End-To-End Verification
 

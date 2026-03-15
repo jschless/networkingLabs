@@ -236,7 +236,7 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 | [bfd-bgp](labs/bfd-bgp/) | Practice | BFD with BGP, fast session teardown vs hold timer |
 | [vrrp](labs/vrrp/) | Practice | VRRP master/backup, virtual IP, priority, preemption |
 | [ha-network-design-ceos](labs/ha-network-design-ceos/) | Practice | MLAG, VRRP tracking, OSPF+BFD+ECMP, dual-ISP BGP combined |
-| [graceful-restart](labs/graceful-restart/) | Practice | Graceful Restart for BGP/OSPF, stale route forwarding during restart |
+| [graceful-restart](labs/graceful-restart/) | Practice | Graceful Restart for BGP on cEOS, using a route reflector and BGP-only service routes |
 
 ---
 

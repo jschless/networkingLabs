@@ -8,7 +8,7 @@ Five labs covering BFD, VRRP, Graceful Restart, and a capstone HA design combini
 | [bfd-bgp](bfd-bgp.md) | Practice | FRR | BFD with BGP, fast session teardown vs hold timer |
 | [vrrp](vrrp.md) | Practice | FRR | VRRP master/backup, virtual IP, priority, preemption |
 | [ha-network-design-ceos](ha-network-design-ceos.md) | Practice | cEOS | MLAG, VRRP tracking, OSPF+BFD+ECMP, dual-ISP BGP |
-| [graceful-restart](graceful-restart.md) | Practice | FRR | Graceful Restart for BGP/OSPF, stale route forwarding |
+| [graceful-restart](graceful-restart.md) | Practice | cEOS | Graceful Restart for BGP on a route reflector, with service routes held stale during restart |
 
 ## Platform Notes
 

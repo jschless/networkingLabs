@@ -22,6 +22,12 @@ labs/<name>/
 
 **Reference labs** — Fully working out of the box. Deploy and observe or explore.
 
+Practice lab README convention:
+
+- explanations and verification stay visible
+- actual configuration input is hidden in `<details>`
+- debug labs hide the exact fix in a solution block rather than exposing it inline
+
 ## Startup Sequence
 
 When ContainerLab deploys a topology:
@@ -79,6 +85,18 @@ VyOS labs use router-image startup configuration via `config.boot`. Operational 
 ## When to Use setup.sh
 
 Use a bind-mounted `setup.sh` (called via `exec: - bash /setup.sh`) when a node needs Linux commands before FRR starts: creating VRFs (`ip link add … type vrf`), VXLAN+bridge interfaces, or non-FRR IP assignment. The script ends with `vtysh -b` to load FRR config after Linux setup completes.
+
+## Choosing FRR vs Router Images
+
+Prefer a router image when the local image has been validated to support the exact lab behavior and the node count is reasonable for the host.
+
+Keep FRR when:
+
+- the router image does not support the feature in the local container build
+- the lab depends on Linux-first mechanics that are not a clean fit for the router OS
+- the topology is large enough that router-image RAM cost is not worth it
+
+Use a live image probe before rebuilds. Documentation alone is not enough because containerized router images often expose only a subset of the full platform feature set.
 
 ## Container Naming
 

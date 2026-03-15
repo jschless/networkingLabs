@@ -65,6 +65,9 @@ If the spoke points the hub mapping at the wrong NBMA address, the WAN stays rea
 
 On `spoke1`:
 
+<details>
+<summary>Solution — reveal only after attempting the lab</summary>
+
 ```vyos
 configure
 
@@ -80,6 +83,8 @@ commit
 save
 exit
 ```
+
+</details>
 
 ## Verify
 
