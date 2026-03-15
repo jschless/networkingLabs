@@ -68,6 +68,9 @@ router ospf
  passive-interface Loopback0
 ```
 
+<details>
+<summary>Show configuration</summary>
+
 On **asbr** (Ethernet2 is external — NOT in OSPF):
 ```
 configure terminal
@@ -77,6 +80,7 @@ router ospf
  network 10.1.12.0/30 area 0
  passive-interface Loopback0
 ```
+</details>
 
 Verify adjacency:
 ```
@@ -288,11 +292,15 @@ The default returns automatically when the connected route reappears.
 
 To verify full connectivity (core to internet), internet needs a return route:
 
+<details>
+<summary>Show configuration</summary>
+
 On **internet**:
 ```
 configure terminal
 ip route 10.0.0.0/8 203.0.113.1
 ```
+</details>
 
 Now from **core**:
 ```

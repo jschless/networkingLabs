@@ -287,6 +287,9 @@ you want routers to prefer the topologically closer ASBR.
 
 Change the metric type using a route-map (EOS does not support inline `metric-type` on the `redistribute` command):
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 r3(config)# route-map OSPF-E1 permit 10
 r3(config-route-map)# set metric-type type-1
@@ -294,6 +297,7 @@ r3(config-route-map)# exit
 r3(config)# router ospf 1
 r3(config-router)# redistribute static route-map OSPF-E1
 ```
+</details>
 
 Observe the change in `show ip route ospf` on r4:
 - E2 shows `O E2` with a fixed metric

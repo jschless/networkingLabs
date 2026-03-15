@@ -218,6 +218,9 @@ interface Ethernet1
 ```
 
 **Area-wide** (set auth type once, still configure key per-interface):
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf
  area 0 authentication message-digest
@@ -225,6 +228,7 @@ router ospf
 interface Ethernet1
  ip ospf message-digest-key 1 md5 MyKey
 ```
+</details>
 
 Area-wide auth is easier to manage in large deployments but the key must still
 be configured on every interface. Per-interface auth overrides area auth if both

@@ -108,6 +108,9 @@ Production practice:
 When you want fine-grained control: aggregate some components but still
 advertise others specifically:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 ! Suppress only 10.1.4.0/24, let the other three through
 ip prefix-list SUPPRESS-ONE seq 5 permit 10.1.4.0/24
@@ -115,6 +118,7 @@ route-map SELECTIVE permit 10
    match ip address prefix-list SUPPRESS-ONE
 aggregate-address 10.1.0.0/21 summary-only match-map SELECTIVE
 ```
+</details>
 
 EOS does not have a standalone `suppress-map` option. Instead, combine
 `summary-only` with `match-map`: routes that MATCH the map are suppressed;
@@ -132,12 +136,16 @@ but NOT 10.1.4.0/24.
 Configure BGP on all three nodes.
 
 Originator must advertise four component prefixes:
+<details>
+<summary>Show configuration</summary>
+
 ```
 network 10.1.1.0/24
 network 10.1.2.0/24
 network 10.1.3.0/24
 network 10.1.4.0/24
 ```
+</details>
 
 Verify on receiver — seven prefixes visible (three loopbacks + four /24s):
 ```
@@ -153,12 +161,16 @@ receiver# show bgp ipv4 unicast
 
 ### Task 2 — Basic aggregate (no summary-only)
 
+<details>
+<summary>Show configuration</summary>
+
 On aggregator, add the aggregate-address:
 ```
 aggregator(config)# router bgp 65002
 aggregator(config-router-bgp)# address-family ipv4
 aggregator(config-router-bgp-af)# aggregate-address 10.1.0.0/21
 ```
+</details>
 
 Verify on receiver:
 - `10.1.0.0/21` is NOW present (the aggregate)
@@ -216,12 +228,16 @@ any of the originating ASes.
 
 With `aggregate-address 10.1.0.0/21 summary-only` active:
 
+<details>
+<summary>Show configuration</summary>
+
 On originator, remove one component:
 ```
 originator(config)# router bgp 65001
 originator(config-router-bgp)# address-family ipv4
 originator(config-router-bgp-af)# no network 10.1.4.0/24
 ```
+</details>
 
 Question: Does 10.1.0.0/21 stay on receiver?
 Answer: YES. The aggregate remains as long as ANY one component is in the table.
@@ -236,6 +252,9 @@ Restore the network statements on originator to bring it back.
 ### Task 6 — suppress-map: selectively suppress
 
 Instead of suppressing everything, suppress only 10.1.4.0/24:
+<details>
+<summary>Show configuration</summary>
+
 ```
 aggregator(config)# ip prefix-list SUPPRESS-4 seq 5 permit 10.1.4.0/24
 aggregator(config)# route-map SUPPRESS-MAP permit 10
@@ -244,6 +263,7 @@ aggregator(config)# router bgp 65002
 aggregator(config-router-bgp)# address-family ipv4
 aggregator(config-router-bgp-af)# aggregate-address 10.1.0.0/21 summary-only match-map SUPPRESS-MAP
 ```
+</details>
 
 On receiver:
 - `10.1.0.0/21` is present (aggregate)

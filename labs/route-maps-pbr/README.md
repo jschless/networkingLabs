@@ -197,11 +197,15 @@ routing table lookup.
 
 ### set ip next-hop vs set interface
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 set ip next-hop 10.0.1.2      ! Forward to specific next-hop IP
 set interface eth3             ! Forward out specific interface (use with care)
 set ip next-hop verify         ! Only use next-hop if it is in the routing table
 ```
+</details>
 
 ### ip local policy (router-originated traffic)
 

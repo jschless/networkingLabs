@@ -274,6 +274,9 @@ static routes (simpler) or OSPF (as covered in Task 6).
 
 ### Option A — Static routes
 
+<details>
+<summary>Show configuration</summary>
+
 On gw-b, add routes for remote LANs via the hub:
 
 ```bash
@@ -283,6 +286,7 @@ ip route add 192.168.1.0/24 via 10.10.1.1 dev vti0
 # Route to spoke2's LAN (traffic goes hub→spoke2) — spoke-to-spoke via hub
 ip route add 192.168.3.0/24 via 10.10.1.1 dev vti0
 ```
+</details>
 
 On gw-a (hub), add a route back to gw-b's LAN:
 
@@ -310,6 +314,9 @@ traceroute -n 192.168.1.1
 ## Task 5 — Configure spoke2 (gw-c)
 
 Repeat the same steps on gw-c. The only differences are the WAN IP, VTI key, and tunnel address.
+
+<details>
+<summary>Show configuration</summary>
 
 ```bash
 ./scripts/lab.sh bash flexvpn-basics gw-c
@@ -358,6 +365,7 @@ ip route add 192.168.2.0/24 via 10.10.2.1 dev vti0   # LAN B via hub
 # On gw-a (hub), route to LAN C:
 ip route add 192.168.3.0/24 via 10.10.2.2 dev vti2
 ```
+</details>
 
 ---
 
@@ -381,6 +389,9 @@ observe the OSPF design principles and add it if desired.
 
 ### If FRR is available on nodes
 
+<details>
+<summary>Show configuration</summary>
+
 On gw-a (hub), OSPF config would look like:
 
 ```
@@ -396,6 +407,10 @@ interface vti1
 interface vti2
   ip ospf network point-to-point
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 On gw-b (spoke1):
 ```
@@ -407,6 +422,7 @@ router ospf
 interface vti0
   ip ospf network point-to-point
 ```
+</details>
 
 ---
 

@@ -177,6 +177,9 @@ traceroute 192.168.2.10
 
 ## Experiment A — OSPF over GRE
 
+<details>
+<summary>Show configuration</summary>
+
 Replace static routes with OSPF running over the tunnel. Remove the static LAN routes first, then configure OSPF on gw-a:
 
 ```
@@ -198,6 +201,7 @@ router ospf 1
    passive-interface Loopback0
    tunnel routes
 ```
+</details>
 
 Mirror on gw-b (router-id 10.0.0.2, `no ip route 192.168.1.0/24 172.16.0.1`).
 
@@ -281,11 +285,15 @@ These are behaviors unique to Arista EOS running in ContainerLab — you won't h
 
 EOS copies the **inner** IP TTL directly into the **outer** GRE encap header. OSPF hellos are sent with inner TTL=1. In this topology the `internet` router sits between the two tunnel endpoints, so the outer GRE packet arrives there with TTL=1, gets decremented to 0, and is silently discarded.
 
+<details>
+<summary>Show configuration</summary>
+
 Fix — add to `interface Tunnel0` on both gateways (order matters; EOS rejects `tunnel ttl` without PMTUD enabled first):
 ```
 tunnel path-mtu-discovery
 tunnel ttl 255
 ```
+</details>
 
 ### 2. OSPF `tunnel routes` disabled by default
 

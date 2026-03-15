@@ -214,6 +214,9 @@ ce-a1# ping 10.20.0.1 source 10.10.0.1    ! should FAIL — different VRF
 
 Instead of static routes, run OSPF within each VRF. In EOS, each VRF gets its own OSPF instance number.
 
+<details>
+<summary>Show configuration</summary>
+
 On **pe1** (and mirror on pe2):
 ```
 pe1# configure terminal
@@ -238,6 +241,7 @@ pe1(config-if)# ip ospf area 0.0.0.0
 pe1(config)# interface Ethernet4
 pe1(config-if)# ip ospf area 0.0.0.0
 ```
+</details>
 
 Remove static routes first: `no ip route vrf VRF-RED 10.10.0.1/32 10.10.12.1` etc.
 

@@ -234,13 +234,20 @@ Traffic blackhole window: <1 second vs up to 90 seconds
 
 BFD in BGP is configured per-neighbor (not per-interface):
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 router bgp 65001
  neighbor 10.1.12.2 bfd                           # enable BFD
  neighbor 10.1.12.2 bfd check-control-plane-failure  # optional: also check CP
 ```
+</details>
 
 You can also set custom timers per-neighbor:
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 router bgp 65001
@@ -252,6 +259,7 @@ bfd
   receive-interval 100
   detect-multiplier 3
 ```
+</details>
 
 ### BFD vs BGP Hold Timer — When Each Applies
 

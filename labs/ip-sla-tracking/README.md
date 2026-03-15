@@ -218,10 +218,14 @@ A floating static route has a higher administrative distance than the primary.
 It stays in the configuration but is only installed in the RIB when all
 lower-AD paths to the same prefix are absent.
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 ip route 0.0.0.0/0 10.0.1.2 5    ! Primary: AD=5 (installed when track up)
 ip route 0.0.0.0/0 10.0.2.2 10   ! Backup:  AD=10 (installed when primary withdrawn)
 ```
+</details>
 
 ### Track + static route interaction
 

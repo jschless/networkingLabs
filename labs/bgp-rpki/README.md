@@ -183,12 +183,16 @@ edge# show bgp ipv4 unicast 10.100.0.0/24
 Edit the route-map on edge to comment out the deny clause for INVALID routes.
 Change sequence 30 from `deny` to `permit`:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 edge# conf t
 edge(config)# route-map RPKI-POLICY permit 30
 edge(config-route-map)# match rpki invalid
 edge(config-route-map)# end
 ```
+</details>
 
 Then soft-clear BGP to re-evaluate:
 
@@ -206,6 +210,9 @@ Even without the explicit deny, the VALID route wins on local-preference.
 
 Restore the deny:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 edge# conf t
 edge(config)# route-map RPKI-POLICY deny 30
@@ -213,6 +220,7 @@ edge(config-route-map)# match rpki invalid
 edge(config-route-map)# end
 edge# clear bgp * soft in
 ```
+</details>
 
 ---
 
@@ -223,6 +231,9 @@ in the best-path selection (FRR respects `bgp bestpath prefix-validate allow-inv
 to change this behavior).
 
 First, temporarily remove the LP manipulation:
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 edge# conf t
@@ -236,11 +247,15 @@ edge(config-route-map)# end
 edge# clear bgp * soft in
 edge# show bgp ipv4 unicast 10.100.0.0/24
 ```
+</details>
 
 **Observation:** Without the explicit LP difference, which path does FRR select?
 Does RPKI state influence the tie-break?
 
 Restore after exploring:
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 edge# conf t
@@ -253,12 +268,16 @@ edge(config-route-map)# match rpki invalid
 edge(config-route-map)# end
 edge# clear bgp * soft in
 ```
+</details>
 
 ---
 
 ### Task 5 — NOT-FOUND behavior
 
 Add a new announcement from isp1 for a prefix that has *no* ROA:
+
+<details>
+<summary>Show configuration</summary>
 
 On `isp1`:
 
@@ -272,6 +291,7 @@ isp1(config-router)# address-family ipv4 unicast
 isp1(config-router-af)# network 10.50.0.0/24
 isp1(config-router-af)# end
 ```
+</details>
 
 On `edge`:
 
@@ -291,6 +311,9 @@ edge# show bgp ipv4 unicast 10.50.0.0/24
 
 Modify the policy to only accept VALID routes (strict mode):
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 edge# conf t
 edge(config)# route-map RPKI-POLICY deny 20
@@ -299,6 +322,7 @@ edge(config-route-map)# end
 edge# clear bgp * soft in
 edge# show bgp ipv4 unicast
 ```
+</details>
 
 **Questions:**
 - What prefixes remain in the BGP table?
@@ -306,6 +330,9 @@ edge# show bgp ipv4 unicast
   (Hint: what fraction of internet prefixes have ROAs?)
 
 Restore permissive NOT-FOUND policy when done:
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 edge# conf t
@@ -315,6 +342,7 @@ edge(config-route-map)# set local-preference 100
 edge(config-route-map)# end
 edge# clear bgp * soft in
 ```
+</details>
 
 ---
 

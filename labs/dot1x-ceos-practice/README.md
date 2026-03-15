@@ -112,6 +112,9 @@ Expected:
 
 ## Task 2 — Configure AAA and RADIUS
 
+<details>
+<summary>Show configuration</summary>
+
 Configure the switch to use the RADIUS server on Et5:
 
 ```text
@@ -128,7 +131,12 @@ show running-config section radius-server
 show running-config section aaa
 ```
 
+</details>
+
 ## Task 3 — Enable global dot1x
+
+<details>
+<summary>Show configuration</summary>
 
 Enable 802.1X globally:
 
@@ -146,7 +154,12 @@ show running-config all | section dot1x
 show logging | grep Dot1x
 ```
 
+</details>
+
 ## Task 4 — Enable EAP on Et1 and Et2
+
+<details>
+<summary>Show configuration</summary>
 
 Configure `Et1` and `Et2` as wired authenticators:
 
@@ -183,7 +196,12 @@ docker exec clab-dot1x-ceos-practice-supplicant-tls ping -c3 10.10.10.1
 docker exec clab-dot1x-ceos-practice-supplicant-peap ping -c3 10.20.20.1
 ```
 
+</details>
+
 ## Task 5 — Add MAB on Et3
+
+<details>
+<summary>Show configuration</summary>
 
 Configure `Et3` so a non-802.1X endpoint can still be authorized:
 
@@ -210,10 +228,15 @@ Traffic test:
 docker exec clab-dot1x-ceos-practice-supplicant-mab ping -c3 10.30.30.1
 ```
 
+</details>
+
 Note:
 - MAB is slower than the EAP cases; allow roughly 30-60 seconds before deciding it failed.
 
 ## Task 6 — Handle rejected auth on Et4
+
+<details>
+<summary>Show configuration</summary>
 
 Configure a failure policy for the bad supplicant:
 
@@ -225,6 +248,7 @@ interface Ethernet4
    dot1x host-mode single-host
    dot1x authentication failure action traffic allow vlan 99
 ```
+</details>
 
 Validate:
 

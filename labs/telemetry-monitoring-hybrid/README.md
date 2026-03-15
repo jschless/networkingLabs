@@ -229,7 +229,6 @@ logging local-interface Management0
 end
 copy running-config startup-config
 ```
-
 </details>
 
 ### Configure `core1`

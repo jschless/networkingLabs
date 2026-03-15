@@ -203,12 +203,19 @@ In production, iBGP sessions use loopback addresses for resilience (session stay
 3. `ebgp-multihop` is NOT needed for iBGP (TTL=255 by default)
 
 Add static routes on r2 and r3 to reach each other's loopbacks:
+<details>
+<summary>Show configuration</summary>
+
 ```
 ! On r2:
 r2(config)# ip route 10.0.0.3/32 10.1.23.2
 ! On r3:
 r3(config)# ip route 10.0.0.2/32 10.1.23.1
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 Then change iBGP peering to use loopbacks:
 ```
@@ -222,6 +229,7 @@ router bgp 65002
       neighbor 10.0.0.3 next-hop-self
    !
 ```
+</details>
 
 ### Observe iBGP split-horizon
 

@@ -156,6 +156,9 @@ First, observe what happens when GR is **disabled** and the FRR process restarts
 docker exec -it clab-graceful-restart-r2 vtysh
 ```
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 router bgp 65000
@@ -165,6 +168,7 @@ router ospf
 end
 write memory
 ```
+</details>
 
 **Step 2: Start a continuous ping from r1 to r3 (traffic that transits r2)**
 
@@ -217,6 +221,9 @@ Now re-enable Graceful Restart on r2 and repeat the test.
 docker exec -it clab-graceful-restart-r2 vtysh
 ```
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 router bgp 65000
@@ -228,6 +235,7 @@ router ospf
 end
 write memory
 ```
+</details>
 
 **Step 2: Wait for sessions to re-establish and GR capability to be negotiated**
 
@@ -306,12 +314,16 @@ Temporarily reduce the restart-time on r2 to a very short value:
 docker exec -it clab-graceful-restart-r2 vtysh
 ```
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 router bgp 65000
  bgp graceful-restart restart-time 10
 end
 ```
+</details>
 
 Now r1 and r3 have been told r2 will restart within 10 seconds. If r2 takes longer than 10 seconds to come back, helpers will flush stale routes.
 

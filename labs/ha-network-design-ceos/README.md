@@ -113,6 +113,9 @@ docker exec -it clab-ha-network-design-ceos-hosta Cli
 
 Configure dist peer-link and MLAG domain.
 
+<details>
+<summary>Show configuration</summary>
+
 On `dist1`:
 
 ```
@@ -144,6 +147,7 @@ interface Port-Channel10
 interface Ethernet1
    channel-group 10 mode active
 ```
+</details>
 
 On `dist2` use matching config with `peer-address 10.255.254.1`.
 
@@ -163,6 +167,9 @@ show ip interface brief
 
 ### Task 2 - Configure VRRP gateway HA on VLAN 10
 
+<details>
+<summary>Show configuration</summary>
+
 On `dist1`:
 
 ```
@@ -172,6 +179,10 @@ interface Vlan10
    vrrp 10 priority 120
    vrrp 10 preempt delay minimum 30
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 On `dist2`:
 
@@ -182,6 +193,7 @@ interface Vlan10
    vrrp 10 priority 100
    vrrp 10 preempt delay minimum 30
 ```
+</details>
 
 Verify:
 
@@ -195,6 +207,9 @@ Expected: `dist1` is Master, `dist2` is Backup.
 
 If dist1 loses upstream routing connectivity, it should relinquish gateway master role.
 
+<details>
+<summary>Show configuration</summary>
+
 On `dist1`:
 
 ```
@@ -205,6 +220,7 @@ interface Vlan10
    vrrp 10 track 1 decrement 30
    vrrp 10 track 2 decrement 30
 ```
+</details>
 
 On `dist2`, add similar tracking for its uplinks.
 
@@ -222,6 +238,9 @@ Use area 0 on all routed links and advertise Loopback0 on all six campus/edge no
 
 Example (`core1`):
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 router ospf 10
@@ -230,6 +249,7 @@ router ospf 10
    network 10.0.2.0/24 area 0
    network 10.255.0.21/32 area 0
 ```
+</details>
 
 Apply equivalent per-node router-id and loopback network statements on:
 - `dist1`, `dist2`
@@ -248,6 +268,9 @@ Expected: multiple equal-cost next-hops where topology allows ECMP.
 
 ### Task 5 - Enable BFD for faster failure detection
 
+<details>
+<summary>Show configuration</summary>
+
 On each routed point-to-point interface in OSPF domain:
 
 ```
@@ -256,6 +279,7 @@ interface EthernetX
    bfd interval 300 min-rx 300 multiplier 3
    ip ospf bfd
 ```
+</details>
 
 Verify:
 
@@ -269,6 +293,9 @@ AS plan:
 - `edge1` = AS65010, peer to `isp1` (AS65101)
 - `edge2` = AS65020, peer to `isp2` (AS65102)
 
+<details>
+<summary>Show configuration</summary>
+
 On `edge1`:
 
 ```
@@ -280,8 +307,12 @@ router bgp 65010
       neighbor 203.0.113.1 activate
       network 10.255.0.31/32
 ```
+</details>
 
 On `edge2` use neighbor `203.0.113.3 remote-as 65102` and `network 10.255.0.32/32`.
+
+<details>
+<summary>Show configuration</summary>
 
 On `isp1`:
 
@@ -294,6 +325,7 @@ router bgp 65101
       neighbor 203.0.113.0 activate
       network 172.20.20.20/32
 ```
+</details>
 
 On `isp2` mirror with AS65102 and neighbor `203.0.113.2`.
 
@@ -310,11 +342,15 @@ On each edge router, redistribute BGP into OSPF with policy control.
 
 Example (basic):
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 router ospf 10
    redistribute bgp
 ```
+</details>
 
 Optional policy-hardening:
 - Prefix-list only `172.20.20.20/32`

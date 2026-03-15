@@ -80,6 +80,9 @@ A stub router by default only advertises connected and/or summary routes.
 If a stub has downstream networks that non-stub routers need to know about,
 use a **leak-map** to selectively allow those prefixes through.
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 ip prefix-list LEAK-CE permit 10.1.30.0/30
 ip prefix-list LEAK-CE permit 10.0.0.5/32
@@ -90,6 +93,7 @@ route-map LEAK-MAP permit 10
 router eigrp 100
  eigrp stub connected summary leak-map LEAK-MAP
 ```
+</details>
 
 spoke3 will still be treated as stub (hub won't query it), but it will
 advertise ce's networks to the hub.
@@ -104,6 +108,9 @@ sudo containerlab deploy -t topology.clab.yml
 
 ### Step 1: Configure EIGRP on all nodes (no stub yet)
 
+<details>
+<summary>Show configuration</summary>
+
 On each node:
 ```
 router eigrp 100
@@ -111,6 +118,7 @@ router eigrp 100
  network <link-subnet>/30
  no auto-summary
 ```
+</details>
 
 Verify full convergence from hub:
 ```
@@ -147,6 +155,9 @@ Peer-type is Stub
 
 ### Step 3: Configure spoke3 as stub with leak-map
 
+<details>
+<summary>Show configuration</summary>
+
 On spoke3:
 ```
 ip prefix-list LEAK-CE seq 5 permit 10.1.30.0/30
@@ -158,6 +169,7 @@ route-map LEAK-MAP permit 10
 router eigrp 100
  eigrp stub connected summary leak-map LEAK-MAP
 ```
+</details>
 
 Verify ce's prefix is still reachable from hub:
 ```

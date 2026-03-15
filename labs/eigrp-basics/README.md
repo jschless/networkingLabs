@@ -58,36 +58,52 @@ docker exec -it clab-eigrp-basics-r1 vtysh
 Configure the same AS number (100) and advertise all interfaces using a catch-all network statement.
 
 ### r1
+<details>
+<summary>Show configuration</summary>
+
 ```
 router eigrp 100
  eigrp router-id 10.0.0.1
  network 0.0.0.0/0
  passive-interface lo
 ```
+</details>
 
 ### r2
+<details>
+<summary>Show configuration</summary>
+
 ```
 router eigrp 100
  eigrp router-id 10.0.0.2
  network 0.0.0.0/0
  passive-interface lo
 ```
+</details>
 
 ### r3
+<details>
+<summary>Show configuration</summary>
+
 ```
 router eigrp 100
  eigrp router-id 10.0.0.3
  network 0.0.0.0/0
  passive-interface lo
 ```
+</details>
 
 ### r4
+<details>
+<summary>Show configuration</summary>
+
 ```
 router eigrp 100
  eigrp router-id 10.0.0.4
  network 0.0.0.0/0
  passive-interface lo
 ```
+</details>
 
 ---
 

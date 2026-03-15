@@ -149,20 +149,28 @@ SR distributes MPLS labels via IS-IS extensions — no LDP needed.
 
 ### On each SP router: enable SR in IS-IS
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 router isis CORE
  segment-routing on
  segment-routing prefix <loopback>/32 index <index>
 ```
+</details>
 
 Use each router's index from the table above (e.g. pe1 = index 2).
 
 ### On each SP router: enable MPLS on transit interfaces
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 interface <transit-interface>
  mpls enable
 ```
+</details>
 
 Apply to all transit interfaces (not the loopback, not CE-facing).
 On p1 this means eth1, eth2, eth3. On pe1 this means eth2 only.
@@ -194,6 +202,9 @@ BGP sessions run over loopbacks (reachable via IS-IS from step 1).
 
 ### On rr1: global BGP + route reflector
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 router bgp 65000
  bgp router-id 10.0.0.1
@@ -218,8 +229,12 @@ router bgp 65000
   neighbor IBGP send-community both
  exit-address-family
 ```
+</details>
 
 ### On pe1 and pe2: BGP toward rr1
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 router bgp 65000
@@ -238,6 +253,7 @@ router bgp 65000
   neighbor 10.0.0.1 send-community both
  exit-address-family
 ```
+</details>
 
 ### Verify BGP
 
@@ -278,17 +294,24 @@ ip link set eth2 master CUST-A    # pe2: CE-facing interface is eth2
 
 ### On pe1 and pe2: declare the VRF in FRR
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 vrf CUST-A
 !
 interface eth1 vrf CUST-A     ! pe1: eth1 is CE-facing
  ip address 192.168.10.2/30
 ```
+</details>
 
 Then run `vtysh -b` (or exit and re-enter vtysh) to reload the config
 after the Linux VRF is in place.
 
 ### On pe1: BGP VRF instance + L3VPN export
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 router bgp 65000 vrf CUST-A
@@ -307,8 +330,12 @@ router bgp 65000 vrf CUST-A
   import vpn
  exit-address-family
 ```
+</details>
 
 ### On pe2: same pattern, different addresses
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 router bgp 65000 vrf CUST-A
@@ -327,8 +354,12 @@ router bgp 65000 vrf CUST-A
   import vpn
  exit-address-family
 ```
+</details>
 
 ### On ce1 and ce2: eBGP toward PE
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 router bgp 65001           ! ce2: use 65002
@@ -343,6 +374,7 @@ router bgp 65001           ! ce2: use 65002
   network 10.100.1.1/32    ! ce2: network 10.100.2.1/32
  exit-address-family
 ```
+</details>
 
 ### Verify L3VPN
 

@@ -340,6 +340,9 @@ These are starter templates, not final answer keys. Fill the TODOs and adapt per
 
 ### Phase 2 Snippet — Underlay Hardening
 
+<details>
+<summary>Show configuration</summary>
+
 Leaf template:
 ```
 configure
@@ -352,6 +355,10 @@ router bgp <LEAF_ASN>
    neighbor <SPINE1_P2P_IP> maximum-routes 32 warning-only
    neighbor <SPINE2_P2P_IP> maximum-routes 32 warning-only
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 Spine template:
 ```
@@ -367,8 +374,12 @@ router bgp <SPINE_ASN>
    neighbor LEAFS route-map FROM-LEAFS-IN in
    ! TODO: bind each leaf neighbor IP to peer-group LEAFS
 ```
+</details>
 
 ### Phase 3 Snippet — VRFs + VLANs on Leafs
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 configure
@@ -392,12 +403,16 @@ interface Ethernet3
 interface Ethernet4
    switchport access vlan 20
 ```
+</details>
 
 TODO ideas:
 1. Pick an endpoint model (local host containers, subinterfaces, or just SVI reachability checks).
 2. Decide if each leaf hosts both tenants or split tenants across leaf pairs.
 
 ### Phase 4 Snippet — EVPN Control Plane
+
+<details>
+<summary>Show configuration</summary>
 
 Leaf template:
 ```
@@ -416,6 +431,10 @@ router bgp <LEAF_ASN>
       neighbor <SPINE1_P2P_IP> activate
       neighbor <SPINE2_P2P_IP> activate
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 Spine template:
 ```
@@ -427,8 +446,12 @@ router bgp <SPINE_ASN>
    address-family evpn
       neighbor <LEAF_PEERS_OR_GROUP> activate
 ```
+</details>
 
 ### Phase 5 Snippet — VXLAN + VNI Mapping
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 configure
@@ -446,6 +469,10 @@ router bgp <LEAF_ASN>
       rd auto
       route-target both 65000:1020
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 Optional L3VNI direction:
 ```
@@ -459,8 +486,12 @@ router bgp <LEAF_ASN>
       route-target import evpn 65000:11020
       route-target export evpn 65000:11020
 ```
+</details>
 
 ### Phase 6 Snippet — Policy + Failure Drills
+
+<details>
+<summary>Show configuration</summary>
 
 Policy skeleton:
 ```
@@ -470,6 +501,7 @@ route-map EVPN-TENANT-A-OUT permit 10
    match ip address prefix-list TENANT_A_ALLOWED
 route-map EVPN-TENANT-A-OUT deny 100
 ```
+</details>
 
 Failure test examples:
 1. Disable one leaf uplink and observe ECMP to single-path transition.

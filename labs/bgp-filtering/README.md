@@ -158,13 +158,20 @@ This works natively without enabling any soft-reconfiguration option.
 Configure BGP on all four nodes. EOS does not require `no bgp ebgp-requires-policy`.
 
 r1 must advertise three prefixes:
+<details>
+<summary>Show configuration</summary>
+
 ```
 network 10.0.0.1/32
 network 172.16.1.0/24
 network 172.16.2.0/24
 ```
+</details>
 
 Example on r1:
+<details>
+<summary>Show configuration</summary>
+
 ```
 r1(config)# router bgp 65001
 r1(config-router-bgp)# bgp router-id 10.0.0.1
@@ -175,6 +182,7 @@ r1(config-router-bgp-af)# network 10.0.0.1/32
 r1(config-router-bgp-af)# network 172.16.1.0/24
 r1(config-router-bgp-af)# network 172.16.2.0/24
 ```
+</details>
 
 Verify on r4 — all six prefixes should be visible:
 ```
@@ -189,6 +197,9 @@ r4# show bgp ipv4 unicast
 
 ### Task 2 — Inbound prefix-list on r2: block 172.16.2.0/24
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 r2(config)# ip prefix-list BLOCK-172-16-2 seq 5 deny 172.16.2.0/24
 r2(config)# ip prefix-list BLOCK-172-16-2 seq 10 permit 0.0.0.0/0 le 32
@@ -196,6 +207,7 @@ r2(config)# router bgp 65002
 r2(config-router-bgp)# address-family ipv4
 r2(config-router-bgp-af)# neighbor 10.1.12.1 prefix-list BLOCK-172-16-2 in
 ```
+</details>
 
 Apply: `clear bgp neighbors 10.1.12.1 soft-inbound`
 
@@ -216,6 +228,9 @@ r2# show bgp neighbors 10.1.12.1 routes
 
 EOS does not have `neighbor filter-list`. Apply AS-path filters via a route-map:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 r3(config)# ip as-path access-list ONLY-AS65001 permit _65001$
 r3(config)# route-map ASPATH-IN permit 10
@@ -224,6 +239,7 @@ r3(config)# router bgp 65003
 r3(config-router-bgp)# address-family ipv4
 r3(config-router-bgp-af)# neighbor 10.1.23.1 route-map ASPATH-IN in
 ```
+</details>
 
 Apply: `clear bgp neighbors 10.1.23.1 soft-inbound`
 
@@ -240,6 +256,9 @@ Verify on r4:
 Instead of filtering at r2, filter at the source. On r1, only send the loopback
 to r2 — suppress the /24 prefixes outbound:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 r1(config)# ip prefix-list LOOPBACK-ONLY seq 5 permit 10.0.0.1/32
 r1(config)# ip prefix-list LOOPBACK-ONLY seq 10 deny 0.0.0.0/0 le 32
@@ -247,6 +266,7 @@ r1(config)# router bgp 65001
 r1(config-router-bgp)# address-family ipv4
 r1(config-router-bgp-af)# neighbor 10.1.12.2 prefix-list LOOPBACK-ONLY out
 ```
+</details>
 
 Apply: `clear bgp * soft-outbound` on r1
 
@@ -258,6 +278,9 @@ On r2, instead of a pure deny/permit, use a route-map that:
 - Accepts 172.16.1.0/24 with local-pref 150
 - Denies 172.16.2.0/24
 - Accepts everything else at default
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 r2(config)# ip prefix-list WANT-172-16-1 seq 5 permit 172.16.1.0/24
@@ -272,6 +295,7 @@ r2(config)# router bgp 65002
 r2(config-router-bgp)# address-family ipv4
 r2(config-router-bgp-af)# neighbor 10.1.12.1 route-map FROM-R1 in
 ```
+</details>
 
 ---
 

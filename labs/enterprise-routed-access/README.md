@@ -250,11 +250,15 @@ ping -i 0.1 10.10.2.2
 ```
 
 **Shut down dist1's uplink to core1:**
+<details>
+<summary>Show configuration</summary>
+
 ```
 dist1# configure
 dist1(config)# interface Ethernet1
 dist1(config-if-Et1)# shutdown
 ```
+</details>
 
 Observe:
 - BFD detects the failure in ~50–300 ms (vs OSPF dead interval of 40 s without BFD)
@@ -273,6 +277,9 @@ ping -i 0.1 10.10.2.2
 ```
 
 **Shut both uplinks on dist1:**
+<details>
+<summary>Show configuration</summary>
+
 ```
 dist1# configure
 dist1(config)# interface Ethernet1
@@ -280,6 +287,7 @@ dist1(config-if-Et1)# shutdown
 dist1(config)# interface Ethernet2
 dist1(config-if-Et2)# shutdown
 ```
+</details>
 
 Result: acc1 still has adjacency to dist2, so h1/h2 maintain full connectivity through dist2 → core. This is the key benefit of dual-homing at the access layer.
 
@@ -294,6 +302,9 @@ In a traditional VLAN-based campus, moving h1 from acc1 to acc2 would require:
 
 In this L3-everywhere design, to "move" h1 to acc2, you only change the host:
 
+<details>
+<summary>Show configuration</summary>
+
 ```bash
 docker exec -it clab-enterprise-routed-access-h1 bash
 # Remove old IP and route
@@ -303,6 +314,7 @@ ip route del default
 ip addr add 10.10.2.10/30 dev eth1
 ip route add default via 10.10.2.9   # hypothetical new gateway
 ```
+</details>
 
 No switch needs to be reconfigured. The host announces its new subnet to the network simply by being connected, and OSPF propagates the new reachability automatically.
 

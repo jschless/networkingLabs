@@ -90,6 +90,9 @@ Create one ACL per traffic type. These ACLs match packets heading to r2's contro
 
 ### r2
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 ip access-list CoPP-BGP
    permit tcp any any eq bgp
@@ -107,6 +110,7 @@ ip access-list CoPP-SSH
 ip access-list CoPP-ARP
    permit arp any any
 ```
+</details>
 
 Verify:
 ```
@@ -120,6 +124,9 @@ show ip access-lists
 A `class-map type copp` classifies packets using the ACLs above. Each class is evaluated in order; the first match wins.
 
 ### r2
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 class-map type copp match-any CLASS-BGP
@@ -137,6 +144,7 @@ class-map type copp match-any CLASS-SSH
 class-map type copp match-any CLASS-ARP
    match arp access-group CoPP-ARP
 ```
+</details>
 
 Verify:
 ```

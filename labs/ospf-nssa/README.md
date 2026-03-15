@@ -68,10 +68,14 @@ After translation:
 
 ### `area X nssa no-summary` (Totally NSSA)
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf
  area 1 nssa no-summary
 ```
+</details>
 
 This adds the "totally" modifier: the ABR stops sending Type-3 (inter-area
 summary) LSAs into area 1. Area 1 routers only receive:
@@ -92,6 +96,9 @@ sudo containerlab deploy -t topology.clab.yml
 
 ### Step 1: Configure basic OSPF (without NSSA first)
 
+<details>
+<summary>Show configuration</summary>
+
 On r1:
 ```
 router ospf
@@ -99,6 +106,10 @@ router ospf
  network 10.0.0.1/32 area 1
  network 10.1.12.0/30 area 1
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 On r2:
 ```
@@ -108,6 +119,10 @@ router ospf
  network 10.1.12.0/30 area 1
  network 10.1.23.0/30 area 0
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 On r3:
 ```
@@ -116,6 +131,7 @@ router ospf
  network 10.0.0.3/32 area 0
  network 10.1.23.0/30 area 0
 ```
+</details>
 
 Verify neighbors:
 ```
@@ -124,11 +140,15 @@ show ip ospf neighbor
 
 ### Step 2: Attempt redistribution WITHOUT NSSA
 
+<details>
+<summary>Show configuration</summary>
+
 On r1, try to redistribute connected:
 ```
 router ospf
  redistribute connected
 ```
+</details>
 
 Check the database on r3:
 ```
@@ -141,17 +161,25 @@ middle ground.
 
 ### Step 3: Configure area 1 as NSSA
 
+<details>
+<summary>Show configuration</summary>
+
 On r1:
 ```
 router ospf
  area 1 nssa
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 On r2:
 ```
 router ospf
  area 1 nssa
 ```
+</details>
 
 Both routers in area 1 must agree on the area type.
 
@@ -207,11 +235,15 @@ ext has a static default route toward r1, so it can return the pings.
 
 ### Step 7 (Optional): Try totally NSSA
 
+<details>
+<summary>Show configuration</summary>
+
 On r2 only (the ABR):
 ```
 router ospf
  area 1 nssa no-summary
 ```
+</details>
 
 On r1, check the routing table — the inter-area routes (O IA) to r3's
 loopback should disappear and be replaced by a single default route:

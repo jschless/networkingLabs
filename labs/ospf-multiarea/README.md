@@ -95,6 +95,9 @@ advertised but do not attempt to form adjacencies.
 
 ### r1 (all interfaces in Area 1)
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 interface Loopback0
  ip ospf area 1
@@ -105,9 +108,13 @@ interface Ethernet1
 router ospf 1
  passive-interface Loopback0
 ```
+</details>
 
 ### r2 (ABR: Ethernet1 in Area 1, Ethernet2 and Loopback0 in Area 0)
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 interface Loopback0
  ip ospf area 0
@@ -121,8 +128,12 @@ interface Ethernet2
 router ospf 1
  passive-interface Loopback0
 ```
+</details>
 
 ### r3 (ABR: Ethernet1 and Loopback0 in Area 0, Ethernet2 in Area 2)
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 interface Loopback0
@@ -137,8 +148,12 @@ interface Ethernet2
 router ospf 1
  passive-interface Loopback0
 ```
+</details>
 
 ### r4 (all interfaces in Area 2)
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 interface Loopback0
@@ -150,6 +165,7 @@ interface Ethernet1
 router ospf 1
  passive-interface Loopback0
 ```
+</details>
 
 ---
 
@@ -213,12 +229,16 @@ A totally-stubby area also suppresses inter-area summary LSAs (Type-3),
 leaving only a single default route. Only the ABR needs the `no-summary`
 keyword; the internal router (r4) keeps plain `stub`.
 
+<details>
+<summary>Show configuration</summary>
+
 On **r3** only:
 
 ```
 router ospf
  area 2 stub no-summary
 ```
+</details>
 
 Check r4's routing table before and after — inter-area routes should
 disappear, leaving only the default route and intra-area prefixes.
@@ -228,10 +248,14 @@ disappear, leaving only the default route and intra-area prefixes.
 ABRs can summarize Type-3 LSAs sent into the backbone. Advertise a
 summary of the Area 2 loopback range instead of the individual /32:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf
  area 2 range 10.0.0.0/24
 ```
+</details>
 
 Verify on r1 and r2 that the specific 10.0.0.4/32 is replaced by the
 summary 10.0.0.0/24 in the OSPF database.

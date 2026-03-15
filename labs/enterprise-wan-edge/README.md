@@ -224,6 +224,9 @@ ping -c 3 2.2.2.2
 
 Simulate isp1 going down and watch traffic fail over to isp2.
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 # On edge — check current default route (should be via isp1 203.0.113.1)
 edge# show ip route 0.0.0.0/0
@@ -238,6 +241,7 @@ edge(config-if-Et1)# end
 # Alternatively, clear the BGP session for immediate failover:
 edge# clear ip bgp 203.0.113.1
 ```
+</details>
 
 After failover:
 ```
@@ -252,12 +256,16 @@ ping -c 3 2.2.2.2    # isp2 loopback reachable via new default path
 ```
 
 Restore:
+<details>
+<summary>Show configuration</summary>
+
 ```
 edge# configure
 edge(config)# interface Ethernet1
 edge(config-if-Et1)# no shutdown
 edge(config-if-Et1)# end
 ```
+</details>
 
 ### Task 2 — Observe Inbound Path Control (AS-Path Prepend)
 
@@ -283,6 +291,9 @@ remote peers would prefer the shorter isp1 path to reach your 198.51.100.0/24 bl
 
 Reduce or increase the prepend count and observe the change.
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 edge# configure
 edge(config)# route-map PREPEND-ISP2 permit 10
@@ -294,6 +305,7 @@ edge# clear ip bgp 203.0.114.1 soft out
 
 isp2# show ip bgp 198.51.100.0/24
 ```
+</details>
 AS path should now be `65300 65300 65300` (3 total: 1 original + 2 prepended).
 
 ### Task 4 — Per-Prefix Traffic Steering

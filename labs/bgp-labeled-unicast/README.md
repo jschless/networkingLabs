@@ -227,19 +227,27 @@ its loopback 10.0.0.4/32 with label 17:
 This is the EOS address family for BGP-LU. It is distinct from `address-family ipv4 unicast`.
 You must explicitly activate neighbors in this AF:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 address-family ipv4 labeled-unicast
  neighbor X.X.X.X activate
  network 10.0.0.1/32
 ```
+</details>
 
 ### MPLS Interface Enablement
+
+<details>
+<summary>Show configuration</summary>
 
 For labeled packets to be forwarded, each interface must have MPLS enabled:
 ```
 interface Ethernet1
    mpls ip
 ```
+</details>
 This is pre-configured in the startup-config files.
 
 ## Challenge Exercises

@@ -49,6 +49,9 @@ sudo containerlab destroy -t topology.clab.yml
 
 ### Level-1 routers: r1, r4, r5
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 Cli
 configure terminal
@@ -67,8 +70,12 @@ router isis CORE
 end
 write memory
 ```
+</details>
 
 ### Level-1/2 routers: r2, r3
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 Cli
@@ -91,6 +98,7 @@ router isis CORE
 end
 write memory
 ```
+</details>
 
 r3 also has eth3 — configure it under IS-IS as well.
 
@@ -157,10 +165,14 @@ pointing toward that L1/2 router. This is how traffic leaves an L1 area.
 
 Optionally, you can leak specific prefixes from L2 into L1 for more precise routing:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 router isis CORE
  redistribute level-2 into level-1 route-map LEAK-MAP
 ```
+</details>
 
 This is useful when you want L1 routers to know specific destinations rather than
 relying solely on a default.

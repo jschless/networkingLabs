@@ -65,6 +65,9 @@ The virtual link:
 
 ### On r2 (ABR between area 2 and area 1):
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf
  router-id 10.0.0.2
@@ -73,8 +76,12 @@ router ospf
  network 10.1.23.0/30 area 1
  area 1 virtual-link 10.0.0.3
 ```
+</details>
 
 ### On r3 (ABR between area 1 and area 0):
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 router ospf
@@ -84,6 +91,7 @@ router ospf
  network 10.1.34.0/30 area 0
  area 1 virtual-link 10.0.0.2
 ```
+</details>
 
 The argument to `area 1 virtual-link` is the **router-id** of the other
 endpoint, NOT an IP address. Both routers must be reachable within area 1.
@@ -102,14 +110,21 @@ Configure all four routers with their respective areas. Do NOT add the
 virtual-link statement yet.
 
 r1:
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf
  router-id 10.0.0.1
  network 10.0.0.1/32 area 2
  network 10.1.12.0/30 area 2
 ```
+</details>
 
 r2:
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf
  router-id 10.0.0.2
@@ -117,8 +132,12 @@ router ospf
  network 10.1.12.0/30 area 2
  network 10.1.23.0/30 area 1
 ```
+</details>
 
 r3:
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf
  router-id 10.0.0.3
@@ -126,14 +145,19 @@ router ospf
  network 10.1.23.0/30 area 1
  network 10.1.34.0/30 area 0
 ```
+</details>
 
 r4:
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf
  router-id 10.0.0.4
  network 10.0.0.4/32 area 0
  network 10.1.34.0/30 area 0
 ```
+</details>
 
 ### Step 2: Observe the broken state
 
@@ -156,17 +180,25 @@ Expected: only area 0 routes — no visibility of area 2.
 
 ### Step 3: Add virtual link on r2 and r3
 
+<details>
+<summary>Show configuration</summary>
+
 On r2:
 ```
 router ospf
  area 1 virtual-link 10.0.0.3
 ```
+</details>
+
+<details>
+<summary>Show configuration</summary>
 
 On r3:
 ```
 router ospf
  area 1 virtual-link 10.0.0.2
 ```
+</details>
 
 ### Step 4: Verify virtual link is up
 

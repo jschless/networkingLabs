@@ -284,6 +284,9 @@ EIGRP->OSPF by the other ASBR.
 
 ### Tag matching in FRR
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 route-map NAME deny 10
  match tag 100        ! Drop routes with tag 100
@@ -291,6 +294,7 @@ route-map NAME deny 10
 route-map NAME permit 20
  set tag 200          ! Apply tag 200 to accepted routes
 ```
+</details>
 
 Tags propagate with the route through the protocol. OSPF carries tags in
 external LSAs. EIGRP carries tags in the topology table.

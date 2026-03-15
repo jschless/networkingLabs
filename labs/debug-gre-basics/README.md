@@ -139,10 +139,9 @@ configure
 interface Tunnel0
    tunnel destination 203.0.113.1
 ```
+</details>
 
 The correct remote for gw-b's tunnel is gw-a's **WAN** IP: `203.0.113.1`.
-
-</details>
 
 ## Verification
 

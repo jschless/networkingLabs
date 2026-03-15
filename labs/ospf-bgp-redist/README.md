@@ -64,6 +64,9 @@ Configure OSPF in area 0 on both nodes. Loopbacks should be passive
 
 ### r1
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 r1# configure
 r1(config)# router ospf 1
@@ -73,8 +76,12 @@ r1(config-router-ospf)# network 10.0.0.1/32 area 0.0.0.0
 r1(config-router-ospf)# network 10.0.12.0/30 area 0.0.0.0
 r1(config-router-ospf)# end
 ```
+</details>
 
 ### asbr
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 asbr# configure
@@ -85,6 +92,7 @@ asbr(config-router-ospf)# network 10.0.0.2/32 area 0.0.0.0
 asbr(config-router-ospf)# network 10.0.12.0/30 area 0.0.0.0
 asbr(config-router-ospf)# end
 ```
+</details>
 
 Verify on asbr: `show ip ospf neighbor` should show r1 in Full state.
 
@@ -93,6 +101,9 @@ Verify on asbr: `show ip ospf neighbor` should show r1 in Full state.
 ## Step 2 — eBGP between asbr and bgp1
 
 ### asbr (AS 65100)
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 asbr# configure
@@ -103,8 +114,12 @@ asbr(config-router-bgp)# address-family ipv4
 asbr(config-router-bgp-af)# neighbor 10.0.23.2 activate
 asbr(config-router-bgp-af)# end
 ```
+</details>
 
 ### bgp1 (AS 65200) — also configure iBGP to bgp2 here
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 bgp1# configure
@@ -118,11 +133,15 @@ bgp1(config-router-bgp-af)# neighbor 10.0.34.2 activate
 bgp1(config-router-bgp-af)# neighbor 10.0.34.2 next-hop-self
 bgp1(config-router-bgp-af)# end
 ```
+</details>
 
 `next-hop-self` is critical: without it, bgp2 receives prefixes with
 a next-hop of 10.0.23.1 (asbr), which bgp2 cannot reach.
 
 ### bgp2 (AS 65200)
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 bgp2# configure
@@ -133,6 +152,7 @@ bgp2(config-router-bgp)# address-family ipv4
 bgp2(config-router-bgp-af)# neighbor 10.0.34.1 activate
 bgp2(config-router-bgp-af)# end
 ```
+</details>
 
 Verify: `show bgp ipv4 unicast summary` on asbr and bgp1 should show
 Established state.
@@ -212,6 +232,9 @@ ping 10.0.0.1 source 10.0.0.4   ! on bgp2
 Instead of blindly redistributing all OSPF routes, apply a route-map
 that sets a BGP community on redistributed prefixes.
 
+<details>
+<summary>Show configuration</summary>
+
 On asbr:
 ```
 asbr# configure
@@ -223,6 +246,7 @@ asbr(config-router-bgp)# address-family ipv4
 asbr(config-router-bgp-af)# redistribute ospf route-map OSPF-TO-BGP
 asbr(config-router-bgp-af)# end
 ```
+</details>
 
 Check `show bgp ipv4 unicast` on bgp1 — the community should appear.
 
@@ -230,6 +254,9 @@ Check `show bgp ipv4 unicast` on bgp1 — the community should appear.
 
 Suppress the transit subnet (10.0.12.0/30) from being redistributed
 into BGP using a prefix-list:
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 asbr# configure
@@ -243,6 +270,7 @@ asbr(config-router-bgp)# address-family ipv4
 asbr(config-router-bgp-af)# redistribute ospf route-map OSPF-TO-BGP
 asbr(config-router-bgp-af)# end
 ```
+</details>
 
 ### Redistribute connected instead of BGP into OSPF
 

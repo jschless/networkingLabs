@@ -43,6 +43,9 @@ sudo containerlab destroy -t topology.clab.yml
 
 ## What You Configure
 
+<details>
+<summary>Show configuration</summary>
+
 On each router, configure IS-IS. Example for r1:
 
 ```
@@ -64,6 +67,7 @@ router isis CORE
 end
 write memory
 ```
+</details>
 
 Repeat for r2, r3, r4 — substituting the correct NET address (see table above).
 

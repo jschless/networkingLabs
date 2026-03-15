@@ -92,6 +92,9 @@ These have globally defined meanings, no AA:NN negotiation needed:
 
 ### Setting a community on outbound routes
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 ! Define the route-map
 route-map SET-COMM permit 10
@@ -102,8 +105,12 @@ router bgp 65001
    address-family ipv4
       neighbor 10.1.12.2 route-map SET-COMM out
 ```
+</details>
 
 ### Setting a well-known community
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 route-map SET-NOEXPORT permit 10
@@ -112,8 +119,12 @@ route-map SET-NOEXPORT permit 10
 ! Or combine: set community 65001:100 no-export additive
 ! "additive" appends to existing communities rather than replacing them
 ```
+</details>
 
 ### Matching a community inbound
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 ! Step 1: define a community-list
@@ -131,13 +142,18 @@ router bgp 65002
    address-family ipv4
       neighbor 10.1.12.1 route-map MATCH-COMM in
 ```
+</details>
 
 ### Stripping communities
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 route-map STRIP-COMM permit 10
    set community none
 ```
+</details>
 
 ### Applying changes without dropping sessions
 
@@ -178,6 +194,9 @@ r4# show bgp ipv4 unicast
 On r1, create a route-map that sets community `65001:100` on outbound routes to r2.
 Since r1 only advertises its loopback (10.0.0.1/32), this effectively tags that prefix.
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 r1(config)# route-map SET-COMM permit 10
 r1(config-route-map-SET-COMM)#    set community 65001:100
@@ -186,6 +205,7 @@ r1(config-router-bgp)#    neighbor 10.1.12.2 send-community
 r1(config-router-bgp)#    address-family ipv4
 r1(config-router-bgp-af)#       neighbor 10.1.12.2 route-map SET-COMM out
 ```
+</details>
 
 Verify on r2:
 ```
@@ -196,6 +216,9 @@ r2# show bgp ipv4 unicast 10.0.0.1/32
 On r3 and r4, the community should still be visible (communities propagate by default).
 
 ### Task 3 — Match community and set local-preference on r2
+
+<details>
+<summary>Show configuration</summary>
 
 On r2, match inbound routes tagged with `65001:100` and set local-preference 200.
 
@@ -209,6 +232,7 @@ r2(config)# router bgp 65002
 r2(config-router-bgp)#    address-family ipv4
 r2(config-router-bgp-af)#       neighbor 10.1.12.1 route-map HONOR-TAG in
 ```
+</details>
 
 Verify:
 ```
@@ -220,10 +244,14 @@ r2# show bgp ipv4 unicast 10.0.0.1/32
 
 Change r1's outbound route-map to set community `no-export`:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 route-map SET-COMM permit 10
    set community no-export
 ```
+</details>
 
 Apply: `clear bgp * soft-outbound` on r1.
 
@@ -236,10 +264,14 @@ Expected: r2 accepts the route but does NOT advertise to r3.
 
 Change to `no-advertise`:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 route-map SET-COMM permit 10
    set community no-advertise
 ```
+</details>
 
 Expected: r2 keeps the route in its local RIB but does not advertise it to
 ANY neighbor — not even r3.
@@ -248,6 +280,9 @@ ANY neighbor — not even r3.
 - r4: route is absent
 
 ### Task 6 — Strip communities before forwarding
+
+<details>
+<summary>Show configuration</summary>
 
 On r2, strip the community from r1's prefix before forwarding to r3:
 
@@ -258,6 +293,7 @@ r2(config)# router bgp 65002
 r2(config-router-bgp)#    address-family ipv4
 r2(config-router-bgp-af)#       neighbor 10.1.23.2 route-map STRIP-COMM out
 ```
+</details>
 
 Verify: r3 receives 10.0.0.1/32 but with no community attached.
 ```
@@ -267,12 +303,16 @@ r3# show bgp ipv4 unicast 10.0.0.1/32
 
 ### Task 7 — Combine communities
 
+<details>
+<summary>Show configuration</summary>
+
 On r1, set multiple communities at once using `additive`:
 
 ```
 route-map SET-COMM permit 10
    set community 65001:100 65001:200 additive
 ```
+</details>
 
 The `additive` keyword is important: without it, `set community` replaces
 all existing communities. With `additive`, it appends to whatever is already set.

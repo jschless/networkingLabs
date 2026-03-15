@@ -62,6 +62,9 @@ docker exec -it clab-bgp-path-selection-ce1 Cli
 Configure BGP sessions and advertise loopbacks. After this step, both paths should work and traffic should flow.
 
 ### ce1 (AS 65001)
+<details>
+<summary>Show configuration</summary>
+
 ```
 router bgp 65001
    bgp router-id 10.0.0.1
@@ -74,8 +77,12 @@ router bgp 65001
       network 10.0.0.1/32
    !
 ```
+</details>
 
 ### isp1 (AS 65100)
+<details>
+<summary>Show configuration</summary>
+
 ```
 router bgp 65100
    bgp router-id 10.0.0.2
@@ -91,8 +98,12 @@ router bgp 65100
       network 10.0.0.2/32
    !
 ```
+</details>
 
 ### isp2 (AS 65100)
+<details>
+<summary>Show configuration</summary>
+
 ```
 router bgp 65100
    bgp router-id 10.0.0.3
@@ -108,8 +119,12 @@ router bgp 65100
       network 10.0.0.3/32
    !
 ```
+</details>
 
 ### ce2 (AS 65002)
+<details>
+<summary>Show configuration</summary>
+
 ```
 router bgp 65002
    bgp router-id 10.0.0.4
@@ -122,6 +137,7 @@ router bgp 65002
       network 10.0.0.4/32
    !
 ```
+</details>
 
 Verify base: `show bgp ipv4 unicast 10.0.0.4/32` on ce1 — should show two paths, one marked `>` as best.
 
@@ -169,6 +185,9 @@ The path via isp1 (10.1.11.2) should now show `weight 200` and be selected (`>`)
 
 Local-pref is carried in iBGP updates and is visible to the entire AS. Highest wins (default 100).
 
+<details>
+<summary>Show configuration</summary>
+
 On **isp1** — set high local-pref for prefixes received from ce1:
 ```
 route-map LP-CE1-HIGH permit 10
@@ -180,6 +199,7 @@ router bgp 65100
       neighbor 10.1.11.1 route-map LP-CE1-HIGH in
    !
 ```
+</details>
 
 This tells isp2 (via iBGP) to prefer isp1's path when exiting toward ce1's prefix. Check on isp2:
 ```
@@ -188,6 +208,9 @@ show bgp ipv4 unicast 10.0.0.1/32
 The path received from isp1 should show `localpref 200` and be selected.
 
 After experimenting, remove the route-map:
+<details>
+<summary>Show configuration</summary>
+
 ```
 router bgp 65100
    !
@@ -195,12 +218,16 @@ router bgp 65100
       no neighbor 10.1.11.1 route-map LP-CE1-HIGH in
    !
 ```
+</details>
 
 ---
 
 ## Experiment 3 — AS-path prepending (influence inbound traffic)
 
 AS-path prepending makes a path look longer, making it less preferred by other ASes. Used to influence which ISP receives inbound traffic.
+
+<details>
+<summary>Show configuration</summary>
 
 On **ce1** — make the path via isp2 look longer (so AS65100 prefers isp1 for inbound to ce1):
 ```
@@ -213,6 +240,7 @@ router bgp 65001
       neighbor 10.1.12.2 route-map PREPEND-ISP2 out
    !
 ```
+</details>
 
 Check on isp2:
 ```
@@ -225,6 +253,9 @@ The AS-path for ce1's prefix should now show `65001 65001 65001` (original + 2 p
 ## Experiment 4 — MED (advisory metric for inbound)
 
 MED (Multi-Exit Discriminator) is sent to a neighbouring AS to suggest which entry point to use. It is only compared between paths that were learned from the **same neighbouring AS** — so it is a weaker influence than local-pref.
+
+<details>
+<summary>Show configuration</summary>
 
 On **ce1** — advertise a low MED to isp1 and high MED to isp2:
 ```
@@ -241,6 +272,7 @@ router bgp 65001
       neighbor 10.1.12.2 route-map MED-HIGH out
    !
 ```
+</details>
 
 Check on isp1 and isp2:
 ```

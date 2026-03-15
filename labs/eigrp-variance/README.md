@@ -94,6 +94,9 @@ sudo containerlab deploy -t topology.clab.yml
 
 ### Step 1: Configure EIGRP on all nodes
 
+<details>
+<summary>Show configuration</summary>
+
 On each router (r1, r2, r3, r4), enter vtysh and configure:
 
 ```
@@ -102,6 +105,7 @@ router eigrp 100
  network 10.1.XY.0/30
  no auto-summary
 ```
+</details>
 
 Note: FRR EIGRP accepts prefix notation in the network statement.
 

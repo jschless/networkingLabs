@@ -93,6 +93,9 @@ on each router to bring up adjacencies and exchange routes.
 
 ### Step 1: Enable OSPFv3 on interfaces
 
+<details>
+<summary>Show configuration</summary>
+
 On each router, in Cli:
 
 ```
@@ -105,6 +108,7 @@ interface Loopback0
  ipv6 ospf6 area 0
  ipv6 ospf6 passive
 ```
+</details>
 
 Transit routers (r2, r3) also need Ethernet2:
 

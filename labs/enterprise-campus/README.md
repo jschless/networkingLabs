@@ -318,20 +318,28 @@ docker start clab-enterprise-campus-core1
 
 Expected: OSPF reconverges within ~30-40 seconds (dead interval × hello interval default).
 To speed up, configure OSPF BFD or reduce timers:
+<details>
+<summary>Show configuration</summary>
+
 ```
 router ospf 1
    timers lsa arrival 100
    timers spf delay initial 100 200 5000
 ```
+</details>
 
 ### Task 4: Add ABR Route Summarization
 Reduce LSA flooding into area 0 by summarizing area 1 subnets on both dist1 and dist2.
+
+<details>
+<summary>Show configuration</summary>
 
 ```bash
 # On dist1 and dist2, add summary for all campus subnets:
 router ospf 1
    area 0.0.0.1 range 10.0.0.0/8
 ```
+</details>
 
 Then verify: `show ip ospf database` on core1 should show a single summary LSA
 (10.0.0.0/8) instead of individual subnet LSAs.

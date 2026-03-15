@@ -108,6 +108,9 @@ Connect to the edge router and enable uRPF strict mode on the attacker-facing in
 docker exec -it clab-urpf-antispoofing-edge vtysh
 ```
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface eth1
@@ -115,6 +118,7 @@ interface eth1
 end
 write memory
 ```
+</details>
 
 Verify configuration:
 
@@ -206,6 +210,9 @@ Loose mode (`reachable-via any`) drops only packets whose source has no route an
 docker exec -it clab-urpf-antispoofing-edge vtysh
 ```
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface eth1
@@ -213,6 +220,7 @@ interface eth1
 end
 write memory
 ```
+</details>
 
 Now repeat the spoofed ping:
 
@@ -272,12 +280,16 @@ Now enable `allow-default`:
 docker exec -it clab-urpf-antispoofing-edge vtysh
 ```
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface eth1
  ip verify unicast source reachable-via any allow-default
 end
 ```
+</details>
 
 Repeat:
 
@@ -293,6 +305,9 @@ docker exec -it clab-urpf-antispoofing-attacker ping -c3 -I 10.99.99.1 10.0.0.10
 ```bash
 docker exec -it clab-urpf-antispoofing-edge vtysh
 ```
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface eth1
@@ -301,6 +316,7 @@ interface eth1
 end
 no ip route 0.0.0.0/0 10.10.2.2
 ```
+</details>
 
 ---
 

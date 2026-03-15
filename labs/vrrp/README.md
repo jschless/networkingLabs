@@ -50,19 +50,27 @@ Cli -c "enable" -c "configure" -c "interface Ethernet1" \
 ```
 
 Or enter vtysh interactively:
+<details>
+<summary>Show configuration</summary>
+
 ```
 interface Ethernet1
  vrrp 1 ip 192.168.1.254
  vrrp 1 priority 110
  vrrp 1 preempt
 ```
+</details>
 
 ### Task 2 — Configure VRRP on r2 (backup, default priority 100)
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 interface Ethernet1
  vrrp 1 ip 192.168.1.254
 ```
+</details>
 
 Priority defaults to 100, which is lower than r1's 110 — r1 wins the election.
 

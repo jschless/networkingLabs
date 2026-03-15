@@ -241,5 +241,3 @@ Paths: 1 available
     10.1.23.1 from 10.1.23.1 (10.0.0.2)
       Origin IGP, metric 0, localpref 100, weight 0, valid, internal, best
 ```
-
-</details>

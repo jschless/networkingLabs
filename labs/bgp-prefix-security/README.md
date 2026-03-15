@@ -60,6 +60,9 @@ docker exec -it clab-bgp-prefix-security-victim Cli
 
 Configure eBGP on all four nodes. Each node peers only with isp. See the TODO comments in each startup-config for the full config stubs.
 
+<details>
+<summary>Show configuration</summary>
+
 On each node, enter configuration mode and apply the BGP config:
 
 ```
@@ -72,6 +75,7 @@ legitimate(config-router-bgp-af)# neighbor 10.1.11.2 activate
 legitimate(config-router-bgp-af)# network 10.0.0.1/32
 legitimate(config-router-bgp-af)# network 192.0.2.0/24
 ```
+</details>
 
 Repeat for isp, hijacker (advertise only its own prefix for now), and victim.
 
@@ -92,6 +96,9 @@ Expected AS-path: `65100 65001`
 
 ### Task 3 — Simulate a route hijack (same prefix)
 
+<details>
+<summary>Show configuration</summary>
+
 On `hijacker`, add 192.0.2.0/24 to the BGP network statements:
 ```
 hijacker# configure
@@ -99,6 +106,7 @@ hijacker(config)# router bgp 65002
 hijacker(config-router-bgp)# address-family ipv4
 hijacker(config-router-bgp-af)# network 192.0.2.0/24
 ```
+</details>
 
 On victim, check the BGP table:
 ```
@@ -113,6 +121,9 @@ The victim may now be routing 192.0.2.0/24 traffic toward the hijacker.
 
 ### Task 4 — More-specific hijack
 
+<details>
+<summary>Show configuration</summary>
+
 On `hijacker`, additionally advertise 192.0.2.128/25 (a more-specific prefix, sourced from Loopback1):
 ```
 hijacker# configure
@@ -120,6 +131,7 @@ hijacker(config)# router bgp 65002
 hijacker(config-router-bgp)# address-family ipv4
 hijacker(config-router-bgp-af)# network 192.0.2.128/25
 ```
+</details>
 
 BGP always prefers the most specific match. The victim will now forward
 traffic for 192.0.2.128/25 to the hijacker, regardless of AS-path.
@@ -135,18 +147,25 @@ show ip route 192.0.2.128/25
 ### Task 5 — Fix 1: max-prefix limit
 
 Protect isp from accepting too many routes from hijacker.
+<details>
+<summary>Show configuration</summary>
+
 Apply on isp, in the BGP config for the hijacker neighbor:
 ```
 isp# configure
 isp(config)# router bgp 65100
 isp(config-router-bgp)# neighbor 10.1.12.2 maximum-routes 5
 ```
+</details>
 
 Note: In EOS this is called `maximum-routes` (not `maximum-prefix`). If hijacker sends more than 5 prefixes, the session is torn down. This protects against route table flooding attacks.
 
 ### Task 6 — Fix 2: prefix-list (whitelist)
 
 The correct fix: only accept prefixes that hijacker is legitimately allowed to announce.
+<details>
+<summary>Show configuration</summary>
+
 Apply on isp, incoming from hijacker:
 
 ```
@@ -157,6 +176,7 @@ isp(config)# router bgp 65100
 isp(config-router-bgp)# address-family ipv4
 isp(config-router-bgp-af)# neighbor 10.1.12.2 prefix-list HIJACKER-IN in
 ```
+</details>
 
 The `le 32` on the deny line catches 192.0.2.0/24 and all more-specifics.
 

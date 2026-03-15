@@ -115,6 +115,9 @@ leaf1 is in `configs/leaf1/startup-config` as comments. Adapt the per-leaf value
 
 ### Task 1 — Create VRF instances
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 conf
 vrf instance TENANT-A
@@ -122,6 +125,7 @@ vrf instance TENANT-B
 ip routing vrf TENANT-A
 ip routing vrf TENANT-B
 ```
+</details>
 
 ### Task 2 — Set the anycast gateway MAC
 
@@ -161,6 +165,9 @@ interface Vxlan1
 Hosts ARP for their gateway and get a consistent response regardless of which leaf
 they're attached to.
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 interface Vlan10
    vrf TENANT-A
@@ -172,6 +179,7 @@ interface Vlan20
    ip address virtual 10.20.20.1/24
    no autostate
 ```
+</details>
 
 ### Task 6 — Configure BGP (underlay + EVPN overlay)
 
@@ -184,6 +192,9 @@ through the fabric unchanged — VXLAN tunnels form to the originating leaf's lo
 not to the spine.
 
 **Adjust these per leaf** (shown for leaf1):
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 router bgp 65001                           ! 65001/65002/65003/65004
@@ -229,6 +240,7 @@ router bgp 65001                           ! 65001/65002/65003/65004
       route-target export evpn 65000:50002
       redistribute connected
 ```
+</details>
 
 ---
 

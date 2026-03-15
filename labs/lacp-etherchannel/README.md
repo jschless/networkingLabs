@@ -95,6 +95,9 @@ Configure a two-member LACP port-channel between sw1 and sw2. Ethernet1 and Ethe
 
 ### On sw1
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 
@@ -111,8 +114,12 @@ interface Ethernet2
 
 end
 ```
+</details>
 
 ### On sw2
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 configure
@@ -130,6 +137,7 @@ interface Ethernet2
 
 end
 ```
+</details>
 
 ### What happens when you add `channel-group 1 mode active`
 
@@ -234,6 +242,9 @@ ping 10.12.0.2
 
 From host1 (after adding a static route on sw1 and sw2):
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 ! On sw1:
 ip route 10.0.1.2/32 10.12.0.2
@@ -241,6 +252,7 @@ ip route 10.0.1.2/32 10.12.0.2
 ! On sw2:
 ip route 10.0.1.1/32 10.12.0.1
 ```
+</details>
 
 Then from host1:
 
@@ -314,12 +326,16 @@ Shut down one member and observe that the bundle stays up with reduced bandwidth
 
 ### Shut one member on sw1
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Ethernet2
    shutdown
 end
 ```
+</details>
 
 ### Verify the bundle is still up
 
@@ -337,12 +353,16 @@ The Port-Channel remains up/up — this is the key benefit of a port-channel ove
 
 ### Restore the link
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Ethernet2
    no shutdown
 end
 ```
+</details>
 
 LACP will re-negotiate and Ethernet2 will rejoin the bundle within a few seconds (or within 1 second with fast timers).
 
@@ -358,6 +378,9 @@ LACP requires negotiation. An alternative is `mode on`, which creates a static b
 
 ### Switch to static mode on sw1
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Ethernet1
@@ -366,9 +389,13 @@ interface Ethernet2
    channel-group 1 mode on
 end
 ```
+</details>
 
 ### Switch to static mode on sw2
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Ethernet1
@@ -377,6 +404,7 @@ interface Ethernet2
    channel-group 1 mode on
 end
 ```
+</details>
 
 ### Verify
 
@@ -394,6 +422,9 @@ The Protocol column now shows `Static` instead of `LACP`. The bundle will form i
 | `passive` | Yes, responds only | Use when partner initiates; will not form if both sides passive |
 | `on` | No | Legacy or when LACP is not supported on the peer |
 
+<details>
+<summary>Show configuration</summary>
+
 For this lab, switch back to LACP active when done:
 
 ```
@@ -404,6 +435,7 @@ interface Ethernet2
    channel-group 1 mode active
 end
 ```
+</details>
 
 ---
 
@@ -431,12 +463,16 @@ Apply the same on sw2.
 
 With `min-links 2`, the port-channel will only stay up when both Ethernet1 and Ethernet2 are bundled. Shut one member:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Ethernet2
    shutdown
 end
 ```
+</details>
 
 Now check:
 
@@ -451,14 +487,21 @@ This causes Port-Channel1 to drop, which triggers a routing reconvergence — bu
 
 ### Remove min-links
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Port-Channel1
    no port-channel min-links
 end
 ```
+</details>
 
 Then restore the shut interface:
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 configure
@@ -466,6 +509,7 @@ interface Ethernet2
    no shutdown
 end
 ```
+</details>
 
 ---
 
@@ -482,6 +526,9 @@ With slow timers (default), a failed link will not be detected by LACP for up to
 
 ### Enable fast LACP timers on sw1
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Ethernet1
@@ -490,9 +537,13 @@ interface Ethernet2
    lacp timer fast
 end
 ```
+</details>
 
 ### Enable fast LACP timers on sw2
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Ethernet1
@@ -501,6 +552,7 @@ interface Ethernet2
    lacp timer fast
 end
 ```
+</details>
 
 ### Verify timer mode
 
@@ -514,6 +566,9 @@ Look for `Timeout=Short` (fast) vs `Timeout=Long` (slow) in the LACP state outpu
 
 With fast timers enabled, shut a member interface and watch how quickly the bundle reacts:
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 ! In one session — watch etherchannel summary repeatedly
 watch 1 show etherchannel summary
@@ -523,10 +578,14 @@ configure
 interface Ethernet2
    shutdown
 ```
+</details>
 
 With slow timers the bundle degrades almost immediately (the physical link drops, which EOS detects instantly via carrier loss — LACP timers matter more when the physical layer stays up but LACP PDUs stop arriving, for example in a unidirectional fiber failure).
 
 To restore:
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 configure
@@ -536,6 +595,7 @@ interface Ethernet2
    no lacp timer fast
 end
 ```
+</details>
 
 ---
 
