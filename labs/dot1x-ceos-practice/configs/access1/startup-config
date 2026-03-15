@@ -1,15 +1,17 @@
 ! access1 - Arista cEOS wired access switch
 !
 ! This node is intentionally only partially configured.
-! Your task is to add AAA, RADIUS, and dot1x/MAB on the access ports.
+! Your task is to add:
+!  - RADIUS + dot1x/MAB for endpoint access control
+!  - TACACS+ admin AAA for operator login, exec authorization, and accounting
 !
 ! Suggested workflow:
 !   1. Verify Et5 can ping 192.168.100.2
-!   2. Add:
+!   2. Add RADIUS:
 !        radius-server host 192.168.100.2 key 0 testing123
 !        aaa authentication dot1x default group radius
 !        aaa accounting dot1x default start-stop group radius
-!   3. Enable:
+!   3. Enable dot1x:
 !        dot1x system-auth-control
 !        dot1x
 !           radius av-pair tunnel-private-group-id
@@ -21,8 +23,16 @@
 !        dot1x mac based authentication
 !   6. Configure Et4 auth-fail handling:
 !        dot1x authentication failure action traffic allow vlan 99
+!   7. Add TACACS+ admin AAA:
+!        tacacs-server host 192.168.199.20 key 0 labkey
+!        aaa authentication login default group tacacs+ local
+!        aaa authorization exec default group tacacs+ local
+!        aaa accounting exec default start-stop group tacacs+
+!        aaa accounting commands all default start-stop group tacacs+
 !
 hostname access1
+!
+username admin privilege 15 role network-admin secret admin
 !
 vlan 10
    name EMPLOYEE
@@ -35,6 +45,9 @@ vlan 30
 !
 vlan 99
    name QUARANTINE
+!
+vlan 199
+   name MANAGEMENT
 !
 interface Ethernet1
    description supplicant-tls
@@ -82,6 +95,24 @@ interface Ethernet8
    description iot-server
    switchport access vlan 30
    spanning-tree portfast
+   no shutdown
+!
+interface Ethernet9
+   description tacacs-server
+   switchport access vlan 199
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet10
+   description admin-workstation
+   switchport access vlan 199
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Vlan199
+   ip address 192.168.199.1/24
    no shutdown
 !
 ip routing

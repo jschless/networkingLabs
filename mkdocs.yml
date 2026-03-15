@@ -1,8 +1,8 @@
 site_name: ContainerLab Networking Labs
 site_description: 93 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, and more.
-site_url: https://joelburger.github.io/containerlab/
-repo_url: https://github.com/joelburger/containerlab
-repo_name: joelburger/containerlab
+site_url: https://jschless.github.io/networkingLabs/
+repo_url: https://github.com/jschless/networkingLabs
+repo_name: jschless/networkingLabs
 edit_uri: edit/main/
 
 docs_dir: docs
