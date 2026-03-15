@@ -64,6 +64,9 @@ sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli
 
 ### Step 2: Add default static route (baseline routing)
 
+<details>
+<summary>Show configuration</summary>
+
 On **router** — establishes a default route so traffic without a PBR match
 can still reach the internet via isp1:
 
@@ -84,6 +87,8 @@ Test: ping isp2's loopback from router (should work via isp1's return route):
 ping 10.99.1.1
 ```
 
+</details>
+
 ### Step 3: Verify without PBR (both hosts use isp1)
 
 From **host-a**, traceroute to isp2's loopback:
@@ -99,6 +104,9 @@ Cli -c "traceroute 10.99.2.1 source 192.168.2.1"
 Both will show the same path via 10.0.1.1 (isp1). This is the problem PBR solves.
 
 ### Step 4: Configure PBR on router
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 Cli
@@ -130,6 +138,8 @@ interface Ethernet2
  ip policy route-map PBR-ISP2
 ```
 
+</details>
+
 ### Step 5: Verify PBR steering
 
 From **host-a**:
@@ -153,6 +163,9 @@ show route-map
 
 ### Step 6: Check routing table (unchanged)
 
+<details>
+<summary>Show configuration</summary>
+
 On **router**:
 ```
 show ip route
@@ -161,6 +174,8 @@ show ip route
 Note that the routing table still shows only the default route via isp1 (10.0.1.2).
 PBR does NOT modify the routing table. It intercepts packets before the routing
 table lookup and forces a different next-hop.
+
+</details>
 
 ## Key Concepts
 

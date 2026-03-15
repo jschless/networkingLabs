@@ -58,6 +58,9 @@ docker exec -it clab-bgp-basics-r2 Cli
 
 ## Step 1 — Configure eBGP between r1 and r2
 
+<details>
+<summary>Show configuration</summary>
+
 On **r1**:
 ```
 router bgp 65001
@@ -86,7 +89,12 @@ Check: `show bgp ipv4 unicast summary` on r1 — the state should reach `Establi
 
 ---
 
+</details>
+
 ## Step 2 — Configure iBGP between r2 and r3
+
+<details>
+<summary>Show configuration</summary>
 
 **Before adding next-hop-self**, add the iBGP peer on both routers and observe the problem:
 
@@ -132,7 +140,12 @@ Now r3 sees r2 (10.1.23.1) as the next-hop for r1's prefix — reachable!
 
 ---
 
+</details>
+
 ## Step 3 — Configure eBGP between r3 and r4
+
+<details>
+<summary>Show configuration</summary>
 
 On **r3** (add to existing config):
 ```
@@ -158,6 +171,8 @@ router bgp 65003
 ```
 
 ---
+
+</details>
 
 ## Verification
 

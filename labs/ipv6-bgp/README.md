@@ -56,6 +56,9 @@ All IP addresses are pre-configured. Choose one of the two approaches below (or 
 
 ### Approach A: IPv4 sessions + extended next-hop for IPv6
 
+<details>
+<summary>Show configuration</summary>
+
 This is the most common enterprise/ISP approach. BGP sessions run over IPv4, but also carry
 IPv6 prefixes. In EOS, when an IPv4 BGP neighbor is activated in `address-family ipv6`, EOS
 automatically negotiates the extended next-hop capability (RFC 5549). No explicit capability
@@ -141,7 +144,12 @@ r4# write memory
 
 ---
 
+</details>
+
 ### Approach B: Native IPv6 BGP sessions
+
+<details>
+<summary>Show configuration</summary>
 
 Sessions run over IPv6 link-local or global IPv6 addresses. Only IPv6 prefixes are carried.
 
@@ -175,6 +183,8 @@ r2# write memory
 ```
 
 (Continue similarly for r3 and r4 with their respective IPv6 peer addresses.)
+
+</details>
 
 ## Verification Commands
 

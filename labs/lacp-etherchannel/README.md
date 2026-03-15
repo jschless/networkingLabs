@@ -413,6 +413,9 @@ The `port-channel min-links` command sets a minimum number of active member port
 
 ### Configure min-links on both switches
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 configure
 interface Port-Channel1
@@ -421,6 +424,8 @@ end
 ```
 
 Apply the same on sw2.
+
+</details>
 
 ### Test min-links behavior
 

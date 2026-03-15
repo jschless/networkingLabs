@@ -84,6 +84,9 @@ ping 192.168.2.10 -c 3    # should FAIL — no route to LAN B
 
 ## Step 2 — Configure Tunnel0 on gw-a
 
+<details>
+<summary>Show configuration</summary>
+
 Enter the EOS CLI on gw-a:
 ```bash
 docker exec -it clab-gre-basics-gw-a Cli
@@ -110,7 +113,12 @@ Look for `line protocol is up` in the output. The tunnel comes up as soon as bot
 
 ---
 
+</details>
+
 ## Step 3 — Configure Tunnel0 on gw-b
+
+<details>
+<summary>Show configuration</summary>
 
 ```bash
 docker exec -it clab-gre-basics-gw-b Cli
@@ -132,7 +140,12 @@ ping 172.16.0.1 repeat 3    ← gw-a tunnel IP; should succeed now
 
 ---
 
+</details>
+
 ## Step 4 — Add static routes through the tunnel
+
+<details>
+<summary>Show configuration</summary>
 
 On **gw-a**:
 ```
@@ -145,6 +158,8 @@ ip route 192.168.1.0/24 172.16.0.1
 ```
 
 ---
+
+</details>
 
 ## Step 5 — Verify end-to-end
 

@@ -130,7 +130,7 @@ On gw-b, `tunnel destination` is `192.168.1.1` (gw-a LAN) instead of `203.0.113.
 
 ## Solution
 
-<details><summary>Fix (don't peek!)</summary>
+<details><summary>Show configuration</summary>
 
 On **gw-b** (EOS CLI):
 

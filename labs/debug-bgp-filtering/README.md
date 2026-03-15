@@ -199,7 +199,7 @@ The filter should be applied `out` on the r3 neighbor, so that r2 blocks
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **r2**:
 

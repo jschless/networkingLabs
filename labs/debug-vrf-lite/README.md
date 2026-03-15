@@ -189,7 +189,7 @@ shows up under VRF-BLUE, and the VRF-RED static route to ce-a1's loopback is ina
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **pe1**:
 

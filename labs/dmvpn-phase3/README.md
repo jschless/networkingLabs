@@ -156,6 +156,9 @@ O     192.168.3.0/24 [110/xx] via 172.16.0.13, Tunnel0
 
 ## Step 2 — Configure spoke1
 
+<details>
+<summary>Show configuration</summary>
+
 ```bash
 docker exec -it clab-dmvpn-phase3-spoke1 Cli
 ```
@@ -180,6 +183,8 @@ router ospf 1
    passive-interface Loopback0
    passive-interface Loopback1
 ```
+
+</details>
 
 ### NHRP parameter explanation
 

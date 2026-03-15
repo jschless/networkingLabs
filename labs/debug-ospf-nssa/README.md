@@ -110,7 +110,7 @@ r1 has Area 1 configured as a **Stub** area; r2 has Area 1 configured as **NSSA*
 
 ## Solution
 
-<details><summary>Fix (don't peek!)</summary>
+<details><summary>Show configuration</summary>
 
 On **r1** in Cli:
 

@@ -57,6 +57,9 @@ docker exec -it clab-spine-leaf-leaf1  Cli
 
 ## Step 1 — Configure spine1 (AS65100)
 
+<details>
+<summary>Show configuration</summary>
+
 ```bash
 docker exec -it clab-spine-leaf-spine1 Cli
 ```
@@ -80,6 +83,8 @@ router bgp 65100
       network 10.0.0.101/32
 ```
 
+</details>
+
 ### Why these two settings matter
 
 **`maximum-paths 4 ecmp 4`** — without this, EOS installs only one BGP path in the FIB even if multiple equal-cost paths exist. The first number controls BGP RIB multipath; the second controls FIB ECMP installation.
@@ -89,6 +94,9 @@ router bgp 65100
 ---
 
 ## Step 2 — Configure spine2 (AS65200)
+
+<details>
+<summary>Show configuration</summary>
 
 ```bash
 docker exec -it clab-spine-leaf-spine2 Cli
@@ -115,7 +123,12 @@ router bgp 65200
 
 ---
 
+</details>
+
 ## Step 3 — Configure leaf1 (AS65001)
+
+<details>
+<summary>Show configuration</summary>
 
 ```bash
 docker exec -it clab-spine-leaf-leaf1 Cli
@@ -139,6 +152,8 @@ router bgp 65001
 Repeat for leaf2–leaf4 with appropriate router-id, neighbor IPs, and AS numbers (see startup-config hints in `configs/leafX/startup-config`).
 
 ---
+
+</details>
 
 ## Step 4 — Verify
 

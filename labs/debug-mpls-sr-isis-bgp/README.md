@@ -132,7 +132,7 @@ pe2 is advertising its prefix (10.0.0.3/32) with SID index **2** instead of **3*
 
 ## Solution
 
-<details><summary>Fix (don't peek!)</summary>
+<details><summary>Show configuration</summary>
 
 On **pe2** in vtysh:
 

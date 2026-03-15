@@ -181,7 +181,7 @@ area, r2 cannot form any adjacencies. It should be `49.0001.0100.0000.0002.00`.
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **r2**:
 

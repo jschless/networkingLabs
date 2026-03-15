@@ -75,10 +75,15 @@ Cross-LAN pings (host-a → host-b) will fail until the IPsec tunnel is up — t
 
 ## Step 1 — Configure the IPsec tunnel on gw-a
 
+<details>
+<summary>Show configuration</summary>
+
 Open a shell on gw-a:
 ```bash
 ./scripts/lab.sh bash ipsec-basics gw-a
 ```
+
+</details>
 
 ### /etc/ipsec.conf
 
@@ -125,10 +130,15 @@ ipsec start
 
 ## Step 2 — Configure the IPsec tunnel on gw-b
 
+<details>
+<summary>Show configuration</summary>
+
 Open a shell on gw-b:
 ```bash
 ./scripts/lab.sh bash ipsec-basics gw-b
 ```
+
+</details>
 
 ### /etc/ipsec.conf
 

@@ -120,6 +120,9 @@ The hub's `show ip nhrp` will be empty until spokes register.
 
 ## Step 2 — Configure spoke1
 
+<details>
+<summary>Show configuration</summary>
+
 ```bash
 docker exec -it clab-dmvpn-phase2-spoke1 Cli
 ```
@@ -145,6 +148,8 @@ router ospf 1
    passive-interface Loopback0
    passive-interface Loopback1
 ```
+
+</details>
 
 ### NHRP parameter explanation
 
@@ -222,6 +227,9 @@ This is the fundamental difference from Phase 1 where all routes pointed to `172
 
 ## Step 6 — Observe the Phase 2 shortcut being created
 
+<details>
+<summary>Show configuration</summary>
+
 Run a large ping from spoke1 to spoke2's LAN and watch the path change:
 
 ```
@@ -255,6 +263,8 @@ Expected — dynamic entry for spoke2 has appeared:
 ```
 
 The `shortcut` flag confirms a direct spoke-to-spoke entry exists.
+
+</details>
 
 ### Traceroute confirms direct path
 

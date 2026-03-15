@@ -203,6 +203,9 @@ Use:
 
 ### Configure `campus1`
 
+<details>
+<summary>Show configuration</summary>
+
 Apply this in the `campus1` CLI:
 
 ```text
@@ -227,7 +230,12 @@ end
 copy running-config startup-config
 ```
 
+</details>
+
 ### Configure `core1`
+
+<details>
+<summary>Show configuration</summary>
 
 Apply this in the `core1` CLI:
 
@@ -271,6 +279,8 @@ Expected result:
 
 - after the collector restart, Prometheus begins showing Ethernet counters for `campus1` and `core1`
 - syslog files for the EOS nodes appear after they generate messages
+
+</details>
 
 ## 3. Discover The Network In OpenNMS
 

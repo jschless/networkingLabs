@@ -61,6 +61,9 @@ and configure `/etc/wireguard/wg0.conf` on each node.
 
 ### Step 1: Generate key pairs on each node
 
+<details>
+<summary>Show configuration</summary>
+
 ```bash
 # Generate hub key pair
 docker exec clab-wireguard-hub bash -c \
@@ -82,7 +85,12 @@ docker exec clab-wireguard-gw-b cat /etc/wireguard/gwb.pub
 
 Note the three public keys — you need them for the peer configurations.
 
+</details>
+
 ### Step 2: Configure hub
+
+<details>
+<summary>Show configuration</summary>
 
 Replace `GWA_PUBKEY` and `GWB_PUBKEY` with the actual public keys from Step 1.
 
@@ -105,7 +113,12 @@ AllowedIPs = 192.168.100.20/32
 EOF'
 ```
 
+</details>
+
 ### Step 3: Configure gw-a
+
+<details>
+<summary>Show configuration</summary>
 
 Replace `HUB_PUBKEY` with hub's public key from Step 1.
 
@@ -124,7 +137,12 @@ PersistentKeepalive = 25
 EOF'
 ```
 
+</details>
+
 ### Step 4: Configure gw-b
+
+<details>
+<summary>Show configuration</summary>
 
 ```bash
 docker exec clab-wireguard-gw-b bash -c 'cat > /etc/wireguard/wg0.conf << EOF
@@ -140,6 +158,8 @@ AllowedIPs = 192.168.100.0/24
 PersistentKeepalive = 25
 EOF'
 ```
+
+</details>
 
 ### Step 5: Start WireGuard on all nodes
 

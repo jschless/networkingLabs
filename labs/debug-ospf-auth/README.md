@@ -165,7 +165,7 @@ script transposed the digits on r2's Ethernet1 only.
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **r2**:
 

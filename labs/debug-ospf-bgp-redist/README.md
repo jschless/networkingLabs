@@ -191,7 +191,7 @@ OSPF process configuration on asbr.
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **asbr**:
 

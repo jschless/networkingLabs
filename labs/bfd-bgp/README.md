@@ -42,6 +42,9 @@ sudo containerlab destroy -t topology.clab.yml
 
 ### Step 1: Configure BGP on all nodes (without BFD first)
 
+<details>
+<summary>Show configuration</summary>
+
 Example for r1:
 
 ```
@@ -95,7 +98,12 @@ Verify BGP sessions are Established:
 show bgp ipv4 unicast summary
 ```
 
+</details>
+
 ### Step 2: Time BGP convergence WITHOUT BFD
+
+<details>
+<summary>Show configuration</summary>
 
 Open a watch window on r1:
 
@@ -118,7 +126,12 @@ Restore the link:
 docker exec clab-bfd-bgp-r2 ip link set eth1 up
 ```
 
+</details>
+
 ### Step 3: Enable BFD per BGP neighbor
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 Cli
@@ -139,6 +152,8 @@ router bgp 65002
  neighbor 10.1.23.2 bfd
 ```
 
+</details>
+
 ### Step 4: Verify BFD sessions
 
 ```
@@ -151,6 +166,9 @@ Each BGP neighbor should have a corresponding BFD session in UP state.
 
 ### Step 5: Time BGP convergence WITH BFD
 
+<details>
+<summary>Show configuration</summary>
+
 Repeat the link-down test. BGP session should tear down in under 1 second.
 
 ```bash
@@ -160,6 +178,8 @@ watch -n0.5 'docker exec clab-bfd-bgp-r1 Cli -c "show bgp ipv4 unicast summary"'
 # Kill the link
 docker exec clab-bfd-bgp-r2 ip link set eth1 down
 ```
+
+</details>
 
 ## Verification Commands
 

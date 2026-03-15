@@ -119,7 +119,7 @@ spoke1's config has `ip nhrp nhs 10.0.0.1 nbma 10.0.0.1` — both the NHS and NB
 
 ## Solution
 
-<details><summary>Fix (don't peek!)</summary>
+<details><summary>Show configuration</summary>
 
 On **spoke1** in Cli:
 

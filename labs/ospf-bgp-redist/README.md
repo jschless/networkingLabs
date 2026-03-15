@@ -141,6 +141,9 @@ Established state.
 
 ## Step 3 — Redistribute OSPF into BGP (at asbr)
 
+<details>
+<summary>Show configuration</summary>
+
 This makes OSPF-learned prefixes (r1's loopback, etc.) visible in BGP.
 
 ```
@@ -156,7 +159,12 @@ and 10.0.0.2/32 with bgp1 (10.0.34.1) as next-hop.
 
 ---
 
+</details>
+
 ## Step 4 — Redistribute BGP into OSPF (at asbr)
+
+<details>
+<summary>Show configuration</summary>
 
 This makes BGP-learned prefixes (bgp1/bgp2 loopbacks, etc.) visible
 in OSPF as Type-5 external LSAs.
@@ -172,6 +180,8 @@ Check on r1: `show ip route ospf` — you should see 10.0.0.3/32 and
 10.0.0.4/32 marked as `OE2` (external type-2).
 
 ---
+
+</details>
 
 ## Verification
 

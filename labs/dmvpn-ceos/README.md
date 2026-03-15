@@ -62,6 +62,9 @@ The hub's `show ip nhrp` output will be empty until spokes register.
 
 ## Step 2 — Configure spoke1 NHRP and OSPF
 
+<details>
+<summary>Show configuration</summary>
+
 Enter spoke1 CLI:
 ```bash
 docker exec -it clab-dmvpn-ceos-spoke1 Cli
@@ -87,6 +90,8 @@ router ospf 1
    passive-interface Loopback0
    passive-interface Loopback1
 ```
+
+</details>
 
 ### NHRP parameter explanation
 

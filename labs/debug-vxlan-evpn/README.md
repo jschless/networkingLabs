@@ -119,7 +119,7 @@ vtep2's vxlan100 interface was created with `local 10.0.0.1` — vtep1's loopbac
 
 ## Solution
 
-<details><summary>Fix (don't peek!)</summary>
+<details><summary>Show configuration</summary>
 
 On **vtep2** (inside container bash):
 

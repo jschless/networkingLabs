@@ -22,7 +22,8 @@
       "Bash(python3.10 -m pip install -r /home/joe/containerlab/requirements-docs.txt 2>&1 | grep -E \"error:|Error:|Successfully|Collecting\" | head -20)",
       "WebFetch(domain:squidfunk.github.io)",
       "WebFetch(domain:docs.github.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(wc:*)"
     ]
   }
 }

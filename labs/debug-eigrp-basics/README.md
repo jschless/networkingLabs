@@ -184,7 +184,7 @@ by r1 and r4, and vice versa. r3 appears isolated.
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **r3**:
 

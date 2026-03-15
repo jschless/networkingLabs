@@ -84,6 +84,9 @@ You should see unencrypted GRE packets (protocol 47).
 
 ### Step 2: Configure IPsec on gw-a
 
+<details>
+<summary>Show configuration</summary>
+
 IPsec transport mode encrypts the payload of IP packets (the GRE data) while preserving
 the outer IP header. This is ideal for GRE because the outer IP header (gw-a to gw-b) is
 preserved, only the GRE contents are encrypted.
@@ -114,7 +117,12 @@ cat > /etc/ipsec.secrets << 'EOF'
 EOF
 ```
 
+</details>
+
 ### Step 3: Configure IPsec on gw-b
+
+<details>
+<summary>Show configuration</summary>
 
 ```bash
 docker exec -it clab-gre-ipsec-gw-b bash
@@ -137,6 +145,8 @@ cat > /etc/ipsec.secrets << 'EOF'
 203.0.113.6 203.0.113.1 : PSK "SuperSecret123"
 EOF
 ```
+
+</details>
 
 ### Step 4: Start IPsec on both gateways
 

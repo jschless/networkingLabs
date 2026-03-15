@@ -52,6 +52,9 @@ sudo docker exec -it clab-ospf-default-route-asbr Cli
 
 ## Step 1 — Configure Basic OSPF on core and asbr
 
+<details>
+<summary>Show configuration</summary>
+
 Configure OSPF on the two internal routers. Do **not** include the external
 interface (asbr's Ethernet2 toward internet) in OSPF.
 
@@ -88,7 +91,12 @@ core# show ip route
 
 There is no `0.0.0.0/0` entry. core has no way to reach the internet.
 
+</details>
+
 ## Step 2 — Add a Static Default Route on asbr
+
+<details>
+<summary>Show configuration</summary>
 
 The asbr needs to know how to reach the internet. Add a static default pointing
 to the internet router's address:
@@ -110,7 +118,12 @@ S      0.0.0.0/0 [1/0] via 203.0.113.2, Ethernet2
 
 core still has no default route — the static route on asbr is local to asbr.
 
+</details>
+
 ## Step 3 — Inject the Default Route Into OSPF
+
+<details>
+<summary>Show configuration</summary>
 
 Now configure asbr to originate a default route into OSPF:
 
@@ -142,7 +155,12 @@ Also verify the Type-5 LSA directly:
 core# show ip ospf database external
 ```
 
+</details>
+
 ## Step 4 — Experiment: Remove the Static Default
+
+<details>
+<summary>Show configuration</summary>
 
 See what happens when the upstream path disappears:
 
@@ -166,7 +184,12 @@ Restore the static default:
 asbr(config)# ip route 0.0.0.0/0 203.0.113.2
 ```
 
+</details>
+
 ## Step 5 — The `always` Keyword
+
+<details>
+<summary>Show configuration</summary>
 
 The `always` keyword forces asbr to advertise the default route regardless of
 whether a default route exists in its own routing table:
@@ -180,6 +203,8 @@ asbr(config-router)# default-information originate always
 Now even if you run `no ip route 0.0.0.0/0 203.0.113.2`, core will still see
 the `O E2 0.0.0.0/0` route. However, traffic following that default will be
 **black-holed** at asbr (it has no idea where to send it).
+
+</details>
 
 ### When is `always` appropriate?
 
@@ -202,6 +227,9 @@ asbr(config-router)# default-information originate
 (Removing `always` — issue the command without it to override.)
 
 ## Step 6 — Conditional Default With a Route-Map
+
+<details>
+<summary>Show configuration</summary>
 
 A more robust approach: only inject the default when a specific prefix confirms
 internet connectivity is actually working. We use the presence of the
@@ -253,6 +281,8 @@ sudo docker exec clab-ospf-default-route-asbr ip link set eth2 up
 ```
 
 The default returns automatically when the connected route reappears.
+
+</details>
 
 ## End-to-End Reachability Test
 

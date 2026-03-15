@@ -46,6 +46,9 @@ sudo docker exec -it clab-ospf-auth-r1 Cli
 
 ## Step 1 — Basic OSPF (No Authentication)
 
+<details>
+<summary>Show configuration</summary>
+
 Get OSPF adjacencies working first. Configure all three routers with basic OSPF
 before adding authentication. This confirms the base topology is working.
 
@@ -100,7 +103,12 @@ Verify end-to-end reachability:
 r1# ping 10.0.0.3 source 10.0.0.1
 ```
 
+</details>
+
 ## Step 2 — Add MD5 Authentication
+
+<details>
+<summary>Show configuration</summary>
 
 Now add MD5 authentication to every OSPF interface. The key **must match on both
 ends** of each link — a mismatch prevents adjacency formation.
@@ -152,7 +160,12 @@ Verify adjacencies are still `Full` after adding auth:
 show ip ospf neighbor
 ```
 
+</details>
+
 ## Step 3 — Experiment: Deliberate Key Mismatch
+
+<details>
+<summary>Show configuration</summary>
 
 This simulates a misconfiguration or a rogue router. Change the key on **r1 only**:
 
@@ -171,7 +184,12 @@ The neighbor `10.0.0.1` will disappear from the table.
 
 Notice that r3 is **unaffected** — the mismatch is localized to the r1-r2 link.
 
+</details>
+
 ## Step 4 — Fix the Mismatch
+
+<details>
+<summary>Show configuration</summary>
 
 Restore the correct key on r1:
 ```
@@ -185,6 +203,8 @@ it come back:
 ```
 r2# show ip ospf neighbor
 ```
+
+</details>
 
 ## Per-Interface Auth vs. Area Auth
 

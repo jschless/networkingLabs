@@ -55,6 +55,9 @@ sudo containerlab deploy -t topology.clab.yml
 
 ### Step 2: Configure OSPF (left domain — r1 and asbr1)
 
+<details>
+<summary>Show configuration</summary>
+
 On **r1**:
 ```
 vtysh
@@ -75,7 +78,12 @@ router ospf
  network 10.1.10.0/30 area 0
 ```
 
+</details>
+
 ### Step 3: Configure OSPF (right domain — asbr2 and r3)
+
+<details>
+<summary>Show configuration</summary>
 
 On **asbr2**:
 ```
@@ -97,7 +105,12 @@ router ospf
  network 10.1.30.0/30 area 0
 ```
 
+</details>
+
 ### Step 4: Configure EIGRP AS 100
+
+<details>
+<summary>Show configuration</summary>
 
 On **asbr1**, **r2**, and **asbr2**:
 ```
@@ -110,7 +123,12 @@ router eigrp 100
 
 Verify: `show ip eigrp neighbors` should show adjacencies on all EIGRP nodes.
 
+</details>
+
 ### Step 5: Mutual redistribution WITHOUT tags (observe the problem)
+
+<details>
+<summary>Show configuration</summary>
 
 On **asbr1**:
 ```
@@ -164,7 +182,12 @@ redistributed back into EIGRP by asbr2, then coming back to asbr1, creating a
 potential loop. With two ASBRs, a route can bounce: OSPF-left -> EIGRP -> OSPF-right
 -> EIGRP -> OSPF-left (loop).
 
+</details>
+
 ### Step 6: Fix with route tags
+
+<details>
+<summary>Show configuration</summary>
 
 The solution: each ASBR stamps routes with a tag when redistributing, and denies
 routes with the other direction's tag on the way back.
@@ -209,6 +232,8 @@ route-map OSPF-TO-EIGRP deny 10
 route-map OSPF-TO-EIGRP permit 20
  set tag 100
 ```
+
+</details>
 
 ### Step 7: Verify loop-free operation
 

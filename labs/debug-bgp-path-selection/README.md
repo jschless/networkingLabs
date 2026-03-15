@@ -188,7 +188,7 @@ and propagating via iBGP to isp2.
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **isp1**:
 

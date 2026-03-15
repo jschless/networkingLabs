@@ -194,7 +194,7 @@ next-hop of 10.1.12.1, which r3 can't reach.
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **r2**:
 

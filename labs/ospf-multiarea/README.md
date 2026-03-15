@@ -65,6 +65,9 @@ and `do show ...` to run show commands from config mode.
 
 ## Step 1 — Configure the OSPF process on each router
 
+<details>
+<summary>Show configuration</summary>
+
 Enter Cli on each node and configure the OSPF process. Use the process
 name "CORE" and set the router-id to match the loopback address.
 
@@ -81,6 +84,8 @@ router ospf
 | r4   | `ospf router-id 10.0.0.4`      |
 
 ---
+
+</details>
 
 ## Step 2 — Assign interfaces to OSPF areas
 
@@ -150,6 +155,9 @@ router ospf 1
 
 ## Step 3 — Declare Area 2 as a stub area
 
+<details>
+<summary>Show configuration</summary>
+
 A stub area suppresses external LSAs (Type-5). The ABR (r3) injects a
 default route into the area instead. Both the ABR and every internal
 router in the area must have matching stub configuration.
@@ -165,6 +173,8 @@ After this, r4 should see a default route `0.0.0.0/0` via r3 in its
 OSPF routing table.
 
 ---
+
+</details>
 
 ## Verification
 

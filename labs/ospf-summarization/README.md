@@ -62,6 +62,9 @@ sudo docker exec -it clab-ospf-summarization-r4 Cli
 
 ## Step 1 — Add Extra Loopback Addresses on r1
 
+<details>
+<summary>Show configuration</summary>
+
 To have multiple prefixes to summarize, add two more addresses to r1's loopback:
 
 ```
@@ -74,7 +77,12 @@ r1(config-if)# ip address 10.1.3.1/32
 These three prefixes (10.1.1.1/32, 10.1.2.1/32, 10.1.3.1/32) will all fall
 within the summary range 10.1.0.0/22 used in Step 4.
 
+</details>
+
 ## Step 2 — Configure Basic OSPF With Areas
+
+<details>
+<summary>Show configuration</summary>
 
 Configure each router with OSPF, paying close attention to which interfaces
 belong to which area. The area assignment is what makes r2 an ABR and r3 an ABR
@@ -129,6 +137,8 @@ Verify all adjacencies are `Full`:
 r3# show ip ospf neighbor
 ```
 
+</details>
+
 ### Examine the OSPF Database — Before Summarization
 
 From r4 (furthest from area 1), look at the database:
@@ -146,6 +156,9 @@ r4# show ip ospf database summary
 Note the LSA count. You will compare this after enabling summarization.
 
 ## Step 3 — Redistribute External Routes on r3 (ASBR)
+
+<details>
+<summary>Show configuration</summary>
 
 First, add a static route on r3 for the external network:
 ```
@@ -168,7 +181,12 @@ r4# show ip route ospf
 You should see `O E2 192.168.100.0/24` in r4's routing table. The `E2` means
 the metric is fixed (does not accumulate intra-domain cost) — explained below.
 
+</details>
+
 ## Step 4 — Inter-Area Summarization at r2 (ABR)
+
+<details>
+<summary>Show configuration</summary>
 
 Now configure r2 to summarize all area 1 routes in the 10.1.0.0/22 range into
 a single Type-3 LSA:
@@ -197,6 +215,8 @@ After: `O IA 10.1.0.0/22`
 The summary prefix metric is the **maximum** cost among all contributing
 specific routes.
 
+</details>
+
 ### Suppressing a Range With not-advertise
 
 You can completely hide a range from other areas:
@@ -215,6 +235,9 @@ r2(config-router)# area 1 range 10.1.0.0/22
 
 ## Step 5 — External Summarization at r3 (ASBR)
 
+<details>
+<summary>Show configuration</summary>
+
 If r3 were redistributing many external prefixes (simulating BGP), you would
 want to summarize them. Configure the summary on r3:
 
@@ -232,6 +255,8 @@ r4# show ip ospf database external
 Any redistributed routes within 192.168.100.0/24 are now represented by a
 single Type-5 LSA. Without this, each individual prefix would generate its own
 Type-5 LSA flooded to every router in the entire OSPF domain.
+
+</details>
 
 ## LSA Type Reference
 

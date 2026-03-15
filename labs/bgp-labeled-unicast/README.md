@@ -57,6 +57,9 @@ Your task is to configure BGP Labeled Unicast sessions on all four nodes.
 
 ### Step 1: Configure iBGP-LU within AS65001 (r1 and r2)
 
+<details>
+<summary>Show configuration</summary>
+
 For iBGP-LU in EOS, peers use loopback addresses (reachable via OSPF). The loopback-based iBGP
 peer with `update-source Loopback0` is the correct approach.
 
@@ -90,7 +93,12 @@ r2(config-router-bgp-af)# end
 r2# write memory
 ```
 
+</details>
+
 ### Step 2: Configure eBGP-LU at the AS boundary (r2 and r3)
+
+<details>
+<summary>Show configuration</summary>
 
 The eBGP-LU session between r2 (AS65001) and r3 (AS65002) is already partially configured above
 on r2. On **r3**:
@@ -110,7 +118,12 @@ r3(config-router-bgp-af)# end
 r3# write memory
 ```
 
+</details>
+
 ### Step 3: Configure iBGP-LU within AS65002 (r3 and r4)
+
+<details>
+<summary>Show configuration</summary>
 
 On **r4**:
 ```
@@ -125,6 +138,8 @@ r4(config-router-bgp-af)# network 10.0.0.4/32
 r4(config-router-bgp-af)# end
 r4# write memory
 ```
+
+</details>
 
 ### Step 4: Verify
 

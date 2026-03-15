@@ -51,6 +51,9 @@ sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli
 
 ### Step 2: Configure floating static routes (no tracking yet)
 
+<details>
+<summary>Show configuration</summary>
+
 On **router**:
 ```
 Cli
@@ -72,7 +75,12 @@ Verify both routes are configured:
 show ip route 0.0.0.0/0 longer-prefixes
 ```
 
+</details>
+
 ### Step 3: Configure IP SLA probe
+
+<details>
+<summary>Show configuration</summary>
 
 On **router**:
 ```
@@ -92,7 +100,12 @@ show ip sla statistics
 You should see `Latest operation return code: Success` and the round-trip time
 for ICMP echo probes to 10.99.0.1 via eth1.
 
+</details>
+
 ### Step 4: Configure track object
+
+<details>
+<summary>Show configuration</summary>
 
 On **router**:
 ```
@@ -108,7 +121,12 @@ show track 1
 
 Output will show `State is Up` when the SLA probe succeeds.
 
+</details>
+
 ### Step 5: Tie primary route to track object
+
+<details>
+<summary>Show configuration</summary>
 
 On **router** — remove the untracked primary route and replace with tracked version:
 ```
@@ -123,7 +141,12 @@ Verify routing table still shows primary as active:
 show ip route
 ```
 
+</details>
+
 ### Step 6: Simulate isp1 failure
+
+<details>
+<summary>Show configuration</summary>
 
 On the **router** node, bring down eth1:
 ```
@@ -149,6 +172,8 @@ Test connectivity via backup path:
 ```
 sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- ping 10.0.2.2
 ```
+
+</details>
 
 ### Step 7: Restore isp1 and verify recovery
 

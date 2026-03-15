@@ -209,7 +209,7 @@ during deployment.
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **leaf2**:
 

@@ -179,7 +179,7 @@ The fix is a single interface command on r3.
 ## Solution
 
 <details>
-<summary>Fix (don't peek until you've tried the hints)</summary>
+<summary>Show configuration</summary>
 
 On **r3**:
 

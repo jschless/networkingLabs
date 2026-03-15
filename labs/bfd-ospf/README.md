@@ -45,6 +45,9 @@ sudo containerlab destroy -t topology.clab.yml
 
 ### Step 1: Configure OSPF on all nodes
 
+<details>
+<summary>Show configuration</summary>
+
 Example for r1:
 
 ```
@@ -75,7 +78,12 @@ Verify OSPF neighbors are up before enabling BFD:
 show ip ospf neighbor
 ```
 
+</details>
+
 ### Step 2: Enable BFD on OSPF interfaces
+
+<details>
+<summary>Show configuration</summary>
 
 Add BFD to each interface on each router:
 
@@ -93,7 +101,12 @@ end
 write memory
 ```
 
+</details>
+
 ### Step 3 (Optional): Tune BFD timers
+
+<details>
+<summary>Show configuration</summary>
 
 Default BFD timers are 300ms tx/rx with multiplier 3 (failure = 900ms).
 You can tune them:
@@ -114,6 +127,8 @@ interface Ethernet1
  ip ospf bfd min-tx 100
 ```
 
+</details>
+
 ### Step 4: Verify BFD sessions
 
 ```
@@ -125,6 +140,9 @@ show ip ospf neighbor
 You should see BFD sessions in UP state for each OSPF neighbor.
 
 ### Step 5: Simulate a link failure
+
+<details>
+<summary>Show configuration</summary>
 
 Open two terminal windows. In one, watch OSPF:
 
@@ -148,6 +166,8 @@ Bring the link back up:
 ```bash
 docker exec clab-bfd-ospf-r2 ip link set eth1 up
 ```
+
+</details>
 
 ## Verification Commands
 

@@ -69,6 +69,9 @@ docker exec -it clab-vrf-lite-pe2 Cli
 
 ## Step 1 — Create VRFs and enable routing on pe1
 
+<details>
+<summary>Show configuration</summary>
+
 ```
 pe1# configure terminal
 
@@ -91,7 +94,12 @@ Expected: VRF-RED and VRF-BLUE appear, no interfaces yet.
 
 ---
 
+</details>
+
 ## Step 2 — Assign interfaces to VRFs on pe1
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 pe1# configure terminal
@@ -138,7 +146,12 @@ Expected: 10.10.12.0/30 and 10.10.99.0/30 as directly connected.
 
 ---
 
+</details>
+
 ## Step 3 — Configure static routes on pe1
+
+<details>
+<summary>Show configuration</summary>
 
 ```
 pe1# configure terminal
@@ -151,7 +164,12 @@ pe1(config)# end
 
 ---
 
+</details>
+
 ## Step 4 — Configure pe2 (mirror of pe1, different subnets)
+
+<details>
+<summary>Show configuration</summary>
 
 Repeat Steps 1–3 on pe2. Key differences:
 - Ethernet1 → VRF-RED, 10.10.99.2/30 (inter-PE)
@@ -168,6 +186,8 @@ ip route vrf VRF-BLUE 10.20.0.2/32 10.20.34.2
 ```
 
 ---
+
+</details>
 
 ## Verification
 
