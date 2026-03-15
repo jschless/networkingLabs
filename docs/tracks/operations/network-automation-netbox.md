@@ -3,9 +3,11 @@ title: network-automation-netbox
 ---
 
 !!! tip "Practice Lab"
-    NetBox inventory, automation workflow, programmatic config
+    NetBox capstone: DCIM, IPAM, cables, VLANs, VRFs, API-driven config rendering, backup, and drift detection
 
-!!! note "Image" `frr-lab:local` — `docker build -t frr-lab:local images/frr/`
+!!! note "Images"
+    `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
+    `docker build -t netbox-automation:local labs/network-automation-netbox/`
 
 {%
   include-markdown "../../../labs/network-automation-netbox/README.md"

@@ -2,6 +2,14 @@
   hosts: all
   gather_facts: false
   tasks:
+    - name: Ensure backup directory exists
+      ansible.builtin.file:
+        path: /workspace/backups
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
     - name: Collect running config
       arista.eos.eos_command:
         commands:
@@ -9,6 +17,7 @@
       register: running
 
     - name: Save backup
-      copy:
+      ansible.builtin.copy:
         dest: "/workspace/backups/{{ inventory_hostname }}.cfg"
         content: "{{ running.stdout[0] }}"
+      delegate_to: localhost

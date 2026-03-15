@@ -1,0 +1,7 @@
+- name: Push rendered config from NetBox model
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Load generated EOS config
+      arista.eos.eos_config:
+        src: "/workspace/generated/{{ inventory_hostname }}.cfg"

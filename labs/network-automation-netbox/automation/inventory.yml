@@ -1,6 +1,6 @@
 all:
   hosts:
-    leaf1:
+    spine1:
       ansible_host: 172.31.40.11
       ansible_user: admin
       ansible_password: admin
@@ -8,7 +8,9 @@ all:
       ansible_connection: ansible.netcommon.httpapi
       ansible_httpapi_use_ssl: false
       ansible_httpapi_validate_certs: false
-    leaf2:
+      ansible_become: true
+      ansible_become_method: enable
+    spine2:
       ansible_host: 172.31.40.12
       ansible_user: admin
       ansible_password: admin
@@ -16,3 +18,25 @@ all:
       ansible_connection: ansible.netcommon.httpapi
       ansible_httpapi_use_ssl: false
       ansible_httpapi_validate_certs: false
+      ansible_become: true
+      ansible_become_method: enable
+    leaf1:
+      ansible_host: 172.31.40.13
+      ansible_user: admin
+      ansible_password: admin
+      ansible_network_os: eos
+      ansible_connection: ansible.netcommon.httpapi
+      ansible_httpapi_use_ssl: false
+      ansible_httpapi_validate_certs: false
+      ansible_become: true
+      ansible_become_method: enable
+    leaf2:
+      ansible_host: 172.31.40.14
+      ansible_user: admin
+      ansible_password: admin
+      ansible_network_os: eos
+      ansible_connection: ansible.netcommon.httpapi
+      ansible_httpapi_use_ssl: false
+      ansible_httpapi_validate_certs: false
+      ansible_become: true
+      ansible_become_method: enable

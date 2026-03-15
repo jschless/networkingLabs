@@ -6,16 +6,28 @@ mgmt:
 
 topology:
   nodes:
-    leaf1:
+    spine1:
       kind: ceos
       image: ceos:4.35.2F
       mgmt-ipv4: 172.31.40.11
+      startup-config: configs/spine1/startup-config
+
+    spine2:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.40.12
+      startup-config: configs/spine2/startup-config
+
+    leaf1:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.40.13
       startup-config: configs/leaf1/startup-config
 
     leaf2:
       kind: ceos
       image: ceos:4.35.2F
-      mgmt-ipv4: 172.31.40.12
+      mgmt-ipv4: 172.31.40.14
       startup-config: configs/leaf2/startup-config
 
     postgres:
@@ -59,4 +71,7 @@ topology:
       cmd: sleep infinity
 
   links:
-    - endpoints: ["leaf1:eth1", "leaf2:eth1"]
+    - endpoints: ["spine1:eth1", "leaf1:eth1"]
+    - endpoints: ["spine1:eth2", "leaf2:eth1"]
+    - endpoints: ["spine2:eth1", "leaf1:eth2"]
+    - endpoints: ["spine2:eth2", "leaf2:eth2"]

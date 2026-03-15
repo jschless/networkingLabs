@@ -1,12 +1,22 @@
-# Network Automation and NetBox Lab
+# NetBox Automation Capstone Lab
 
-This lab teaches a practical small-scale automation workflow:
+This lab is a full source-of-truth capstone built around NetBox.
 
-- build inventory in NetBox
-- keep intended state in data files
-- render configs from intent
+You will use NetBox for:
+
+- DCIM objects: site, racks, manufacturer, platform, roles, devices, interfaces, cables
+- IPAM objects: prefixes, IP addresses, primary IPs, VLANs, VRFs
+- structured automation input for config rendering
+- validation against live running state
+
+The automation node includes scripts and playbooks to:
+
+- seed NetBox
+- render EOS configs from the modeled topology
+- push rendered configs
 - back up running configs
-- gather facts and detect drift
+- gather live facts
+- detect drift
 
 ## Build
 
@@ -25,91 +35,342 @@ sudo containerlab deploy -t labs/network-automation-netbox/topology.clab.yml
 docker exec -it clab-network-automation-netbox-automation bash
 ```
 
+If you are on a different machine than the lab host, forward the UI with SSH:
+
+```bash
+ssh -N -L 8001:127.0.0.1:8001 <user>@<lab-host>
+```
+
+Then browse to `http://127.0.0.1:8001`.
+
 ## Topology
 
 ```mermaid
-flowchart LR
-    leaf1["leaf1\ncEOS\n172.31.40.11"]
-    leaf2["leaf2\ncEOS\n172.31.40.12"]
+flowchart TB
+    spine1["spine1\nAS65100\nLo0 10.255.0.11/32\nMgmt 172.31.40.11"]
+    spine2["spine2\nAS65101\nLo0 10.255.0.12/32\nMgmt 172.31.40.12"]
+    leaf1["leaf1\nAS65111\nLo0 10.255.0.13/32\nMgmt 172.31.40.13"]
+    leaf2["leaf2\nAS65112\nLo0 10.255.0.14/32\nMgmt 172.31.40.14"]
     netbox(["netbox\nUI :8001\n172.31.40.23"])
     automation(["automation\nAnsible + Python\n172.31.40.24"])
-    postgres(["postgres\n172.31.40.21"])
-    redis(["redis\n172.31.40.22"])
 
-    leaf1 -- "eth1" --- leaf2
-    netbox --- postgres
-    netbox --- redis
-    automation -. "mgmt network" .- leaf1
-    automation -. "mgmt network" .- leaf2
-    automation -. "API" .- netbox
+    spine1 ---|"10.0.0.0/31"| leaf1
+    spine1 ---|"10.0.0.2/31"| leaf2
+    spine2 ---|"10.0.0.4/31"| leaf1
+    spine2 ---|"10.0.0.6/31"| leaf2
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-
-    class leaf1,leaf2 router
-    class netbox,automation,postgres,redis host
+    automation -. API .- netbox
+    automation -. mgmt .- spine1
+    automation -. mgmt .- spine2
+    automation -. mgmt .- leaf1
+    automation -. mgmt .- leaf2
 ```
 
-## Lab Components
+## What Is In The Lab
 
-- `leaf1`, `leaf2`: small cEOS fleet
-- `netbox`: source-of-truth UI
-- `automation`: Ansible and Python workspace
+Routers:
 
-Files in `/workspace` on the automation node:
+- `spine1`, `spine2`
+- `leaf1`, `leaf2`
 
-- `inventory.yml`
-- `intent.yml`
-- `render_intent.py`
+Service containers:
+
+- `netbox`
+- `postgres`
+- `redis`
+- `automation`
+
+Automation workspace files in `/workspace`:
+
+- `netbox_model.yml`
+- `seed_netbox.py`
+- `render_from_netbox.py`
+- `deploy.yml`
 - `backup.yml`
 - `facts.yml`
+- `drift_report.py`
+- `inventory.yml`
 
-## Suggested Workflow
+## What NetBox Will Model
 
-### 1. Create Inventory in NetBox
+This capstone intentionally uses more of NetBox than the original small lab.
 
-Use the UI to create:
+Seeded object types:
 
 - site
+- tenant
+- manufacturer
+- platform
+- device type
 - device roles
-- devices `leaf1` and `leaf2`
-- their management IPs and interface addresses
+- racks
+- tags
+- devices
+- interfaces
+- cables
+- VLAN group
+- VLANs
+- VRFs
+- prefixes
+- IP addresses
+- primary IPs
 
-### 2. Render Intended Config
+## Lab Addressing
 
-On the automation node:
+### Management
+
+| Device | Management |
+|--------|------------|
+| `spine1` | `172.31.40.11/24` |
+| `spine2` | `172.31.40.12/24` |
+| `leaf1`  | `172.31.40.13/24` |
+| `leaf2`  | `172.31.40.14/24` |
+
+### Loopbacks
+
+| Device | Loopback0 |
+|--------|-----------|
+| `spine1` | `10.255.0.11/32` |
+| `spine2` | `10.255.0.12/32` |
+| `leaf1`  | `10.255.0.13/32` |
+| `leaf2`  | `10.255.0.14/32` |
+
+### Fabric Links
+
+| Link | Subnet |
+|------|--------|
+| `spine1:Ethernet1` ↔ `leaf1:Ethernet1` | `10.0.0.0/31` |
+| `spine1:Ethernet2` ↔ `leaf2:Ethernet1` | `10.0.0.2/31` |
+| `spine2:Ethernet1` ↔ `leaf1:Ethernet2` | `10.0.0.4/31` |
+| `spine2:Ethernet2` ↔ `leaf2:Ethernet2` | `10.0.0.6/31` |
+
+### Service Objects To Model In NetBox
+
+| Object | Values |
+|--------|--------|
+| VRFs | `BLUE`, `GREEN` |
+| VLANs | `10 USERS`, `20 SERVERS` |
+| Service prefixes | `10.10.10.0/24`, `10.20.20.0/24` |
+
+These services are intentionally present even though the capstone focus is NetBox and automation, not end-host data-plane testing.
+
+## Step 1 — Verify The Base Fabric
+
+This lab ships with a working underlay so the automation workflow has a known-good starting point.
+
+Run:
+
+```bash
+./scripts/lab.sh check network-automation-netbox
+```
+
+Expected:
+
+- all BGP adjacencies are established
+- loopback reachability works across the fabric
+- the NetBox UI responds
+
+## Step 2 — Export NetBox Connection Info
+
+The seeding and rendering scripts use the NetBox API.
+
+By default they can auto-provision a token using the lab credentials `admin` / `admin`, so this is enough on the automation node:
+
+```bash
+docker exec -it clab-network-automation-netbox-automation bash
+cd /workspace
+export NETBOX_URL=http://172.31.40.23:8080
+export NETBOX_USERNAME=admin
+export NETBOX_PASSWORD=admin
+```
+
+If you prefer a manually created token, set `NETBOX_TOKEN` instead.
+
+## Step 3 — Seed NetBox
+
+The seed model lives in `netbox_model.yml`.
+
+Run:
 
 ```bash
 cd /workspace
-python3 render_intent.py
+python3 seed_netbox.py
+```
+
+This populates NetBox with:
+
+- fabric devices and racks
+- interfaces and cables
+- management, loopback, and transit addressing
+- VLANs and VRFs
+- IPAM prefixes and IP assignments
+
+After seeding, explore these NetBox areas:
+
+- `DCIM -> Devices`
+- `DCIM -> Interfaces`
+- `DCIM -> Cables`
+- `IPAM -> Prefixes`
+- `IPAM -> IP Addresses`
+- `IPAM -> VLANs`
+- `IPAM -> VRFs`
+- `Organization -> Racks`
+
+## Step 4 — Render Configs From NetBox
+
+Render fresh configs from the modeled topology:
+
+```bash
+cd /workspace
+python3 render_from_netbox.py
 ls generated/
 ```
 
-### 3. Back Up the Running Config
+You should get:
+
+- `generated/spine1.cfg`
+- `generated/spine2.cfg`
+- `generated/leaf1.cfg`
+- `generated/leaf2.cfg`
+
+What the renderer uses:
+
+- devices and roles from NetBox
+- interface/IP structure from the model
+- BGP underlay neighbors derived from the seeded topology
+- VLAN and VRF objects for service configuration on the leaves
+
+## Step 5 — Push The Rendered Config
+
+Install collections if needed:
+
+```bash
+cd /workspace
+ansible-galaxy collection install arista.eos ansible.netcommon
+```
+
+Push the rendered config:
+
+```bash
+ansible-playbook -i inventory.yml deploy.yml
+```
+
+This lets you treat NetBox plus the render step as the intended-state source for the devices.
+
+## Step 6 — Back Up Running Config
 
 ```bash
 cd /workspace
 mkdir -p backups facts
-ansible-galaxy collection install arista.eos ansible.netcommon
 ansible-playbook -i inventory.yml backup.yml
 ```
 
-### 4. Gather Facts
+This saves current running configs into `backups/`.
+
+## Step 7 — Gather Facts
 
 ```bash
+cd /workspace
 ansible-playbook -i inventory.yml facts.yml
 ```
 
-### 5. Introduce Drift
+This saves EOS facts into `facts/`.
 
-Make a manual change on `leaf1`, then compare:
+## Step 8 — Run Drift Detection
 
-- intended config in `generated/`
-- backup in `backups/`
-- live facts in `facts/`
+```bash
+cd /workspace
+python3 drift_report.py
+```
 
-## What This Lab Teaches
+The current drift report checks interface/IP consistency between the NetBox model and live device facts.
 
-- source of truth and running state are not the same thing
-- rendered config, device backup, and gathered facts each answer different operational questions
-- even a small fleet benefits from repeatable pre/post checks
+This is intentionally narrow but practical. It gives you a concrete example of how to compare:
+
+- source of truth
+- intended config
+- observed running state
+
+## Step 9 — Introduce Drift
+
+Make a manual change on one leaf. Good examples:
+
+- change an interface description
+- change an access VLAN on `Ethernet3`
+- remove a loopback address
+- alter a fabric IP
+
+Then rerun:
+
+```bash
+ansible-playbook -i inventory.yml backup.yml
+ansible-playbook -i inventory.yml facts.yml
+python3 drift_report.py
+```
+
+Compare:
+
+- `generated/*.cfg`
+- `backups/*.cfg`
+- `facts/*.json`
+- the NetBox UI
+
+## NetBox Features This Capstone Exercises
+
+### DCIM
+
+- device roles
+- device types
+- platforms
+- racks
+- device inventory
+- interfaces
+- cables
+- tags
+
+### IPAM
+
+- prefixes
+- IP addresses
+- primary IPs
+- VLANs
+- VRFs
+
+### Automation
+
+- API-driven data access
+- rendered config generation
+- programmatic config deployment
+- live facts collection
+- drift detection against the source-of-truth model
+
+## Files To Inspect
+
+- `automation/netbox_model.yml`
+- `automation/seed_netbox.py`
+- `automation/render_from_netbox.py`
+- `automation/deploy.yml`
+- `automation/drift_report.py`
+- `configs/spine1/startup-config`
+- `configs/spine2/startup-config`
+- `configs/leaf1/startup-config`
+- `configs/leaf2/startup-config`
+
+## Ideas To Extend It Further
+
+If you want to keep pushing this lab, the highest-value next additions are:
+
+- create custom fields for ownership, maintenance window, and compliance status
+- add config contexts and merge them into the renderer
+- pull device/interface data directly from NetBox instead of using the YAML model as the seed source
+- add a second site and model inter-site inventory
+- add circuits/providers and WAN-facing devices
+- add server nodes and make VLAN-backed services observable end to end
+- turn the drift report into a fuller compliance report
+
+## What This Capstone Teaches
+
+- NetBox is most valuable when it models both inventory and IPAM consistently
+- source of truth, intended config, and running state are different datasets
+- a small fabric is enough to practice a real automation workflow
+- NetBox becomes useful operationally when it feeds rendering, deployment, and validation, not just documentation

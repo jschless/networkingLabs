@@ -27,3 +27,9 @@ Thumbs.db
 
 # MkDocs generated site
 site/
+
+# NetBox automation lab runtime artifacts
+labs/network-automation-netbox/automation/__pycache__/
+labs/network-automation-netbox/automation/generated/
+labs/network-automation-netbox/automation/backups/
+labs/network-automation-netbox/automation/facts/

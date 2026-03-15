@@ -2,12 +2,21 @@
   hosts: all
   gather_facts: false
   tasks:
+    - name: Ensure facts directory exists
+      ansible.builtin.file:
+        path: /workspace/facts
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
     - name: Gather EOS facts
       arista.eos.eos_facts:
         gather_subset: all
       register: facts
 
     - name: Save summary
-      copy:
+      ansible.builtin.copy:
         dest: "/workspace/facts/{{ inventory_hostname }}.json"
         content: "{{ facts.ansible_facts | to_nice_json }}"
+      delegate_to: localhost

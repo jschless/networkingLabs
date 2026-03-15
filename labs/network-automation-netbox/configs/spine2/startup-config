@@ -1,0 +1,38 @@
+hostname spine2
+!
+username admin privilege 15 role network-admin secret admin
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.255.0.12/32
+!
+interface Ethernet1
+   description to leaf1 Ethernet2
+   no switchport
+   ip address 10.0.0.4/31
+   no shutdown
+!
+interface Ethernet2
+   description to leaf2 Ethernet2
+   no switchport
+   ip address 10.0.0.6/31
+   no shutdown
+!
+router bgp 65101
+   router-id 10.255.0.12
+   maximum-paths 2 ecmp 2
+   neighbor 10.0.0.5 remote-as 65111
+   neighbor 10.0.0.7 remote-as 65112
+   !
+   address-family ipv4
+      neighbor 10.0.0.5 activate
+      neighbor 10.0.0.7 activate
+      network 10.255.0.12/32
+   !
+!
+management api http-commands
+   no shutdown
+   protocol http
+!
+end
