@@ -7,11 +7,25 @@ IP addressing and routing are pre-configured. You write the IPsec config.
 
 ## Topology
 
-```
-[host-a] ---eth1--- [gw-a] ---eth2--- [internet] ---eth2--- [gw-b] ---eth2--- [host-b]
-192.168.1.10        .1                  .2     .5                .6            192.168.2.10
-                    203.0.113.1/30             203.0.113.6/30
-                         LAN A: 192.168.1.0/24      LAN B: 192.168.2.0/24
+```mermaid
+flowchart LR
+    ha(["host-a\n192.168.1.10"])
+    gwa["gw-a\n192.168.1.1\n203.0.113.1"]
+    inet["internet\n203.0.113.2 / .5"]
+    gwb["gw-b\n203.0.113.6\n192.168.2.1"]
+    hb(["host-b\n192.168.2.10"])
+
+    ha -- "192.168.1.0/24" --- gwa
+    gwa -- "203.0.113.0/30" --- inet
+    inet -- "203.0.113.4/30" --- gwb
+    gwb -- "192.168.2.0/24" --- hb
+
+    gwa -. "IPsec IKEv2 tunnel" .- gwb
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class gwa,gwb,inet router
+    class ha,hb host
 ```
 
 | Node     | Interface | Address          | Role                        |

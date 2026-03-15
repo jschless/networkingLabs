@@ -6,11 +6,33 @@ A colleague deployed an MPLS SR-ISIS + BGP VPNv4 topology that was previously wo
 
 ## Topology
 
-```
-[ce1]──[pe1]──[p1]──[rr1]──[p2]──[pe2]──[ce2]
-  AS65001  IS-IS+SR Level-2 core (AS65000)   AS65002
-           BGP VPNv4 with rr1 as Route Reflector
-           VRF: CUST-A on pe1 and pe2
+```mermaid
+flowchart TB
+    rr1["rr1\n10.0.0.1/32\nSID 1 · label 16001\nAS65000 RR"]
+    p1["p1\n10.0.0.4/32\nSID 4 · label 16004"]
+    p2["p2\n10.0.0.5/32\nSID 5 · label 16005"]
+    pe1["pe1\n10.0.0.2/32\nSID 2 · label 16002"]
+    pe2["pe2\n10.0.0.3/32\nSID 3 · label 16003"]
+    ce1(["ce1\n10.0.0.6/32\nAS65001"])
+    ce2(["ce2\n10.0.0.7/32\nAS65002"])
+
+    p1 --- |"10.1.0.4/30"| rr1
+    rr1 --- |"10.1.0.8/30"| p2
+    p1 --- |"10.1.0.12/30"| p2
+    pe1 --- |"10.1.0.0/30"| p1
+    p2 --- |"10.1.0.16/30"| pe2
+    ce1 --- |"192.168.10.0/30"| pe1
+    ce2 --- |"192.168.20.0/30"| pe2
+
+    classDef pe     fill:#5c2d91,color:#fff,stroke:#000
+    classDef p      fill:#7a3b00,color:#fff,stroke:#000
+    classDef rr     fill:#8b0000,color:#fff,stroke:#000
+    classDef ce     fill:#006400,color:#fff,stroke:#000
+
+    class rr1 rr
+    class p1,p2 p
+    class pe1,pe2 pe
+    class ce1,ce2 ce
 ```
 
 ## IP / Node Reference

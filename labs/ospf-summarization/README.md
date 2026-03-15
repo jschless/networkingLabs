@@ -16,10 +16,23 @@ the domain. With `summary-address`, it becomes a single LSA.
 
 ## Topology
 
-```
-[r1] --Area1-- [r2(ABR)] --Area0-- [r3(ASBR)] --Area2-- [r4]
-                                         |
-                               [ext] (192.168.100.x, not in OSPF)
+```mermaid
+flowchart LR
+    r1["r1\n10.1.1.1/32"]
+    r2["r2 ABR\n10.0.0.2/32"]
+    r3["r3 ABR+ASBR\n10.0.0.3/32"]
+    r4["r4\n10.2.0.1/32"]
+    ext(["ext\n192.168.100.2"])
+
+    r1 -- "10.1.12.0/30\nArea 1" --- r2
+    r2 -- "10.1.23.0/30\nArea 0" --- r3
+    r3 -- "10.1.34.0/30\nArea 2" --- r4
+    r3 -- "192.168.100.0/30\n(external)" --- ext
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class r1,r2,r3,r4 router
+    class ext host
 ```
 
 | Segment           | Subnet            | Addresses       | Area   |

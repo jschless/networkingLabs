@@ -19,6 +19,32 @@ sudo containerlab deploy -t labs/enterprise-wireless-architecture/topology.clab.
 
 ## Topology
 
+```mermaid
+flowchart TB
+    dist1["dist1\nVLAN gateways"]
+    acc1["acc1\nAP uplink"]
+    wlc(["wlc\ncontroller\n192.168.99.10\nVLAN99"])
+    radius(["radius\nAAA\nVLAN99"])
+    ap1["ap1\nVLAN99/110/120"]
+    corpsta(["corp-sta\nVLAN110"])
+    gueststa(["guest-sta\nVLAN120"])
+
+    dist1 --- acc1
+    dist1 --- wlc
+    dist1 --- radius
+    acc1 --- ap1
+    ap1 --- corpsta
+    ap1 --- gueststa
+
+    classDef dist   fill:#0077cc,color:#fff,stroke:#000
+    classDef access fill:#00aa88,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class dist1 dist
+    class acc1,ap1 access
+    class wlc,radius,corpsta,gueststa host
+```
+
 - `dist1`: distribution switch with VLAN gateways
 - `acc1`: access switch feeding the AP
 - `wlc`: lightweight controller endpoint on VLAN 99

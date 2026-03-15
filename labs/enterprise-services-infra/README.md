@@ -19,6 +19,28 @@ sudo containerlab deploy -t labs/enterprise-services-infra/topology.clab.yml
 
 ## Topology
 
+```mermaid
+flowchart TB
+    edge1["edge1\nupstream router"]
+    campus1["campus1\ncEOS\nVLAN10 + VLAN99"]
+    client1(["client1\nDHCP client\nVLAN10"])
+    services1(["services1\nDHCP/DNS/NTP/syslog\n192.168.99.10\nVLAN99"])
+    mgmt1(["mgmt1\nadmin WS\n192.168.99.30\nVLAN99"])
+    tacacs1(["tacacs1\nTACACS+\n192.168.99.20\nVLAN99"])
+
+    edge1 --- campus1
+    campus1 --- client1
+    campus1 --- services1
+    campus1 --- mgmt1
+    campus1 --- tacacs1
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class edge1,campus1 router
+    class client1,services1,mgmt1,tacacs1 host
+```
+
 - `campus1`: access/distribution switch with user VLAN 10 and management VLAN 99
 - `edge1`: upstream router
 - `services1`: management-services node at `192.168.99.10`

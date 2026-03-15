@@ -43,11 +43,20 @@ LOOSE MODE  (reachable-via any)
 
 ## Topology
 
-```
-[attacker] ---eth1:10.10.1.0/30--- [edge] ---eth2:10.10.2.0/30--- [internet]
-  lo: 10.0.0.10/32                    lo: 10.0.0.1/32              lo: 10.0.0.100/32
-  eth1: 10.10.1.1/30                  eth1: 10.10.1.2/30
-                                      eth2: 10.10.2.1/30           eth1: 10.10.2.2/30
+```mermaid
+flowchart LR
+    attacker(["attacker\nlo: 10.0.0.10/32\neth1: 10.10.1.1/30"])
+    edge["edge\nlo: 10.0.0.1/32\neth1: 10.10.1.2/30\neth2: 10.10.2.1/30\nuRPF on eth1"]
+    internet(["internet\nlo: 10.0.0.100/32\neth1: 10.10.2.2/30"])
+
+    attacker -- "10.10.1.0/30" --- edge
+    edge -- "10.10.2.0/30" --- internet
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class edge router
+    class attacker,internet host
 ```
 
 - **attacker** — simulates a malicious host that can send packets with spoofed source IPs

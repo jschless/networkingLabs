@@ -8,16 +8,26 @@ performance, and attack surface.
 
 ## Topology
 
-```
-  [gw-a]                         [gw-b]
-  WAN: 10.0.0.10                 WAN: 10.0.0.20
-  wg0: 192.168.100.10            wg0: 192.168.100.20
-        \                              /
-         \-------- [br-wan] ----------/
-                       |
-                    [hub]
-                    WAN: 10.0.0.1
-                    wg0: 192.168.100.1
+```mermaid
+flowchart TB
+    brwan[("br-wan\n10.0.0.0/24")]
+    hub["hub\nWAN: 10.0.0.1\nwg0: 192.168.100.1/24\nListenPort: 51820"]
+    gwa["gw-a\nWAN: 10.0.0.10\nwg0: 192.168.100.10/32"]
+    gwb["gw-b\nWAN: 10.0.0.20\nwg0: 192.168.100.20/32"]
+
+    hub --- brwan
+    gwa --- brwan
+    gwb --- brwan
+
+    gwa -. "WireGuard\n192.168.100.x" .- hub
+    gwb -. "WireGuard\n192.168.100.x" .- hub
+
+    classDef hub    fill:#8b4513,color:#fff,stroke:#000
+    classDef spoke  fill:#4682b4,color:#fff,stroke:#000
+    classDef wan    fill:#ccc,color:#000,stroke:#666,stroke-dasharray:5
+    class hub hub
+    class gwa,gwb spoke
+    class brwan wan
 ```
 
 | Node | WAN IP | WireGuard IP | Role |

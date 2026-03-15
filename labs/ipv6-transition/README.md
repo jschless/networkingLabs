@@ -49,11 +49,26 @@ backbone. Key points:
 
 ### Topology
 
-```
-[ce1 IPv6-only]──eth1──[pe1]──eth2──[p1]──eth2──[pe2]──eth2──[ce2 IPv6-only]
-  AS65001               |       AS65000  IS-IS+SR    |              AS65002
-  fd00:1::/48           |   iBGP: pe1<─RR(p1)─>pe2  |       fd00:2::/48
-                  fd00:10::/127                fd00:20::/127
+```mermaid
+flowchart TB
+    ce1(["ce1\nfd00:1::1/128\nAS65001 · IPv6-only"])
+    pe1["pe1\n10.0.0.1/32\nSID 1 · label 16001\n6PE ingress/egress"]
+    p1["p1\n10.0.0.2/32\nSID 2 · label 16002\nRR + P router"]
+    pe2["pe2\n10.0.0.3/32\nSID 3 · label 16003\n6PE ingress/egress"]
+    ce2(["ce2\nfd00:2::1/128\nAS65002 · IPv6-only"])
+
+    ce1 --- |"fd00:10::/127\n(IPv6 only)"| pe1
+    pe1 --- |"10.1.0.0/30\n(IPv4 MPLS core)"| p1
+    p1 --- |"10.1.0.4/30\n(IPv4 MPLS core)"| pe2
+    pe2 --- |"fd00:20::/127\n(IPv6 only)"| ce2
+
+    classDef pe     fill:#5c2d91,color:#fff,stroke:#000
+    classDef p      fill:#7a3b00,color:#fff,stroke:#000
+    classDef ce     fill:#006400,color:#fff,stroke:#000
+
+    class pe1,pe2 pe
+    class p1 p
+    class ce1,ce2 ce
 ```
 
 **Node roles:**

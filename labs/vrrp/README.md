@@ -5,23 +5,24 @@ Learn how VRRP provides first-hop redundancy: two routers share a single virtual
 
 ## Topology
 
-```
-             192.168.1.10/24
-                  [host]
-                    |
-           192.168.1.0/24 LAN (br-lan)
-            /               \
-  192.168.1.1/24       192.168.1.2/24
-       [r1] MASTER          [r2] BACKUP
-  10.0.1.1/30            10.0.2.1/30
-       |                        |
-  10.0.1.2/30            10.0.2.2/30
-       \                        /
-              [server]
-          lo: 10.99.0.1/32
+```mermaid
+flowchart TB
+    host(["host\n192.168.1.10/24\ngw: 192.168.1.254"])
+    brl["br-lan\n192.168.1.0/24"]
+    r1["r1 MASTER\n192.168.1.1/24\nVRRP VIP: 192.168.1.254\npriority 110"]
+    r2["r2 BACKUP\n192.168.1.2/24\nVRRP VIP: 192.168.1.254\npriority 100"]
+    server(["server\nlo: 10.99.0.1/32"])
 
-VRRP VIP: 192.168.1.254 (shared between r1 and r2)
-host default gateway: 192.168.1.254
+    host --- brl
+    brl --- r1
+    brl --- r2
+    r1 -- "10.0.1.0/30" --- server
+    r2 -- "10.0.2.0/30" --- server
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class r1,r2 router
+    class host,server host
 ```
 
 ## Deploy

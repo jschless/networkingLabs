@@ -4,11 +4,22 @@ Demonstrates MACsec (Media Access Control Security) in two layered scenarios usi
 
 ## Topology
 
-```
-[host-a] eth1 ──── eth1 [sw-a] eth2 ═══(MACsec A)═══ eth2 [sw-b] eth1 ──── eth1 [host-b]
+```mermaid
+flowchart LR
+    hosta(["host-a\nmacsec0: 10.0.0.1/24\nScenario B endpoint"])
+    swa["sw-a\nmacsec0: 192.168.1.1/30\nScenario A infra"]
+    swb["sw-b\nmacsec0: 192.168.1.2/30\nScenario A infra"]
+    hostb(["host-b\nmacsec0: 10.0.0.2/24\nScenario B endpoint"])
 
-═══ = encrypted MACsec link (Scenario A: infrastructure)
-─── = plaintext wire (but carries Scenario B MACsec frames)
+    hosta -- "eth1 (plaintext wire\nScenario B MACsec frames)" --- swa
+    swa == "eth2 MACsec encrypted\nScenario A" === swb
+    swb -- "eth1 (plaintext wire\nScenario B MACsec frames)" --- hostb
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class swa,swb router
+    class hosta,hostb host
 ```
 
 | Node   | Interface | IP             | Role                       |

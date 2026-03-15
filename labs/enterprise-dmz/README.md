@@ -4,26 +4,33 @@ This lab demonstrates the **screened subnet** (dual-firewall DMZ) pattern — th
 
 ## Topology
 
-```
-                      INTERNET
-                          |
-                     [isp cEOS]
-                    /           \
-          203.0.113.1           203.0.114.1
-                |                    |
-       [internet-client]       203.0.114.2
-        203.0.113.2             [fw-outside]   <-- perimeter firewall (nftables)
-                               /     |     \
-                    172.16.0.1  172.16.0.5  172.16.1.1
-                         |           |           |
-                   172.16.0.2  172.16.0.6  172.16.1.2
-                  [web-server] [mail-server]  [fw-inside]  <-- internal firewall
-                  (DMZ-web)    (DMZ-mail)    /           \
-                                      10.0.0.1         10.0.0.5
-                                          |                 |
-                                     10.0.0.2         10.0.0.6
-                                    [db-server]     [workstation]
-                                    (LAN-db)         (LAN-ws)
+```mermaid
+flowchart TB
+    isp["isp\ncEOS"]
+    iclient(["internet-client\n203.0.113.2"])
+    fwout["fw-outside\nperimeter firewall\n203.0.114.2"]
+    web(["web-server\n172.16.0.2\nDMZ-web"])
+    mail(["mail-server\n172.16.0.6\nDMZ-mail"])
+    fwin["fw-inside\ninternal firewall\n172.16.1.2"]
+    db(["db-server\n10.0.0.2\nLAN-db"])
+    ws(["workstation\n10.0.0.6\nLAN-ws"])
+
+    isp -- "203.0.113.0/30" --- iclient
+    isp -- "203.0.114.0/30" --- fwout
+    fwout -- "172.16.0.0/30\nDMZ-web" --- web
+    fwout -- "172.16.0.4/30\nDMZ-mail" --- mail
+    fwout -- "172.16.1.0/30\nDMZ-inner" --- fwin
+    fwin -- "10.0.0.0/30\nLAN-db" --- db
+    fwin -- "10.0.0.4/30\nLAN-ws" --- ws
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef wan    fill:#ccc,color:#000,stroke:#666,stroke-dasharray:5
+
+    class isp isp
+    class fwout,fwin router
+    class iclient,web,mail,db,ws host
 ```
 
 ## Address Summary

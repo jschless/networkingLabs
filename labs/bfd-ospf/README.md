@@ -6,12 +6,18 @@ sub-second failure detection — dramatically faster than OSPF's default 40-seco
 
 ## Topology
 
-```
-[r1] ---10.1.12.0/30--- [r2]
-  \                       /
-  10.1.13.0/30      10.1.23.0/30
-    \                 /
-         [r3]
+```mermaid
+flowchart TB
+    r1["r1\n10.0.0.1/32"]
+    r2["r2\n10.0.0.2/32"]
+    r3["r3\n10.0.0.3/32"]
+
+    r1 -- "10.1.12.0/30" --- r2
+    r2 -- "10.1.23.0/30" --- r3
+    r1 -- "10.1.13.0/30" --- r3
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2,r3 router
 ```
 
 | Link              | Subnet        | Addresses       |

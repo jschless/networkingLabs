@@ -21,18 +21,32 @@ Treat this as a **CLI and control-plane practice lab**. Arista documents the rel
 
 ## Topology
 
-```text
-[supplicant-tls]  eth1 ──── eth1 ─┐
-[supplicant-peap] eth1 ──── eth2 ─┤
-[supplicant-mab]  eth1 ──── eth3 ─┤
-[supplicant-fail] eth1 ──── eth4 ─┤
-                                   │
-                              [access1] cEOS
-                                   │
-                         eth5 ─────┴───── [radius] 192.168.100.2/24
-                         eth6 ─────────── [employee-server]   10.10.10.1/24
-                         eth7 ─────────── [contractor-server] 10.20.20.1/24
-                         eth8 ─────────── [iot-server]        10.30.30.1/24
+```mermaid
+flowchart LR
+    stls(["supplicant-tls\nEAP-TLS → VLAN10"])
+    speap(["supplicant-peap\nPEAP → VLAN20"])
+    smab(["supplicant-mab\nMAB → VLAN30"])
+    sfail(["supplicant-fail\nReject → VLAN99"])
+    access1["access1\ncEOS\n802.1X authenticator"]
+    radius(["radius\nFreeRADIUS\n192.168.100.2"])
+    emp(["employee-server\n10.10.10.1\nVLAN10"])
+    con(["contractor-server\n10.20.20.1\nVLAN20"])
+    iot(["iot-server\n10.30.30.1\nVLAN30"])
+
+    stls -- "Et1" --- access1
+    speap -- "Et2" --- access1
+    smab -- "Et3" --- access1
+    sfail -- "Et4" --- access1
+    access1 -- "Et5\nRADIUS" --- radius
+    access1 -- "Et6\nVLAN10" --- emp
+    access1 -- "Et7\nVLAN20" --- con
+    access1 -- "Et8\nVLAN30" --- iot
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class access1,radius router
+    class stls,speap,smab,sfail,emp,con,iot host
 ```
 
 ## Authentication goals

@@ -29,10 +29,28 @@ Think of the tools this way:
 
 ## Topology
 
-```text
-[client]
-   |
-[branch1 - FRR] --- [campus1 - cEOS] --- [pe1 - FRR] --- [core1 - cEOS] --- [dc1 - FRR] --- [server]
+```mermaid
+flowchart LR
+    client(["client\ntraffic source"])
+    branch1["branch1\nFRR\nenterprise edge"]
+    campus1["campus1\ncEOS\ncampus/dist\ngNMI + SNMP"]
+    pe1["pe1\nFRR\nprovider edge"]
+    core1["core1\ncEOS\nprovider core\ngNMI + SNMP"]
+    dc1["dc1\nFRR\nDC edge"]
+    server(["server\niperf3"])
+
+    client --- branch1
+    branch1 --- campus1
+    campus1 --- pe1
+    pe1 --- core1
+    core1 --- dc1
+    dc1 --- server
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class branch1,campus1,pe1,core1,dc1 router
+    class client,server host
 ```
 
 Roles:

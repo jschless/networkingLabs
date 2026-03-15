@@ -6,11 +6,21 @@ and Level-1/2 routers that bridge them. Understand how routes are leaked between
 
 ## Topology
 
-```
-Area 49.0001                Level-2 Backbone            Area 49.0002
-                           (r2:eth2 <-> r3:eth1)
-[r1(L1)] ---10.1.12.0/30--- [r2(L1/2)] ---10.1.23.0/30--- [r3(L1/2)] ---10.1.34.0/30--- [r4(L1)]
-                                                                      \---10.1.35.0/30--- [r5(L1)]
+```mermaid
+flowchart LR
+    r1["r1\nL1 only\n49.0001\n10.0.0.1/32"]
+    r2["r2\nL1/2 ABR\n49.0001\n10.0.0.2/32"]
+    r3["r3\nL1/2 ABR\n49.0002\n10.0.0.3/32"]
+    r4["r4\nL1 only\n49.0002\n10.0.0.4/32"]
+    r5["r5\nL1 only\n49.0002\n10.0.0.5/32"]
+
+    r1 -- "10.1.12.0/30" --- r2
+    r2 -- "10.1.23.0/30\nL2 Backbone" --- r3
+    r3 -- "10.1.34.0/30" --- r4
+    r3 -- "10.1.35.0/30" --- r5
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2,r3,r4,r5 router
 ```
 
 | Node | Role       | Area      | NET Address                    |

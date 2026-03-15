@@ -17,20 +17,32 @@ fabric, Tenant-B hosts can reach each other, and that no cross-tenant traffic is
 
 ## Topology
 
-```
-                  [spine1]              [spine2]
-                  AS65100               AS65200
-              Lo:10.0.0.101         Lo:10.0.0.102
-             /    /    \    \      /    /    \    \
-           e1   e2   e3   e4   e1   e2   e3   e4
-       [leaf1] [leaf2] [leaf3] [leaf4]
-       AS65001 AS65002 AS65003 AS65004
-       Lo:.1   Lo:.2   Lo:.3   Lo:.4
-          |       |       |       |
-      [host-a1][host-b1][host-a2][host-b2]
-      VLAN 10  VLAN 20  VLAN 10  VLAN 20
-      TENANT-A TENANT-B TENANT-A TENANT-B
-   10.10.10.11 10.20.20.11 10.10.10.12 10.20.20.12
+```mermaid
+flowchart TB
+    spine1["spine1\nAS65100\nLo:10.0.0.101"]
+    spine2["spine2\nAS65200\nLo:10.0.0.102"]
+    leaf1["leaf1\nAS65001\nLo:10.0.0.1"]
+    leaf2["leaf2\nAS65002\nLo:10.0.0.2"]
+    leaf3["leaf3\nAS65003\nLo:10.0.0.3"]
+    leaf4["leaf4\nAS65004\nLo:10.0.0.4"]
+    ha1(["host-a1\nTENANT-A\n10.10.10.11"])
+    hb1(["host-b1\nTENANT-B\n10.20.20.11"])
+    ha2(["host-a2\nTENANT-A\n10.10.10.12"])
+    hb2(["host-b2\nTENANT-B\n10.20.20.12"])
+
+    spine1 --- leaf1 & leaf2 & leaf3 & leaf4
+    spine2 --- leaf1 & leaf2 & leaf3 & leaf4
+    leaf1 --- ha1
+    leaf2 --- hb1
+    leaf3 --- ha2
+    leaf4 --- hb2
+
+    classDef spine fill:#1a1aff,color:#fff,stroke:#000
+    classDef vtep  fill:#0077cc,color:#fff,stroke:#000
+    classDef host  fill:#3d7a3d,color:#fff,stroke:#000
+    class spine1,spine2 spine
+    class leaf1,leaf2,leaf3,leaf4 vtep
+    class ha1,hb1,ha2,hb2 host
 ```
 
 ### Underlay links (all /31)

@@ -20,10 +20,26 @@ ARP and direct L2 forwarding — just like hosts on the same switch.
 
 ## Topology
 
-```
-[ce1]──eth1──[pe1]──eth2──[p1]──eth2──[pe2]──eth2──[ce2]
-             10.0.0.1          10.0.0.2         10.0.0.3
-             (PE)               (P)               (PE)
+```mermaid
+flowchart TB
+    ce1(["ce1\n10.100.0.1/24"])
+    pe1["pe1\n10.0.0.1/32\nPE · LDP + pseudowire"]
+    p1["p1\n10.0.0.2/32\nP · IS-IS + LDP"]
+    pe2["pe2\n10.0.0.3/32\nPE · LDP + pseudowire"]
+    ce2(["ce2\n10.100.0.2/24"])
+
+    ce1 --- |"L2 attachment circuit"| pe1
+    pe1 --- |"10.1.0.0/30\n(MPLS core)"| p1
+    p1 --- |"10.1.0.4/30\n(MPLS core)"| pe2
+    pe2 --- |"L2 attachment circuit"| ce2
+
+    classDef pe     fill:#5c2d91,color:#fff,stroke:#000
+    classDef p      fill:#7a3b00,color:#fff,stroke:#000
+    classDef ce     fill:#006400,color:#fff,stroke:#000
+
+    class pe1,pe2 pe
+    class p1 p
+    class ce1,ce2 ce
 ```
 
 ### MPLS core addressing

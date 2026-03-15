@@ -15,23 +15,39 @@ the VRRP, STP, and OSPF behaviour, then run the demo tasks to observe failover.
 
 ## Topology
 
-```
-                       [isp]  AS65500
-                         | 203.0.113.0/30  (.1=isp, .2=edge)
-                       [edge] AS65100
-                      /         \
-          10.0.12.0/30           10.0.22.0/30
-         (.1=edge,.2=cc1)      (.1=edge,.2=cc2)
-              /                       \
-           [cc1] ---10.0.99.0/30--- [cc2]
-         STP root:               STP root:
-         VLAN 10,30               VLAN 20
-          /      \               /      \
-       [acc1]  [acc2]        [acc3]  [acc4]
-         |                     |
-     [client-a]            [client-b]
-      VLAN 10                VLAN 20
-    10.10.10.11            10.20.20.11
+```mermaid
+flowchart TB
+    isp["isp\nAS65500\n1.1.1.1/32"]
+    edge["edge\nAS65100\n10.0.0.2/32"]
+    cc1["cc1\nSTP root VLAN10,30\n10.0.0.3/32"]
+    cc2["cc2\nSTP root VLAN20\n10.0.0.4/32"]
+    acc1["acc1"]
+    acc2["acc2"]
+    acc3["acc3"]
+    acc4["acc4"]
+    clienta(["client-a\nVLAN10\n10.10.10.11"])
+    clientb(["client-b\nVLAN20\n10.20.20.11"])
+
+    isp -- "203.0.113.0/30" --- edge
+    edge -- "10.0.12.0/30" --- cc1
+    edge -- "10.0.22.0/30" --- cc2
+    cc1 -- "10.0.99.0/30" --- cc2
+    cc1 --- acc1
+    cc1 --- acc2
+    cc2 --- acc3
+    cc2 --- acc4
+    acc1 -- "VLAN10" --- clienta
+    acc3 -- "VLAN20" --- clientb
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef access fill:#00aa88,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+
+    class isp isp
+    class edge,cc1,cc2 router
+    class acc1,acc2,acc3,acc4 access
+    class clienta,clientb host
 ```
 
 ### Node Summary

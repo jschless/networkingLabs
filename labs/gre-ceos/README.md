@@ -8,10 +8,25 @@ Compare with the `gre-basics` lab which uses Linux `ip tunnel` commands; here yo
 
 ## Topology
 
-```
-[host-a] --- [gw-a] ---WAN--- [internet] ---WAN--- [gw-b] --- [host-b]
- LAN A         |    203.0.113.0/30   203.0.113.4/30   |         LAN B
-           Tunnel0: 172.16.0.1                    Tunnel0: 172.16.0.2
+```mermaid
+flowchart LR
+    ha(["host-a\n192.168.1.10"])
+    gwa["gw-a\n203.0.113.1\nTunnel0: 172.16.0.1"]
+    inet["internet\n203.0.113.2 / .5"]
+    gwb["gw-b\n203.0.113.6\nTunnel0: 172.16.0.2"]
+    hb(["host-b\n192.168.2.10"])
+
+    ha -- "192.168.1.0/24" --- gwa
+    gwa -- "203.0.113.0/30" --- inet
+    inet -- "203.0.113.4/30" --- gwb
+    gwb -- "192.168.2.0/24" --- hb
+
+    gwa -. "GRE Tunnel0\n172.16.0.0/30" .- gwb
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class gwa,gwb,inet router
+    class ha,hb host
 ```
 
 ### Physical links (pre-configured)

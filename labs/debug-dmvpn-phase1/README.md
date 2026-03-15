@@ -6,11 +6,19 @@ A colleague deployed a DMVPN Phase 1 hub-and-spoke topology. spoke2 and spoke3 a
 
 ## Topology
 
-```
-          [spoke1] WAN 10.0.0.11  tunnel 172.16.0.11  LAN 192.168.1.0/24
-          [spoke2] WAN 10.0.0.12  tunnel 172.16.0.12  LAN 192.168.2.0/24  ──[br-wan]──[hub]
-          [spoke3] WAN 10.0.0.13  tunnel 172.16.0.13  LAN 192.168.3.0/24
-                                                               hub WAN 10.0.0.1  tunnel 172.16.0.1
+```mermaid
+flowchart TB
+    hub["hub\nWAN: 10.0.0.1\nTunnel0: 172.16.0.1"]
+    spoke1["spoke1\nWAN: 10.0.0.11\nTunnel0: 172.16.0.11\nLAN: 192.168.1.0/24"]
+    spoke2["spoke2\nWAN: 10.0.0.12\nTunnel0: 172.16.0.12\nLAN: 192.168.2.0/24"]
+    spoke3["spoke3\nWAN: 10.0.0.13\nTunnel0: 172.16.0.13\nLAN: 192.168.3.0/24"]
+
+    hub -- "br-wan\n10.0.0.0/24 (NBMA)" --- spoke1
+    hub -- "br-wan\n10.0.0.0/24 (NBMA)" --- spoke2
+    hub -- "br-wan\n10.0.0.0/24 (NBMA)" --- spoke3
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class hub,spoke1,spoke2,spoke3 router
 ```
 
 ## IP / Node Reference

@@ -7,9 +7,15 @@ is mounted into containers, and how basic OSPF adjacency forms.
 
 ## Topology
 
-```
-[r1] ---10.0.0.0/30--- [r2]
-10.0.0.1              10.0.0.2
+```mermaid
+flowchart LR
+    r1["r1\n10.0.0.1"]
+    r2["r2\n10.0.0.2"]
+
+    r1 -- "10.0.0.0/30" --- r2
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2 router
 ```
 
 | Link | Subnet | r1 IP | r2 IP |

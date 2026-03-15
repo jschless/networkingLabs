@@ -12,19 +12,24 @@ docker build -t qos-lab:local labs/qos-enterprise/
 
 ## Topology
 
-```
-                      ┌─────────────────────────────────────────┐
-  10.1.1.0/30         │               ROUTER                    │      10.2.0.0/30
-  [client-voice]──eth1┤eth1  10.1.1.2                           │
-  DSCP EF  (0xb8)     │                          WAN bottleneck │
-                      │                          eth4  10.2.0.1 ├eth4──[server]
-  10.1.2.0/30         │  10.1.2.2  eth2          2Mbps shaped   │      10.2.0.2
-  [client-video]──eth1┤eth2       HTB QoS        (qos-apply.sh) │
-  DSCP AF41 (0x88)    │                                          │
-                      │  10.1.3.2  eth3                          │
-  10.1.3.0/30         │                                          │
-  [client-data] ──eth1┤eth3                                      │
-  DSCP BE   (0x00)    └─────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    voice(["client-voice\n10.1.1.1/30\nDSCP EF 0xb8"])
+    video(["client-video\n10.1.2.1/30\nDSCP AF41 0x88"])
+    data(["client-data\n10.1.3.1/30\nDSCP BE 0x00"])
+    router["router\nHTB QoS on eth4\n2Mbps WAN bottleneck"]
+    server(["server\n10.2.0.2/30\niperf3"])
+
+    voice -- "10.1.1.0/30" --- router
+    video -- "10.1.2.0/30" --- router
+    data -- "10.1.3.0/30" --- router
+    router -- "10.2.0.0/30\nWAN bottleneck" --- server
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class router router
+    class voice,video,data,server host
 ```
 
 The router's `eth4` is the WAN bottleneck — all three client streams converge

@@ -6,14 +6,32 @@ and RADIUS accounting.
 
 ## Topology
 
-```
-[supplicant-tls]  eth1 ──── eth1 ─┐
-[supplicant-peap] eth1 ──── eth2 ─┤
-[supplicant-mab]  eth1 ──── eth3 ─┤─ [authenticator] ─ eth5 ── [radius]
-[supplicant-fail] eth1 ──── eth4 ─┘        br0
-                                           eth6 ── [employee-server]   10.10.10.1
-                                           eth7 ── [contractor-server] 10.20.20.1
-                                           eth8 ── [iot-server]        10.30.30.1
+```mermaid
+flowchart LR
+    stls(["supplicant-tls\nEAP-TLS → VLAN10"])
+    speap(["supplicant-peap\nPEAP → VLAN20"])
+    smab(["supplicant-mab\nMAB → VLAN30"])
+    sfail(["supplicant-fail\nReject → VLAN99"])
+    auth["authenticator\nhostapd + nftables\nbr0"]
+    radius(["radius\nFreeRADIUS\n192.168.100.2"])
+    emp(["employee-server\n10.10.10.1\nVLAN10"])
+    con(["contractor-server\n10.20.20.1\nVLAN20"])
+    iot(["iot-server\n10.30.30.1\nVLAN30"])
+
+    stls -- "eth1" --- auth
+    speap -- "eth2" --- auth
+    smab -- "eth3" --- auth
+    sfail -- "eth4" --- auth
+    auth -- "eth5\nRADIUS UDP" --- radius
+    auth -- "eth6\nVLAN10" --- emp
+    auth -- "eth7\nVLAN20" --- con
+    auth -- "eth8\nVLAN30" --- iot
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class auth,radius router
+    class stls,speap,smab,sfail,emp,con,iot host
 ```
 
 The **authenticator** runs `hostapd` in wired mode on eth1–eth4. Pre-auth, `nftables`

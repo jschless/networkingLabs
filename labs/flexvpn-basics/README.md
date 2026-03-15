@@ -52,14 +52,34 @@ or decrypted (inbound) by the matching SA. This is "route-based" IPsec:
 
 ## Topology
 
-```
-[host-a]─────[gw-a HUB]────[internet]────[gw-b spoke1]────[host-b]
-192.168.1.10  192.168.1.1  .2      .5    .6 192.168.2.1   192.168.2.10
-              203.0.113.1/30      203.0.113.4/30
-                                |
-                                └──────────[gw-c spoke2]────[host-c]
-                                      .9  .10 192.168.3.1  192.168.3.10
-                                  203.0.113.8/30
+```mermaid
+flowchart TB
+    ha(["host-a\n192.168.1.10"])
+    gwa["gw-a (HUB)\n192.168.1.1\n203.0.113.1\nvti1: 10.10.1.1\nvti2: 10.10.2.1"]
+    inet["internet\n203.0.113.2 / .5 / .9"]
+    gwb["gw-b (spoke1)\n203.0.113.6\n192.168.2.1\nvti0: 10.10.1.2"]
+    gwc["gw-c (spoke2)\n203.0.113.10\n192.168.3.1\nvti0: 10.10.2.2"]
+    hb(["host-b\n192.168.2.10"])
+    hc(["host-c\n192.168.3.10"])
+
+    ha -- "192.168.1.0/24" --- gwa
+    gwa -- "203.0.113.0/30" --- inet
+    inet -- "203.0.113.4/30" --- gwb
+    inet -- "203.0.113.8/30" --- gwc
+    gwb -- "192.168.2.0/24" --- hb
+    gwc -- "192.168.3.0/24" --- hc
+
+    gwa -. "IKEv2 VTI\n10.10.1.0/30" .- gwb
+    gwa -. "IKEv2 VTI\n10.10.2.0/30" .- gwc
+
+    classDef hub    fill:#8b4513,color:#fff,stroke:#000
+    classDef spoke  fill:#4682b4,color:#fff,stroke:#000
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class gwa hub
+    class gwb,gwc spoke
+    class inet router
+    class ha,hb,hc host
 ```
 
 | Node | Interface | Address | Role |

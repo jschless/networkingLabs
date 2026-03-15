@@ -2,16 +2,23 @@
 
 ## Topology
 
-```
-        [spoke1] 10.0.0.2
-       / 10.1.11.0/30
-[hub] 10.0.0.1
-       \ 10.1.12.0/30
-        [spoke2] 10.0.0.3
-       \ 10.1.13.0/30
-        [spoke3] 10.0.0.4
-              \ 10.1.30.0/30
-               [ce] 10.0.0.5
+```mermaid
+flowchart TB
+    hub["hub\n10.0.0.1/32"]
+    spoke1["spoke1\n10.0.0.2/32"]
+    spoke2["spoke2\n10.0.0.3/32"]
+    spoke3["spoke3\n10.0.0.4/32"]
+    ce(["ce\n10.0.0.5/32"])
+
+    hub -- "10.1.11.0/30" --- spoke1
+    hub -- "10.1.12.0/30" --- spoke2
+    hub -- "10.1.13.0/30" --- spoke3
+    spoke3 -- "10.1.30.0/30" --- ce
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef ce     fill:#006400,color:#fff,stroke:#000
+    class hub,spoke1,spoke2,spoke3 router
+    class ce ce
 ```
 
 | Link | Subnet | hub/spoke side | spoke/ce side |

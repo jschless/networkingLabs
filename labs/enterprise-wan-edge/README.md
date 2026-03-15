@@ -6,28 +6,29 @@ path selection via local-preference, and inbound traffic engineering via AS-path
 
 ## Topology
 
-```
-                 [isp1]                        [isp2]
-                 AS65100                       AS65200
-              1.1.1.1/32                    2.2.2.2/32
-           203.0.113.1/30                 203.0.114.1/30
-                  |   LP-HIGH in (200)  LP-LOW in (100)  |
-                  |   PREPEND-ISP2 out (3x prepend)      |
-                  +----------------[edge]----------------+
-                                   AS65300
-                                 10.0.0.1/32
-                              198.51.100.0/24
-                              /               \
-                 10.255.1.0/30               10.255.2.0/30
-                        |                           |
-                    [core1]---10.255.3.0/30---[core2]
-                    10.0.0.2/32                10.0.0.3/32
-                        |
-                  10.100.0.0/30
-                        |
-                    [server]
-                  10.100.0.2/30
-                   Linux host
+```mermaid
+flowchart TB
+    isp1["isp1\nAS65100\n1.1.1.1/32"]
+    isp2["isp2\nAS65200\n2.2.2.2/32"]
+    edge["edge\nAS65300\n10.0.0.1/32\n198.51.100.0/24"]
+    core1["core1\n10.0.0.2/32"]
+    core2["core2\n10.0.0.3/32"]
+    server(["server\n10.100.0.2/30"])
+
+    isp1 -- "203.0.113.0/30\nLP-HIGH in (200)" --- edge
+    isp2 -- "203.0.114.0/30\nLP-LOW in (100)" --- edge
+    edge -- "10.255.1.0/30" --- core1
+    edge -- "10.255.2.0/30" --- core2
+    core1 -- "10.255.3.0/30" --- core2
+    core1 -- "10.100.0.0/30" --- server
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+
+    class isp1,isp2 isp
+    class edge,core1,core2 router
+    class server host
 ```
 
 ### Address Plan

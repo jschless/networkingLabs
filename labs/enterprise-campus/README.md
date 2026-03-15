@@ -7,28 +7,47 @@ the traditional 3-tier hierarchy: **Core / Distribution / Access**.
 
 ## Topology Diagram
 
-```
-                  [isp]  AS65500
-                    | 203.0.113.0/30
-                  [edge] AS65100
-                  10.0.0.1  eBGP upstream
-                 /              \
-      10.255.1.0/30          10.255.2.0/30
-           /                        \
-       [core1]----10.255.3.0/30----[core2]
-       10.0.0.2                   10.0.0.3
-       /      \                  /      \
- 10.0.13    10.0.14         10.0.23   10.0.24
- /0/30       /0/30           /0/30     /0/30
-[dist1]------+              +------[dist2]
-10.0.0.4  (VRRP active:    (VRRP active:  10.0.0.5
-           VLAN10,30)        VLAN20)
-  |    |                      |    |
-[acc1][acc2]              [acc3][acc4]
-  |                          |
-[client-a]              [client-b]
-VLAN10                   VLAN20
-10.10.10.11              10.20.20.11
+```mermaid
+flowchart TB
+    isp["isp\nAS65500\n1.1.1.1/32"]
+    edge["edge\nAS65100\n10.0.0.1/32"]
+    core1["core1\n10.0.0.2/32"]
+    core2["core2\n10.0.0.3/32"]
+    dist1["dist1\nVRRP active VLAN10,30\n10.0.0.4/32"]
+    dist2["dist2\nVRRP active VLAN20\n10.0.0.5/32"]
+    acc1["acc1"]
+    acc2["acc2"]
+    acc3["acc3"]
+    acc4["acc4"]
+    clienta(["client-a\nVLAN10\n10.10.10.11"])
+    clientb(["client-b\nVLAN20\n10.20.20.11"])
+
+    isp -- "203.0.113.0/30" --- edge
+    edge -- "10.255.1.0/30" --- core1
+    edge -- "10.255.2.0/30" --- core2
+    core1 -- "10.255.3.0/30" --- core2
+    core1 -- "10.0.13.0/30" --- dist1
+    core1 -- "10.0.14.0/30" --- dist2
+    core2 -- "10.0.23.0/30" --- dist1
+    core2 -- "10.0.24.0/30" --- dist2
+    dist1 --- acc1
+    dist1 --- acc2
+    dist2 --- acc3
+    dist2 --- acc4
+    acc1 -- "VLAN10" --- clienta
+    acc3 -- "VLAN20" --- clientb
+
+    classDef core   fill:#1a1aff,color:#fff,stroke:#000
+    classDef dist   fill:#0077cc,color:#fff,stroke:#000
+    classDef access fill:#00aa88,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+
+    class isp isp
+    class edge,core1,core2 core
+    class dist1,dist2 dist
+    class acc1,acc2,acc3,acc4 access
+    class clienta,clientb host
 ```
 
 ---

@@ -6,17 +6,37 @@ This lab extends the `evpn-vxlan-ceos` fabric with a **border leaf** (`bleaf1`) 
 the EVPN fabric to a simulated internet router. Tenant-A gets external connectivity;
 Tenant-B remains completely isolated.
 
-```
-              [spine1]              [spine2]
-              AS65100               AS65200
-         /   /   \   \   \     /   /   \   \   \
-    [leaf1][leaf2][leaf3][leaf4][bleaf1]
-     65001  65002  65003  65004  65005
-       |      |      |      |        \
-  host-a1 host-b1 host-a2 host-b2   [ext-router]
-  VLAN10  VLAN20  VLAN10  VLAN20     AS65500
- TENANT-A TENANT-B TENANT-A TENANT-B  "internet"
-                                     100.64.0.0/24
+```mermaid
+flowchart TB
+    spine1["spine1\nAS65100\nLo:10.0.0.101"]
+    spine2["spine2\nAS65200\nLo:10.0.0.102"]
+    leaf1["leaf1\nAS65001\nLo:10.0.0.1"]
+    leaf2["leaf2\nAS65002\nLo:10.0.0.2"]
+    leaf3["leaf3\nAS65003\nLo:10.0.0.3"]
+    leaf4["leaf4\nAS65004\nLo:10.0.0.4"]
+    bleaf1["bleaf1\nAS65005\nLo:10.0.0.5"]
+    ext["ext-router\nAS65500\n100.64.0.0/24"]
+    ha1(["host-a1\nTENANT-A\n10.10.10.11"])
+    hb1(["host-b1\nTENANT-B\n10.20.20.11"])
+    ha2(["host-a2\nTENANT-A\n10.10.10.12"])
+    hb2(["host-b2\nTENANT-B\n10.20.20.12"])
+
+    spine1 --- leaf1 & leaf2 & leaf3 & leaf4 & bleaf1
+    spine2 --- leaf1 & leaf2 & leaf3 & leaf4 & bleaf1
+    leaf1 --- ha1
+    leaf2 --- hb1
+    leaf3 --- ha2
+    leaf4 --- hb2
+    bleaf1 -- "203.0.113.0/30" --- ext
+
+    classDef spine fill:#1a1aff,color:#fff,stroke:#000
+    classDef vtep  fill:#0077cc,color:#fff,stroke:#000
+    classDef host  fill:#3d7a3d,color:#fff,stroke:#000
+    classDef ce    fill:#006400,color:#fff,stroke:#000
+    class spine1,spine2 spine
+    class leaf1,leaf2,leaf3,leaf4,bleaf1 vtep
+    class ha1,hb1,ha2,hb2 host
+    class ext ce
 ```
 
 **Underlay addresses (bleaf1)**

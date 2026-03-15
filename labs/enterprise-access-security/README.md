@@ -18,6 +18,36 @@ docker build -t enterprise-access-tools:local labs/enterprise-access-security/
 sudo containerlab deploy -t labs/enterprise-access-security/topology.clab.yml
 ```
 
+## Topology
+
+```mermaid
+flowchart TB
+    dist1["dist1\ncEOS\nSVIs + DHCP snooping + DAI"]
+    acc1["acc1\ncEOS\nlegitimate access"]
+    acc2["acc2\ncEOS\nrogue/attacker side"]
+    clienta(["client-a\nDHCP client\nVLAN10"])
+    dhcp(["dhcp-server\n10.10.10.10\nVLAN10"])
+    roguedhcp(["rogue-dhcp\nunauthorized DHCP\nVLAN10"])
+    attacker(["attacker\nARP spoof tester"])
+    clientb(["client-b\nstatic voice\nVLAN20"])
+
+    dist1 --- acc1
+    dist1 --- acc2
+    acc1 --- clienta
+    acc1 --- dhcp
+    acc2 --- roguedhcp
+    acc2 --- attacker
+    acc2 --- clientb
+
+    classDef dist   fill:#0077cc,color:#fff,stroke:#000
+    classDef access fill:#00aa88,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class dist1 dist
+    class acc1,acc2 access
+    class clienta,clientb,dhcp,roguedhcp,attacker host
+```
+
 ## Topology Focus
 
 Use the campus underlay as-is and focus on these edge nodes:

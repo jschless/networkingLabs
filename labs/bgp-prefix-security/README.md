@@ -5,23 +5,21 @@ Demonstrate how BGP route hijacking works in practice and how to defend against 
 
 ## Topology
 
-```
-[legitimate]            [hijacker]
- AS65001                AS65002
- 192.0.2.0/24           (fraudulent 192.0.2.0/24 or 192.0.2.128/25)
-     |                       |
-  eth1:10.1.11.1          eth1:10.1.12.2
-     |                       |
-  10.1.11.2               10.1.12.1
-     \                       /
-            [isp]
-            AS65100
-          10.1.13.1
-              |
-           10.1.13.2
-              |
-           [victim]
-            AS65003
+```mermaid
+flowchart TB
+    legitimate["legitimate\nAS65001\n10.0.0.1/32\n192.0.2.0/24"]
+    hijacker["hijacker\nAS65002\n10.0.0.3/32\n192.0.2.128/25"]
+    isp["isp\nAS65100\n10.0.0.2/32"]
+    victim["victim\nAS65003\n10.0.0.4/32"]
+
+    legitimate -- "10.1.11.0/30" --- isp
+    hijacker -- "10.1.12.0/30" --- isp
+    isp -- "10.1.13.0/30" --- victim
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+    class legitimate,hijacker,victim router
+    class isp isp
 ```
 
 ## Address Plan

@@ -6,15 +6,44 @@ See `labs/enterprise-routed-access/` for the fully-working reference solution.
 
 ## Topology
 
-```
-             [core1]----------[core2]
-             /  | | \        /  | | \
-            /   | |  \      /   | |  \
-     [dist1][dist2][dist3][dist4]
-        |      |       |      |
-      [acc1]         [acc2]
-      /    \         /    \
-    [h1]  [h2]     [h3]  [h4]
+```mermaid
+flowchart TB
+    core1["core1\n10.0.0.1/32\nOSPF area 0"]
+    core2["core2\n10.0.0.2/32\nOSPF area 0"]
+    dist1["dist1\n10.0.1.1/32\nABR"]
+    dist2["dist2\n10.0.1.2/32\nABR"]
+    dist3["dist3\n10.0.1.3/32\nABR"]
+    dist4["dist4\n10.0.1.4/32\nABR"]
+    acc1["acc1\n10.0.2.1/32\nstub"]
+    acc2["acc2\n10.0.2.2/32\nstub"]
+    h1(["h1"])
+    h2(["h2"])
+    h3(["h3"])
+    h4(["h4"])
+
+    core1 -- "10.1.2.0/31" --- core2
+    core1 & core2 -- "area 0" --- dist1
+    core1 & core2 -- "area 0" --- dist2
+    core1 & core2 -- "area 0" --- dist3
+    core1 & core2 -- "area 0" --- dist4
+    dist1 --- acc1
+    dist2 --- acc1
+    dist3 --- acc2
+    dist4 --- acc2
+    acc1 --- h1
+    acc1 --- h2
+    acc2 --- h3
+    acc2 --- h4
+
+    classDef core   fill:#1a1aff,color:#fff,stroke:#000
+    classDef dist   fill:#0077cc,color:#fff,stroke:#000
+    classDef access fill:#00aa88,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class core1,core2 core
+    class dist1,dist2,dist3,dist4 dist
+    class acc1,acc2 access
+    class h1,h2,h3,h4 host
 ```
 
 ## Node / Link Table

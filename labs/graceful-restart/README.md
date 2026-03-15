@@ -69,13 +69,18 @@ FRR enables OSPF GR with `capability graceful-restart` under `router ospf`.
 
 ## Topology
 
-```
-         [r1] 10.0.0.1/32
-        /    \
-   eth1/      \eth2
-      /        \
-  [r2]---eth2---[r3]
-10.0.0.2/32     10.0.0.3/32
+```mermaid
+flowchart TB
+    r1["r1 (RR)\nAS65000\n10.0.0.1/32"]
+    r2["r2\nAS65000\n10.0.0.2/32"]
+    r3["r3\nAS65000\n10.0.0.3/32"]
+
+    r1 -- "10.0.12.0/30" --- r2
+    r2 -- "10.0.23.0/30" --- r3
+    r1 -- "10.0.13.0/30" --- r3
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2,r3 router
 ```
 
 | Link | Subnet | r1 | r2 | r3 |

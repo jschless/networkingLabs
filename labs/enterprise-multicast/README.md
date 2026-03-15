@@ -16,6 +16,30 @@ sudo containerlab deploy -t labs/enterprise-multicast/topology.clab.yml
 
 ## Topology
 
+```mermaid
+flowchart TB
+    core1["core1\nRP: 10.0.0.1/32\nPIM-SM"]
+    dist1["dist1\nPIM-SM"]
+    dist2["dist2\nPIM-SM"]
+    src(["source1\n10.20.20.0/24"])
+    recvlocal(["recv-local\n10.20.20.0/24"])
+    recvremote(["recv-remote\n10.20.30.0/24"])
+
+    dist1 --- core1
+    core1 --- dist2
+    dist1 --- src
+    dist1 --- recvlocal
+    dist2 --- recvremote
+
+    classDef core   fill:#1a1aff,color:#fff,stroke:#000
+    classDef dist   fill:#0077cc,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class core1 core
+    class dist1,dist2 dist
+    class src,recvlocal,recvremote host
+```
+
 - `source1` in `10.20.20.0/24` behind `dist1`
 - `recv-local` in the same VLAN as the source
 - `recv-remote` in `10.20.30.0/24` behind `dist2`

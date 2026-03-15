@@ -20,11 +20,23 @@ This lab teaches 802.3ad LACP (Link Aggregation Control Protocol) and EtherChann
 
 ## Topology
 
-```
-                      Port-Channel1
-          eth1 ========================= eth1
-[host1] --eth1-- [sw1]                       [sw2] --eth3-- [host2]
-                      eth2 ========== eth2
+```mermaid
+flowchart LR
+    host1(["host1\n10.0.1.1/24"])
+    sw1["sw1\nLo0: 10.0.0.1/32\nEt3: 10.0.1.253/24"]
+    sw2["sw2\nLo0: 10.0.0.2/32\nEt3: 10.0.1.254/24"]
+    host2(["host2\n10.0.1.2/24"])
+
+    host1 -- "Et1" --- sw1
+    sw1 -- "Et1 (Po1 member)" --- sw2
+    sw1 -- "Et2 (Po1 member)" --- sw2
+    sw2 -- "Et3" --- host2
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class sw1,sw2 router
+    class host1,host2 host
 ```
 
 ```

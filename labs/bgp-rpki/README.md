@@ -6,25 +6,23 @@ RTR server serving pre-loaded ROA data.
 
 ## Topology
 
-```
-  [isp1 AS65100]               [hijacker AS65999]
-  10.0.0.10/32                 10.0.0.99/32
-  eth1: 10.0.1.1/30            eth1: 10.0.2.2/30
-        |                              |
-        | 10.0.1.0/30     10.0.2.0/30 |
-        |                              |
-        +--------[  edge  ]------------+
-                  AS65000
-                  lo:  10.0.0.1/32
-                  eth1: 10.0.1.2/30
-                  eth2: 10.0.2.1/30
-                  eth3: 10.0.3.1/30
-                        |
-                        | 10.0.3.0/30
-                        |
-                  [rpki-server]
-                  eth1: 10.0.3.2/30
-                  RTR server :3323
+```mermaid
+flowchart TB
+    isp1["isp1\nAS65100\n10.0.0.10/32\n10.100.0.0/24 (VALID)"]
+    hijacker["hijacker\nAS65999\n10.0.0.99/32\n10.100.0.0/24 (INVALID)"]
+    edge["edge\nAS65000\n10.0.0.1/32"]
+    rpki["rpki-server\nRTR :3323"]
+
+    isp1 -- "10.0.1.0/30" --- edge
+    hijacker -- "10.0.2.0/30" --- edge
+    edge -- "10.0.3.0/30" --- rpki
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class edge router
+    class isp1,hijacker isp
+    class rpki host
 ```
 
 ## ROA Database

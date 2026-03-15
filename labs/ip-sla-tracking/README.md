@@ -9,11 +9,19 @@ route (with higher administrative distance) takes its place automatically.
 
 ## Topology
 
-```
-[router] --eth1--> [isp1]  10.0.1.0/30   (primary, AD=5)
-         --eth2--> [isp2]  10.0.2.0/30   (backup,  AD=10)
+```mermaid
+flowchart LR
+    router["router\n10.0.1.1 / 10.0.2.1"]
+    isp1["isp1\n10.99.0.1/32"]
+    isp2["isp2\n10.99.0.1/32"]
 
-Both ISPs loopback: 10.99.0.1/32 (simulated internet)
+    router -- "10.0.1.0/30\nprimary AD=5" --- isp1
+    router -- "10.0.2.0/30\nbackup AD=10" --- isp2
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+    class router router
+    class isp1,isp2 isp
 ```
 
 ## IP Addressing

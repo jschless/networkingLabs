@@ -12,14 +12,17 @@ aggregator that summarizes them, and a receiver that observes the result.
 
 ## Topology
 
-```
-[originator]---eth1---eth1---[aggregator]---eth2---eth1---[receiver]
-    AS65001                      AS65002                    AS65003
-  10.0.0.1/32                  10.0.0.2/32               10.0.0.3/32
-  10.1.1.0/24
-  10.1.2.0/24   (component prefixes)
-  10.1.3.0/24   (aggregated into 10.1.0.0/21)
-  10.1.4.0/24
+```mermaid
+flowchart LR
+    originator["originator\nAS65001\n10.0.0.1/32\n10.1.1-4.0/24"]
+    aggregator["aggregator\nAS65002\n10.0.0.2/32\naggregate: 10.1.0.0/21"]
+    receiver["receiver\nAS65003\n10.0.0.3/32"]
+
+    originator -- "10.1.12.0/30" --- aggregator
+    aggregator -- "10.1.23.0/30" --- receiver
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class originator,aggregator,receiver router
 ```
 
 Originator uses separate Loopback interfaces: Loopback0 (10.0.0.1/32) for

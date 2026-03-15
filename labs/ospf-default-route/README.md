@@ -13,9 +13,19 @@ configuration point distributes default reachability to the entire domain.
 
 ## Topology
 
-```
-[core] Ethernet1 --- Ethernet1 [asbr] Ethernet2 --- Ethernet1 [internet]
-   (area 0)              (area 0 + external)   (no OSPF)
+```mermaid
+flowchart LR
+    core["core\n10.0.0.1/32"]
+    asbr["asbr\n10.0.0.2/32"]
+    internet(["internet\n10.99.0.1/32"])
+
+    core -- "10.1.12.0/30\nArea 0" --- asbr
+    asbr -- "203.0.113.0/30\n(no OSPF)" --- internet
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class core,asbr router
+    class internet host
 ```
 
 | Segment           | Subnet          | Addresses            | OSPF? |

@@ -12,12 +12,25 @@ and host-b traffic is steered to isp2 regardless of the routing table.
 
 ## Topology
 
-```
-[host-a]   [host-b]
-    \         /
-   [router]
-    /         \
- [isp1]     [isp2]
+```mermaid
+flowchart TB
+    ha(["host-a\n192.168.1.1/30"])
+    hb(["host-b\n192.168.2.1/30"])
+    router["router"]
+    isp1["isp1\n10.99.1.1/32"]
+    isp2["isp2\n10.99.2.1/32"]
+
+    ha -- "192.168.1.0/30" --- router
+    hb -- "192.168.2.0/30" --- router
+    router -- "10.0.1.0/30" --- isp1
+    router -- "10.0.2.0/30" --- isp2
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+    class router router
+    class ha,hb host
+    class isp1,isp2 isp
 ```
 
 ## IP Addressing

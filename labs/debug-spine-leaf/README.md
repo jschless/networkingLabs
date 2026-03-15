@@ -18,15 +18,22 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 
 ## Topology
 
-```
-        [spine1]             [spine2]
-        AS65100               AS65200
-   .1  .3  .5  .7        .1  .3  .5  .7
-    |   |   |   |          |   |   |   |
-   .0  .2  .4  .6        .0  .2  .4  .6
-  eth1 eth1 eth1 eth1   eth2 eth2 eth2 eth2
-[leaf1][leaf2][leaf3][leaf4]
-AS65001 AS65002 AS65003 AS65004
+```mermaid
+flowchart TB
+    spine1["spine1\nAS65100\nLo:10.0.0.101"]
+    spine2["spine2\nAS65200\nLo:10.0.0.102"]
+    leaf1["leaf1\nAS65001\nLo:10.0.0.1"]
+    leaf2["leaf2\nAS65002\nLo:10.0.0.2"]
+    leaf3["leaf3\nAS65003\nLo:10.0.0.3"]
+    leaf4["leaf4\nAS65004\nLo:10.0.0.4"]
+
+    spine1 --- leaf1 & leaf2 & leaf3 & leaf4
+    spine2 --- leaf1 & leaf2 & leaf3 & leaf4
+
+    classDef spine fill:#1a1aff,color:#fff,stroke:#000
+    classDef leaf  fill:#0077cc,color:#fff,stroke:#000
+    class spine1,spine2 spine
+    class leaf1,leaf2,leaf3,leaf4 leaf
 ```
 
 ### Links (/31 subnets)

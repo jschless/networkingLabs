@@ -8,9 +8,19 @@ routing protocols and redistribution.
 
 ## Topology
 
-```
-  [r1] ----OSPF area 0---- [asbr] ----eBGP---- [bgp1] ----iBGP---- [bgp2]
-                           AS65100              AS65200
+```mermaid
+flowchart LR
+    r1["r1\n10.0.0.1/32"]
+    asbr["asbr\nAS65100\n10.0.0.2/32"]
+    bgp1["bgp1\nAS65200\n10.0.0.3/32"]
+    bgp2["bgp2\nAS65200\n10.0.0.4/32"]
+
+    r1 -- "10.0.12.0/30\nOSPF area 0" --- asbr
+    asbr -- "10.0.23.0/30\neBGP" --- bgp1
+    bgp1 -- "10.0.34.0/30\niBGP" --- bgp2
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,asbr,bgp1,bgp2 router
 ```
 
 ### Link addressing

@@ -36,19 +36,48 @@ This lab demonstrates the **L3-everywhere** (also called "routed access") campus
 
 ## Topology
 
-```
-                 [core1]──────────────[core2]
-                 10.0.0.1              10.0.0.2
-                /  | | \              /  | | \
-               /   | |  \            /   | |  \
-        [dist1] [dist2] [dist3] [dist4]
-        10.0.1.1 10.0.1.2 10.0.1.3 10.0.1.4
-            \      /          \      /
-           [acc1]             [acc2]
-           10.0.2.1           10.0.2.2
-           /    \             /    \
-         [h1]  [h2]        [h3]  [h4]
-      10.10.1.2  10.10.1.6  10.10.2.2  10.10.2.6
+```mermaid
+flowchart TB
+    core1["core1\n10.0.0.1/32\nOSPF area 0"]
+    core2["core2\n10.0.0.2/32\nOSPF area 0"]
+    dist1["dist1\n10.0.1.1/32\nABR"]
+    dist2["dist2\n10.0.1.2/32\nABR"]
+    dist3["dist3\n10.0.1.3/32\nABR"]
+    dist4["dist4\n10.0.1.4/32\nABR"]
+    acc1["acc1\n10.0.2.1/32\narea 1 stub"]
+    acc2["acc2\n10.0.2.2/32\narea 1 stub"]
+    h1(["h1\n10.10.1.2"])
+    h2(["h2\n10.10.1.6"])
+    h3(["h3\n10.10.2.2"])
+    h4(["h4\n10.10.2.6"])
+
+    core1 -- "10.1.2.0/31" --- core2
+    core1 -- "10.1.0.0/31" --- dist1
+    core1 -- "10.1.0.2/31" --- dist2
+    core1 -- "10.1.0.4/31" --- dist3
+    core1 -- "10.1.0.6/31" --- dist4
+    core2 -- "10.1.1.0/31" --- dist1
+    core2 -- "10.1.1.2/31" --- dist2
+    core2 -- "10.1.1.4/31" --- dist3
+    core2 -- "10.1.1.6/31" --- dist4
+    dist1 -- "10.2.0.0/31" --- acc1
+    dist2 -- "10.2.0.2/31" --- acc1
+    dist3 -- "10.2.1.0/31" --- acc2
+    dist4 -- "10.2.1.2/31" --- acc2
+    acc1 -- "10.10.1.0/30" --- h1
+    acc1 -- "10.10.1.4/30" --- h2
+    acc2 -- "10.10.2.0/30" --- h3
+    acc2 -- "10.10.2.4/30" --- h4
+
+    classDef core   fill:#1a1aff,color:#fff,stroke:#000
+    classDef dist   fill:#0077cc,color:#fff,stroke:#000
+    classDef access fill:#00aa88,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class core1,core2 core
+    class dist1,dist2,dist3,dist4 dist
+    class acc1,acc2 access
+    class h1,h2,h3,h4 host
 ```
 
 ### OSPF Areas

@@ -4,12 +4,30 @@ Demonstrates four core network observability mechanisms using Linux containers w
 
 ## Topology
 
-```
-[client]─10.1.0.0/30─[r1]─10.0.12.0/30─[r2]─10.0.23.0/30─[r3]─10.3.0.0/30─[server]
-                       │eth3              │eth3              │eth3
-                  172.16.0.0/30      172.16.0.4/30      172.16.0.8/30
-                       └─────────────────┴─────────────────┘
-                                    [management]─192.168.99.0/30─[analyzer]
+```mermaid
+flowchart LR
+    client(["client\n10.1.0.2/30"])
+    r1["r1\n10.0.0.1/32\nSNMP+syslog+NetFlow"]
+    r2["r2\n10.0.0.2/32\nSPAN src: eth1"]
+    r3["r3\n10.0.0.3/32\nSNMP+syslog+NetFlow"]
+    server(["server\n10.3.0.2/30"])
+    mgmt["management\nSNMP/syslog/NetFlow\ncollector"]
+    analyzer(["analyzer\nSPAN capture"])
+
+    client -- "10.1.0.0/30" --- r1
+    r1 -- "10.0.12.0/30" --- r2
+    r2 -- "10.0.23.0/30" --- r3
+    r3 -- "10.3.0.0/30" --- server
+    r1 -- "172.16.0.0/30" --- mgmt
+    r2 -- "172.16.0.4/30\nSPAN egress" --- mgmt
+    r3 -- "172.16.0.8/30" --- mgmt
+    mgmt -- "192.168.99.0/30" --- analyzer
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class r1,r2,r3,mgmt router
+    class client,server,analyzer host
 ```
 
 ## Node Addressing

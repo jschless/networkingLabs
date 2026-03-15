@@ -10,8 +10,17 @@ adjacencies and exchange LSAs.
 
 ## Topology
 
-```
-[r1] Ethernet1 --- Ethernet1 [r2] Ethernet2 --- Ethernet1 [r3]
+```mermaid
+flowchart LR
+    r1["r1\n10.0.0.1/32"]
+    r2["r2\n10.0.0.2/32"]
+    r3["r3\n10.0.0.3/32"]
+
+    r1 -- "10.1.12.0/30\nArea 0" --- r2
+    r2 -- "10.1.23.0/30\nArea 0" --- r3
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2,r3 router
 ```
 
 | Segment       | Subnet        | r1/r2/r3 address |

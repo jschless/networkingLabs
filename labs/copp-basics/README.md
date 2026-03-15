@@ -6,18 +6,18 @@ You will protect the control plane of **r2** by classifying inbound traffic (BGP
 
 ## Topology
 
-```
-  r1 (AS65001)              r3
-  10.0.0.1/32           10.0.0.3/32
-       |                     |
-  eth1 | 10.1.12.1       10.1.23.2 | eth1
-       |                     |
-  eth1 | 10.1.12.2       10.1.23.1 | eth2
-       |                     |
-       +----------- r2 ------+
-                  (DUT)
-               10.0.0.2/32
-               AS65002
+```mermaid
+flowchart LR
+    r1["r1\nAS65001\n10.0.0.1/32"]
+    r2["r2 (DUT)\nAS65002\n10.0.0.2/32\nCoPP policy"]
+    r3["r3\nOSPF area 0\n10.0.0.3/32"]
+
+    r1 -- "10.1.12.0/30\neBGP" --- r2
+    r2 -- "10.1.23.0/30\nOSPF" --- r3
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+
+    class r1,r2,r3 router
 ```
 
 ### Link addressing

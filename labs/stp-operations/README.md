@@ -8,6 +8,42 @@ This is a focused Layer 2 campus lab for spanning-tree operations and failure ha
 sudo containerlab deploy -t labs/stp-operations/topology.clab.yml
 ```
 
+## Topology
+
+```mermaid
+flowchart TB
+    isp["isp\nAS65500"]
+    edge["edge\nAS65100"]
+    cc1["cc1\nSTP root VLAN10,30"]
+    cc2["cc2\nSTP root VLAN20"]
+    acc1["acc1\ndual-homed"]
+    acc2["acc2\ndual-homed"]
+    clienta(["client-a\nVLAN10"])
+    rogue["rogue-switch\nhostile edge"]
+
+    isp -- "203.0.113.0/30" --- edge
+    edge -- "10.0.12.0/30" --- cc1
+    edge -- "10.0.22.0/30" --- cc2
+    cc1 -- "10.0.99.0/30" --- cc2
+    cc1 --- acc1
+    cc1 --- acc2
+    cc2 --- acc1
+    cc2 --- acc2
+    acc1 -- "VLAN10" --- clienta
+    acc2 --- rogue
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef access fill:#00aa88,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+
+    class isp isp
+    class edge,cc1,cc2 router
+    class acc1,acc2 access
+    class clienta host
+    class rogue access
+```
+
 ## What Is Different Here
 
 Unlike the other campus labs, `acc1` and `acc2` are dual-homed to `cc1` and `cc2`, so STP has a real redundant Layer 2 topology to control.

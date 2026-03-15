@@ -6,10 +6,21 @@ A colleague was reviewing area configurations and changed a setting on r1, the A
 
 ## Topology
 
-```
-[ext]──[r1 ASBR]──────────[r2 ABR]──────────[r3]
-       Area 1 (NSSA)   Area 0 / Area 1       Area 0
-  192.168.100.0/30  10.1.12.0/30  10.1.23.0/30
+```mermaid
+flowchart LR
+    ext(["ext\n192.168.100.2"])
+    r1["r1 ASBR\n10.0.0.1/32"]
+    r2["r2 ABR\n10.0.0.2/32"]
+    r3["r3\n10.0.0.3/32"]
+
+    ext -- "192.168.100.0/30\n(external)" --- r1
+    r1 -- "10.1.12.0/30\nArea 1 (NSSA)" --- r2
+    r2 -- "10.1.23.0/30\nArea 0" --- r3
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class r1,r2,r3 router
+    class ext host
 ```
 
 ## IP / Node Reference

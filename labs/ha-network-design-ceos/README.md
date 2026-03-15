@@ -12,26 +12,44 @@ You will implement and test:
 
 ## Topology
 
-```
-                   hosta (192.168.10.10/24)
-                    LACP Po1 dual-home
-                      /               \
-               [dist1]=============== [dist2]
-               Lo0 .11    MLAG pair   Lo0 .12
-                |   \                  /   |
-                |    \                /    |
-                |     [core1]----[core2]   |
-                |        Lo0 .21   Lo0 .22 |
-                |          |  \    /  |     |
-                |          |   \  /   |     |
-               [edge1]            [edge2]
-               Lo0 .31            Lo0 .32
-                  |                  |
-                [isp1]            [isp2]
-                  \                /
-                   \              /
-                        [app1]
-                    Lo0 172.20.20.20/32
+```mermaid
+flowchart TB
+    hosta(["hosta\n192.168.10.10/24\nLACP Po1"])
+    dist1["dist1\nMLAG + VRRP\n10.255.0.11/32"]
+    dist2["dist2\nMLAG + VRRP\n10.255.0.12/32"]
+    core1["core1\n10.255.0.21/32"]
+    core2["core2\n10.255.0.22/32"]
+    edge1["edge1\nAS65010\n10.255.0.31/32"]
+    edge2["edge2\nAS65020\n10.255.0.32/32"]
+    isp1["isp1\nAS65101\n203.255.1.1/32"]
+    isp2["isp2\nAS65102\n203.255.2.1/32"]
+    app1(["app1\n172.20.20.20/32"])
+
+    hosta -- "LACP" --- dist1
+    hosta -- "LACP" --- dist2
+    dist1 == "MLAG peer-link" === dist2
+    dist1 -- "10.0.1.0/31" --- core1
+    dist1 -- "10.0.1.2/31" --- core2
+    dist2 -- "10.0.1.4/31" --- core1
+    dist2 -- "10.0.1.6/31" --- core2
+    core1 -- "10.0.2.0/31" --- edge1
+    core1 -- "10.0.2.2/31" --- edge2
+    core2 -- "10.0.2.4/31" --- edge1
+    core2 -- "10.0.2.6/31" --- edge2
+    edge1 -- "203.0.113.0/31" --- isp1
+    edge2 -- "203.0.113.2/31" --- isp2
+    isp1 -- "198.51.100.0/31" --- app1
+    isp2 -- "198.51.100.2/31" --- app1
+
+    classDef core   fill:#1a1aff,color:#fff,stroke:#000
+    classDef dist   fill:#0077cc,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+
+    class core1,core2,edge1,edge2 core
+    class dist1,dist2 dist
+    class hosta,app1 host
+    class isp1,isp2 isp
 ```
 
 ### Link addressing

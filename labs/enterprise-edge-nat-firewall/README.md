@@ -15,6 +15,38 @@ docker build -t dmz-lab:local labs/enterprise-edge-nat-firewall/
 sudo containerlab deploy -t labs/enterprise-edge-nat-firewall/topology.clab.yml
 ```
 
+## Topology
+
+```mermaid
+flowchart TB
+    isp["isp\ncEOS"]
+    iclient(["internet-client\n203.0.113.2"])
+    fwout["fw-outside\nperimeter FW + NAT\n203.0.114.2"]
+    web(["web-server\n172.16.0.2\nDMZ-web"])
+    mail(["mail-server\n172.16.0.6\nDMZ-mail"])
+    fwin["fw-inside\ninternal FW\n172.16.1.2"]
+    db(["db-server\n10.0.0.2"])
+    ws(["workstation\n10.0.0.6"])
+    guest(["guest-laptop\n10.0.0.10"])
+
+    isp -- "203.0.113.0/30" --- iclient
+    isp -- "203.0.114.0/30" --- fwout
+    fwout -- "172.16.0.0/30\nDMZ-web" --- web
+    fwout -- "172.16.0.4/30\nDMZ-mail" --- mail
+    fwout -- "172.16.1.0/30\nDMZ-inner" --- fwin
+    fwin -- "10.0.0.0/30\nLAN-db" --- db
+    fwin -- "10.0.0.4/30\nLAN-ws" --- ws
+    fwin -- "10.0.0.8/30\nGUEST" --- guest
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef isp    fill:#555,color:#fff,stroke:#000
+
+    class isp isp
+    class fwout,fwin router
+    class iclient,web,mail,db,ws,guest host
+```
+
 ## Roles
 
 - `internet-client`: simulated outside user

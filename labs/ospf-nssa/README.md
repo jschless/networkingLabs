@@ -2,10 +2,21 @@
 
 ## Topology
 
-```
-[ext] --192.168.100.0/30-- [r1 ASBR] --area1(NSSA)-- [r2 ABR] --area0-- [r3]
-192.168.100.2                  .1                       .2/.1                .2
-                           10.0.0.1                  10.0.0.2            10.0.0.3
+```mermaid
+flowchart LR
+    ext(["ext\n192.168.100.2"])
+    r1["r1 ASBR\n10.0.0.1/32"]
+    r2["r2 ABR\n10.0.0.2/32"]
+    r3["r3\n10.0.0.3/32"]
+
+    ext -- "192.168.100.0/30\n(external)" --- r1
+    r1 -- "10.1.12.0/30\nArea 1 (NSSA)" --- r2
+    r2 -- "10.1.23.0/30\nArea 0" --- r3
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    class r1,r2,r3 router
+    class ext host
 ```
 
 | Link | Subnet | Left | Right | OSPF Area |

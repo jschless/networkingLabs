@@ -46,20 +46,21 @@ enter candidate
                         circuit-type point-to-point
                         ipv4-unicast
                             admin-state enable
-                        level 2
-                            metric 10
-
+                        level 2 {
+                        }
                     interface ethernet-1/2.0
                         circuit-type point-to-point
                         ipv4-unicast
                             admin-state enable
-                        level 2
-                            metric 10
-
+                        level 2 {
+                        }
                     interface system0.0
+                        admin-state enable
                         passive true
                         ipv4-unicast
                             admin-state enable
+                        level 2 {
+                        }
 
                     segment-routing
                         mpls

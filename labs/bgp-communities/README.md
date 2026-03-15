@@ -12,10 +12,19 @@ configure base BGP, then progressively add community tagging and matching policy
 
 ## Topology
 
-```
-[r1]---eth1---eth1---[r2]---eth2---eth1---[r3]---eth2---eth1---[r4]
-AS65001               AS65002               AS65003               AS65004
-10.0.0.1/32           10.0.0.2/32           10.0.0.3/32           10.0.0.4/32
+```mermaid
+flowchart LR
+    r1["r1\nAS65001\n10.0.0.1/32"]
+    r2["r2\nAS65002\n10.0.0.2/32"]
+    r3["r3\nAS65003\n10.0.0.3/32"]
+    r4["r4\nAS65004\n10.0.0.4/32"]
+
+    r1 -- "10.1.12.0/30" --- r2
+    r2 -- "10.1.23.0/30" --- r3
+    r3 -- "10.1.34.0/30" --- r4
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2,r3,r4 router
 ```
 
 ### Link Addresses

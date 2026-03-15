@@ -7,8 +7,17 @@ hold timer mechanism.
 
 ## Topology
 
-```
-[r1 AS65001] ---10.1.12.0/30--- [r2 AS65002] ---10.1.23.0/30--- [r3 AS65003]
+```mermaid
+flowchart LR
+    r1["r1\nAS65001\n10.0.0.1/32"]
+    r2["r2\nAS65002\n10.0.0.2/32"]
+    r3["r3\nAS65003\n10.0.0.3/32"]
+
+    r1 -- "10.1.12.0/30" --- r2
+    r2 -- "10.1.23.0/30" --- r3
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2,r3 router
 ```
 
 | Link              | Subnet        | Addresses       | BGP Session          |

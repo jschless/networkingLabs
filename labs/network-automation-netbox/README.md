@@ -25,6 +25,31 @@ sudo containerlab deploy -t labs/network-automation-netbox/topology.clab.yml
 docker exec -it clab-network-automation-netbox-automation bash
 ```
 
+## Topology
+
+```mermaid
+flowchart LR
+    leaf1["leaf1\ncEOS\n172.31.40.11"]
+    leaf2["leaf2\ncEOS\n172.31.40.12"]
+    netbox(["netbox\nUI :8001\n172.31.40.23"])
+    automation(["automation\nAnsible + Python\n172.31.40.24"])
+    postgres(["postgres\n172.31.40.21"])
+    redis(["redis\n172.31.40.22"])
+
+    leaf1 -- "eth1" --- leaf2
+    netbox --- postgres
+    netbox --- redis
+    automation -. "mgmt network" .- leaf1
+    automation -. "mgmt network" .- leaf2
+    automation -. "API" .- netbox
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+
+    class leaf1,leaf2 router
+    class netbox,automation,postgres,redis host
+```
+
 ## Lab Components
 
 - `leaf1`, `leaf2`: small cEOS fleet

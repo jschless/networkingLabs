@@ -8,9 +8,19 @@ link-local addresses for all neighbor communication and supports IPv6 topology.
 
 ## Topology
 
-```
-[r1] --Ethernet1-- [r2] --Ethernet2-- [r3] --Ethernet2-- [r4]
-     Ethernet1          Ethernet1          Ethernet1
+```mermaid
+flowchart LR
+    r1["r1\n2001:db8::1/128\nrid 10.0.0.1"]
+    r2["r2\n2001:db8::2/128\nrid 10.0.0.2"]
+    r3["r3\n2001:db8::3/128\nrid 10.0.0.3"]
+    r4["r4\n2001:db8::4/128\nrid 10.0.0.4"]
+
+    r1 -- "2001:db8:12::/64\nArea 0" --- r2
+    r2 -- "2001:db8:23::/64\nArea 0" --- r3
+    r3 -- "2001:db8:34::/64\nArea 0" --- r4
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2,r3,r4 router
 ```
 
 All four routers are in OSPFv3 **area 0**.

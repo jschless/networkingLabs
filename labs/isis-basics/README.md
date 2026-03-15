@@ -6,9 +6,19 @@ area configuration, Level-1/Level-2 operation, DIS election, and LSP flooding.
 
 ## Topology
 
-```
-[r1] --- [r2] --- [r3] --- [r4]
-         (linear, all Level-2, area 49.0001)
+```mermaid
+flowchart LR
+    r1["r1\n10.0.0.1/32\n49.0001"]
+    r2["r2\n10.0.0.2/32\n49.0001"]
+    r3["r3\n10.0.0.3/32\n49.0001"]
+    r4["r4\n10.0.0.4/32\n49.0001"]
+
+    r1 -- "10.1.12.0/30" --- r2
+    r2 -- "10.1.23.0/30" --- r3
+    r3 -- "10.1.34.0/30" --- r4
+
+    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    class r1,r2,r3,r4 router
 ```
 
 | Link          | Subnet          | r-near IP    | r-far IP     |

@@ -17,13 +17,23 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 
 ## Topology
 
-```
-        [isp1] (AS65100)
-       /        \
-  [ce1]          [ce2]
- (AS65001)      (AS65002)
-       \        /
-        [isp2] (AS65100)
+```mermaid
+flowchart TB
+    ce1["ce1\nAS65001\n10.0.0.1/32"]
+    isp1["isp1\nAS65100\n10.0.0.2/32"]
+    isp2["isp2\nAS65100\n10.0.0.3/32"]
+    ce2["ce2\nAS65002\n10.0.0.4/32"]
+
+    ce1 -- "10.1.11.0/30" --- isp1
+    ce1 -- "10.1.12.0/30" --- isp2
+    isp1 -- "10.1.99.0/30 (iBGP)" --- isp2
+    isp1 -- "10.1.21.0/30" --- ce2
+    isp2 -- "10.1.22.0/30" --- ce2
+
+    classDef ce  fill:#006400,color:#fff,stroke:#000
+    classDef isp fill:#555,color:#fff,stroke:#000
+    class ce1,ce2 ce
+    class isp1,isp2 isp
 ```
 
 ### Link addressing

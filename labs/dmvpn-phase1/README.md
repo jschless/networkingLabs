@@ -8,16 +8,25 @@ DMVPN Phase 1 is used by network operators deploying hub-and-spoke WAN topologie
 
 ## Topology
 
-```
-                        [br-wan]  10.0.0.0/24 (NBMA)
-                       /    |    \
-              eth1   eth2  eth3  eth4
-              hub   spoke1 spoke2 spoke3
+```mermaid
+flowchart TB
+    brwan[("br-wan\n10.0.0.0/24\nNBMA")]
+    hub["hub\nWAN: 10.0.0.1\nTunnel0: 172.16.0.1\nmGRE"]
+    spoke1["spoke1\nWAN: 10.0.0.11\nTunnel0: 172.16.0.11\nLAN: 192.168.1.0/24"]
+    spoke2["spoke2\nWAN: 10.0.0.12\nTunnel0: 172.16.0.12\nLAN: 192.168.2.0/24"]
+    spoke3["spoke3\nWAN: 10.0.0.13\nTunnel0: 172.16.0.13\nLAN: 192.168.3.0/24"]
 
-hub    WAN: 10.0.0.1/24   Tunnel0: 172.16.0.1/24   (mGRE — no fixed remote)
-spoke1 WAN: 10.0.0.11/24  Tunnel0: 172.16.0.11/24  LAN: 192.168.1.0/24
-spoke2 WAN: 10.0.0.12/24  Tunnel0: 172.16.0.12/24  LAN: 192.168.2.0/24
-spoke3 WAN: 10.0.0.13/24  Tunnel0: 172.16.0.13/24  LAN: 192.168.3.0/24
+    hub --- brwan
+    spoke1 --- brwan
+    spoke2 --- brwan
+    spoke3 --- brwan
+
+    classDef hub    fill:#8b4513,color:#fff,stroke:#000
+    classDef spoke  fill:#4682b4,color:#fff,stroke:#000
+    classDef wan    fill:#ccc,color:#000,stroke:#666,stroke-dasharray:5
+    class hub hub
+    class spoke1,spoke2,spoke3 spoke
+    class brwan wan
 ```
 
 `br-wan` is a Linux bridge simulating the NBMA WAN network (all spokes can reach the hub but not each other directly at the IP layer in Phase 1).
