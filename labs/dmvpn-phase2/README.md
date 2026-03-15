@@ -1,8 +1,8 @@
-# DMVPN Phase 2 — Arista cEOS Practice Lab
+# DMVPN Phase 2 — Linux/FRR Practice Lab
 
-Configure DMVPN Phase 2 on Arista EOS to enable direct spoke-to-spoke tunnels. The hub is fully pre-configured; you configure NHRP, OSPF broadcast mode, and `ip nhrp shortcut` on each spoke.
+Configure DMVPN Phase 2 hub-and-spoke VPN with direct spoke-to-spoke shortcuts. The hub is fully pre-configured; you configure NHRP, OSPF broadcast mode, and `ip nhrp shortcut` on each spoke using FRR's `vtysh`.
 
-DMVPN Phase 2 is used when spoke-to-spoke traffic volume justifies bypassing the hub. The critical enabler is OSPF broadcast mode on the tunnel: it causes the routing table to carry each spoke's own tunnel IP as the next-hop, which NHRP can then resolve directly to the spoke's WAN IP.
+> **Platform note:** This lab uses Linux containers with FRR's `nhrpd` daemon. Arista EOS does not support `ip nhrp`, so the lab runs on `frr-lab:local` with nhrpd v8.4.
 
 ---
 
@@ -11,10 +11,10 @@ DMVPN Phase 2 is used when spoke-to-spoke traffic volume justifies bypassing the
 ```mermaid
 flowchart TB
     brwan[("br-wan\n10.0.0.0/24\nNBMA")]
-    hub["hub\nWAN: 10.0.0.1\nTunnel0: 172.16.0.1\nmGRE, OSPF DR (pri 10)"]
-    spoke1["spoke1\nWAN: 10.0.0.11\nTunnel0: 172.16.0.11\nLAN: 192.168.1.0/24"]
-    spoke2["spoke2\nWAN: 10.0.0.12\nTunnel0: 172.16.0.12\nLAN: 192.168.2.0/24"]
-    spoke3["spoke3\nWAN: 10.0.0.13\nTunnel0: 172.16.0.13\nLAN: 192.168.3.0/24"]
+    hub["hub\nWAN: 10.0.0.1\ntun0: 172.16.0.1\nmGRE, OSPF DR (pri 10)"]
+    spoke1["spoke1\nWAN: 10.0.0.11\ntun0: 172.16.0.11\nLAN: 192.168.1.0/24"]
+    spoke2["spoke2\nWAN: 10.0.0.12\ntun0: 172.16.0.12\nLAN: 192.168.2.0/24"]
+    spoke3["spoke3\nWAN: 10.0.0.13\ntun0: 172.16.0.13\nLAN: 192.168.3.0/24"]
 
     hub --- brwan
     spoke1 --- brwan
@@ -32,7 +32,14 @@ flowchart TB
     class brwan wan
 ```
 
-`br-wan` is a Linux bridge simulating an NBMA WAN.  All four routers share it; any can reach any other at Layer 2 once NHRP resolves the mapping.
+### Addressing
+
+| Node   | eth1 (WAN)    | tun0 (tunnel)  | lo extras                    |
+|--------|--------------|----------------|------------------------------|
+| hub    | 10.0.0.1/24  | 172.16.0.1/24  | 10.0.0.1/32                  |
+| spoke1 | 10.0.0.11/24 | 172.16.0.11/24 | 10.0.0.11/32, 192.168.1.1/24 |
+| spoke2 | 10.0.0.12/24 | 172.16.0.12/24 | 10.0.0.12/32, 192.168.2.1/24 |
+| spoke3 | 10.0.0.13/24 | 172.16.0.13/24 | 10.0.0.13/32, 192.168.3.1/24 |
 
 ---
 
@@ -42,7 +49,7 @@ flowchart TB
 |-----------|---------|---------|
 | Hub OSPF network type | point-to-multipoint | **broadcast** |
 | Hub OSPF priority | default | **10** (forces DR) |
-| Spoke OSPF network type | point-to-point | **broadcast** |
+| Spoke OSPF network type | point-to-multipoint | **broadcast** |
 | Spoke OSPF priority | default | **0** (never DR) |
 | `ip nhrp redirect` on hub | yes | yes |
 | `ip nhrp shortcut` on spokes | no | **yes** |
@@ -51,33 +58,19 @@ flowchart TB
 
 ### Why OSPF broadcast mode is required
 
-In OSPF point-to-multipoint (Phase 1), the hub advertises each spoke's prefix with itself as the next-hop.  Spoke1's routing table looks like:
-
+In OSPF point-to-multipoint (Phase 1), the hub advertises each spoke's prefix with itself as the next-hop. Spoke1's routing table:
 ```
-192.168.2.0/24 via 172.16.0.1   <- hub tunnel IP as next-hop
-```
-
-When spoke1 wants to reach spoke2, it sends traffic toward the hub tunnel IP.  NHRP can only create a shortcut if the routing-table next-hop is the TARGET spoke's tunnel IP, not the hub.
-
-In OSPF broadcast (Phase 2), the DR (hub) floods network LSAs.  Each spoke originates its own router LSA advertising its LAN via its own tunnel IP.  The routing table becomes:
-
-```
-192.168.2.0/24 via 172.16.0.12  <- spoke2 tunnel IP as next-hop directly
+192.168.2.0/24 via 172.16.0.1   ← hub tunnel IP as next-hop
 ```
 
-Now when spoke1 looks up the next-hop 172.16.0.12 and has no NBMA map for it, NHRP kicks in to resolve it — either via NHR resolution or a redirect from the hub.
+NHRP can only create a shortcut if the routing-table next-hop is the **target spoke's** tunnel IP.
 
-### The NHRP redirect + shortcut mechanism
+In OSPF broadcast (Phase 2), the DR (hub) floods network LSAs. Each spoke originates its own router LSA advertising its LAN via its own tunnel IP:
+```
+192.168.2.0/24 via 172.16.0.12  ← spoke2 tunnel IP directly
+```
 
-1. spoke1 receives an OSPF route: `192.168.2.0/24 via 172.16.0.12`
-2. spoke1 has no NBMA map for 172.16.0.12 — it sends the packet to the hub (multicast map)
-3. Hub forwards to spoke2 AND sends an **NHRP redirect** back to spoke1:
-   "172.16.0.12 is reachable via NBMA address 10.0.0.12"
-4. spoke1 (with `ip nhrp shortcut`) installs: `172.16.0.12  NBMA: 10.0.0.12`
-5. A host-specific shortcut route overrides the OSPF route for that spoke
-6. All subsequent packets from spoke1 go directly to 10.0.0.12 (spoke2 WAN IP)
-
-The shortcut is dynamic and ages out if unused (NHRP holdtime).
+Now NHRP can resolve 172.16.0.12 to spoke2's WAN IP and create a direct shortcut.
 
 ---
 
@@ -86,81 +79,66 @@ The shortcut is dynamic and ages out if unused (NHRP holdtime).
 ```bash
 sudo containerlab deploy -t labs/dmvpn-phase2/topology.clab.yml
 
-# EOS CLI
-docker exec -it clab-dmvpn-phase2-hub    Cli
-docker exec -it clab-dmvpn-phase2-spoke1 Cli
-docker exec -it clab-dmvpn-phase2-spoke2 Cli
-docker exec -it clab-dmvpn-phase2-spoke3 Cli
+# vtysh on any node
+./scripts/lab.sh cli dmvpn-phase2 hub
+./scripts/lab.sh cli dmvpn-phase2 spoke1
 ```
 
 ---
 
 ## Step 1 — Verify hub baseline
 
-The hub is fully configured.  Check it before touching the spokes:
+The hub is fully configured (tun0 mGRE, nhrpd as NHS, OSPF broadcast, priority 10). Check before configuring spokes:
 
 ```
-# On hub
-show interfaces Tunnel0
-show ip ospf interface Tunnel0
+# On hub (vtysh)
+show interface tun0
 show ip nhrp
+show ip ospf interface tun0
 ```
 
-Expected `show ip ospf interface Tunnel0`:
-```
-Tunnel0 is up, line protocol is up
-  Internet address is 172.16.0.1/24, Area 0
-  Network type BROADCAST, Cost: 10
-  Transmit Delay is 1 sec, State DR, Priority 10
-```
-
-The hub's `show ip nhrp` will be empty until spokes register.
+`show ip ospf interface tun0` should show `Network Type Broadcast`, `State: DR`, `Priority: 10`.
 
 ---
 
 ## Step 2 — Configure spoke1
 
-<details>
-<summary>Show configuration</summary>
-
+Enter spoke1 vtysh:
 ```bash
-docker exec -it clab-dmvpn-phase2-spoke1 Cli
+./scripts/lab.sh cli dmvpn-phase2 spoke1
 ```
 
-Configure Tunnel0:
+Configure NHRP, OSPF broadcast, and shortcut on the tunnel:
 ```
-configure
-interface Tunnel0
-   ip nhrp network-id 1
-   ip nhrp holdtime 300
-   ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast
-   ip nhrp map 172.16.0.1 10.0.0.1
-   ip nhrp shortcut
-   ip ospf network broadcast
-   ip ospf priority 0
-   ip ospf area 0
+configure terminal
+interface tun0
+ ip nhrp network-id 1
+ ip nhrp holdtime 300
+ ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast
+ ip nhrp registration no-unique
+ ip nhrp shortcut
+ ip ospf network broadcast
+ ip ospf priority 0
+ ip ospf area 0.0.0.0
+exit
+router ospf
+ ospf router-id 10.0.0.11
+ passive-interface lo
+ passive-interface eth1
+ network 192.168.1.0/24 area 0
+end
+write
 ```
 
-Configure OSPF process:
-```
-router ospf 1
-   router-id 10.0.0.11
-   passive-interface Loopback0
-   passive-interface Loopback1
-```
-
-</details>
-
-### NHRP parameter explanation
+### Parameter explanation
 
 | Command | Purpose |
 |---------|---------|
-| `ip nhrp network-id 1` | Identifies the DMVPN cloud (must match hub and all spokes) |
-| `ip nhrp holdtime 300` | How long the hub keeps this spoke's registration |
-| `ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast` | Register with hub; multicast forwards OSPF hellos to hub |
-| `ip nhrp map 172.16.0.1 10.0.0.1` | Static map so spoke can reach hub before dynamic resolution |
+| `ip nhrp network-id 1` | Identifies the DMVPN cloud — must match hub |
+| `ip nhrp nhs 172.16.0.1 nbma 10.0.0.1 multicast` | Register with hub; `multicast` forwards OSPF hellos to hub |
+| `ip nhrp registration no-unique` | Allows re-registration from the same NBMA address |
 | `ip nhrp shortcut` | Install shortcut routes when hub sends NHRP redirects |
-| `ip ospf network broadcast` | Preserves originating router's tunnel IP as OSPF next-hop |
+| `ip ospf network broadcast` | Preserves each spoke's own tunnel IP as OSPF next-hop |
 | `ip ospf priority 0` | Spoke never becomes DR — hub stays DR |
 
 ---
@@ -170,141 +148,84 @@ router ospf 1
 On hub:
 ```
 show ip nhrp
-```
-
-Expected output (after spoke1 configures NHRP):
-```
-172.16.0.11/32 via 172.16.0.11
-   Tunnel0 created 00:00:xx, expire 00:04:xx
-   Type: dynamic, Flags: registered used
-   NBMA address: 10.0.0.11
-```
-
-Check OSPF neighbor:
-```
 show ip ospf neighbor
 ```
 
-Expected:
-```
-Neighbor ID     Pri   State           Dead Time   Address         Interface
-10.0.0.11         0   Full/DROTHER    00:00:39    172.16.0.11     Tunnel0
-```
-
-Hub is DR (priority 10), spoke is DROTHER (priority 0).
+Spoke1 should appear as `Full/DROTHER` in OSPF (hub is DR, spokes are DROTHER with priority 0).
 
 ---
 
 ## Step 4 — Configure spoke2 and spoke3
 
-Repeat Step 2 with the appropriate parameters:
-
-| Spoke | router-id | Tunnel IP | WAN IP |
-|-------|-----------|-----------|--------|
-| spoke2 | 10.0.0.12 | 172.16.0.12 | 10.0.0.12 |
-| spoke3 | 10.0.0.13 | 172.16.0.13 | 10.0.0.13 |
-
-NHS parameters are identical on every spoke: `nhs 172.16.0.1 nbma 10.0.0.1 multicast`.
+Repeat Step 2 for spoke2 (router-id `10.0.0.12`, tunnel `172.16.0.12`, LAN `192.168.2.0/24`) and spoke3 (router-id `10.0.0.13`, tunnel `172.16.0.13`, LAN `192.168.3.0/24`).
 
 ---
 
-## Step 5 — Verify routing table next-hops (Phase 2 key check)
+## Step 5 — Verify Phase 2 routing table
 
-After all three spokes are configured, on spoke1:
+After all spokes are configured, on spoke1:
 ```
 show ip route ospf
 ```
 
-Expected — each spoke's LAN reachable via that spoke's tunnel IP directly:
+Expected — each spoke LAN reachable via that spoke's tunnel IP (not hub):
 ```
-O     192.168.2.0/24 [110/20] via 172.16.0.12, Tunnel0
-O     192.168.3.0/24 [110/20] via 172.16.0.13, Tunnel0
+O     192.168.2.0/24 [110/20] via 172.16.0.12, tun0
+O     192.168.3.0/24 [110/20] via 172.16.0.13, tun0
 ```
 
-This is the fundamental difference from Phase 1 where all routes pointed to `172.16.0.1` (hub).
+This is the key difference from Phase 1 where routes showed `172.16.0.1` (hub).
 
 ---
 
-## Step 6 — Observe the Phase 2 shortcut being created
+## Step 6 — Observe NHRP shortcut creation
 
-<details>
-<summary>Show configuration</summary>
-
-Run a large ping from spoke1 to spoke2's LAN and watch the path change:
-
+Send traffic from spoke1 to spoke2's LAN:
 ```
-# On spoke1 — before any traffic
+# On spoke1 shell (not vtysh — use bash)
+ping 192.168.2.1 -c 20 -I tun0
+```
+
+The first few packets may be lost during NHRP resolution. Then check NHRP:
+```
+# On spoke1 (vtysh)
 show ip nhrp
 ```
 
-You should only see the static hub entry.  Now send traffic:
-
+After the shortcut is installed, you'll see a dynamic entry for spoke2:
 ```
-ping 192.168.2.1 repeat 20 interval 0
-```
-
-During the first few packets NHRP resolution is in progress; some may drop.  After resolution:
-
-```
-show ip nhrp
-```
-
-Expected — dynamic entry for spoke2 has appeared:
-```
-172.16.0.1/32 via 172.16.0.1
-   Tunnel0 created 00:05:xx, never expire
-   Type: static, Flags: used
-   NBMA address: 10.0.0.1
-
-172.16.0.12/32 via 172.16.0.12
-   Tunnel0 created 00:00:xx, expire 00:04:xx
+172.16.0.12 via 172.16.0.12
+   tun0 created 00:00:xx, expire 00:04:xx
    Type: dynamic, Flags: shortcut
    NBMA address: 10.0.0.12
 ```
 
-The `shortcut` flag confirms a direct spoke-to-spoke entry exists.
-
-</details>
-
-### Traceroute confirms direct path
-
+Verify direct path — traceroute should NOT transit the hub:
 ```
-# On spoke1 — after NHRP shortcut is installed
+# On spoke1 shell
 traceroute 192.168.2.1
 ```
 
-Expected (direct, no hub hop):
-```
-traceroute to 192.168.2.1 (192.168.2.1), 30 hops max
- 1  172.16.0.12  x ms   <- spoke2 tunnel IP directly
- 2  192.168.2.1  x ms
-```
-
-Compare with Phase 1 where traceroute would show `172.16.0.1` (hub) as first hop.
+Expected: first hop is `172.16.0.12` (spoke2 directly), not hub.
 
 ---
 
 ## Troubleshooting
 
 **OSPF stuck in 2-Way instead of Full**
-- Verify hub is elected DR: `show ip ospf neighbor` on hub — hub should show all spokes as `Full/DROTHER`
-- Check priority: hub must be 10, spokes must be 0
-- OSPF broadcast requires DR/BDR election; spokes form Full adjacency with DR only
+- Hub must be elected DR (priority 10) — `show ip ospf interface tun0` on hub should show `State: DR`
+- Spokes must have priority 0 — `show ip ospf interface tun0` on spoke should show `State: DROTHER`
+- Spokes only form Full adjacency with the DR (hub)
 
 **No NHRP shortcut appearing after ping**
 - Confirm `ip nhrp shortcut` is on the spoke
 - Confirm `ip nhrp redirect` is on the hub
-- Check `show ip nhrp detail` — look for redirect messages in counters
-- NHRP redirect requires the hub to see the spoke-to-spoke traffic transiting it — verify routing table next-hops point to spoke IPs (not hub)
+- Routes in routing table must point to spoke tunnel IPs (not hub) — this requires OSPF broadcast mode
+- Run `debug nhrp` in vtysh on spoke to see redirect processing
 
-**Routes still pointing to hub (172.16.0.1) as next-hop**
-- OSPF network type mismatch — confirm broadcast on both hub and spoke
-- Verify spoke priority is 0 (otherwise spoke may become DR and change LSA flooding)
-- Run `show ip ospf interface Tunnel0` on spoke — confirm `Network type BROADCAST, State DROTHER`
-
-**Ping succeeds but traceroute shows hub in path**
-- NHRP shortcut may not have been triggered yet — run more pings, then recheck `show ip nhrp`
-- Shortcut entries age out — check holdtime with `show ip nhrp detail`
+**Routes still pointing to hub as next-hop**
+- OSPF network type mismatch — both hub and spoke must be `broadcast`
+- `show ip ospf interface tun0` should show `Network Type: Broadcast` on all nodes
 
 ---
 

@@ -1,48 +1,30 @@
 name: dmvpn-phase3
 
-# DMVPN Phase 3 — Shortcut Routing with Hub Summarization  (Arista cEOS)
+# DMVPN Phase 3 — Hub Summarization + NHRP Shortcuts  (Linux/FRR)
 #
-# Phase 3 = Phase 1 routing (hub-and-spoke OSPF p2mp) + NHRP shortcuts.
-# Hub can summarize spoke routes, AND spokes still build direct tunnels on demand.
+# Phase 3 = Phase 1 routing (OSPF p2mp, all routes via hub) + NHRP shortcuts.
+# Hub summarizes spoke LANs into 192.168.0.0/16; shortcuts install /24 overrides.
 #
-# Topology:
-#   [spoke1] (WAN: 10.0.0.11) --\
-#   [spoke2] (WAN: 10.0.0.12) ---[hub] (WAN: 10.0.0.1)   br-wan: 10.0.0.0/24
-#   [spoke3] (WAN: 10.0.0.13) --/
-#
-# Tunnel IPs:
-#   hub:    172.16.0.1/24   spoke1: 172.16.0.11/24
-#   spoke2: 172.16.0.12/24  spoke3: 172.16.0.13/24
-#
-# Simulated LANs (Loopback1):
-#   spoke1: 192.168.1.0/24   spoke2: 192.168.2.0/24   spoke3: 192.168.3.0/24
+# Platform note: FRR nhrpd v8.4; nhrp shortcut installs kernel routes.
 #
 # Key commands:
-#   Hub:    ip nhrp redirect  +  OSPF point-to-multipoint  +  summary-address 192.168.0.0/16
-#   Spokes: ip nhrp shortcut  +  OSPF point-to-point       (same as Phase 1 + shortcut)
+#   Hub:    ip nhrp redirect  +  OSPF p2mp  +  redistribute static (summary 192.168.0.0/16)
+#   Spokes: ip nhrp shortcut  +  OSPF p2mp  (same as Phase 1 + shortcut)
 #
-# How Phase 3 works (step by step):
-#   1. Routing: spoke1 learns 192.168.0.0/16 via hub (OSPF summary from hub)
-#   2. spoke1 sends traffic for spoke2 LAN toward hub (per routing table)
-#   3. Hub forwards to spoke2 AND sends NHRP redirect to spoke1:
-#      "192.168.2.x is reachable via spoke2 (NBMA: 10.0.0.12, tunnel: 172.16.0.12)"
-#   4. spoke1 resolves spoke2 and installs shortcut: 192.168.2.0/24 via 172.16.0.12
-#   5. The /24 shortcut is MORE SPECIFIC than the /16 summary -> shortcut wins
-#   6. Subsequent packets spoke1->spoke2 bypass the hub entirely
+# Pre-configured: hub (fully working Phase 3)
+# Your task: Configure NHRP + OSPF p2mp + ip nhrp shortcut on each spoke
 #
-# vs Phase 2:
-#   Phase 2: OSPF broadcast, direct next-hops in routing table, shortcuts
-#   Phase 3: OSPF p2mp, hub-and-spoke routing (all via hub), but NHRP shortcuts override
-#   Phase 3 advantage: hub can summarize routes (Phase 2 cannot without next-hop-self)
-#
-# Pre-configured: hub (OSPF p2mp + nhrp redirect + summary-address)
-# Your task: Configure NHRP + OSPF + ip nhrp shortcut on each spoke
+# Access:
+#   ./scripts/lab.sh cli dmvpn-phase3 hub       # vtysh
+#   ./scripts/lab.sh cli dmvpn-phase3 spoke1    # vtysh
 
 topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+
   nodes:
     br-wan:
-      kind: linux
-      image: frr-lab:local
       exec:
         - ip link add name br0 type bridge
         - ip link set br0 up
@@ -52,24 +34,40 @@ topology:
         - ip link set eth4 master br0
 
     hub:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/hub/startup-config
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/hub/frr.conf:/etc/frr/frr.conf
+        - configs/hub/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
 
     spoke1:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/spoke1/startup-config
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/spoke1/frr.conf:/etc/frr/frr.conf
+        - configs/spoke1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
 
     spoke2:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/spoke2/startup-config
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/spoke2/frr.conf:/etc/frr/frr.conf
+        - configs/spoke2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
 
     spoke3:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/spoke3/startup-config
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/spoke3/frr.conf:/etc/frr/frr.conf
+        - configs/spoke3/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
 
   links:
     - endpoints: ["hub:eth1",    "br-wan:eth1"]
