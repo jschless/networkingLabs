@@ -9,6 +9,9 @@ mkdir -p /srv/www
 cat > /srv/www/index.html << 'EOF'
 packet-analysis-basics
 EOF
+cat > /srv/www/healthz << 'EOF'
+ok
+EOF
 python3 -m http.server 8080 --directory /srv/www >/tmp/http.log 2>&1 &
 
 echo "[services] Ready: 10.2.0.2/30, HTTP on 8080"

@@ -1,0 +1,62 @@
+name: dmvpn-phase3-ipsec-capstone
+
+# DMVPN Phase 3 + Certificate IPsec Capstone  (VyOS)
+#
+# Goal:
+#   Build a DMVPN Phase 3 fabric on VyOS, then protect the GRE underlay with
+#   certificate-based IPsec so spoke-to-spoke shortcuts remain encrypted.
+#
+# Tasks:
+#   - generate a local CA and endpoint certificates on `ca`
+#   - import CA/cert/key material into hub and spokes
+#   - configure DMVPN Phase 3 (NHRP redirect/shortcut + OSPF p2mp + summary)
+#   - configure full-mesh GRE-over-IPsec transport selectors
+
+topology:
+  nodes:
+    br-wan:
+      kind: linux
+      image: frrouting/frr:latest
+      exec:
+        - ip link add name br0 type bridge
+        - ip link set br0 up
+        - ip link set eth1 master br0
+        - ip link set eth2 master br0
+        - ip link set eth3 master br0
+        - ip link set eth4 master br0
+
+    ca:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/ca/setup.sh:/setup.sh
+        - configs/ca/init-ca.sh:/lab/init-ca.sh
+        - configs/ca/issue-router.sh:/lab/issue-router.sh
+      exec:
+        - sh /setup.sh
+
+    hub:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/hub/config.boot
+
+    spoke1:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke1/config.boot
+
+    spoke2:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke2/config.boot
+
+    spoke3:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/spoke3/config.boot
+
+  links:
+    - endpoints: ["hub:eth1",    "br-wan:eth1"]
+    - endpoints: ["spoke1:eth1", "br-wan:eth2"]
+    - endpoints: ["spoke2:eth1", "br-wan:eth3"]
+    - endpoints: ["spoke3:eth1", "br-wan:eth4"]

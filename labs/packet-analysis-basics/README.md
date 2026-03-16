@@ -5,7 +5,7 @@ You will capture packets in three places:
 
 - on a host to see ARP and first-hop behavior
 - on a mirrored transit link to see OSPF, ICMP, and TCP between routers
-- in a saved pcap so you can open the trace in Wireshark later
+- in a saved pcap so you can inspect it with `tshark` or Wireshark later
 
 ## Topology
 
@@ -41,6 +41,7 @@ sudo containerlab deploy -t labs/packet-analysis-basics/topology.clab.yml
 - OSPF adjacency between `r1` and `r2`
 - a traffic mirror from `r1:eth2` to `analyzer:eth1`
 - a Python HTTP service on `services:8080`
+- a simple `healthz` endpoint at `http://10.2.0.2:8080/healthz`
 
 ## Workflow
 
@@ -94,18 +95,18 @@ Notice:
 
 ### 4. Capture a TCP three-way handshake
 
-Generate an HTTP request from `client`:
-
-```bash
-docker exec clab-packet-analysis-basics-client \
-  bash -lc 'printf "GET / HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
-```
-
 On `analyzer`, capture just TCP port 8080:
 
 ```bash
 docker exec clab-packet-analysis-basics-analyzer \
   tcpdump -ni eth1 -vv tcp port 8080
+```
+
+Then generate an HTTP request from `client`:
+
+```bash
+docker exec clab-packet-analysis-basics-client \
+  bash -lc 'printf "GET / HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
 ```
 
 Identify:
@@ -116,20 +117,107 @@ Identify:
 - HTTP payload packets
 - FIN/ACK teardown
 
-### 5. Save a pcap for Wireshark
+### 5. Use tshark to read a saved capture
+
+Start a short background capture on `analyzer`, then create one healthy probe and one HTTP transaction:
+
+```bash
+docker exec -d clab-packet-analysis-basics-analyzer \
+  sh -lc "tshark -ni eth1 -a duration:15 -f 'icmp or tcp port 8080' \
+  -w /tmp/packet-analysis-basics.pcap >/tmp/tshark-basic.log 2>&1"
+
+sleep 1
+docker exec clab-packet-analysis-basics-client ping -c 2 10.2.0.1
+docker exec clab-packet-analysis-basics-client \
+  bash -lc 'printf "GET /healthz HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
+
+sleep 16
+```
+
+Now summarize the pcap without opening a GUI:
 
 ```bash
 docker exec clab-packet-analysis-basics-analyzer \
-  tcpdump -ni eth1 -w /tmp/packet-analysis-basics.pcap -c 100
+  tshark -r /tmp/packet-analysis-basics.pcap -q -z io,phs
 
-docker cp clab-packet-analysis-basics-analyzer:/tmp/packet-analysis-basics.pcap /tmp/
+docker exec clab-packet-analysis-basics-analyzer \
+  tshark -r /tmp/packet-analysis-basics.pcap \
+  -Y 'icmp or http' \
+  -T fields \
+  -e frame.number -e ip.src -e ip.dst -e _ws.col.Protocol \
+  -e icmp.type -e http.request.method -e http.request.uri -e http.response.code
 ```
 
-Open `/tmp/packet-analysis-basics.pcap` in Wireshark and compare:
+Use that output to answer:
+
+- which frames are ICMP and which are HTTP
+- which URI was requested
+- whether the HTTP exchange completed successfully
+
+### 6. Engineer Scenario: Prove It Is Not the Network
+
+An application team says "the network is dropping our API calls." Your job is to pull a packet capture and decide whether the problem is path reachability, TCP session setup, or the HTTP transaction itself.
+
+Start a background capture on `analyzer`:
+
+```bash
+docker exec -d clab-packet-analysis-basics-analyzer \
+  sh -lc "tshark -ni eth1 -a duration:20 -f 'tcp port 8080' \
+  -w /tmp/app-triage.pcap >/tmp/tshark-triage.log 2>&1"
+```
+
+While that runs, generate one known-good request and one failing request from `client`:
+
+```bash
+sleep 1
+docker exec clab-packet-analysis-basics-client \
+  bash -lc 'printf "GET /healthz HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
+
+docker exec clab-packet-analysis-basics-client \
+  bash -lc 'printf "GET /api/status HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
+
+sleep 21
+```
+
+Use `tshark` to inspect the resulting pcap:
+
+```bash
+docker exec clab-packet-analysis-basics-analyzer \
+  tshark -r /tmp/app-triage.pcap -q -z conv,tcp
+
+docker exec clab-packet-analysis-basics-analyzer \
+  tshark -r /tmp/app-triage.pcap \
+  -Y 'http.request or http.response' \
+  -T fields \
+  -e tcp.stream -e ip.src -e ip.dst -e http.request.method \
+  -e http.request.uri -e http.response.code -e http.response.phrase
+
+docker exec clab-packet-analysis-basics-analyzer \
+  tshark -r /tmp/app-triage.pcap -Y 'http.response.code == 404' -V | sed -n '1,120p'
+```
+
+What you should conclude:
+
+- TCP setup succeeds in both streams
+- the network path is healthy enough for a full request and response
+- `/healthz` returns `200`
+- `/api/status` returns `404`, which is an application or URL problem, not a routing problem
+
+### 7. Save a pcap for Wireshark
+
+Copy either capture to your workstation if you want to inspect the same packets in Wireshark:
+
+```bash
+docker cp clab-packet-analysis-basics-analyzer:/tmp/packet-analysis-basics.pcap /tmp/
+docker cp clab-packet-analysis-basics-analyzer:/tmp/app-triage.pcap /tmp/
+```
+
+Open the pcaps in Wireshark and compare:
 
 - OSPF control-plane packets
 - ICMP reachability tests
 - TCP session setup and teardown
+- HTTP status codes and URIs from the engineer triage scenario
 
 ## Verification Commands
 
@@ -137,6 +225,8 @@ Open `/tmp/packet-analysis-basics.pcap` in Wireshark and compare:
 docker exec clab-packet-analysis-basics-r1 vtysh -c "show ip ospf neighbor"
 docker exec clab-packet-analysis-basics-r1 ip route
 docker exec clab-packet-analysis-basics-client ping -c 2 10.2.0.1
+docker exec clab-packet-analysis-basics-client \
+  bash -lc 'printf "GET /healthz HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
 docker exec clab-packet-analysis-basics-services ss -ltn
 ```
 
@@ -144,4 +234,5 @@ docker exec clab-packet-analysis-basics-services ss -ltn
 
 - packet capture location changes what story you can tell
 - mirrored transit traffic is useful for routing and application forensics
-- packet analysis is not separate from routing knowledge; it proves what the control plane is doing
+- `tshark` is fast for answering targeted questions from a saved pcap
+- packet analysis is not separate from routing knowledge; it proves whether a problem is network, transport, or application

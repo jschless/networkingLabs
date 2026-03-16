@@ -259,6 +259,43 @@ show configuration commands | match nhrp
 
 If you are already in config mode, prefix them with `run`.
 
+## Extension Challenge — Protect Phase 1 With IPsec
+
+You now have a working Phase 1 DMVPN underlay. Extend it by protecting the WAN-facing GRE traffic with IPsec while preserving the original Phase 1 behavior:
+
+- keep the same underlay addresses on `eth1`
+- keep the same mGRE tunnel addresses on `tun0`
+- keep hub-and-spoke forwarding through the hub
+- keep NHRP and OSPF working across the encrypted underlay
+
+What to implement:
+
+1. Create a reusable IKE group and ESP group on the hub and spokes.
+2. Add site-to-site IPsec peers between the hub and every spoke.
+3. Match GRE traffic between the WAN /32 addresses so the DMVPN tunnel rides inside IPsec.
+4. Re-test NHRP registration, OSPF adjacency, and spoke-to-spoke reachability.
+
+Verification targets:
+
+```vyos
+show vpn ike sa
+show vpn ipsec sa
+show ip nhrp
+show ip ospf neighbor
+```
+
+Traffic proof:
+
+```bash
+sudo tcpdump -ni any 'udp port 500 or udp port 4500 or esp'
+```
+
+Expected outcome:
+
+- the hub still forwards spoke-to-spoke traffic in classic Phase 1 style
+- `show vpn ike sa` and `show vpn ipsec sa` show live hub-to-spoke security associations
+- the WAN now carries IKE/ESP, while the overlay behavior stays unchanged
+
 ## Automation Note
 
 For this lab, `config.boot` is the cleanest source of truth and `vbash` op commands are the simplest way to validate state. If you later automate spoke bring-up, VyOS's HTTP API maps naturally to the same workflow:

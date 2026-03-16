@@ -1,6 +1,6 @@
 # Tunnels & VPN Track
 
-Ten labs covering GRE, IPsec, DMVPN (Phase 1/2/3), FlexVPN, WireGuard, and VRF-Lite across FRR, VyOS, and Arista cEOS platforms.
+Eleven labs covering GRE, IPsec, DMVPN (Phase 1/2/3 plus a certificate-IPsec capstone), FlexVPN, WireGuard, and VRF-Lite across FRR, VyOS, and Arista cEOS platforms.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
@@ -11,6 +11,7 @@ Ten labs covering GRE, IPsec, DMVPN (Phase 1/2/3), FlexVPN, WireGuard, and VRF-L
 | [dmvpn-phase1](dmvpn-phase1.md) | Practice | VyOS | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF |
 | [dmvpn-phase2](dmvpn-phase2.md) | Practice | VyOS | DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts |
 | [dmvpn-phase3](dmvpn-phase3.md) | Practice | VyOS | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp |
+| [dmvpn-phase3-ipsec-capstone](dmvpn-phase3-ipsec-capstone.md) | Capstone | VyOS | DMVPN Phase 3 with in-lab PKI and certificate-based IPsec |
 | [flexvpn-basics](flexvpn-basics.md) | Practice | strongSwan | IKEv2 FlexVPN, Virtual Tunnel Interfaces |
 | [wireguard](wireguard.md) | Practice | WireGuard | WireGuard VPN, key pairs, hub-and-spoke topology |
 | [vrf-lite](vrf-lite.md) | Practice | cEOS | VRF-Lite, per-VRF routing tables, route leaking |
