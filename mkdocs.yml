@@ -162,10 +162,13 @@ nav:
       - enterprise-wan-edge-capstone: tracks/enterprise/enterprise-wan-edge-capstone.md
     - Layer 2:
       - tracks/layer2/index.md
+      - vlan-trunks-switchport-basics: tracks/layer2/vlan-trunks-switchport-basics.md
+      - campus-l2-hardening: tracks/layer2/campus-l2-hardening.md
       - stp-operations: tracks/layer2/stp-operations.md
       - lacp-etherchannel: tracks/layer2/lacp-etherchannel.md
     - Security:
       - tracks/security/index.md
+      - acl-basics: tracks/security/acl-basics.md
       - macsec-basics: tracks/security/macsec-basics.md
       - dot1x-nac: tracks/security/dot1x-nac.md
       - urpf-antispoofing: tracks/security/urpf-antispoofing.md
@@ -173,6 +176,12 @@ nav:
       - dot1x-ceos-practice: tracks/security/dot1x-ceos-practice.md
     - Network Operations:
       - tracks/operations/index.md
+      - management-access-control: tracks/operations/management-access-control.md
+      - dhcp-dns-troubleshooting: tracks/operations/dhcp-dns-troubleshooting.md
+      - aaa-ops-troubleshooting: tracks/operations/aaa-ops-troubleshooting.md
+      - ipv6-access-services: tracks/operations/ipv6-access-services.md
+      - packet-analysis-basics: tracks/operations/packet-analysis-basics.md
+      - mtu-pmtud-troubleshooting: tracks/operations/mtu-pmtud-troubleshooting.md
       - network-assurance: tracks/operations/network-assurance.md
       - qos-enterprise: tracks/operations/qos-enterprise.md
       - network-automation-netbox: tracks/operations/network-automation-netbox.md

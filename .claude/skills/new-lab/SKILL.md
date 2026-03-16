@@ -153,6 +153,11 @@ interface Ethernet1
 
 IPs, descriptions, and hostnames are pre-configured. The routing protocol config is **absent** — only present as `!` comments in the hint block.
 
+Also update the docs metadata for every new lab:
+- Add the lab to the appropriate track table in `README.md`
+- Add the wrapper page in `docs/tracks/<track>/<lab-name>.md`
+- Add the matching nav entry in `mkdocs.yml` under that track so the lab shows up in the docs sidebar
+
 ---
 
 ## Completeness Checklist
@@ -164,3 +169,4 @@ Before finishing, verify:
 - [ ] Practice lab: IPs and hostnames set, routing config absent but hinted
 - [ ] Debug lab: exactly ONE bug in exactly ONE node; all others are fully correct working configs
 - [ ] README has: topology ASCII diagram, link table, node table, deploy commands, numbered steps, verification commands, troubleshooting section
+- [ ] `README.md`, `docs/tracks/<track>/<lab-name>.md`, and `mkdocs.yml` are all updated so the lab appears both on the track page and in the sidebar
