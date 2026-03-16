@@ -1,80 +1,36 @@
 #!/usr/bin/env python3
-import ipaddress
-import os
 import pathlib
-import sys
 
-import pynetbox
-import requests
 import yaml
 
+from netbox_common import api_post, build_clients, ensure_object
 
 ROOT = pathlib.Path("/workspace")
 MODEL = yaml.safe_load((ROOT / "netbox_model.yml").read_text())
-NETBOX_URL = os.environ.get("NETBOX_URL", "http://172.31.40.23:8080")
-NETBOX_TOKEN = os.environ.get("NETBOX_TOKEN")
-NETBOX_USERNAME = os.environ.get("NETBOX_USERNAME", "admin")
-NETBOX_PASSWORD = os.environ.get("NETBOX_PASSWORD", "admin")
+nb, session, _ = build_clients("lab-seed-token")
 
 
-def ensure_token():
-    if NETBOX_TOKEN:
-        return NETBOX_TOKEN
-    resp = requests.post(
-        f"{NETBOX_URL}/api/users/tokens/provision/",
-        json={
-            "username": NETBOX_USERNAME,
-            "password": NETBOX_PASSWORD,
-            "write_enabled": True,
-            "description": "lab-seed-token",
-        },
-        timeout=20,
-    )
-    resp.raise_for_status()
-    return resp.json()["key"]
-
-
-NETBOX_TOKEN = ensure_token()
-
-nb = pynetbox.api(NETBOX_URL, token=NETBOX_TOKEN)
-session = requests.Session()
-session.headers.update(
-    {
-        "Authorization": f"Token {NETBOX_TOKEN}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-)
-
-
-def get_or_create(endpoint, lookup, payload):
-    obj = endpoint.get(**lookup)
-    if obj:
-        return obj
-    return endpoint.create(payload)
-
-
-site = get_or_create(
+site = ensure_object(
     nb.dcim.sites,
     {"slug": MODEL["site"]["slug"]},
     MODEL["site"],
 )
-tenant = get_or_create(
+tenant = ensure_object(
     nb.tenancy.tenants,
     {"slug": MODEL["tenant"]["slug"]},
     MODEL["tenant"],
 )
-manufacturer = get_or_create(
+manufacturer = ensure_object(
     nb.dcim.manufacturers,
     {"slug": MODEL["manufacturer"]["slug"]},
     MODEL["manufacturer"],
 )
-platform = get_or_create(
+platform = ensure_object(
     nb.dcim.platforms,
     {"slug": MODEL["platform"]["slug"]},
-    MODEL["platform"],
+    {**MODEL["platform"], "manufacturer": manufacturer.id},
 )
-device_type = get_or_create(
+device_type = ensure_object(
     nb.dcim.device_types,
     {"slug": MODEL["device_type"]["slug"]},
     {**MODEL["device_type"], "manufacturer": manufacturer.id},
@@ -82,13 +38,13 @@ device_type = get_or_create(
 
 roles = {}
 for role in MODEL["roles"]:
-    roles[role["slug"]] = get_or_create(
+    roles[role["slug"]] = ensure_object(
         nb.dcim.device_roles, {"slug": role["slug"]}, role
     )
 
 racks = {}
 for rack in MODEL["racks"]:
-    racks[rack["name"]] = get_or_create(
+    racks[rack["name"]] = ensure_object(
         nb.dcim.racks,
         {"name": rack["name"], "site_id": site.id},
         {"name": rack["name"], "site": site.id, "status": "active"},
@@ -96,14 +52,14 @@ for rack in MODEL["racks"]:
 
 tag_ids = []
 for tag in MODEL["tags"]:
-    tag_obj = get_or_create(
+    tag_obj = ensure_object(
         nb.extras.tags,
         {"slug": tag},
         {"name": tag, "slug": tag},
     )
     tag_ids.append(tag_obj.id)
 
-vlan_group = get_or_create(
+vlan_group = ensure_object(
     nb.ipam.vlan_groups,
     {"slug": MODEL["vlan_group"]["slug"]},
     {"name": MODEL["vlan_group"]["name"], "slug": MODEL["vlan_group"]["slug"]},
@@ -111,7 +67,7 @@ vlan_group = get_or_create(
 
 vrfs = {}
 for vrf in MODEL["vrfs"]:
-    vrfs[vrf["name"]] = get_or_create(
+    vrfs[vrf["name"]] = ensure_object(
         nb.ipam.vrfs,
         {"name": vrf["name"]},
         {"name": vrf["name"], "rd": vrf["rd"], "tenant": tenant.id},
@@ -119,7 +75,7 @@ for vrf in MODEL["vrfs"]:
 
 vlans = {}
 for vlan in MODEL["vlans"]:
-    vlans[vlan["vid"]] = get_or_create(
+    vlans[vlan["vid"]] = ensure_object(
         nb.ipam.vlans,
         {"vid": vlan["vid"], "group_id": vlan_group.id},
         {
@@ -141,7 +97,41 @@ for prefix in MODEL["prefixes"]:
     }
     if "vrf" in prefix:
         payload["vrf"] = vrfs[prefix["vrf"]].id
-    get_or_create(nb.ipam.prefixes, {"prefix": prefix["prefix"]}, payload)
+    ensure_object(nb.ipam.prefixes, {"prefix": prefix["prefix"]}, payload)
+
+template_text = (ROOT / MODEL["config_template"]["file"]).read_text()
+config_template = ensure_object(
+    nb.extras.config_templates,
+    {"name": MODEL["config_template"]["name"]},
+    {
+        "name": MODEL["config_template"]["name"],
+        "description": MODEL["config_template"]["description"],
+        "template_code": template_text,
+    },
+)
+
+platform.update({"config_template": config_template.id})
+for role in roles.values():
+    role.update({"config_template": None})
+
+scope_map = {
+    "sites": {site.name: site.id},
+    "roles": {role.slug: role.id for role in roles.values()},
+    "platforms": {platform.slug: platform.id},
+}
+
+for context in MODEL["config_contexts"]:
+    payload = {
+        "name": context["name"],
+        "description": context["description"],
+        "weight": context["weight"],
+        "is_active": True,
+        "data": context["data"],
+    }
+    scopes = context.get("scopes", {})
+    for scope_name, values in scopes.items():
+        payload[scope_name] = [scope_map[scope_name][value] for value in values]
+    ensure_object(nb.extras.config_contexts, {"name": context["name"]}, payload)
 
 devices = {}
 interfaces = {}
@@ -161,17 +151,17 @@ for device in MODEL["devices"]:
         "serial": f"{device['name']}-lab",
         "asset_tag": f"asn-{device['asn']}",
     }
-    devices[device["name"]] = get_or_create(
+    devices[device["name"]] = ensure_object(
         nb.dcim.devices, {"name": device["name"]}, device_payload
     )
-    asn_tag = get_or_create(
+    asn_tag = ensure_object(
         nb.extras.tags,
         {"slug": f"asn-{device['asn']}"},
         {"name": f"asn-{device['asn']}", "slug": f"asn-{device['asn']}"},
     )
     devices[device["name"]].update({"tags": tag_ids + [asn_tag.id]})
 
-    mgmt = get_or_create(
+    mgmt = ensure_object(
         nb.dcim.interfaces,
         {"device_id": devices[device["name"]].id, "name": "Management0"},
         {
@@ -182,7 +172,7 @@ for device in MODEL["devices"]:
             "enabled": True,
         },
     )
-    lo0 = get_or_create(
+    lo0 = ensure_object(
         nb.dcim.interfaces,
         {"device_id": devices[device["name"]].id, "name": "Loopback0"},
         {
@@ -206,11 +196,14 @@ for device in MODEL["devices"]:
             "type": intf_type,
             "enabled": True,
         }
-        if intf["name"].startswith("Ethernet") and "mode" in intf:
+        if intf["name"].startswith("Ethernet") and intf.get("mode") == "access":
             payload["description"] = f"access vlan {intf['vlan']}"
+            payload["mode"] = "access"
+            payload["untagged_vlan"] = vlans[intf["vlan"]].id
         elif intf["name"].startswith("Vlan"):
             payload["description"] = f"{intf.get('vrf', '')} service interface".strip()
-        iface = get_or_create(
+            payload["vrf"] = vrfs[intf["vrf"]].id
+        iface = ensure_object(
             nb.dcim.interfaces,
             {"device_id": devices[device["name"]].id, "name": intf["name"]},
             payload,
@@ -221,7 +214,7 @@ for device in MODEL["devices"]:
         (device["mgmt_ip"], "Management0"),
         (device["loopback"], "Loopback0"),
     ):
-        ip = get_or_create(
+        ip = ensure_object(
             nb.ipam.ip_addresses,
             {"address": address},
             {
@@ -247,7 +240,7 @@ for device in MODEL["devices"]:
         }
         if "vrf" in intf:
             payload["vrf"] = vrfs[intf["vrf"]].id
-        get_or_create(nb.ipam.ip_addresses, {"address": intf["address"]}, payload)
+        ensure_object(nb.ipam.ip_addresses, {"address": intf["address"]}, payload)
 
 for cable in MODEL["cables"]:
     a = interfaces[(cable["a_device"], cable["a_interface"])]
@@ -265,7 +258,9 @@ for cable in MODEL["cables"]:
         "type": "cat6a",
         "tenant": tenant.id,
     }
-    resp = session.post(f"{NETBOX_URL}/api/dcim/cables/", json=payload, timeout=20)
-    resp.raise_for_status()
+    api_post(session, "/api/dcim/cables/", payload)
 
-print("Seeded NetBox with devices, interfaces, IPAM, VLANs, VRFs, and cables.")
+print(
+    "Seeded NetBox with devices, interfaces, IPAM, VLANs, VRFs, cables, "
+    "config context, and a native EOS config template."
+)

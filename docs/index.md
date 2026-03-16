@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-**93 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+**98 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 No cloud account. No license fees. Deploy, break things, learn.
 
@@ -144,24 +144,24 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Enterprise track](tracks/enterprise/index.md)
 
-- :material-switch: **Layer 2** (2 labs)
+- :material-switch: **Layer 2** (4 labs)
 
     ---
-    STP operations, LACP EtherChannel
+    VLANs and trunks, L2 hardening, STP operations, LACP EtherChannel
 
     [:octicons-arrow-right-24: Layer 2 track](tracks/layer2/index.md)
 
-- :material-shield-lock: **Security** (5 labs)
+- :material-shield-lock: **Security** (6 labs)
 
     ---
-    MACsec, 802.1X/NAC, uRPF, CoPP, dot1x on EOS
+    ACLs, MACsec, 802.1X/NAC, uRPF, CoPP, dot1x on EOS
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-chart-line: **Network Operations** (4 labs)
+- :material-chart-line: **Network Operations** (6 labs)
 
     ---
-    SNMP/syslog/NetFlow, QoS, NetBox automation, gNMI telemetry
+    Packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, NetBox automation, gNMI telemetry
 
     [:octicons-arrow-right-24: Operations track](tracks/operations/index.md)
 

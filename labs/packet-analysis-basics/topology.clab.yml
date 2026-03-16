@@ -1,0 +1,56 @@
+name: packet-analysis-basics
+
+# Packet Analysis Basics
+#
+# Capture workflow:
+# - client local capture shows ARP and first-hop traffic
+# - analyzer receives a mirror of r1<->r2 traffic from r1:eth2 via tc mirred
+# - services hosts a simple HTTP server so you can inspect a real TCP handshake
+
+topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+
+  nodes:
+    r1:
+      binds:
+        - configs/r1/frr.conf:/etc/frr/frr.conf
+        - configs/r1/setup.sh:/setup.sh
+        - configs/shared/daemons:/etc/frr/daemons
+        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
+      exec:
+        - bash /setup.sh
+
+    r2:
+      binds:
+        - configs/r2/frr.conf:/etc/frr/frr.conf
+        - configs/r2/setup.sh:/setup.sh
+        - configs/shared/daemons:/etc/frr/daemons
+        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
+      exec:
+        - bash /setup.sh
+
+    client:
+      binds:
+        - configs/client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    services:
+      binds:
+        - configs/services/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    analyzer:
+      binds:
+        - configs/analyzer/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["client:eth1", "r1:eth1"]        # 10.1.0.0/30
+    - endpoints: ["r1:eth2", "r2:eth1"]            # 10.0.12.0/30
+    - endpoints: ["r2:eth2", "services:eth1"]      # 10.2.0.0/30
+    - endpoints: ["r1:eth3", "analyzer:eth1"]      # mirror destination

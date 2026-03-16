@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **93 hands-on networking labs** covering OSPF, BGP, MPLS,
+A self-hosted lab environment with **98 hands-on networking labs** covering OSPF, BGP, MPLS,
 VPN, data center, enterprise design, security, and more. All labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
 [Arista cEOS](https://www.arista.com/en/support/software-download), and
@@ -270,6 +270,7 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
+| [acl-basics](labs/acl-basics/) | Practice | Interface ACLs for router-local services, default deny, protocol/port filtering, counters |
 | [macsec-basics](labs/macsec-basics/) | Practice | IEEE 802.1AE MACsec, MKA key agreement, infrastructure + endpoint modes |
 | [dot1x-nac](labs/dot1x-nac/) | Practice | 802.1X port authentication, RADIUS, EAP, NAC enforcement |
 | [urpf-antispoofing](labs/urpf-antispoofing/) | Practice | Unicast RPF, source IP anti-spoofing, strict vs loose mode |
@@ -282,6 +283,8 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
+| [packet-analysis-basics](labs/packet-analysis-basics/) | Practice | ARP, OSPF, ICMP, TCP handshake capture, mirrored traffic, Wireshark workflow |
+| [mtu-pmtud-troubleshooting](labs/mtu-pmtud-troubleshooting/) | Practice | GRE overhead, exact-size probes, PMTUD, tunnel MTU correction |
 | [network-assurance](labs/network-assurance/) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |
 | [qos-enterprise](labs/qos-enterprise/) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
 | [network-automation-netbox](labs/network-automation-netbox/) | Practice | NetBox inventory, automation workflow, programmatic config |
@@ -293,6 +296,8 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
+| [vlan-trunks-switchport-basics](labs/vlan-trunks-switchport-basics/) | Practice | VLAN creation, access ports, trunks, allowed VLANs, pruning symptoms |
+| [campus-l2-hardening](labs/campus-l2-hardening/) | Practice | PortFast, BPDU Guard, Root Guard, storm control on a compact campus edge |
 | [stp-operations](labs/stp-operations/) | Practice | Spanning Tree operations, port states, failure handling |
 | [lacp-etherchannel](labs/lacp-etherchannel/) | Practice | 802.3ad LACP EtherChannel, Port-Channel, link aggregation |
 
@@ -371,7 +376,15 @@ HA:       ha-network-design-ceos
 ### Security
 
 ```
-bgp-prefix-security -> ipsec-basics -> gre-ipsec -> macsec-basics -> dot1x-nac
+acl-basics -> bgp-prefix-security -> ipsec-basics -> gre-ipsec
+-> macsec-basics -> dot1x-nac
+```
+
+### Network Operations
+
+```
+packet-analysis-basics -> network-assurance -> mtu-pmtud-troubleshooting
+-> telemetry-monitoring-hybrid -> network-automation-netbox
 ```
 
 ### Troubleshooting Practice

@@ -1,0 +1,27 @@
+hostname acc1
+!
+no ip routing
+!
+spanning-tree mode rstp
+!
+vlan 10
+!
+interface Ethernet1
+   description to-dist1 trunk
+   switchport trunk allowed vlan 10
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet2
+   description to-client-a user edge
+   switchport access vlan 10
+   switchport mode access
+   no shutdown
+!
+interface Ethernet3
+   description to-rogue-switch hostile edge
+   switchport access vlan 10
+   switchport mode access
+   no shutdown
+!
+end

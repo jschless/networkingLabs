@@ -1,0 +1,25 @@
+hostname sw2
+!
+no ip routing
+!
+spanning-tree mode rstp
+!
+! Learner tasks:
+!  - create VLAN 10 and VLAN 20
+!  - make Ethernet1 an access port for VLAN 10
+!  - make Ethernet2 an access port for VLAN 20
+!  - make Ethernet3 a trunk carrying VLANs 10 and 20
+!
+interface Ethernet1
+   description to-host-b users
+   no shutdown
+!
+interface Ethernet2
+   description to-voice-b voice
+   no shutdown
+!
+interface Ethernet3
+   description to-sw1 trunk
+   no shutdown
+!
+end

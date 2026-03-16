@@ -1,0 +1,48 @@
+name: mtu-pmtud-troubleshooting
+
+# MTU and PMTUD troubleshooting over a GRE tunnel.
+# The WAN path is reduced to MTU 1400, but the GRE tunnel is left at its default MTU.
+# Small traffic works. Large DF traffic does not.
+
+topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+
+  nodes:
+    host-a:
+      binds:
+        - configs/host-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    edge-a:
+      binds:
+        - configs/edge-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    internet:
+      binds:
+        - configs/internet/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    edge-b:
+      binds:
+        - configs/edge-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    host-b:
+      binds:
+        - configs/host-b/setup.sh:/setup.sh
+        - configs/host-b/udp-echo.py:/udp-echo.py
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["host-a:eth1", "edge-a:eth1"]       # 192.168.1.0/24
+    - endpoints: ["edge-a:eth2", "internet:eth1"]     # 203.0.113.0/30
+    - endpoints: ["internet:eth2", "edge-b:eth2"]     # 203.0.113.4/30
+    - endpoints: ["edge-b:eth1", "host-b:eth1"]       # 192.168.2.0/24

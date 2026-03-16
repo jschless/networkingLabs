@@ -1,0 +1,33 @@
+name: acl-basics
+
+# ACL basics with a Linux router.
+# Use iptables-legacy to protect router-local services by interface,
+# source, protocol, port, and rule order.
+
+topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+
+  nodes:
+    client:
+      binds:
+        - configs/client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    attacker:
+      binds:
+        - configs/attacker/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    router:
+      binds:
+        - configs/router/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["client:eth1", "router:eth1"]      # 192.168.10.0/24
+    - endpoints: ["attacker:eth1", "router:eth2"]    # 192.168.20.0/24

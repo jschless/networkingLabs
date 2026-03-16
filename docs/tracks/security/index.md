@@ -1,9 +1,10 @@
 # Security Track
 
-Five labs covering MACsec encryption, 802.1X NAC, uRPF anti-spoofing, Control Plane Policing, and wired dot1x on Arista EOS.
+Six labs covering ACL fundamentals, MACsec encryption, 802.1X NAC, uRPF anti-spoofing, Control Plane Policing, and wired dot1x on Arista EOS.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
+| [acl-basics](acl-basics.md) | Practice | FRR | Interface ACLs, default deny, source/protocol/port filtering, counters |
 | [macsec-basics](macsec-basics.md) | Practice | Custom | IEEE 802.1AE MACsec, MKA key agreement |
 | [dot1x-nac](dot1x-nac.md) | Practice | Custom | 802.1X port auth, RADIUS, EAP, NAC enforcement |
 | [urpf-antispoofing](urpf-antispoofing.md) | Practice | FRR | Unicast RPF, source IP anti-spoofing, strict vs loose mode |

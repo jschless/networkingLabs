@@ -1,0 +1,52 @@
+name: vlan-trunks-switchport-basics
+
+topology:
+  nodes:
+    sw1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/sw1/startup-config
+
+    sw2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/sw2/startup-config
+
+    host-a:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/host-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    host-b:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/host-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    voice-a:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/voice-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    voice-b:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/voice-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["host-a:eth1", "sw1:eth1"]
+    - endpoints: ["voice-a:eth1", "sw1:eth2"]
+    - endpoints: ["sw1:eth3", "sw2:eth3"]
+    - endpoints: ["host-b:eth1", "sw2:eth1"]
+    - endpoints: ["voice-b:eth1", "sw2:eth2"]

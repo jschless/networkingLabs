@@ -37,5 +37,11 @@ retry_contains \
   "200" \
   24 \
   5
+retry_contains \
+  "netbox render-config works" \
+  "node automation 'bash -lc \"cd /workspace && python3 seed_netbox.py >/dev/null && python3 render_from_netbox.py\"'" \
+  "Rendered 4 configs from NetBox" \
+  12 \
+  5
 
 summary

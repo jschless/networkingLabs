@@ -53,10 +53,17 @@ Capstones: enterprise-collapsed-core-capstone → enterprise-campus-capstone
 ## Security
 
 ```
-bgp-prefix-security → bgp-rpki
+acl-basics → bgp-prefix-security → bgp-rpki
 ipsec-basics → gre-ipsec → flexvpn-basics
 macsec-basics → dot1x-nac → dot1x-ceos-practice
 urpf-antispoofing → copp-basics
+```
+
+## Network Operations
+
+```
+packet-analysis-basics → network-assurance → mtu-pmtud-troubleshooting
+→ telemetry-monitoring-hybrid → network-automation-netbox
 ```
 
 ## DMVPN Progression

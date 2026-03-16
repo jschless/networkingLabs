@@ -1,12 +1,14 @@
 # Network Operations Track
 
-Four labs covering observability (SNMP, syslog, SPAN, NetFlow), QoS, network automation with NetBox, and streaming telemetry.
+Six labs covering packet capture workflow, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, network automation with NetBox, and streaming telemetry.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
+| [packet-analysis-basics](packet-analysis-basics.md) | Practice | ARP, OSPF, ICMP, TCP handshake capture, mirrored traffic, Wireshark workflow |
+| [mtu-pmtud-troubleshooting](mtu-pmtud-troubleshooting.md) | Practice | GRE overhead, exact-size probes, PMTUD, tunnel MTU correction |
 | [network-assurance](network-assurance.md) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |
 | [qos-enterprise](qos-enterprise.md) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
-| [network-automation-netbox](network-automation-netbox.md) | Practice | NetBox capstone: DCIM, IPAM, cables, VLANs, VRFs, API-driven config rendering |
+| [network-automation-netbox](network-automation-netbox.md) | Practice | NetBox capstone: DCIM, IPAM, native config templates, discovery sync, and drift validation |
 | [telemetry-monitoring-hybrid](telemetry-monitoring-hybrid.md) | Practice | gNMI telemetry, Prometheus, Grafana, classic NMS |
 
 ## Platform Notes

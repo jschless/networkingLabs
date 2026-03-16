@@ -1,0 +1,69 @@
+hostname {{ device.name }}
+!
+username {{ automation.admin_username }} privilege 15 role network-admin secret {{ automation.admin_secret }}
+!
+ip routing
+!
+{% if device.role.slug == "leaf" %}
+{% for vrf in service_vrfs %}
+vrf instance {{ vrf.name }}
+!
+{% endfor %}
+{% for vlan in service_vlans %}
+vlan {{ vlan.vid }}
+   name {{ vlan.name }}
+!
+{% endfor %}
+{% endif %}
+interface Loopback0
+   ip address {{ loopback.address }}
+!
+{% for iface in fabric_interfaces %}
+interface {{ iface.name }}
+   description to {{ iface.peer_device }} {{ iface.peer_interface }}
+   no switchport
+   ip address {{ iface.address }}
+   no shutdown
+!
+{% endfor %}
+{% for iface in access_interfaces %}
+interface {{ iface.name }}
+   description access port for VLAN {{ iface.vlan }}
+   switchport access vlan {{ iface.vlan }}
+   no shutdown
+!
+{% endfor %}
+{% for svi in svis %}
+interface {{ svi.name }}
+   description {{ svi.description }}
+   vrf {{ svi.vrf }}
+   ip address {{ svi.address }}
+   no autostate
+!
+{% endfor %}
+router bgp {{ local_asn }}
+   router-id {{ router_id }}
+   maximum-paths {{ bgp.maximum_paths }} ecmp {{ bgp.maximum_paths }}
+{% for neigh in neighbors %}
+   neighbor {{ neigh.ip }} remote-as {{ neigh.asn }}
+{% endfor %}
+   !
+   address-family ipv4
+{% for neigh in neighbors %}
+      neighbor {{ neigh.ip }} activate
+{% endfor %}
+      network {{ loopback.address }}
+   !
+!
+{% for name_server in automation.name_servers %}
+ip name-server {{ name_server }}
+{% endfor %}
+{% for ntp_server in automation.ntp_servers %}
+ntp server {{ ntp_server }}
+{% endfor %}
+!
+management api http-commands
+   no shutdown
+   protocol http
+!
+end

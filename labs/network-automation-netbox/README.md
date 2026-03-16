@@ -1,22 +1,24 @@
 # NetBox Automation Capstone Lab
 
-This lab is a full source-of-truth capstone built around NetBox.
+This lab is a source-of-truth capstone built around NetBox.
 
 You will use NetBox for:
 
 - DCIM objects: site, racks, manufacturer, platform, roles, devices, interfaces, cables
 - IPAM objects: prefixes, IP addresses, primary IPs, VLANs, VRFs
-- structured automation input for config rendering
-- validation against live running state
+- config context and native config templates
+- rendered configuration output through the live NetBox API
+- reconciliation between live device facts and the modeled state
 
 The automation node includes scripts and playbooks to:
 
 - seed NetBox
-- render EOS configs from the modeled topology
+- render EOS configs from NetBox's native `render-config` endpoint
 - push rendered configs
 - back up running configs
 - gather live facts
-- detect drift
+- sync discovered facts back into NetBox
+- detect drift between NetBox and live devices
 
 ## Build
 
@@ -83,8 +85,11 @@ Service containers:
 Automation workspace files in `/workspace`:
 
 - `netbox_model.yml`
+- `netbox_common.py`
+- `eos_device_config.j2`
 - `seed_netbox.py`
 - `render_from_netbox.py`
+- `discover_sync.py`
 - `deploy.yml`
 - `backup.yml`
 - `facts.yml`
@@ -114,6 +119,8 @@ Seeded object types:
 - prefixes
 - IP addresses
 - primary IPs
+- config contexts
+- config templates
 
 ## Lab Addressing
 
@@ -152,8 +159,6 @@ Seeded object types:
 | VLANs | `10 USERS`, `20 SERVERS` |
 | Service prefixes | `10.10.10.0/24`, `10.20.20.0/24` |
 
-These services are intentionally present even though the capstone focus is NetBox and automation, not end-host data-plane testing.
-
 ## Step 1 — Verify The Base Fabric
 
 This lab ships with a working underlay so the automation workflow has a known-good starting point.
@@ -172,7 +177,7 @@ Expected:
 
 ## Step 2 — Export NetBox Connection Info
 
-The seeding and rendering scripts use the NetBox API.
+The Python scripts use the NetBox API.
 
 By default they can auto-provision a token using the lab credentials `admin` / `admin`, so this is enough on the automation node:
 
@@ -197,13 +202,14 @@ cd /workspace
 python3 seed_netbox.py
 ```
 
-This populates NetBox with:
+This seeds:
 
-- fabric devices and racks
-- interfaces and cables
+- the fabric inventory and rack placement
 - management, loopback, and transit addressing
-- VLANs and VRFs
-- IPAM prefixes and IP assignments
+- VLANs, VRFs, and IPAM prefixes
+- cable relationships
+- a site-scoped config context with automation defaults
+- a native NetBox config template for EOS devices
 
 After seeding, explore these NetBox areas:
 
@@ -215,10 +221,12 @@ After seeding, explore these NetBox areas:
 - `IPAM -> VLANs`
 - `IPAM -> VRFs`
 - `Organization -> Racks`
+- `Extras -> Config Contexts`
+- `Extras -> Config Templates`
 
-## Step 4 — Render Configs From NetBox
+## Step 4 — Render Configs Through NetBox
 
-Render fresh configs from the modeled topology:
+Render fresh configs from the live NetBox API:
 
 ```bash
 cd /workspace
@@ -233,12 +241,14 @@ You should get:
 - `generated/leaf1.cfg`
 - `generated/leaf2.cfg`
 
-What the renderer uses:
+What this script does:
 
-- devices and roles from NetBox
-- interface/IP structure from the model
-- BGP underlay neighbors derived from the seeded topology
-- VLAN and VRF objects for service configuration on the leaves
+- reads devices, interfaces, IP assignments, VLANs, VRFs, and cable-derived topology from NetBox
+- builds per-device context for neighbors and service interfaces
+- calls each device's native `/render-config/` API endpoint
+- writes the rendered config text to `generated/`
+
+This is the important shift from the old lab: configs are no longer rendered by a local-only Jinja path pretending to be NetBox. NetBox now owns the template and does the rendering.
 
 ## Step 5 — Push The Rendered Config
 
@@ -276,35 +286,66 @@ ansible-playbook -i inventory.yml facts.yml
 
 This saves EOS facts into `facts/`.
 
-## Step 8 — Run Drift Detection
+## Step 8 — Sync Discovery Back Into NetBox
+
+NetBox is not a discovery engine by itself. The common pattern is:
+
+- collect live state with something else
+- transform it
+- reconcile it into NetBox
+
+This lab demonstrates that pattern with gathered EOS facts:
+
+```bash
+cd /workspace
+python3 discover_sync.py
+```
+
+The discovery sync updates selected NetBox fields from live device facts, including:
+
+- device serial numbers
+- interface descriptions
+- interface MTU
+- interface MAC addresses
+- interface/IP objects if a discovered interface is missing from NetBox
+
+This is intentionally conservative. It shows how external discovery can feed NetBox without turning the lab into a full NMS.
+
+## Step 9 — Run Drift Detection
 
 ```bash
 cd /workspace
 python3 drift_report.py
 ```
 
-The current drift report checks interface/IP consistency between the NetBox model and live device facts.
+The drift report now compares NetBox against live facts, not against the original seed YAML.
 
-This is intentionally narrow but practical. It gives you a concrete example of how to compare:
+It checks:
+
+- device serial numbers
+- interface/IP consistency
+- interface descriptions
+
+This gives you a practical model for comparing:
 
 - source of truth
 - intended config
 - observed running state
 
-## Step 9 — Introduce Drift
+## Step 10 — Introduce Drift And Reconcile It
 
 Make a manual change on one leaf. Good examples:
 
 - change an interface description
-- change an access VLAN on `Ethernet3`
 - remove a loopback address
 - alter a fabric IP
 
 Then rerun:
 
 ```bash
-ansible-playbook -i inventory.yml backup.yml
 ansible-playbook -i inventory.yml facts.yml
+python3 drift_report.py
+python3 discover_sync.py
 python3 drift_report.py
 ```
 
@@ -314,6 +355,13 @@ Compare:
 - `backups/*.cfg`
 - `facts/*.json`
 - the NetBox UI
+
+The workflow should make the distinction clear:
+
+- `render_from_netbox.py` shows intended state coming out of NetBox
+- `facts.yml` shows observed device state
+- `discover_sync.py` is the reconciliation step that updates NetBox from live state
+- `drift_report.py` tells you whether those datasets still agree
 
 ## NetBox Features This Capstone Exercises
 
@@ -336,41 +384,40 @@ Compare:
 - VLANs
 - VRFs
 
+### Extras
+
+- config contexts
+- config templates
+- native rendered config output via the NetBox API
+
 ### Automation
 
 - API-driven data access
 - rendered config generation
 - programmatic config deployment
 - live facts collection
-- drift detection against the source-of-truth model
+- external discovery feeding NetBox
+- drift detection against the source of truth
 
 ## Files To Inspect
 
 - `automation/netbox_model.yml`
+- `automation/eos_device_config.j2`
+- `automation/netbox_common.py`
 - `automation/seed_netbox.py`
 - `automation/render_from_netbox.py`
-- `automation/deploy.yml`
+- `automation/discover_sync.py`
 - `automation/drift_report.py`
+- `automation/deploy.yml`
 - `configs/spine1/startup-config`
 - `configs/spine2/startup-config`
 - `configs/leaf1/startup-config`
 - `configs/leaf2/startup-config`
 
-## Ideas To Extend It Further
-
-If you want to keep pushing this lab, the highest-value next additions are:
-
-- create custom fields for ownership, maintenance window, and compliance status
-- add config contexts and merge them into the renderer
-- pull device/interface data directly from NetBox instead of using the YAML model as the seed source
-- add a second site and model inter-site inventory
-- add circuits/providers and WAN-facing devices
-- add server nodes and make VLAN-backed services observable end to end
-- turn the drift report into a fuller compliance report
-
 ## What This Capstone Teaches
 
-- NetBox is most valuable when it models both inventory and IPAM consistently
+- NetBox is most useful as a source of truth, not as a built-in discovery engine
+- config templates become more valuable when they render from real NetBox objects and context
 - source of truth, intended config, and running state are different datasets
-- a small fabric is enough to practice a real automation workflow
-- NetBox becomes useful operationally when it feeds rendering, deployment, and validation, not just documentation
+- external discovery plus reconciliation is a normal NetBox operating model
+- a small fabric is enough to practice a real automation workflow end to end

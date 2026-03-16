@@ -1,179 +1,169 @@
 #!/usr/bin/env python3
-import collections
 import ipaddress
-import os
 import pathlib
-import sys
-
-import jinja2
-import pynetbox
-import requests
-import yaml
+from netbox_common import api_post, build_clients, paginated_results
 
 
 ROOT = pathlib.Path("/workspace")
-MODEL = yaml.safe_load((ROOT / "netbox_model.yml").read_text())
-NETBOX_URL = os.environ.get("NETBOX_URL", "http://172.31.40.23:8080")
-NETBOX_TOKEN = os.environ.get("NETBOX_TOKEN")
-NETBOX_USERNAME = os.environ.get("NETBOX_USERNAME", "admin")
-NETBOX_PASSWORD = os.environ.get("NETBOX_PASSWORD", "admin")
+OUTDIR = ROOT / "generated"
+OUTDIR.mkdir(exist_ok=True)
 
 
-def ensure_token():
-    if NETBOX_TOKEN:
-        return NETBOX_TOKEN
-    resp = requests.post(
-        f"{NETBOX_URL}/api/users/tokens/provision/",
-        json={
-            "username": NETBOX_USERNAME,
-            "password": NETBOX_PASSWORD,
-            "write_enabled": True,
-            "description": "lab-render-token",
-        },
-        timeout=20,
-    )
-    resp.raise_for_status()
-    return resp.json()["key"]
+def parse_asn(device):
+    asset_tag = device.get("asset_tag", "")
+    if asset_tag.startswith("asn-"):
+        return int(asset_tag.split("-", 1)[1])
+
+    for tag in device.get("tags", []):
+        slug = tag.get("slug", "")
+        if slug.startswith("asn-"):
+            return int(slug.split("-", 1)[1])
+
+    raise ValueError(f"Unable to infer ASN for {device['name']}")
 
 
-NETBOX_TOKEN = ensure_token()
-
-nb = pynetbox.api(NETBOX_URL, token=NETBOX_TOKEN)
-template = jinja2.Template(
-    """hostname {{ device.name }}
-!
-username admin privilege 15 role network-admin secret admin
-!
-ip routing
-!
-{% for vrf in vrfs %}
-vrf instance {{ vrf }}
-!
-{% endfor %}
-{% for vlan in vlans %}
-vlan {{ vlan.vid }}
-   name {{ vlan.name }}
-!
-{% endfor %}
-interface Loopback0
-   ip address {{ device.loopback }}
-!
-{% for iface in device.fabric_interfaces %}
-interface {{ iface.name }}
-   description to {{ iface.peer_device }} {{ iface.peer_interface }}
-   no switchport
-   ip address {{ iface.address }}
-   no shutdown
-!
-{% endfor %}
-{% for iface in device.access_interfaces %}
-interface {{ iface.name }}
-   description access port for VLAN {{ iface.vlan }}
-   switchport access vlan {{ iface.vlan }}
-   no shutdown
-!
-{% endfor %}
-{% for svi in device.svis %}
-interface {{ svi.name }}
-   description {{ svi.description }}
-   vrf {{ svi.vrf }}
-   ip address {{ svi.address }}
-   no autostate
-!
-{% endfor %}
-router bgp {{ device.asn }}
-   router-id {{ device.router_id }}
-   maximum-paths 2 ecmp 2
-{% for neigh in device.neighbors %}
-   neighbor {{ neigh.ip }} remote-as {{ neigh.asn }}
-{% endfor %}
-   !
-   address-family ipv4
-{% for neigh in device.neighbors %}
-      neighbor {{ neigh.ip }} activate
-{% endfor %}
-      network {{ device.loopback }}
-   !
-!
-ip name-server 1.1.1.1
-ntp server time.google.com
-!
-management api http-commands
-   no shutdown
-   protocol http
-!
-end
-"""
-)
+def interface_type(name):
+    if name.startswith(("Loopback", "Vlan", "Management")):
+        return "virtual"
+    return "1000base-t"
 
 
-def get_device_model(name):
-    for device in MODEL["devices"]:
-        if device["name"] == name:
-            return device
-    raise KeyError(name)
+def build_inventory(session):
+    devices = paginated_results(session, "/api/dcim/devices/", {"tag": "managed"})
+    device_by_name = {device["name"]: device for device in devices}
+    interfaces = {}
+    ips = {}
+
+    for device in devices:
+        device_interfaces = paginated_results(
+            session, "/api/dcim/interfaces/", {"device_id": device["id"]}
+        )
+        device_ips = paginated_results(
+            session, "/api/ipam/ip-addresses/", {"device": device["name"]}
+        )
+        interfaces[device["name"]] = device_interfaces
+        ips[device["name"]] = {}
+        for address in device_ips:
+            assigned = address.get("assigned_object")
+            if not assigned:
+                continue
+            ips[device["name"]][assigned["name"]] = {
+                "address": address["address"],
+                "vrf": address.get("vrf", {}),
+            }
+
+    return devices, device_by_name, interfaces, ips
 
 
-ip_to_endpoint = {}
-for device in MODEL["devices"]:
-    for iface in device["interfaces"]:
-        if "address" in iface:
-            ip_to_endpoint[iface["address"]] = (device["name"], iface["name"])
-
-vlans = MODEL["vlans"]
-vrfs = [vrf["name"] for vrf in MODEL["vrfs"]]
-outdir = ROOT / "generated"
-outdir.mkdir(exist_ok=True)
-
-for device in MODEL["devices"]:
-    local = {
-        "name": device["name"],
-        "asn": device["asn"],
-        "loopback": device["loopback"],
-        "router_id": str(ipaddress.ip_interface(device["loopback"]).ip),
-        "fabric_interfaces": [],
-        "access_interfaces": [],
-        "svis": [],
-        "neighbors": [],
-    }
-    for iface in device["interfaces"]:
-        if iface["name"].startswith("Ethernet") and "address" in iface:
-            subnet = ipaddress.ip_interface(iface["address"]).network
-            for candidate, endpoint in ip_to_endpoint.items():
-                if endpoint[0] == device["name"]:
-                    continue
-                if ipaddress.ip_interface(candidate).network == subnet:
-                    peer_device = get_device_model(endpoint[0])
-                    local["fabric_interfaces"].append(
-                        {
-                            "name": iface["name"],
-                            "address": iface["address"],
-                            "peer_device": endpoint[0],
-                            "peer_interface": endpoint[1],
-                        }
-                    )
-                    local["neighbors"].append(
-                        {
-                            "ip": str(ipaddress.ip_interface(candidate).ip),
-                            "asn": peer_device["asn"],
-                        }
-                    )
-                    break
-        elif iface["name"].startswith("Ethernet") and iface.get("mode") == "access":
-            local["access_interfaces"].append(
-                {"name": iface["name"], "vlan": iface["vlan"]}
-            )
-        elif iface["name"].startswith("Vlan"):
-            local["svis"].append(
+def build_render_contexts(device_by_name, interfaces, ips):
+    subnet_index = {}
+    for device_name, device_interfaces in interfaces.items():
+        for iface in device_interfaces:
+            address = ips[device_name].get(iface["name"], {}).get("address")
+            if not address:
+                continue
+            subnet = str(ipaddress.ip_interface(address).network)
+            subnet_index.setdefault(subnet, []).append(
                 {
-                    "name": iface["name"],
-                    "address": iface["address"],
-                    "vrf": iface["vrf"],
-                    "description": f"{iface['vrf']} service gateway",
+                    "device": device_name,
+                    "interface": iface["name"],
+                    "address": address,
                 }
             )
 
-    rendered = template.render(device=local, vlans=vlans, vrfs=vrfs)
-    (outdir / f"{device['name']}.cfg").write_text(rendered)
+    contexts = {}
+    for device_name, device_interfaces in interfaces.items():
+        local_asn = parse_asn(device_by_name[device_name])
+        loopback = ips[device_name]["Loopback0"]
+        context = {
+            "local_asn": local_asn,
+            "router_id": str(ipaddress.ip_interface(loopback["address"]).ip),
+            "loopback": loopback,
+            "fabric_interfaces": [],
+            "access_interfaces": [],
+            "svis": [],
+            "neighbors": [],
+            "service_vlans": [],
+            "service_vrfs": [],
+        }
 
-print(f"Rendered {len(MODEL['devices'])} configs into {outdir}")
+        for iface in device_interfaces:
+            name = iface["name"]
+            address = ips[device_name].get(name, {}).get("address")
+            if name.startswith("Ethernet") and address:
+                subnet = str(ipaddress.ip_interface(address).network)
+                peers = [
+                    peer for peer in subnet_index[subnet] if peer["device"] != device_name
+                ]
+                if not peers:
+                    continue
+                peer = peers[0]
+                peer_device = device_by_name[peer["device"]]
+                context["fabric_interfaces"].append(
+                    {
+                        "name": name,
+                        "address": address,
+                        "peer_device": peer["device"],
+                        "peer_interface": peer["interface"],
+                    }
+                )
+                context["neighbors"].append(
+                    {
+                        "ip": str(ipaddress.ip_interface(peer["address"]).ip),
+                        "asn": parse_asn(peer_device),
+                    }
+                )
+            elif name.startswith("Ethernet") and iface.get("mode", {}).get("value") == "access":
+                vlan = iface.get("untagged_vlan") or {}
+                context["access_interfaces"].append(
+                    {
+                        "name": name,
+                        "vlan": vlan.get("vid"),
+                    }
+                )
+            elif name.startswith("Vlan") and address:
+                vrf = iface.get("vrf") or ips[device_name].get(name, {}).get("vrf") or {}
+                context["svis"].append(
+                    {
+                        "name": name,
+                        "address": address,
+                        "vrf": vrf.get("name"),
+                        "description": iface.get("description") or f"{vrf.get('name', '')} service gateway".strip(),
+                    }
+                )
+
+        context["service_vlans"] = sorted(
+            [
+                {"vid": item["vlan"], "name": next(
+                    iface["untagged_vlan"]["name"]
+                    for iface in device_interfaces
+                    if iface["name"] == item["name"] and iface.get("untagged_vlan")
+                )}
+                for item in context["access_interfaces"]
+                if item["vlan"] is not None
+            ],
+            key=lambda item: item["vid"],
+        )
+        context["service_vrfs"] = sorted(
+            [{"name": svi["vrf"]} for svi in context["svis"] if svi["vrf"]],
+            key=lambda item: item["name"],
+        )
+        contexts[device_name] = context
+
+    return contexts
+
+
+_, session, _ = build_clients("lab-render-token")
+devices, device_by_name, interfaces, ips = build_inventory(session)
+render_contexts = build_render_contexts(device_by_name, interfaces, ips)
+
+for device in devices:
+    rendered = api_post(
+        session,
+        f"/api/dcim/devices/{device['id']}/render-config/",
+        render_contexts[device["name"]],
+        accept="text/plain",
+    )
+    (OUTDIR / f"{device['name']}.cfg").write_text(rendered)
+
+print(f"Rendered {len(devices)} configs from NetBox into {OUTDIR}")

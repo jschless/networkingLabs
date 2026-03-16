@@ -40,6 +40,29 @@ tags:
   - fabric
   - managed
 
+config_template:
+  name: eos-fabric-base
+  description: Native NetBox config template for the lab fabric
+  file: eos_device_config.j2
+
+config_contexts:
+  - name: lab-automation-defaults
+    description: Global automation defaults rendered into EOS configs
+    weight: 1000
+    scopes:
+      sites:
+        - lab
+    data:
+      automation:
+        admin_username: admin
+        admin_secret: admin
+        name_servers:
+          - 1.1.1.1
+        ntp_servers:
+          - time.google.com
+      bgp:
+        maximum_paths: 2
+
 vrfs:
   - name: BLUE
     rd: "65111:10"

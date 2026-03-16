@@ -1,0 +1,31 @@
+name: campus-l2-hardening
+
+topology:
+  nodes:
+    dist1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist1/startup-config
+
+    acc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc1/startup-config
+
+    rogue-switch:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/rogue-switch/startup-config
+
+    client-a:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/client-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["dist1:eth1", "acc1:eth1"]          # trunk
+    - endpoints: ["acc1:eth2", "client-a:eth1"]       # user edge
+    - endpoints: ["acc1:eth3", "rogue-switch:eth1"]   # hostile edge
