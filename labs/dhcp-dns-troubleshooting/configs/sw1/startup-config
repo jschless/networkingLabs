@@ -1,0 +1,28 @@
+hostname sw1
+!
+no ip routing
+!
+vlan 10
+!
+interface Ethernet1
+   description to-services1
+   switchport access vlan 10
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet2
+   description to-client1
+   switchport access vlan 10
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet3
+   description to-app1
+   switchport access vlan 10
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+!
+end

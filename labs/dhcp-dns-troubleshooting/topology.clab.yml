@@ -1,0 +1,35 @@
+name: dhcp-dns-troubleshooting
+
+topology:
+  nodes:
+    sw1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/sw1/startup-config
+    services1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/services1/setup.sh:/setup.sh
+        - configs/services1/dnsmasq.conf:/etc/dnsmasq.conf
+      exec:
+        - bash /setup.sh
+    client1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/client1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    app1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/app1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["sw1:eth1", "services1:eth1"]
+    - endpoints: ["sw1:eth2", "client1:eth1"]
+    - endpoints: ["sw1:eth3", "app1:eth1"]

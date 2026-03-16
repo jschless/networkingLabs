@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **98 hands-on networking labs** covering OSPF, BGP, MPLS,
+A self-hosted lab environment with **102 hands-on networking labs** covering OSPF, BGP, MPLS,
 VPN, data center, enterprise design, security, and more. All labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
 [Arista cEOS](https://www.arista.com/en/support/software-download), and
@@ -95,6 +95,12 @@ docker build -t assurance-lab:local labs/network-assurance/
 
 # qos-enterprise
 docker build -t qos-lab:local labs/qos-enterprise/
+
+# management-access-control, dhcp-dns-troubleshooting, ipv6-access-services
+docker build -t ops-lab:local images/ops-lab/
+
+# aaa-ops-troubleshooting
+docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/
 ```
 
 ### Labs requiring Arista cEOS
@@ -283,6 +289,10 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
+| [management-access-control](labs/management-access-control/) | Practice | Restrict SSH/UI access by source subnet and interface, verify with counters |
+| [dhcp-dns-troubleshooting](labs/dhcp-dns-troubleshooting/) | Practice | Diagnose DHCP option issues and DNS correctness from the client side |
+| [aaa-ops-troubleshooting](labs/aaa-ops-troubleshooting/) | Practice | TACACS reachability, shared secrets, local fallback, break-glass access |
+| [ipv6-access-services](labs/ipv6-access-services/) | Practice | Router advertisements, SLAAC, default route learning, DNS over IPv6 |
 | [packet-analysis-basics](labs/packet-analysis-basics/) | Practice | ARP, OSPF, ICMP, TCP handshake capture, mirrored traffic, Wireshark workflow |
 | [mtu-pmtud-troubleshooting](labs/mtu-pmtud-troubleshooting/) | Practice | GRE overhead, exact-size probes, PMTUD, tunnel MTU correction |
 | [network-assurance](labs/network-assurance/) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |
@@ -383,7 +393,8 @@ acl-basics -> bgp-prefix-security -> ipsec-basics -> gre-ipsec
 ### Network Operations
 
 ```
-packet-analysis-basics -> network-assurance -> mtu-pmtud-troubleshooting
+management-access-control -> dhcp-dns-troubleshooting -> aaa-ops-troubleshooting
+-> packet-analysis-basics -> mtu-pmtud-troubleshooting -> ipv6-access-services
 -> telemetry-monitoring-hybrid -> network-automation-netbox
 ```
 

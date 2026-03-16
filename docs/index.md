@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-**98 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+**102 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 No cloud account. No license fees. Deploy, break things, learn.
 
@@ -158,10 +158,10 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-chart-line: **Network Operations** (6 labs)
+- :material-chart-line: **Network Operations** (10 labs)
 
     ---
-    Packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, NetBox automation, gNMI telemetry
+    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, NetBox automation, gNMI telemetry
 
     [:octicons-arrow-right-24: Operations track](tracks/operations/index.md)
 

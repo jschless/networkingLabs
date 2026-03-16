@@ -62,7 +62,8 @@ urpf-antispoofing → copp-basics
 ## Network Operations
 
 ```
-packet-analysis-basics → network-assurance → mtu-pmtud-troubleshooting
+management-access-control → dhcp-dns-troubleshooting → aaa-ops-troubleshooting
+→ packet-analysis-basics → mtu-pmtud-troubleshooting → ipv6-access-services
 → telemetry-monitoring-hybrid → network-automation-netbox
 ```
 

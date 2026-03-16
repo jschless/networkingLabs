@@ -1,0 +1,27 @@
+name: management-access-control
+
+topology:
+  defaults:
+    kind: linux
+    image: ops-lab:local
+
+  nodes:
+    device1:
+      binds:
+        - configs/device1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    admin1:
+      binds:
+        - configs/admin1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    guest1:
+      binds:
+        - configs/guest1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["device1:eth1", "admin1:eth1"]
+    - endpoints: ["device1:eth2", "guest1:eth1"]

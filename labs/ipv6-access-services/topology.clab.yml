@@ -1,0 +1,39 @@
+name: ipv6-access-services
+
+topology:
+  nodes:
+    sw1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/sw1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    router1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/router1/setup.sh:/setup.sh
+        - configs/router1/radvd.conf:/etc/radvd.conf
+      exec:
+        - bash /setup.sh
+    client1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/client1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    dns1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/dns1/setup.sh:/setup.sh
+        - configs/dns1/dnsmasq.conf:/etc/dnsmasq.conf
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["sw1:eth1", "router1:eth1"]
+    - endpoints: ["sw1:eth2", "client1:eth1"]
+    - endpoints: ["sw1:eth3", "dns1:eth1"]

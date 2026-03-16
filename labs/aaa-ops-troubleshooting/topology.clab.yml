@@ -1,0 +1,33 @@
+name: aaa-ops-troubleshooting
+
+topology:
+  defaults:
+    kind: linux
+    image: ops-lab:local
+
+  nodes:
+    sw1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/sw1/startup-config
+    device1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/device1/startup-config
+    admin1:
+      binds:
+        - configs/admin1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    tacacs1:
+      image: enterprise-tacacs:local
+      binds:
+        - configs/tacacs1/setup.sh:/setup.sh
+        - configs/tacacs1/tac_plus.conf:/etc/tacacs+/tac_plus.conf
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["sw1:eth1", "device1:eth1"]
+    - endpoints: ["sw1:eth2", "admin1:eth1"]
+    - endpoints: ["sw1:eth3", "tacacs1:eth1"]
