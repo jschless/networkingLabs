@@ -3,9 +3,9 @@ title: gre-ipsec
 ---
 
 !!! tip "Practice Lab"
-    GRE + IPsec transport mode, strongSwan
+    GRE + IPsec transport mode, VyOS
 
-!!! note "Image" `ipsec-lab:local` — `docker build -t ipsec-lab:local labs/ipsec-basics/`
+!!! note "Image" `vyos:local` — `docker build -t vyos:local -f Dockerfile.vyos .`
 
 {%
   include-markdown "../../../labs/gre-ipsec/README.md"

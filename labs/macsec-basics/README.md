@@ -1,114 +1,165 @@
 # macsec-basics — IEEE 802.1AE MACsec Lab
 
-Demonstrates MACsec (Media Access Control Security) in two layered scenarios using Linux's `macsec_linux` driver and MKA (MACsec Key Agreement) via `wpa_supplicant`.
+This lab uses native VyOS MACsec interfaces to show the difference between:
+
+- a normal Ethernet link carrying plain IPv4/ICMP
+- a MACsec-protected Ethernet link carrying the same traffic encrypted on the wire
 
 ## Topology
 
 ```mermaid
 flowchart LR
-    hosta(["host-a\nmacsec0: 10.0.0.1/24\nScenario B endpoint"])
-    swa["sw-a\nmacsec0: 192.168.1.1/30\nScenario A infra"]
-    swb["sw-b\nmacsec0: 192.168.1.2/30\nScenario A infra"]
-    hostb(["host-b\nmacsec0: 10.0.0.2/24\nScenario B endpoint"])
+    r1["r1\neth1 -> macsec0: 192.0.2.1/30\neth2: 198.51.100.1/30"]
+    r2["r2\neth1 -> macsec0: 192.0.2.2/30\neth2: 198.51.100.2/30"]
 
-    hosta -- "eth1 (plaintext wire\nScenario B MACsec frames)" --- swa
-    swa == "eth2 MACsec encrypted\nScenario A" === swb
-    swb -- "eth1 (plaintext wire\nScenario B MACsec frames)" --- hostb
-
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-
-    class swa,swb router
-    class hosta,hostb host
+    r1 == "eth1 MACsec-protected wire" === r2
+    r1 --- "eth2 plain Ethernet baseline" --- r2
 ```
 
-| Node   | Interface | IP             | Role                       |
-|--------|-----------|----------------|----------------------------|
-| host-a | macsec0   | 10.0.0.1/24    | Endpoint MACsec supplicant |
-| sw-a   | macsec0   | 192.168.1.1/30 | Infrastructure MACsec      |
-| sw-b   | macsec0   | 192.168.1.2/30 | Infrastructure MACsec      |
-| host-b | macsec0   | 10.0.0.2/24    | Endpoint MACsec supplicant |
+| Node | Plain link | MACsec link |
+|------|------------|-------------|
+| r1   | `eth2` = `198.51.100.1/30` | `macsec0` over `eth1` = `192.0.2.1/30` |
+| r2   | `eth2` = `198.51.100.2/30` | `macsec0` over `eth1` = `192.0.2.2/30` |
 
-## Scenarios
-
-### Scenario A — Infrastructure MACsec (sw-a ↔ sw-b)
-
-Switch-to-switch link encryption using MKA with a pre-shared CAK (Connectivity Association Key). Both switches share the same CAK+CKN and MKA automatically elects a key server to derive SAKs (Secure Association Keys). Traffic between sw-a and sw-b is encrypted with GCM-AES-128.
-
-### Scenario B — Endpoint MACsec (host-a ↔ host-b)
-
-End-to-end host encryption. host-a and host-b share a different CAK+CKN pair. Their MACsec frames travel through sw-a and sw-b (which bridge them over the encrypted infra link), creating **nested MACsec** — host traffic is doubly protected.
-
-## Build and Deploy
+## Build And Deploy
 
 ```bash
-docker build -t macsec-lab:local labs/macsec-basics/
+docker build -t vyos:local -f Dockerfile.vyos .
 sudo containerlab deploy -t labs/macsec-basics/topology.clab.yml
 ```
 
+## What Is Prebuilt
+
+- a plain Ethernet point-to-point link on `eth2`
+- a MACsec point-to-point link on `eth1`
+- MACsec interfaces `macsec0` on both routers using MKA with a shared CAK/CKN
+- IP addressing on both the plain and protected links
+
 ## Verification
 
-### Scenario A — Infrastructure Link
+### 1. Confirm the plain Ethernet link
 
 ```bash
-# Check MACsec status on sw-a
-docker exec clab-macsec-basics-sw-a ip macsec show
-
-# Check MKA statistics
-docker exec clab-macsec-basics-sw-a ip -s macsec show macsec0
-
-# See EtherType 0x88E5 (MACsec) on the wire — encrypted frames
-docker exec clab-macsec-basics-sw-a tcpdump -i eth2 -n ether proto 0x88e5 -c 10
-
-# Ping across the encrypted infra link
-docker exec clab-macsec-basics-sw-a ping -c 3 192.168.1.2
+docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 198.51.100.2 count 3'"
 ```
 
-### Scenario B — Endpoint-to-Endpoint
+### 2. Confirm the MACsec link
 
 ```bash
-# Ping end-to-end (traverses infra MACsec transparently)
-docker exec clab-macsec-basics-host-a ping -c 3 10.0.0.2
-
-# On sw-a: watch the outer (infra) MACsec frames — host data is inside
-docker exec clab-macsec-basics-sw-a tcpdump -i eth2 -n ether proto 0x88e5 -c 5
-
-# On sw-a: watch on eth1 (host-a side) — inner MACsec frames visible on plaintext wire
-docker exec clab-macsec-basics-sw-a tcpdump -i eth1 -n ether proto 0x88e5 -c 5
+docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 192.0.2.2 count 3'"
 ```
 
-### Observe MKA Key Exchange
+### 3. Inspect the MACsec config
 
 ```bash
-# Watch MKA EAPOL frames during startup (EtherType 0x888e)
-docker exec clab-macsec-basics-sw-a tcpdump -i eth2 -n ether proto 0x888e -c 20
+docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'show configuration commands | match macsec'"
+docker exec clab-macsec-basics-r1 ip macsec show
 ```
 
-## Key Concepts
+## Packet Capture Walkthrough
 
-| Concept | Details |
-|---------|---------|
-| **EtherType** | 0x88E5 (MACsec); 0x888E (EAPoL/MKA) |
-| **CAK** | Connectivity Association Key — pre-shared secret (16 bytes) |
-| **CKN** | CAK Name — identifies the CAK (32 bytes) |
-| **MKA** | MACsec Key Agreement — IEEE 802.1X-2010 protocol |
-| **SAK** | Secure Association Key — derived by key server, rotated periodically |
-| **SecTAG** | 8-byte header added by MACsec |
-| **ICV** | 16-byte Integrity Check Value (GCM authentication tag) |
-| **Overhead** | 24 bytes per frame (SecTAG + ICV) |
-| **Cipher** | GCM-AES-128 (confidentiality + integrity) |
+The key idea is:
 
-## Exploration Tasks
+- capture on `eth2` to see a normal unencrypted Ethernet/IP link
+- capture on `eth1` to see MACsec on the wire
+- capture on `macsec0` to see the same MACsec traffic after decryption
 
-1. **Watch SAK rotation**: `wpa_cli -i eth2 -p /var/run/wpa_supplicant status` on sw-a
-2. **Verify encryption**: capture on eth2 (encrypted) vs eth1 (plaintext inner MAC frames)
-3. **Check frame counters**: `ip -s macsec show macsec0` — watch `txsc` and `rxsc` counts grow
-4. **Nested MACsec**: use Wireshark/tcpdump to show the outer MACsec frame concealing the inner one
-5. **Break it**: stop wpa_supplicant on one end and observe traffic stops (MACsec strictly enforced)
+### 1. Plain Ethernet baseline
 
-## Build Note
+Start a capture on `r1:eth2`:
 
-The `macsec_linux` kernel module must be available on the host. Verify with:
 ```bash
-modprobe macsec && echo "MACsec module available"
+./scripts/lab.sh pcap macsec-basics r1 eth2 /tmp/macsec-plain-eth2.pcap
+```
+
+In another terminal, generate traffic:
+
+```bash
+docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 198.51.100.2 count 3'"
+```
+
+What you should see in Wireshark or `tshark`:
+
+- normal Ethernet II
+- EtherType `0x0800`
+- IPv4
+- ICMP echo request/reply in the clear
+
+### 2. MACsec on-wire capture
+
+Start a capture on `r1:eth1`:
+
+```bash
+./scripts/lab.sh pcap macsec-basics r1 eth1 /tmp/macsec-wire-eth1.pcap
+```
+
+Generate traffic over the MACsec interface:
+
+```bash
+docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 192.0.2.2 count 3'"
+```
+
+What you should see:
+
+- EtherType `0x88e5` for MACsec data frames
+- during adjacency/keying, EtherType `0x888e` for EAPOL/MKA control traffic
+- no plain ICMP payload visible on the wire capture
+
+### 3. Decrypted MACsec payload view
+
+Start a capture on `r1:macsec0`:
+
+```bash
+./scripts/lab.sh pcap macsec-basics r1 macsec0 /tmp/macsec-inner-macsec0.pcap
+```
+
+Generate traffic again:
+
+```bash
+docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 192.0.2.2 count 3'"
+```
+
+What you should see:
+
+- normal IPv4/ICMP packets
+- the same kind of payload you sent over the protected link
+- this is the traffic after MACsec processing, not the encrypted wire image
+
+## Fast `tshark` Checks
+
+Plain Ethernet:
+
+```bash
+tshark -r /tmp/macsec-plain-eth2.pcap -Y icmp
+```
+
+On-wire MACsec:
+
+```bash
+tshark -r /tmp/macsec-wire-eth1.pcap -Y 'eth.type == 0x88e5 || eth.type == 0x888e'
+```
+
+Decrypted MACsec payload:
+
+```bash
+tshark -r /tmp/macsec-inner-macsec0.pcap -Y icmp
+```
+
+## What This Lab Teaches
+
+- MACsec protects Ethernet frames on the wire, not just IP payloads
+- a wire-side capture sees MACsec EtherType `0x88e5`, not the inner ICMP data
+- a capture on the MACsec virtual interface shows the decrypted payload
+- comparing `eth2`, `eth1`, and `macsec0` is the fastest way to understand what MACsec is actually doing
+
+## Automated Check
+
+```bash
+./scripts/lab.sh check macsec-basics
+```
+
+## Cleanup
+
+```bash
+sudo containerlab destroy -t labs/macsec-basics/topology.clab.yml --cleanup
 ```

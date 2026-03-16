@@ -1,9 +1,6 @@
-# IPsec Site-to-Site Tunnel — Practice Lab
+# IPsec Site-to-Site Tunnel — VyOS Practice Lab
 
-Build an IKEv2 IPsec tunnel between two sites using StrongSwan.
-IP addressing and routing are pre-configured. You write the IPsec config.
-
----
+Build an IKEv2 site-to-site IPsec tunnel between two VyOS gateways. IP addressing and basic routing are pre-configured; your task is to add the IPsec policy and verify encrypted LAN-to-LAN reachability.
 
 ## Topology
 
@@ -20,268 +17,173 @@ flowchart LR
     inet -- "203.0.113.4/30" --- gwb
     gwb -- "192.168.2.0/24" --- hb
 
-    gwa -. "IPsec IKEv2 tunnel" .- gwb
-
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    class gwa,gwb,inet router
-    class ha,hb host
+    gwa -. "IKEv2 / ESP tunnel" .- gwb
 ```
 
-| Node     | Interface | Address          | Role                        |
-|----------|-----------|------------------|-----------------------------|
-| host-a   | eth1      | 192.168.1.10/24  | LAN A client                |
-| gw-a     | eth1      | 192.168.1.1/24   | LAN A gateway / IPsec peer  |
-| gw-a     | eth2      | 203.0.113.1/30   | WAN (public) side           |
-| internet | eth1      | 203.0.113.2/30   | Simulated internet          |
-| internet | eth2      | 203.0.113.5/30   | Simulated internet          |
-| gw-b     | eth1      | 203.0.113.6/30   | WAN (public) side           |
-| gw-b     | eth2      | 192.168.2.1/24   | LAN B gateway / IPsec peer  |
-| host-b   | eth1      | 192.168.2.10/24  | LAN B client                |
+| Node | Interface | Address | Role |
+|------|-----------|---------|------|
+| host-a | eth1 | 192.168.1.10/24 | LAN A client |
+| gw-a | eth1 | 192.168.1.1/24 | LAN A gateway / IPsec peer |
+| gw-a | eth2 | 203.0.113.1/30 | WAN side |
+| internet | eth1 | 203.0.113.2/30 | Simulated internet |
+| internet | eth2 | 203.0.113.5/30 | Simulated internet |
+| gw-b | eth1 | 203.0.113.6/30 | WAN side |
+| gw-b | eth2 | 192.168.2.1/24 | LAN B gateway / IPsec peer |
+| host-b | eth1 | 192.168.2.10/24 | LAN B client |
 
----
-
-## Deploy and access
+## Deploy and Access
 
 ```bash
-# Build the custom image first (only needed once)
-docker build -t ipsec-lab:local labs/ipsec-basics/
+# Build the VyOS image first if you do not already have it
+docker build -t vyos:local -f Dockerfile.vyos .
 
-# Deploy the lab
 ./scripts/lab.sh deploy ipsec-basics
 
-# Open a shell on any node
-./scripts/lab.sh bash ipsec-basics gw-a
+./scripts/lab.sh cli ipsec-basics gw-a
+./scripts/lab.sh cli ipsec-basics gw-b
 ./scripts/lab.sh bash ipsec-basics host-a
 ```
 
----
+## What Is Preconfigured
 
-## Before you start — verify connectivity
+- `host-a` and `host-b` have IP addressing and default routes.
+- `gw-a` and `gw-b` have LAN/WAN addressing and default routes.
+- `internet` is forwarding between the two WAN segments.
+- Cross-LAN traffic does not work until you build the IPsec tunnel.
 
-Before configuring IPsec, confirm the pre-configured IP addressing works.
+Verify the base state before configuring IPsec:
 
 ```bash
-# From gw-a — can you reach gw-b's public IP through the internet node?
-./scripts/lab.sh cmd ipsec-basics gw-a ping -c2 203.0.113.6
-
-# From host-a — can you reach gw-a?
 ./scripts/lab.sh cmd ipsec-basics host-a ping -c2 192.168.1.1
+./scripts/lab.sh cmd ipsec-basics host-b ping -c2 192.168.2.1
+./scripts/lab.sh cmd ipsec-basics host-a ping -c2 192.168.2.10
 ```
 
-Cross-LAN pings (host-a → host-b) will fail until the IPsec tunnel is up — that's expected.
+The first two pings should succeed. The last one should fail.
 
----
+## Configure gw-a
 
-## Step 1 — Configure the IPsec tunnel on gw-a
-
-<details>
-<summary>Show configuration</summary>
-
-Open a shell on gw-a:
-```bash
-./scripts/lab.sh bash ipsec-basics gw-a
-```
-
-</details>
-
-### /etc/ipsec.conf
-
-```
-config setup
-    charondebug="ike 1, knl 1, cfg 0"
-
-conn site-to-site
-    auto=start
-    keyexchange=ikev2
-    type=tunnel
-    authby=secret
-
-    # This side (Site A)
-    left=%defaultroute
-    leftid=203.0.113.1
-    leftsubnet=192.168.1.0/24
-
-    # Remote side (Site B)
-    right=203.0.113.6
-    rightid=203.0.113.6
-    rightsubnet=192.168.2.0/24
-
-    # Cipher suites
-    ike=aes256-sha256-modp2048!
-    esp=aes256-sha256!
-
-    dpdaction=restart
-```
-
-### /etc/ipsec.secrets
-
-```
-203.0.113.1 203.0.113.6 : PSK "LabSecret123"
-```
-
-### Start StrongSwan
+Open a VyOS CLI on `gw-a`:
 
 ```bash
-ipsec start
+./scripts/lab.sh cli ipsec-basics gw-a
 ```
 
----
+Apply this configuration:
 
-## Step 2 — Configure the IPsec tunnel on gw-b
+```vyos
+configure
 
-<details>
-<summary>Show configuration</summary>
+set vpn ipsec ike-group SITE-TO-SITE key-exchange 'ikev2'
+set vpn ipsec ike-group SITE-TO-SITE proposal 10 encryption 'aes256'
+set vpn ipsec ike-group SITE-TO-SITE proposal 10 hash 'sha256'
+set vpn ipsec ike-group SITE-TO-SITE proposal 10 dh-group '14'
 
-Open a shell on gw-b:
-```bash
-./scripts/lab.sh bash ipsec-basics gw-b
+set vpn ipsec esp-group SITE-TO-SITE mode 'tunnel'
+set vpn ipsec esp-group SITE-TO-SITE proposal 10 encryption 'aes256'
+set vpn ipsec esp-group SITE-TO-SITE proposal 10 hash 'sha256'
+
+set vpn ipsec authentication psk LAB-PSK id '203.0.113.1'
+set vpn ipsec authentication psk LAB-PSK id '203.0.113.6'
+set vpn ipsec authentication psk LAB-PSK secret 'LabSecret123'
+
+set vpn ipsec site-to-site peer GW-B remote-address '203.0.113.6'
+set vpn ipsec site-to-site peer GW-B authentication mode 'pre-shared-secret'
+set vpn ipsec site-to-site peer GW-B authentication local-id '203.0.113.1'
+set vpn ipsec site-to-site peer GW-B authentication remote-id '203.0.113.6'
+set vpn ipsec site-to-site peer GW-B connection-type 'initiate'
+set vpn ipsec site-to-site peer GW-B local-address '203.0.113.1'
+set vpn ipsec site-to-site peer GW-B ike-group 'SITE-TO-SITE'
+set vpn ipsec site-to-site peer GW-B default-esp-group 'SITE-TO-SITE'
+set vpn ipsec site-to-site peer GW-B tunnel 1 local prefix '192.168.1.0/24'
+set vpn ipsec site-to-site peer GW-B tunnel 1 remote prefix '192.168.2.0/24'
+
+commit
+save
+exit
 ```
 
-</details>
+## Configure gw-b
 
-### /etc/ipsec.conf
-
-```
-config setup
-    charondebug="ike 1, knl 1, cfg 0"
-
-conn site-to-site
-    auto=start
-    keyexchange=ikev2
-    type=tunnel
-    authby=secret
-
-    # This side (Site B)
-    left=%defaultroute
-    leftid=203.0.113.6
-    leftsubnet=192.168.2.0/24
-
-    # Remote side (Site A)
-    right=203.0.113.1
-    rightid=203.0.113.1
-    rightsubnet=192.168.1.0/24
-
-    # Cipher suites
-    ike=aes256-sha256-modp2048!
-    esp=aes256-sha256!
-
-    dpdaction=restart
-```
-
-### /etc/ipsec.secrets
-
-```
-203.0.113.6 203.0.113.1 : PSK "LabSecret123"
-```
-
-### Start StrongSwan
+Open a VyOS CLI on `gw-b`:
 
 ```bash
-ipsec start
+./scripts/lab.sh cli ipsec-basics gw-b
 ```
 
----
+Apply the mirrored configuration:
 
-## Step 3 — Verify the tunnel
+```vyos
+configure
 
-### On either gateway
+set vpn ipsec ike-group SITE-TO-SITE key-exchange 'ikev2'
+set vpn ipsec ike-group SITE-TO-SITE proposal 10 encryption 'aes256'
+set vpn ipsec ike-group SITE-TO-SITE proposal 10 hash 'sha256'
+set vpn ipsec ike-group SITE-TO-SITE proposal 10 dh-group '14'
 
-```bash
-# Check tunnel status — look for INSTALLED, TUNNEL, ESTABLISHED
-ipsec status
+set vpn ipsec esp-group SITE-TO-SITE mode 'tunnel'
+set vpn ipsec esp-group SITE-TO-SITE proposal 10 encryption 'aes256'
+set vpn ipsec esp-group SITE-TO-SITE proposal 10 hash 'sha256'
 
-# Full details including SA lifetimes and traffic counters
-ipsec statusall
+set vpn ipsec authentication psk LAB-PSK id '203.0.113.1'
+set vpn ipsec authentication psk LAB-PSK id '203.0.113.6'
+set vpn ipsec authentication psk LAB-PSK secret 'LabSecret123'
 
-# Show installed kernel XFRM states (the actual encryption SAs)
-ip xfrm state
+set vpn ipsec site-to-site peer GW-A remote-address '203.0.113.1'
+set vpn ipsec site-to-site peer GW-A authentication mode 'pre-shared-secret'
+set vpn ipsec site-to-site peer GW-A authentication local-id '203.0.113.6'
+set vpn ipsec site-to-site peer GW-A authentication remote-id '203.0.113.1'
+set vpn ipsec site-to-site peer GW-A connection-type 'initiate'
+set vpn ipsec site-to-site peer GW-A local-address '203.0.113.6'
+set vpn ipsec site-to-site peer GW-A ike-group 'SITE-TO-SITE'
+set vpn ipsec site-to-site peer GW-A default-esp-group 'SITE-TO-SITE'
+set vpn ipsec site-to-site peer GW-A tunnel 1 local prefix '192.168.2.0/24'
+set vpn ipsec site-to-site peer GW-A tunnel 1 remote prefix '192.168.1.0/24'
 
-# Show installed kernel XFRM policies (traffic selectors)
-ip xfrm policy
-
-# Show routes — StrongSwan installs routes for the remote subnet
-ip route show
+commit
+save
+exit
 ```
 
-A healthy tunnel shows:
-- `ipsec status` reports the connection as `ESTABLISHED` and `INSTALLED`
-- `ip xfrm state` shows two SAs (one for each direction) with `aes_cbc` / `hmac_sha256`
-- `ip route show` has a route for `192.168.2.0/24` (on gw-a) or `192.168.1.0/24` (on gw-b) via `eth2`
+## Verify
 
-### End-to-end ping
+On either VyOS gateway:
 
 ```bash
-# From host-a to host-b through the tunnel
+show vpn ike sa
+show vpn ipsec sa
+show configuration commands | match vpn\ ipsec
+```
+
+Healthy output should show:
+
+- an established IKE SA between `203.0.113.1` and `203.0.113.6`
+- a child SA protecting `192.168.1.0/24 <-> 192.168.2.0/24`
+
+Test end-to-end reachability:
+
+```bash
 ./scripts/lab.sh cmd ipsec-basics host-a ping -c3 192.168.2.10
-
-# Or from a shell on host-a
-ping 192.168.2.10
+./scripts/lab.sh cmd ipsec-basics host-b ping -c3 192.168.1.10
 ```
 
-A successful ping means:
-- IKE negotiated a Security Association (IKEv2 exchange visible in charon.log)
-- ESP is encrypting traffic between gw-a (203.0.113.1) and gw-b (203.0.113.6)
-- StrongSwan installed kernel policies matching 192.168.1.0/24 ↔ 192.168.2.0/24
+## Packet Capture
 
----
-
-## Useful commands reference
-
-### StrongSwan
+Capture on the simulated internet node to see the encrypted WAN traffic:
 
 ```bash
-ipsec start                   # Start the daemon and bring up `auto=start` connections
-ipsec stop                    # Stop the daemon
-ipsec restart                 # Reload config and restart
-
-ipsec status                  # Connection summary
-ipsec statusall               # Full details (SAs, ciphers, traffic)
-ipsec up   site-to-site       # Manually initiate the connection
-ipsec down site-to-site       # Tear down the connection
-
-tail -f /var/log/syslog       # Live StrongSwan logs (charon output)
+./scripts/lab.sh capture ipsec-basics internet eth1 'udp port 500 or udp port 4500 or esp'
 ```
 
-### Kernel XFRM (IPsec state machine)
+You should see:
+
+- UDP/500 or UDP/4500 during IKE negotiation
+- ESP after the tunnel is up and traffic is flowing
+
+The protected LAN traffic itself is not visible on the WAN capture because it is encrypted inside ESP.
+
+## Cleanup
 
 ```bash
-ip xfrm state                 # SAs: encryption keys, SPI, lifetime
-ip xfrm policy                # Policies: which traffic is encrypted
-ip xfrm state flush           # Clear all SAs (forces re-keying)
-ip xfrm monitor               # Watch SA/policy events in real time
+./scripts/lab.sh destroy ipsec-basics
 ```
-
-### Traffic inspection
-
-```bash
-# Watch encrypted ESP traffic on the WAN interface
-tcpdump -i eth2 esp
-
-# Watch decrypted traffic on the LAN interface
-tcpdump -i eth1 icmp
-```
-
----
-
-## Troubleshooting
-
-**Tunnel stuck in CONNECTING**
-- Verify gw-a can reach gw-b's WAN IP: `ping 203.0.113.6` from gw-a
-- Check that `ipsec start` was run on both gateways
-- Check logs: `tail -50 /var/log/syslog`
-
-**PSK mismatch / AUTH_FAILED**
-- The `leftid` / `rightid` in ipsec.conf must match exactly what's in ipsec.secrets
-- The PSK string must be identical on both sides
-
-**Tunnel ESTABLISHED but pings fail**
-- Check `ip xfrm policy` on both gateways — policies for 192.168.1.0/24 ↔ 192.168.2.0/24 should be present
-- Check `ip route show` — a route for the remote subnet should be installed
-- Run `tcpdump -i eth2 esp` on a gateway to confirm ESP packets are flowing
-
-**ipsec command not found / charon not starting**
-- Check the image was built correctly: `docker run --rm ipsec-lab:local ipsec version`
-
-**Tunnel drops after a few seconds**
-- Possibly a DPD or rekey issue; try `dpdaction=none` to disable dead peer detection while debugging

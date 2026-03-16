@@ -22,19 +22,20 @@ name: gre-ipsec
 #     gw-b   eth2: 192.168.2.1
 #     host-b eth1: 192.168.2.10    default route -> 192.168.2.1
 #
-# GRE tunnel (pre-configured by setup.sh):
+# GRE tunnel (pre-configured by VyOS startup-config):
 #   gw-a tun0: 172.16.0.1/30
 #   gw-b tun0: 172.16.0.2/30
 #   GRE local/remote = WAN IPs
 #
 # What you configure:
-#   - /etc/ipsec.conf and /etc/ipsec.secrets on gw-a and gw-b
+#   - Native VyOS IKEv2/IPsec on gw-a and gw-b
 #   - IPsec transport mode protecting GRE (proto 47) between WAN IPs
-#   - Run `ipsec start` to encrypt the GRE traffic
+#   - Verify `show vpn ike sa` / `show vpn ipsec sa`
 #
 # Node images:
-#   gw-a, gw-b:            ipsec-lab:local  (debian + strongswan)
-#   host-a, host-b, internet: frr-lab:local
+#   gw-a, gw-b:            vyos:local
+#   host-a, host-b:        frr-lab:local
+#   internet:              ceos:4.35.2F
 
 topology:
   defaults:
@@ -52,13 +53,12 @@ topology:
       exec:
         - bash -c 'ip route del default dev eth0 2>/dev/null || true'
         - vtysh -b
+        - ip route replace default via 192.168.1.1
 
     gw-a:
-      image: ipsec-lab:local
-      binds:
-        - configs/gw-a/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/gw-a/config.boot
 
     internet:
       kind: ceos
@@ -66,11 +66,9 @@ topology:
       startup-config: configs/internet/startup-config
 
     gw-b:
-      image: ipsec-lab:local
-      binds:
-        - configs/gw-b/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/gw-b/config.boot
 
     host-b:
       image: frr-lab:local
@@ -81,6 +79,7 @@ topology:
       exec:
         - bash -c 'ip route del default dev eth0 2>/dev/null || true'
         - vtysh -b
+        - ip route replace default via 192.168.2.1
 
   links:
     - endpoints: ["host-a:eth1",   "gw-a:eth1"]      # 192.168.1.0/24  LAN A

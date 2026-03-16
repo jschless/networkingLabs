@@ -2,8 +2,16 @@ hostname internet
 !
 interface Ethernet1
    description WAN A link: 203.0.113.0/30, internet=.2
+   no switchport
    ip address 203.0.113.2/30
+   no shutdown
 !
 interface Ethernet2
    description WAN B link: 203.0.113.4/30, internet=.5
+   no switchport
    ip address 203.0.113.5/30
+   no shutdown
+!
+ip routing
+!
+end

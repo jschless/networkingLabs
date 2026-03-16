@@ -1,10 +1,6 @@
-# Lab: gre-ipsec
+# GRE over IPsec — VyOS Practice Lab
 
-## Purpose
-Learn GRE-over-IPsec — the classic enterprise WAN pattern that combines GRE tunnels (for
-routing protocol support) with IPsec transport mode (for encryption). Understand why this
-combination is used instead of plain IPsec (no routing protocol support) or plain GRE
-(no encryption), and how IPsec transport mode encrypts GRE without double-encapsulation.
+Build GRE between two VyOS gateways, verify it works in plaintext, then add IPsec transport mode so the WAN carries ESP instead of raw GRE.
 
 ## Topology
 
@@ -21,12 +17,7 @@ flowchart LR
     inet -- "203.0.113.4/30" --- gwb
     gwb -- "192.168.2.0/24" --- hb
 
-    gwa -. "GRE tun0 + IPsec\n172.16.0.0/30" .- gwb
-
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    class gwa,gwb,inet router
-    class ha,hb host
+    gwa -. "GRE tun0 + IPsec" .- gwb
 ```
 
 | Segment | Network | Addresses |
@@ -37,215 +28,163 @@ flowchart LR
 | LAN B | 192.168.2.0/24 | gw-b=.1, host-b=.10 |
 | GRE tunnel | 172.16.0.0/30 | gw-a tun0=.1, gw-b tun0=.2 |
 
-## Prerequisites: Build the IPsec Image
-
-The gw-a and gw-b nodes use a custom image with strongSwan installed:
+## Deploy and Access
 
 ```bash
-docker build -t ipsec-lab:local labs/ipsec-basics/
+docker build -t vyos:local -f Dockerfile.vyos .
+
+./scripts/lab.sh deploy gre-ipsec
+
+./scripts/lab.sh cli gre-ipsec gw-a
+./scripts/lab.sh cli gre-ipsec gw-b
 ```
 
-## Deploy / Destroy
+## What Is Preconfigured
+
+- `gw-a` and `gw-b` already have WAN, LAN, and `tun0` GRE configuration.
+- Static routes send inter-site traffic across the GRE tunnel.
+- `host-a` and `host-b` can reach each other across GRE before IPsec is added.
+- The internet node is only transit between the two WAN segments.
+
+## Step 1: Verify Plaintext GRE
+
+Confirm the GRE tunnel is already working:
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh cmd gre-ipsec host-a ping -c3 192.168.2.10
+./scripts/lab.sh cmd gre-ipsec host-b ping -c3 192.168.1.10
 ```
 
-## What Is Pre-Configured
-
-The `setup.sh` scripts on gw-a and gw-b automatically configure:
-- All interface IP addresses
-- Default routes
-- **GRE tunnel (tun0)** between 203.0.113.1 and 203.0.113.6
-- GRE tunnel addresses (172.16.0.1/30 on gw-a, 172.16.0.2/30 on gw-b)
-- Static routes for LAN B via GRE (and LAN A on gw-b)
-
-After deploy, GRE is working — you can ping across it **unencrypted**. Your task is to
-add IPsec to encrypt the GRE traffic.
-
-## What You Configure
-
-### Step 1: Verify GRE works (before IPsec)
+On `gw-a`, verify the tunnel interface:
 
 ```bash
-# Ping across GRE from gw-a to gw-b tunnel endpoint
-docker exec clab-gre-ipsec-gw-a ping -c3 172.16.0.2
-
-# Ping host-to-host across GRE
-docker exec clab-gre-ipsec-host-a ping -c3 192.168.2.10
+./scripts/lab.sh cli gre-ipsec gw-a
+show interfaces tunnel tun0
 ```
 
-Capture traffic on WAN to see GRE plaintext:
-```bash
-docker exec clab-gre-ipsec-internet tcpdump -i eth1 -n proto 47
-```
-You should see unencrypted GRE packets (protocol 47).
-
-### Step 2: Configure IPsec on gw-a
-
-<details>
-<summary>Show configuration</summary>
-
-IPsec transport mode encrypts the payload of IP packets (the GRE data) while preserving
-the outer IP header. This is ideal for GRE because the outer IP header (gw-a to gw-b) is
-preserved, only the GRE contents are encrypted.
-
-Edit `/etc/ipsec.conf` on gw-a:
-```bash
-docker exec -it clab-gre-ipsec-gw-a bash
-cat > /etc/ipsec.conf << 'EOF'
-config setup
-    charondebug="ike 1, knl 1, cfg 0"
-
-conn gre-ipsec
-    type=transport
-    authby=secret
-    left=203.0.113.1
-    leftprotoport=gre
-    right=203.0.113.6
-    rightprotoport=gre
-    keyexchange=ikev2
-    auto=start
-EOF
-```
-
-Edit `/etc/ipsec.secrets`:
-```bash
-cat > /etc/ipsec.secrets << 'EOF'
-203.0.113.1 203.0.113.6 : PSK "SuperSecret123"
-EOF
-```
-
-</details>
-
-### Step 3: Configure IPsec on gw-b
-
-<details>
-<summary>Show configuration</summary>
+Capture on the transit link before IPsec is enabled:
 
 ```bash
-docker exec -it clab-gre-ipsec-gw-b bash
-cat > /etc/ipsec.conf << 'EOF'
-config setup
-    charondebug="ike 1, knl 1, cfg 0"
-
-conn gre-ipsec
-    type=transport
-    authby=secret
-    left=203.0.113.6
-    leftprotoport=gre
-    right=203.0.113.1
-    rightprotoport=gre
-    keyexchange=ikev2
-    auto=start
-EOF
-
-cat > /etc/ipsec.secrets << 'EOF'
-203.0.113.6 203.0.113.1 : PSK "SuperSecret123"
-EOF
+./scripts/lab.sh capture gre-ipsec internet eth1 'gre'
 ```
 
-</details>
+You should see raw GRE packets, which means the overlay is working but not encrypted.
 
-### Step 4: Start IPsec on both gateways
+## Step 2: Configure IPsec on gw-a
+
+Open `gw-a` and apply this configuration:
+
+```vyos
+configure
+
+set vpn ipsec ike-group GRE-IPSEC key-exchange 'ikev2'
+set vpn ipsec ike-group GRE-IPSEC proposal 10 encryption 'aes256'
+set vpn ipsec ike-group GRE-IPSEC proposal 10 hash 'sha256'
+set vpn ipsec ike-group GRE-IPSEC proposal 10 dh-group '14'
+
+set vpn ipsec esp-group GRE-IPSEC mode 'transport'
+set vpn ipsec esp-group GRE-IPSEC proposal 10 encryption 'aes256'
+set vpn ipsec esp-group GRE-IPSEC proposal 10 hash 'sha256'
+
+set vpn ipsec authentication psk LAB-PSK id '203.0.113.1'
+set vpn ipsec authentication psk LAB-PSK id '203.0.113.6'
+set vpn ipsec authentication psk LAB-PSK secret 'SuperSecret123'
+
+set vpn ipsec site-to-site peer GW-B remote-address '203.0.113.6'
+set vpn ipsec site-to-site peer GW-B authentication mode 'pre-shared-secret'
+set vpn ipsec site-to-site peer GW-B authentication local-id '203.0.113.1'
+set vpn ipsec site-to-site peer GW-B authentication remote-id '203.0.113.6'
+set vpn ipsec site-to-site peer GW-B connection-type 'initiate'
+set vpn ipsec site-to-site peer GW-B local-address '203.0.113.1'
+set vpn ipsec site-to-site peer GW-B ike-group 'GRE-IPSEC'
+set vpn ipsec site-to-site peer GW-B default-esp-group 'GRE-IPSEC'
+set vpn ipsec site-to-site peer GW-B tunnel 1 protocol 'gre'
+
+commit
+save
+exit
+```
+
+## Step 3: Configure IPsec on gw-b
+
+Apply the mirrored configuration on `gw-b`:
+
+```vyos
+configure
+
+set vpn ipsec ike-group GRE-IPSEC key-exchange 'ikev2'
+set vpn ipsec ike-group GRE-IPSEC proposal 10 encryption 'aes256'
+set vpn ipsec ike-group GRE-IPSEC proposal 10 hash 'sha256'
+set vpn ipsec ike-group GRE-IPSEC proposal 10 dh-group '14'
+
+set vpn ipsec esp-group GRE-IPSEC mode 'transport'
+set vpn ipsec esp-group GRE-IPSEC proposal 10 encryption 'aes256'
+set vpn ipsec esp-group GRE-IPSEC proposal 10 hash 'sha256'
+
+set vpn ipsec authentication psk LAB-PSK id '203.0.113.1'
+set vpn ipsec authentication psk LAB-PSK id '203.0.113.6'
+set vpn ipsec authentication psk LAB-PSK secret 'SuperSecret123'
+
+set vpn ipsec site-to-site peer GW-A remote-address '203.0.113.1'
+set vpn ipsec site-to-site peer GW-A authentication mode 'pre-shared-secret'
+set vpn ipsec site-to-site peer GW-A authentication local-id '203.0.113.6'
+set vpn ipsec site-to-site peer GW-A authentication remote-id '203.0.113.1'
+set vpn ipsec site-to-site peer GW-A connection-type 'initiate'
+set vpn ipsec site-to-site peer GW-A local-address '203.0.113.6'
+set vpn ipsec site-to-site peer GW-A ike-group 'GRE-IPSEC'
+set vpn ipsec site-to-site peer GW-A default-esp-group 'GRE-IPSEC'
+set vpn ipsec site-to-site peer GW-A tunnel 1 protocol 'gre'
+
+commit
+save
+exit
+```
+
+## Step 4: Verify GRE over IPsec
+
+Verify the security associations:
 
 ```bash
-docker exec clab-gre-ipsec-gw-a ipsec start
-docker exec clab-gre-ipsec-gw-b ipsec start
+show vpn ike sa
+show vpn ipsec sa
+show interfaces tunnel tun0
 ```
 
-Wait a few seconds for IKE negotiation, then check:
-```bash
-docker exec clab-gre-ipsec-gw-a ipsec status
-```
-
-### Step 5: Verify encryption
-
-Test connectivity (should still work):
-```bash
-docker exec clab-gre-ipsec-host-a ping -c3 192.168.2.10
-```
-
-Capture WAN traffic (should now see ESP, not GRE):
-```bash
-docker exec clab-gre-ipsec-internet tcpdump -i eth1 -n proto 50
-# proto 50 = ESP (Encapsulating Security Payload)
-```
-You should now see **ESP packets** instead of raw GRE.
-
-## Verification Commands
+Confirm end-to-end traffic still works:
 
 ```bash
-# IPsec status and SA details
-docker exec clab-gre-ipsec-gw-a ipsec status
-docker exec clab-gre-ipsec-gw-a ipsec statusall
-
-# Kernel IPsec policies (xfrm)
-docker exec clab-gre-ipsec-gw-a ip xfrm policy
-docker exec clab-gre-ipsec-gw-a ip xfrm state
-
-# GRE tunnel status
-docker exec clab-gre-ipsec-gw-a ip tunnel show
-
-# Capture ESP on WAN A
-docker exec clab-gre-ipsec-internet tcpdump -i eth1 -n
-
-# Ping test (host-to-host)
-docker exec clab-gre-ipsec-host-a ping -c3 192.168.2.10
+./scripts/lab.sh cmd gre-ipsec host-a ping -c3 192.168.2.10
+./scripts/lab.sh cmd gre-ipsec host-b ping -c3 192.168.1.10
 ```
 
-## Concepts
+## Packet Capture
 
-### Why GRE + IPsec?
+Capture on the transit link after IPsec is enabled:
 
-| Feature | Plain GRE | Plain IPsec | GRE + IPsec |
-|---------|-----------|-------------|-------------|
-| Encryption | No | Yes | Yes |
-| Routing protocols (OSPF/BGP) | Yes | No* | Yes |
-| Multicast support | Yes | No | Yes |
-| Configuration complexity | Low | Medium | Medium |
-
-*IPsec tunnel mode can carry routing protocols but the session is point-to-point
-and doesn't support multicast naturally.
-
-### IPsec Transport vs Tunnel Mode
-
-**Tunnel mode** (standard IPsec): Adds a new outer IP header. Creates a new virtual
-tunnel between two IPs. The original IP packet is completely encapsulated.
-
-**Transport mode** (used here): Encrypts only the payload of the original IP packet.
-The outer IP header (source/dest IPs) remains visible. Used when the outer IP already
-identifies the two VPN endpoints (which is the case when we want to encrypt GRE packets
-between gw-a and gw-b).
-
-```
-GRE transport mode IPsec packet:
-[IP: 203.0.113.1 -> 203.0.113.6][ESP][GRE encrypted payload]
-
-vs. IPsec tunnel mode:
-[IP: 203.0.113.1 -> 203.0.113.6][ESP][IP: 192.168.1.x -> 192.168.2.x][TCP/data]
+```bash
+./scripts/lab.sh capture gre-ipsec internet eth1 'udp port 500 or udp port 4500 or esp or gre'
 ```
 
-### Protecting Proto 47 (GRE)
+Interpretation:
 
-The IPsec policy `leftprotoport=gre` / `rightprotoport=gre` targets protocol 47 (GRE)
-specifically. This means: only GRE packets between these two IPs are protected by IPsec.
-Other traffic (like ICMP between the WAN IPs) is not encrypted.
+- before IPsec: you should see raw `gre`
+- after IPsec: you should see IKE and `esp`, and raw GRE should disappear from the WAN
+- on `tun0`, the inner routed traffic still looks the same because GRE is being protected underneath
 
-## Challenge Exercises
+To inspect the decrypted overlay traffic, capture on a gateway tunnel interface:
 
-1. Use `tcpdump` on the internet node before and after enabling IPsec. Capture the
-   IKE (UDP port 500) handshake and the subsequent ESP-encrypted GRE traffic.
+```bash
+./scripts/lab.sh capture gre-ipsec gw-a tun0 'icmp'
+```
 
-2. Add OSPF over the GRE tunnel. Configure OSPF on gw-a and gw-b using tun0,
-   and advertise the LAN networks. Does OSPF run over the encrypted tunnel?
+## Why This Design Exists
 
-3. Modify the IPsec config to use IKEv1 instead of IKEv2 (`keyexchange=ikev1`).
-   What changes in `ipsec statusall`?
+- GRE provides a routed overlay and supports multicast/routing protocols.
+- IPsec transport mode encrypts the GRE transport without adding another full tunnel header.
+- The underlay sees WAN IPs and ESP; the overlay still uses `tun0` exactly as before.
 
-4. Try using a certificate-based authentication (`authby=rsasig`) instead of PSK.
-   What additional configuration is needed?
+## Cleanup
 
-5. Break IPsec by changing the PSK on one side. What happens to GRE connectivity?
-   Does traffic fall back to unencrypted GRE, or does it stop entirely?
+```bash
+./scripts/lab.sh destroy gre-ipsec
+```
