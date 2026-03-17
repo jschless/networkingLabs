@@ -54,7 +54,7 @@ EOS applies CoPP via a `policy-map type copp` applied inbound on the `control-pl
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/copp-basics/topology.yml
+sudo containerlab deploy -t labs/copp-basics/topology.clab.yml
 
 # Open CLI on r2 (DUT)
 docker exec -it clab-copp-basics-r2 Cli

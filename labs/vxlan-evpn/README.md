@@ -442,3 +442,12 @@ This is the EVPN equivalent of physical network segmentation, enforced in softwa
 5. **Verify ECMP in the underlay.** On leaf1: `show ip route 10.0.0.3/32`. You should
    see two equal-cost paths (via spine1 and spine2). Shut down `Ethernet1` on leaf1 and
    confirm connectivity still works through spine2 only.
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add an anycast gateway for one tenant and verify ARP behavior before and after the gateway is present.
+- Compare type-2 and type-3 EVPN routes directly and document what traffic each enables.
+- Capture UDP/4789 on the underlay and correlate the outer VTEP transport to the inner tenant frame.
+- Move a host from one leaf to another and observe how EVPN MAC mobility is advertised and resolved.

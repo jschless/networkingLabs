@@ -54,6 +54,20 @@ show tunnel-interface
 show network-instance <name> route-table
 ```
 
+## VyOS (`vbash` / admin shell)
+
+```bash
+show version
+show configuration commands
+show interfaces
+show ip route
+show ip ospf neighbor
+show ip nhrp
+show vpn ike sa
+show vpn ipsec sa
+show interfaces tunnel tun0
+```
+
 ## ContainerLab Commands
 
 ```bash
@@ -71,9 +85,11 @@ sudo containerlab inspect
 ./scripts/lab.sh destroy <name>
 ./scripts/lab.sh list <name>
 ./scripts/lab.sh vtysh <name> <node>
+./scripts/lab.sh cli <name> <node>
 ./scripts/lab.sh bash <name> <node>
 ./scripts/lab.sh cmd <name> <node> <command>
 ./scripts/lab.sh capture <name> <node> <iface> [filter]
+./scripts/lab.sh pcap <name> <node> <iface> [out.pcap]
 ```
 
 ## Node Naming Conventions

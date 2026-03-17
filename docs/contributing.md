@@ -46,6 +46,8 @@ README interaction rules:
 - Use `<summary>Configuration — reveal if stuck</summary>` for practice config.
 - Debug labs keep symptoms and diagnostic commands visible, but hide the exact fix in a solution `<details>` block.
 - Do not expose the answer by default just because the platform changed.
+- Optional follow-on exercises belong in an `## Extensions` section near the end of the README.
+- Extensions must be clearly labeled as optional ideas, not validated or required lab steps.
 
 ## Platform Validation Before Rebuild
 

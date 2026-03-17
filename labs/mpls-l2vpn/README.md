@@ -538,3 +538,12 @@ sudo containerlab destroy -t labs/mpls-l2vpn/topology.clab.yml --cleanup
 # or
 ./scripts/lab.sh destroy mpls-l2vpn
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Break one pseudowire label binding and determine whether the fault is in LDP signaling, MPLS forwarding, or bridge-domain learning.
+- Add a second customer VLAN or bridge domain and compare how many control-plane and data-plane objects need to change.
+- Capture traffic on a PE core-facing link and decode the stacked labels to prove the customer Ethernet frame is being carried over MPLS.
+- Replace the pseudowire with an L3VPN design on paper and document what changes in the service model and troubleshooting approach.

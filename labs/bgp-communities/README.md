@@ -349,3 +349,12 @@ show bgp ipv4 unicast summary                ! Neighbor session status
 - Community-list name must match exactly between `ip community-list` and `match community`
 - Check: `show ip community-list`
 - Verify with: `show route-map MATCH-COMM`
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add a second community policy such as `local-as` or `no-advertise` and compare its propagation behavior to `no-export`.
+- Tag the same prefix with multiple communities and verify how route-maps match ordered community-lists.
+- Build an inbound policy that changes local preference based on received communities and observe the bestpath result.
+- Capture updates with `debug bgp updates` or packet capture and verify exactly when the community attribute is attached or stripped.

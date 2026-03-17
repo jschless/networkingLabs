@@ -236,3 +236,12 @@ docker exec clab-packet-analysis-basics-services ss -ltn
 - mirrored transit traffic is useful for routing and application forensics
 - `tshark` is fast for answering targeted questions from a saved pcap
 - packet analysis is not separate from routing knowledge; it proves whether a problem is network, transport, or application
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add DNS lookups and DHCP renewal traffic so the saved pcaps include common client bootstrap protocols.
+- Compare a healthy HTTP flow to one with retransmissions or delayed responses and quantify the difference with `tshark`.
+- Capture a TLS handshake to see what remains visible in encrypted application traffic.
+- Build your own short incident scenario where reachability is fine but the failure is in name resolution, service binding, or application response codes.

@@ -115,3 +115,12 @@ sudo containerlab deploy -t labs/enterprise-collapsed-core-capstone/topology.cla
 # or
 ./scripts/lab.sh deploy enterprise-collapsed-core-capstone
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Inject a single collapsed-core failure and prove whether the resulting symptom is L2, FHRP, routing, or upstream edge related.
+- Rebalance gateway ownership across VLANs and compare the tradeoff between operational symmetry and failover simplicity.
+- Add a management or services subnet and decide whether it should live on the same pair or be isolated differently.
+- Write a short validation checklist for post-change maintenance using only the commands already present in the lab.

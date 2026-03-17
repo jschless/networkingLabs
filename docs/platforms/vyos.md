@@ -6,11 +6,15 @@ Build the local VyOS image once:
 docker build -t vyos:local -f Dockerfile.vyos .
 ```
 
-This repository uses `vyos:local` for the DMVPN labs:
+This repository uses `vyos:local` for:
 
+- `ipsec-basics`
+- `gre-ipsec`
+- `macsec-basics`
 - `dmvpn-phase1`
 - `dmvpn-phase2`
 - `dmvpn-phase3`
+- `dmvpn-phase3-ipsec-capstone`
 - `debug-dmvpn-phase1`
 
 ## Access Model

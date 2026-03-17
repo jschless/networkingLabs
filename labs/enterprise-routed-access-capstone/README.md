@@ -130,3 +130,12 @@ sudo containerlab deploy -t labs/enterprise-routed-access-capstone/topology.clab
 # or
 ./scripts/lab.sh deploy enterprise-routed-access-capstone
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Fail one routed uplink and compare OSPF-only convergence to OSPF with BFD assistance.
+- Introduce summarization at distribution and determine when it helps versus when it hides useful failure detail.
+- Add an access-layer policy or service such as DHCP relay and verify that routed access does not remove the need for campus services design.
+- Capture routing and host traffic during a failure to compare control-plane convergence to user-visible outage time.

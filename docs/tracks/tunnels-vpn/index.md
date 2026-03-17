@@ -1,6 +1,6 @@
 # Tunnels & VPN Track
 
-Eleven labs covering GRE, IPsec, DMVPN (Phase 1/2/3 plus a certificate-IPsec capstone), FlexVPN, WireGuard, and VRF-Lite across FRR, VyOS, and Arista cEOS platforms.
+Twelve labs covering GRE, IPsec, DMVPN (Phase 1/2/3 plus a certificate-IPsec capstone), FlexVPN, WireGuard, and VRF-Lite across FRR, VyOS, and Arista cEOS platforms.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
@@ -20,6 +20,6 @@ Eleven labs covering GRE, IPsec, DMVPN (Phase 1/2/3 plus a certificate-IPsec cap
 
 - **FRR labs**: `docker build -t frr-lab:local images/frr/`
 - **VyOS labs**: `docker build -t vyos:local -f Dockerfile.vyos .`
-- **IPsec/FlexVPN Linux labs**: `docker build -t ipsec-lab:local labs/ipsec-basics/`
+- **FlexVPN Linux lab**: `docker build -t ipsec-lab:local labs/ipsec-basics/`
 - **WireGuard lab**: `docker build -t wireguard-lab:local labs/wireguard/`
 - **cEOS labs**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`

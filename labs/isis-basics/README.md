@@ -192,3 +192,12 @@ show isis interface             # per-interface IS-IS state
 
 4. Change one router from `level-2-only` to `level-1-2` and observe what happens
    to the adjacency (hint: level mismatch causes adjacency problems).
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Enable authentication on one link only and troubleshoot the adjacency failure from the circuit and database output.
+- Set the overload bit on one router and observe how traffic-engineering intent changes route selection without breaking adjacency.
+- Change interface metrics asymmetrically and compare the SPF result to the topology graph you expect.
+- Inspect LSP contents in detail and map important TLVs back to interface addresses, loopbacks, and metrics in the config.

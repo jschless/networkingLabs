@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-**102 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+**103 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 No cloud account. No license fees. Deploy, break things, learn.
 
@@ -109,7 +109,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Route Control track](tracks/route-control/index.md)
 
-- :material-tunnel: **Tunnels & VPN** (11 labs)
+- :material-tunnel: **Tunnels & VPN** (12 labs)
 
     ---
     GRE, IPsec, DMVPN Phase 1/2/3, FlexVPN, WireGuard, VRF-Lite

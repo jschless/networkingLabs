@@ -25,7 +25,14 @@ flowchart LR
 
 ```bash
 docker build -t vyos:local -f Dockerfile.vyos .
-sudo containerlab deploy -t labs/macsec-basics/topology.clab.yml
+./scripts/lab.sh deploy macsec-basics
+```
+
+## Access
+
+```bash
+./scripts/lab.sh cli macsec-basics r1
+./scripts/lab.sh cli macsec-basics r2
 ```
 
 ## What Is Prebuilt
@@ -40,19 +47,20 @@ sudo containerlab deploy -t labs/macsec-basics/topology.clab.yml
 ### 1. Confirm the plain Ethernet link
 
 ```bash
-docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 198.51.100.2 count 3'"
+./scripts/lab.sh cmd macsec-basics r1 ping 198.51.100.2 count 3
 ```
 
 ### 2. Confirm the MACsec link
 
 ```bash
-docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 192.0.2.2 count 3'"
+./scripts/lab.sh cmd macsec-basics r1 ping 192.0.2.2 count 3
 ```
 
 ### 3. Inspect the MACsec config
 
 ```bash
-docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'show configuration commands | match macsec'"
+./scripts/lab.sh cli macsec-basics r1
+# then run: show configuration commands | match macsec
 docker exec clab-macsec-basics-r1 ip macsec show
 ```
 
@@ -75,7 +83,7 @@ Start a capture on `r1:eth2`:
 In another terminal, generate traffic:
 
 ```bash
-docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 198.51.100.2 count 3'"
+./scripts/lab.sh cmd macsec-basics r1 ping 198.51.100.2 count 3
 ```
 
 What you should see in Wireshark or `tshark`:
@@ -96,7 +104,7 @@ Start a capture on `r1:eth1`:
 Generate traffic over the MACsec interface:
 
 ```bash
-docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 192.0.2.2 count 3'"
+./scripts/lab.sh cmd macsec-basics r1 ping 192.0.2.2 count 3
 ```
 
 What you should see:
@@ -116,7 +124,7 @@ Start a capture on `r1:macsec0`:
 Generate traffic again:
 
 ```bash
-docker exec clab-macsec-basics-r1 su - admin -c "/bin/vbash -ic 'ping 192.0.2.2 count 3'"
+./scripts/lab.sh cmd macsec-basics r1 ping 192.0.2.2 count 3
 ```
 
 What you should see:
@@ -161,5 +169,14 @@ tshark -r /tmp/macsec-inner-macsec0.pcap -Y icmp
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/macsec-basics/topology.clab.yml --cleanup
+./scripts/lab.sh destroy macsec-basics
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Break the CAK or CKN on one side and use MKA and interface state to identify why `macsec0` stops passing traffic.
+- Change replay-window settings and observe what counters move during packet reordering or retransmission tests.
+- Rebuild the link in integrity-only mode and compare the wire image to the encrypted default.
+- Rotate keys during a running traffic test and watch for any loss or control-plane churn.

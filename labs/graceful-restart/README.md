@@ -184,3 +184,12 @@ The live validation for this refactor focused on BGP graceful restart because it
 ```bash
 sudo containerlab destroy -t labs/graceful-restart/topology.clab.yml --cleanup
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Compare BGP graceful restart to a plain hard reset and document exactly what disappears from the RIB and when.
+- Change restart timers and stale-path timers, then measure how sensitive traffic retention is to those values.
+- Add a second downstream prefix source so you can observe partial stale retention instead of a single-route example.
+- Test what happens when the restarting peer does not return before the stale timer expires.

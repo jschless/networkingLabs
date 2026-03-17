@@ -93,3 +93,12 @@ sudo containerlab deploy -t labs/enterprise-wan-edge-capstone/topology.clab.yml
 # or
 ./scripts/lab.sh deploy enterprise-wan-edge-capstone
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add inbound traffic-engineering signals such as communities or AS-path prepends and compare them to the existing outbound policy controls.
+- Break one ISP session and document how fast default routing and path preference converge inside the enterprise.
+- Add object tracking or IP SLA so edge preference is influenced by remote reachability, not just BGP session state.
+- Capture BGP updates during a failover and explain which attributes actually drive the new best path.

@@ -569,3 +569,12 @@ sysctl -w net.ipv4.conf.vti0.disable_policy=1
 ip xfrm state flush
 ipsec restart
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add a second spoke and compare the per-peer VTI and XFRM state to the single-spoke case.
+- Replace PSK with certificates and document which strongSwan objects and identities change.
+- Run a routing protocol over the VTI and compare its behavior to the static-route base lab.
+- Force a proposal mismatch or mark mismatch and use `ip xfrm`, `ipsec statusall`, and packet capture to isolate the failure.

@@ -259,6 +259,15 @@ show configuration commands | match nhrp
 
 If you are already in config mode, prefix them with `run`.
 
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add GRE-protecting IPsec between the hub and each spoke, then compare underlay packet captures before and after encryption.
+- Summarize spoke LAN routes at the hub and study how that changes routing visibility on the spokes.
+- Capture NHRP, OSPF, and user traffic on `tun0` and `eth1` to compare overlay control-plane traffic to underlay forwarding.
+- Sketch how you would convert this topology to dual-hub Phase 1 and identify what new failure-handling questions appear.
+
 ## Extension Challenge — Protect Phase 1 With IPsec
 
 You now have a working Phase 1 DMVPN underlay. Extend it by protecting the WAN-facing GRE traffic with IPsec while preserving the original Phase 1 behavior:

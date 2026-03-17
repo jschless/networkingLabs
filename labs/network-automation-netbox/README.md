@@ -421,3 +421,12 @@ The workflow should make the distinction clear:
 - source of truth, intended config, and running state are different datasets
 - external discovery plus reconciliation is a normal NetBox operating model
 - a small fabric is enough to practice a real automation workflow end to end
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add an intended-state validation step before deployment so bad NetBox data is caught before configs are pushed.
+- Introduce drift on one leaf, then use the discovery and report tooling to decide whether NetBox or the device should win.
+- Extend the model with device-role-specific branching so spines and leafs render from a more opinionated source of truth.
+- Add a remediation workflow that takes a drift report and automatically proposes or applies the corrective change.

@@ -252,3 +252,12 @@ To see this: add a 5th container node and peer it iBGP with r3 only. r5 will not
 **BGP routes not showing up on r1 from r4**
 - Walk the path: does r4 have the prefix? Does r3? Does r2?
 - `show bgp ipv4 unicast` on each hop and look for the missing handoff
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add a fifth router and prove the iBGP split-horizon limitation before introducing a route reflector.
+- Change one peering from eBGP to iBGP and compare how next-hop handling and advertisement rules change.
+- Capture TCP/179 traffic during session establishment and map each BGP FSM step to the packets you see.
+- Inject a bad `remote-as` or update-source on one side and troubleshoot the failure from `Idle` or `Active` back to the root cause.

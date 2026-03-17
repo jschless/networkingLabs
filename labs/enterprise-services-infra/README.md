@@ -109,3 +109,12 @@ show logging last 20
 - a network with working routing but broken services is still operationally broken
 - device administration, logging, time, and inventory are management-plane design problems
 - DHCP relay and centralized services are core enterprise skills, not side topics
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Move management traffic into a dedicated VRF and verify each service still works with explicit source-interface and routing choices.
+- Harden TACACS+ and SNMPv3 further, then deliberately break one component to validate local fallback and operational visibility.
+- Add a config backup workflow from `mgmt1` so service health and device-state preservation are treated as one management-plane system.
+- Compare syslog, SNMP, and TACACS accounting records for the same admin action to see what each source contributes.

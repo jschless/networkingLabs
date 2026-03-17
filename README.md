@@ -1,10 +1,10 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **102 hands-on networking labs** covering OSPF, BGP, MPLS,
-VPN, data center, enterprise design, security, and more. All labs run locally using
+A self-hosted lab environment with **103 hands-on networking labs** covering OSPF, BGP, MPLS,
+VPN, data center, enterprise design, security, operations, and more. Labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
-[Arista cEOS](https://www.arista.com/en/support/software-download), and
-[Nokia SR-Linux](https://learn.srlinux.dev/).
+[Arista cEOS](https://www.arista.com/en/support/software-download),
+[VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 ---
 
@@ -12,7 +12,7 @@ VPN, data center, enterprise design, security, and more. All labs run locally us
 
 ```bash
 # Deploy a lab
-sudo containerlab deploy -t labs/<name>/topology.yml
+sudo containerlab deploy -t labs/<name>/topology.clab.yml
 
 # Attach to an FRR node's CLI
 docker exec -it clab-<name>-<node> vtysh
@@ -24,14 +24,14 @@ docker exec -it clab-<name>-<node> Cli
 docker exec -it clab-<name>-<node> bash
 
 # Destroy the lab (removes containers)
-sudo containerlab destroy -t labs/<name>/topology.yml --cleanup
+sudo containerlab destroy -t labs/<name>/topology.clab.yml --cleanup
 ```
 
 **Example:**
 ```bash
-sudo containerlab deploy -t labs/ospf-multiarea/topology.yml
+sudo containerlab deploy -t labs/ospf-multiarea/topology.clab.yml
 docker exec -it clab-ospf-multiarea-r1 vtysh
-sudo containerlab destroy -t labs/ospf-multiarea/topology.yml --cleanup
+sudo containerlab destroy -t labs/ospf-multiarea/topology.clab.yml --cleanup
 ```
 
 ---
@@ -42,7 +42,7 @@ Each lab directory contains:
 
 ```
 labs/<name>/
-  topology.yml        <- ContainerLab topology (nodes + links)
+  topology.clab.yml   <- ContainerLab topology (nodes + links)
   README.md           <- Lab guide, tasks, verification commands
   configs/
     daemons           <- Which FRR daemons to enable (shared)
@@ -53,11 +53,15 @@ labs/<name>/
       setup.sh        <- (some labs) Linux network setup script
 ```
 
-**Practice labs**: IP addressing is pre-configured. You implement the routing protocol
-or feature by running `vtysh` / `Cli` and entering config. Each config file has
-commented-out hints showing the expected config.
+**Practice labs**: IP addressing is pre-configured. You implement the protocol or feature
+using the platform-native workflow (`vtysh`, `Cli`, or VyOS `configure` mode).
 
 **Reference labs**: Fully working out of the box. Deploy and observe/explore.
+
+**Debug labs**: Fully working topologies with one intentional bug. The README gives you
+the scenario, symptoms, hints, and the hidden fix.
+
+**Capstones**: Larger end-to-end labs that combine multiple features or workflows.
 
 ---
 
@@ -78,17 +82,11 @@ docker build -t frr-lab:local images/frr/
 ### Labs requiring custom images
 
 ```bash
-# ipsec-basics AND gre-ipsec
-docker build -t ipsec-lab:local labs/ipsec-basics/
-
 # wireguard
 docker build -t wireguard-lab:local labs/wireguard/
 
 # dot1x-nac
 docker build -t nac-lab:local labs/dot1x-nac/
-
-# macsec-basics
-docker build -t macsec-lab:local labs/macsec-basics/
 
 # network-assurance
 docker build -t assurance-lab:local labs/network-assurance/
@@ -101,6 +99,24 @@ docker build -t ops-lab:local images/ops-lab/
 
 # aaa-ops-troubleshooting
 docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/
+
+# telemetry-monitoring-hybrid
+docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/
+
+# network-automation-netbox
+docker build -t netbox-automation:local labs/network-automation-netbox/
+
+# enterprise-services-infra
+docker build -t enterprise-services-infra:local labs/enterprise-services-infra/
+
+# enterprise-edge-nat-firewall
+docker build -t dmz-lab:local labs/enterprise-edge-nat-firewall/
+
+# enterprise-access-security
+docker build -t enterprise-access-tools:local labs/enterprise-access-security/
+
+# dot1x-ceos-practice
+docker build -t nac-practice:local labs/dot1x-ceos-practice/
 ```
 
 ### Labs requiring Arista cEOS
@@ -118,7 +134,8 @@ Build the local VyOS router image:
 ```bash
 docker build -t vyos:local -f Dockerfile.vyos .
 ```
-Used by: `dmvpn-phase1`, `dmvpn-phase2`, `dmvpn-phase3`, `debug-dmvpn-phase1`.
+Used by: `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `dmvpn-phase1`,
+`dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`.
 
 ### Labs requiring Nokia SR-Linux
 
@@ -198,11 +215,12 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 |-----|------|----------------|
 | [gre-basics](labs/gre-basics/) | Practice | GRE tunnel, routing over GRE, recursive routing pitfall |
 | [gre-ceos](labs/gre-ceos/) | Practice | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
-| [gre-ipsec](labs/gre-ipsec/) | Practice | GRE + IPsec transport mode, strongSwan |
+| [gre-ipsec](labs/gre-ipsec/) | Practice | GRE + IPsec transport mode on VyOS |
 | [ipsec-basics](labs/ipsec-basics/) | Practice | IKEv2 site-to-site IPsec, PSK, tunnel mode |
 | [dmvpn-phase1](labs/dmvpn-phase1/) | Practice | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel (VyOS) |
 | [dmvpn-phase2](labs/dmvpn-phase2/) | Practice | DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts (VyOS) |
 | [dmvpn-phase3](labs/dmvpn-phase3/) | Practice | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp (VyOS) |
+| [dmvpn-phase3-ipsec-capstone](labs/dmvpn-phase3-ipsec-capstone/) | Capstone | DMVPN Phase 3 with in-lab PKI and certificate-based IPsec (VyOS) |
 | [flexvpn-basics](labs/flexvpn-basics/) | Practice | IKEv2 FlexVPN, Virtual Tunnel Interfaces, strongSwan |
 | [wireguard](labs/wireguard/) | Practice | WireGuard VPN, key pairs, hub-and-spoke topology |
 | [vrf-lite](labs/vrf-lite/) | Practice | VRF-Lite on cEOS, per-VRF routing tables, route leaking |
@@ -486,6 +504,6 @@ show tunnel-interface
 - **cEOS**: use `Cli` (capital C) to access the EOS CLI; startup-config loads automatically on boot
 - **SR-Linux**: use `sr_cli` to access the CLI; startup-config loads automatically on boot
 - **Custom images**: build the required image before deploying labs that need one (see Prerequisites)
-- **MPLS labs**: kernel label space is set via `sysctls` in topology.yml — do not try to set it via exec
+- **MPLS labs**: kernel label space is set via `sysctls` in `topology.clab.yml` — do not try to set it via exec
 - **VRF labs (FRR)**: Linux VRFs are created by `setup.sh` — check that script if interfaces look wrong
 - See `ROADMAP.md` for a topic-by-topic breakdown with study order guidance

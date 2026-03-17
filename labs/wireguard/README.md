@@ -279,3 +279,12 @@ the correct AllowedIPs and Endpoint. That's a **mesh** topology.
 5. Use `wg show` after successful tunnels are established. Examine the `latest handshake` field.
    Initiate traffic and watch the `transfer` counters increment. Notice handshake re-keys
    automatically every ~3 minutes (WireGuard's default rekey interval).
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add site LANs behind each gateway and compare host-to-host routing to the original point-to-point design.
+- Change `AllowedIPs` deliberately to create overlap and observe how WireGuard chooses peers for the same destination space.
+- Remove one endpoint and test how roaming or endpoint learning behaves when a peer initiates from a new source address.
+- Capture the WAN traffic during rekey events and compare the opaque UDP flow to the clear routing traffic in other tunnel labs.

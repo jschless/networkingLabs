@@ -181,3 +181,12 @@ Preemption back to master is immediate (first advertisement with higher priority
 ```bash
 sudo containerlab destroy -t topology.clab.yml
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add interface or object tracking so VRRP priority changes are tied to upstream reachability instead of interface state alone.
+- Disable preemption and compare the steady-state master behavior after the original master returns.
+- Capture gratuitous ARP during failover and map it to the end-host recovery timeline.
+- Add a second VLAN and different master priorities to compare active/active gateway placement across segments.

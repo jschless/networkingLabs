@@ -146,3 +146,12 @@ sudo containerlab deploy -t labs/enterprise-campus-capstone/topology.clab.yml
 # or
 ./scripts/lab.sh deploy enterprise-campus-capstone
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Introduce a controlled failure in STP, FHRP, or DHCP relay and build a short incident timeline from only operational commands and host symptoms.
+- Add a guest or IoT VLAN and document how the gateway, spanning tree, and edge-policy design should change.
+- Shift the STP root or VRRP master intentionally and compare the effect on traffic symmetry and first-hop design goals.
+- Capture one user transaction end to end and annotate where campus switching, gatewaying, and edge routing each become visible.

@@ -127,3 +127,12 @@ Then verify guest cannot reach corp/internal services.
 - NAT is separate from security policy
 - “inside can get out” and “outside can reach published service” are different design problems
 - guest policy is best enforced explicitly, not assumed
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Add hairpin NAT so an inside user can reach the published DMZ service through its outside address.
+- Publish the mail server with a different static NAT and policy set, then compare the exposure to the web flow.
+- Intentionally create asymmetric policy between the two firewalls and use counters and logs to prove where the break occurs.
+- Add more verbose deny logging, then generate guest and internet test traffic to build an incident-style packet and log narrative.

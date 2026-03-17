@@ -319,3 +319,12 @@ Observe the change in `show ip route ospf` on r4:
 ```bash
 sudo containerlab destroy -t topology.clab.yml
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Deliberately summarize too broadly and observe the black-hole risk when a component subnet disappears behind the summary.
+- Compare inter-area summarization on the ABR to external summarization on the ASBR and document which LSAs each affects.
+- Redistribute the same routes as E1 and E2 at different times and compare how path cost changes downstream.
+- Capture OSPF updates during summarization changes and correlate them with the shrinking or growing LSDB.

@@ -154,3 +154,12 @@ docker exec clab-enterprise-access-security-client-a ping -c 3 10.10.10.2
 - the legitimate server path must be trusted explicitly
 - edge ports are where you stop L2 attacks before they become campus-wide problems
 - the useful mindset is not “feature by feature,” but “what class of failure am I trying to stop?”
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Trigger a MAC move or port-security violation intentionally and compare the interface counters and logs to a clean port.
+- Mis-mark a trusted DHCP path, then trace how that mistake breaks snooping, DAI, or IP Source Guard for legitimate users.
+- Split voice and data behavior more explicitly on the edge and compare how the protection policy should differ by endpoint type.
+- Introduce a small unmanaged switch on an edge port later and validate BPDU Guard or Root Guard behavior against it.

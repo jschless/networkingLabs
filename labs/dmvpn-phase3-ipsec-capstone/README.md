@@ -344,3 +344,12 @@ If you want packet-level proof from the host:
 ```bash
 sudo containerlab destroy -t labs/dmvpn-phase3-ipsec-capstone/topology.clab.yml --cleanup
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Rotate the CA or reissue one router certificate and document the operational steps needed to restore trust cleanly.
+- Remove one spoke-to-spoke IPsec peer on purpose and prove what Phase 3 shortcut traffic looks like when direct encryption is missing.
+- Compare a shortcut flow before and after NHRP redirect resolution using packet capture on both the hub and a spoke.
+- Add a second summarized prefix behind the hub and study how summary learning and shortcut installation interact.

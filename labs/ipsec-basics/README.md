@@ -187,3 +187,12 @@ The protected LAN traffic itself is not visible on the WAN capture because it is
 ```bash
 ./scripts/lab.sh destroy ipsec-basics
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Replace the PSK with certificate-based authentication and compare the operational output to the PSK version.
+- Rebuild the lab as route-based IPsec with VTIs instead of policy-based selectors.
+- Intentionally break one IKE or ESP proposal and use `show vpn ike sa` / `show vpn ipsec sa` to identify the mismatch.
+- Force NAT-T by inserting NAT in the path, then observe the shift from ESP to UDP/4500 on the WAN capture.

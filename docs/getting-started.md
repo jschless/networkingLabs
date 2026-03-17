@@ -31,12 +31,14 @@ Some labs require additional custom images. Build only what you need:
 
 | Image | Labs | Build Command |
 |-------|------|---------------|
-| `ipsec-lab:local` | ipsec-basics, gre-ipsec, flexvpn-basics | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
+| `vyos:local` | ipsec-basics, gre-ipsec, macsec-basics, DMVPN labs | `docker build -t vyos:local -f Dockerfile.vyos .` |
+| `ipsec-lab:local` | flexvpn-basics | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | wireguard | `docker build -t wireguard-lab:local labs/wireguard/` |
 | `nac-lab:local` | dot1x-nac | `docker build -t nac-lab:local labs/dot1x-nac/` |
-| `macsec-lab:local` | macsec-basics | `docker build -t macsec-lab:local labs/macsec-basics/` |
 | `assurance-lab:local` | network-assurance | `docker build -t assurance-lab:local labs/network-assurance/` |
 | `qos-lab:local` | qos-enterprise | `docker build -t qos-lab:local labs/qos-enterprise/` |
+| `telemetry-lab:local` | telemetry-monitoring-hybrid | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
+| `netbox-automation:local` | network-automation-netbox | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
 
 ## Arista cEOS
 
@@ -56,7 +58,8 @@ Used by: `gre-ceos`, `spine-leaf-ceos`,
 docker build -t vyos:local -f Dockerfile.vyos .
 ```
 
-Used by: `dmvpn-phase1`, `dmvpn-phase2`, `dmvpn-phase3`, `debug-dmvpn-phase1`.
+Used by: `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `dmvpn-phase1`,
+`dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`.
 
 ## Nokia SR-Linux
 
@@ -105,6 +108,7 @@ The `scripts/lab.sh` wrapper simplifies common operations:
 ./scripts/lab.sh destroy <name>        # destroy and clean up
 ./scripts/lab.sh list <name>           # list nodes and IPs
 ./scripts/lab.sh vtysh <name> <node>   # open FRR CLI
+./scripts/lab.sh cli <name> <node>     # open cEOS or VyOS CLI when supported
 ./scripts/lab.sh bash <name> <node>    # open shell
 ./scripts/lab.sh cmd <name> <node> <cmd>  # run a command
 ```

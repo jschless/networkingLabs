@@ -280,3 +280,12 @@ summary 10.0.0.0/24 in the OSPF database.
 - Check the OSPF database on each router: `show ip ospf database`
 - Type-3 summary LSAs carry inter-area routes; confirm they appear on r2 and r3
 - If totally-stub is configured, Type-3 LSAs will not reach r4 — that is expected
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Convert the stub area to totally stubby and compare the Type-3 LSA and routing-table differences.
+- Introduce an MTU or hello/dead mismatch on one adjacency and diagnose the exact failure mode from interface and neighbor state.
+- Capture OSPF on an ABR link and identify when Type-1, Type-3, and default-route information appear during convergence.
+- Add a second subnet in one non-backbone area and study how summarization would change the LSDB seen by other areas.

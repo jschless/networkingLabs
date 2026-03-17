@@ -188,3 +188,12 @@ To inspect the decrypted overlay traffic, capture on a gateway tunnel interface:
 ```bash
 ./scripts/lab.sh destroy gre-ipsec
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Run OSPF across `tun0` instead of using static routes so the GRE overlay carries a dynamic routing protocol.
+- Compare `eth1` and `tun0` packet captures before and after IPsec to make the outer ESP and inner routed traffic distinction explicit.
+- Add MSS clamping or MTU changes, then test what breaks first when large packets cross the tunnel.
+- Simulate a WAN path failure and confirm whether GRE state, IKE state, and host reachability fail in the order you expect.

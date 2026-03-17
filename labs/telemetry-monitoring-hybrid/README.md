@@ -545,3 +545,12 @@ sudo containerlab destroy -t labs/telemetry-monitoring-hybrid/topology-full.clab
 docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/
 sudo containerlab deploy -t labs/telemetry-monitoring-hybrid/topology-full.clab.yml
 ```
+
+## Extensions
+
+These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+
+- Tune alert thresholds and polling intervals, then compare how quickly OpenNMS and Prometheus surface the same fault.
+- Capture one failure event through SNMP, streaming telemetry, and syslog, then document which tool gives the fastest and richest answer.
+- Add your own Grafana panel for interface or path health instead of relying only on the seeded dashboards.
+- Trigger a short flap and then a sustained outage to compare how logs, event history, and time-series data differ.

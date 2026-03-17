@@ -118,6 +118,7 @@ nav:
       - dmvpn-phase1: tracks/tunnels-vpn/dmvpn-phase1.md
       - dmvpn-phase2: tracks/tunnels-vpn/dmvpn-phase2.md
       - dmvpn-phase3: tracks/tunnels-vpn/dmvpn-phase3.md
+      - dmvpn-phase3-ipsec-capstone: tracks/tunnels-vpn/dmvpn-phase3-ipsec-capstone.md
       - dmvpn-ceos: tracks/tunnels-vpn/dmvpn-ceos.md
       - flexvpn-basics: tracks/tunnels-vpn/flexvpn-basics.md
       - wireguard: tracks/tunnels-vpn/wireguard.md

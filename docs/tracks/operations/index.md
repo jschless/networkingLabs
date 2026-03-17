@@ -24,4 +24,4 @@ Ten labs covering management access, DHCP/DNS, AAA operations, packet capture wo
 - **network-assurance**: `docker build -t assurance-lab:local labs/network-assurance/`
 - **qos-enterprise**: `docker build -t qos-lab:local labs/qos-enterprise/`
 - **network-automation-netbox**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t netbox-automation:local labs/network-automation-netbox/`
-- **telemetry-monitoring-hybrid**: `docker build -t frr-lab:local images/frr/`
+- **telemetry-monitoring-hybrid**: `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/`
