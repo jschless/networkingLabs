@@ -1,0 +1,79 @@
+name: enterprise-dmz-capstone
+
+# Enterprise DMZ Capstone — screened-subnet DMZ built from scratch
+#
+# What is pre-configured:
+#   - All interface IPs and static routes on Linux nodes
+#   - IP forwarding on both firewall nodes
+#   - isp node fully configured
+#   - Service listeners on web-server, mail-server, and db-server
+#
+# What YOU configure:
+#   - fw-outside nftables forwarding policy
+#   - fw-outside DNAT for public web/mail publishing
+#   - fw-outside SNAT/masquerade for internal outbound access
+#   - fw-inside nftables policy separating DMZ and LAN
+#
+# See labs/enterprise-dmz/ for the fully-working reference solution.
+
+topology:
+  defaults:
+    kind: linux
+    image: dmz-lab:local
+
+  nodes:
+    isp:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/isp/startup-config
+
+    internet-client:
+      binds:
+        - configs/internet-client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    fw-outside:
+      binds:
+        - configs/fw-outside/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    web-server:
+      binds:
+        - configs/web-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    mail-server:
+      binds:
+        - configs/mail-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    fw-inside:
+      binds:
+        - configs/fw-inside/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    db-server:
+      binds:
+        - configs/db-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    workstation:
+      binds:
+        - configs/workstation/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["isp:eth1", "internet-client:eth1"]
+    - endpoints: ["isp:eth2", "fw-outside:eth1"]
+    - endpoints: ["fw-outside:eth2", "web-server:eth1"]
+    - endpoints: ["fw-outside:eth3", "mail-server:eth1"]
+    - endpoints: ["fw-outside:eth4", "fw-inside:eth1"]
+    - endpoints: ["fw-inside:eth2", "db-server:eth1"]
+    - endpoints: ["fw-inside:eth3", "workstation:eth1"]

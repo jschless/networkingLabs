@@ -1,5 +1,5 @@
 site_name: ContainerLab Networking Labs
-site_description: 93 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, and more.
+site_description: 104 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, and more.
 site_url: https://jschless.github.io/networkingLabs/
 repo_url: https://github.com/jschless/networkingLabs
 repo_name: jschless/networkingLabs
@@ -159,6 +159,7 @@ nav:
       - enterprise-wireless-architecture: tracks/enterprise/enterprise-wireless-architecture.md
       - enterprise-campus-capstone: tracks/enterprise/enterprise-campus-capstone.md
       - enterprise-collapsed-core-capstone: tracks/enterprise/enterprise-collapsed-core-capstone.md
+      - enterprise-dmz-capstone: tracks/enterprise/enterprise-dmz-capstone.md
       - enterprise-routed-access-capstone: tracks/enterprise/enterprise-routed-access-capstone.md
       - enterprise-wan-edge-capstone: tracks/enterprise/enterprise-wan-edge-capstone.md
     - Layer 2:

@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-**103 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+**104 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 No cloud account. No license fees. Deploy, break things, learn.
 
@@ -137,7 +137,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: HA track](tracks/high-availability/index.md)
 
-- :material-office-building: **Enterprise Design** (14 labs)
+- :material-office-building: **Enterprise Design** (15 labs)
 
     ---
     Campus tiers, WAN edge, access security, multicast, services, capstones

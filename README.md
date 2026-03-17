@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **103 hands-on networking labs** covering OSPF, BGP, MPLS,
+A self-hosted lab environment with **104 hands-on networking labs** covering OSPF, BGP, MPLS,
 VPN, data center, enterprise design, security, operations, and more. Labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
 [Arista cEOS](https://www.arista.com/en/support/software-download),
@@ -285,6 +285,7 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 |-----|------|----------------|
 | [enterprise-campus-capstone](labs/enterprise-campus-capstone/) | Practice | Configure full 3-tier campus from scratch (OSPF, VRRP, STP) |
 | [enterprise-collapsed-core-capstone](labs/enterprise-collapsed-core-capstone/) | Practice | Configure 2-tier collapsed-core campus from scratch |
+| [enterprise-dmz-capstone](labs/enterprise-dmz-capstone/) | Capstone | Build a screened-subnet DMZ with dual firewalls, DNAT, SNAT, and segmentation policy |
 | [enterprise-routed-access-capstone](labs/enterprise-routed-access-capstone/) | Practice | Configure L3-everywhere campus — OSPF multi-area, BFD |
 | [enterprise-wan-edge-capstone](labs/enterprise-wan-edge-capstone/) | Practice | Configure dual-homed BGP with traffic engineering from scratch |
 
@@ -398,6 +399,7 @@ Prereq:   ospf-multiarea, bgp-basics, vrrp
 Designs:  enterprise-collapsed-core -> enterprise-campus -> enterprise-routed-access
 Edge:     enterprise-wan-edge
 DMZ:      enterprise-dmz
+Capstone: enterprise-dmz-capstone
 HA:       ha-network-design-ceos
 ```
 
