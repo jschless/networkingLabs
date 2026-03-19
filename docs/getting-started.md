@@ -39,6 +39,7 @@ Some labs require additional custom images. Build only what you need:
 | `qos-lab:local` | qos-enterprise | `docker build -t qos-lab:local labs/qos-enterprise/` |
 | `telemetry-lab:local` | telemetry-monitoring-hybrid | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
 | `netbox-automation:local` | network-automation-netbox | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
+| `fortigate-tools:local` | fortigate-firewall-capstone | `docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/` |
 
 ## Arista cEOS
 
@@ -60,6 +61,18 @@ docker build -t vyos:local -f Dockerfile.vyos .
 
 Used by: `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `dmvpn-phase1`,
 `dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`.
+
+## FortiGate
+
+Use the downloaded FortiGate image:
+
+```bash
+docker image ls vrnetlab/vr-fortios:4.7.11
+```
+
+Used by: `fortigate-firewall-capstone`.
+
+Note: manual license activation is required before the lab can be completed.
 
 ## Nokia SR-Linux
 

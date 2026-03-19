@@ -57,6 +57,7 @@ acl-basics → bgp-prefix-security → bgp-rpki
 ipsec-basics → gre-ipsec → flexvpn-basics
 macsec-basics → dot1x-nac → dot1x-ceos-practice
 urpf-antispoofing → copp-basics
+enterprise-edge-nat-firewall → fortigate-firewall-capstone
 ```
 
 ## Network Operations

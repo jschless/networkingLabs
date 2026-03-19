@@ -1,10 +1,10 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **104 hands-on networking labs** covering OSPF, BGP, MPLS,
+A self-hosted lab environment with **105 hands-on networking labs** covering OSPF, BGP, MPLS,
 VPN, data center, enterprise design, security, operations, and more. Labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
 [Arista cEOS](https://www.arista.com/en/support/software-download),
-[VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+[FortiGate](https://www.fortinet.com/), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 ---
 
@@ -117,6 +117,9 @@ docker build -t enterprise-access-tools:local labs/enterprise-access-security/
 
 # dot1x-ceos-practice
 docker build -t nac-practice:local labs/dot1x-ceos-practice/
+
+# fortigate-firewall-capstone
+docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/
 ```
 
 ### Labs requiring Arista cEOS
@@ -143,6 +146,16 @@ Used by: `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `dmvpn-phase1`,
 docker pull ghcr.io/nokia/srlinux:latest
 ```
 Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
+
+### Labs requiring FortiGate
+
+Use the downloaded FortiGate image:
+```bash
+docker image ls vrnetlab/vr-fortios:4.7.11
+```
+Used by: `fortigate-firewall-capstone`.
+
+Note: manual license activation is required before the lab can be completed.
 
 ---
 
@@ -297,6 +310,7 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 |-----|------|----------------|
 | [acl-basics](labs/acl-basics/) | Practice | Interface ACLs for router-local services, default deny, protocol/port filtering, counters |
 | [macsec-basics](labs/macsec-basics/) | Practice | IEEE 802.1AE MACsec, MKA key agreement, infrastructure + endpoint modes |
+| [fortigate-firewall-capstone](labs/fortigate-firewall-capstone/) | Capstone | FortiGate address objects, service groups, NAT, VIPs, policy order, and logging |
 | [dot1x-nac](labs/dot1x-nac/) | Practice | 802.1X port authentication, RADIUS, EAP, NAC enforcement |
 | [urpf-antispoofing](labs/urpf-antispoofing/) | Practice | Unicast RPF, source IP anti-spoofing, strict vs loose mode |
 | [copp-basics](labs/copp-basics/) | Practice | Control Plane Policing, traffic classification, rate limiting |
@@ -408,6 +422,7 @@ HA:       ha-network-design-ceos
 ```
 acl-basics -> bgp-prefix-security -> ipsec-basics -> gre-ipsec
 -> macsec-basics -> dot1x-nac
+enterprise-edge-nat-firewall -> fortigate-firewall-capstone
 ```
 
 ### Network Operations

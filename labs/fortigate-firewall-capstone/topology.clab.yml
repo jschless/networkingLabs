@@ -1,0 +1,70 @@
+name: fortigate-firewall-capstone
+
+# FortiGate Firewall Capstone
+#
+# One FortiGate with five data interfaces:
+#   port2 = WAN
+#   port3 = corp
+#   port4 = guest
+#   port5 = DMZ
+#   port6 = db
+#
+# port1 is reserved for the management network by the fortinet_fortigate kind.
+
+topology:
+  defaults:
+    kind: linux
+    image: fortigate-tools:local
+
+  nodes:
+    fgt1:
+      kind: fortinet_fortigate
+      image: vrnetlab/vr-fortios:4.7.11
+      ports:
+        - 2222:22
+        - 8080:80
+        - 8443:443
+
+    isp:
+      binds:
+        - configs/isp/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    internet-client:
+      binds:
+        - configs/internet-client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    corp-client:
+      binds:
+        - configs/corp-client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    guest-client:
+      binds:
+        - configs/guest-client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    dmz-web:
+      binds:
+        - configs/dmz-web/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    db-server:
+      binds:
+        - configs/db-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["fgt1:port2", "isp:eth1"]
+    - endpoints: ["isp:eth2", "internet-client:eth1"]
+    - endpoints: ["fgt1:port3", "corp-client:eth1"]
+    - endpoints: ["fgt1:port4", "guest-client:eth1"]
+    - endpoints: ["fgt1:port5", "dmz-web:eth1"]
+    - endpoints: ["fgt1:port6", "db-server:eth1"]
