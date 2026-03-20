@@ -34,6 +34,7 @@ Some labs require additional custom images. Build only what you need:
 | `vyos:local` | ipsec-basics, gre-ipsec, macsec-basics, DMVPN labs | `docker build -t vyos:local -f Dockerfile.vyos .` |
 | `ipsec-lab:local` | flexvpn-basics | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | wireguard | `docker build -t wireguard-lab:local labs/wireguard/` |
+| `black-core-tools:local` | black-core-routing | `docker build -t black-core-tools:local labs/black-core-routing/` |
 | `nac-lab:local` | dot1x-nac | `docker build -t nac-lab:local labs/dot1x-nac/` |
 | `assurance-lab:local` | network-assurance | `docker build -t assurance-lab:local labs/network-assurance/` |
 | `qos-lab:local` | qos-enterprise | `docker build -t qos-lab:local labs/qos-enterprise/` |
@@ -60,17 +61,27 @@ docker build -t vyos:local -f Dockerfile.vyos .
 ```
 
 Used by: `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `dmvpn-phase1`,
-`dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`.
+`dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`,
+`black-core-routing`.
 
 ## FortiGate
 
-Use the downloaded FortiGate image:
+Use the downloaded FortiGate image as the source of the FortiGate `qcow2`:
 
 ```bash
 docker image ls vrnetlab/vr-fortios:4.7.11
 ```
 
 Used by: `fortigate-firewall-capstone`.
+
+The lab then extracts and runs the VM directly:
+
+```bash
+sudo labs/fortigate-firewall-capstone/prepare-bridges.sh
+./scripts/lab.sh deploy fortigate-firewall-capstone
+labs/fortigate-firewall-capstone/extract-fortios.sh
+sudo labs/fortigate-firewall-capstone/start-fgt.sh
+```
 
 Note: manual license activation is required before the lab can be completed.
 

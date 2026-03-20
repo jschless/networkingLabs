@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **105 hands-on networking labs** covering OSPF, BGP, MPLS,
+A self-hosted lab environment with **106 hands-on networking labs** covering OSPF, BGP, MPLS,
 VPN, data center, enterprise design, security, operations, and more. Labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
 [Arista cEOS](https://www.arista.com/en/support/software-download),
@@ -120,6 +120,9 @@ docker build -t nac-practice:local labs/dot1x-ceos-practice/
 
 # fortigate-firewall-capstone
 docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/
+
+# black-core-routing
+docker build -t black-core-tools:local labs/black-core-routing/
 ```
 
 ### Labs requiring Arista cEOS
@@ -138,7 +141,8 @@ Build the local VyOS router image:
 docker build -t vyos:local -f Dockerfile.vyos .
 ```
 Used by: `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `dmvpn-phase1`,
-`dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`.
+`dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`,
+`black-core-routing`.
 
 ### Labs requiring Nokia SR-Linux
 
@@ -149,13 +153,21 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 
 ### Labs requiring FortiGate
 
-Use the downloaded FortiGate image:
+Use the downloaded FortiGate image as the source of the FortiGate `qcow2`:
 ```bash
 docker image ls vrnetlab/vr-fortios:4.7.11
 ```
 Used by: `fortigate-firewall-capstone`.
 
-Note: manual license activation is required before the lab can be completed.
+Then run:
+```bash
+sudo labs/fortigate-firewall-capstone/prepare-bridges.sh
+./scripts/lab.sh deploy fortigate-firewall-capstone
+labs/fortigate-firewall-capstone/extract-fortios.sh
+sudo labs/fortigate-firewall-capstone/start-fgt.sh
+```
+
+Note: manual first boot, password change, and license activation are required before the lab can be completed.
 
 ---
 
@@ -310,6 +322,7 @@ Note: manual license activation is required before the lab can be completed.
 |-----|------|----------------|
 | [acl-basics](labs/acl-basics/) | Practice | Interface ACLs for router-local services, default deny, protocol/port filtering, counters |
 | [macsec-basics](labs/macsec-basics/) | Practice | IEEE 802.1AE MACsec, MKA key agreement, infrastructure + endpoint modes |
+| [black-core-routing](labs/black-core-routing/) | Capstone | Red/black separation, ciphertext underlay, plaintext overlay, and packet-capture proof |
 | [fortigate-firewall-capstone](labs/fortigate-firewall-capstone/) | Capstone | FortiGate address objects, service groups, NAT, VIPs, policy order, and logging |
 | [dot1x-nac](labs/dot1x-nac/) | Practice | 802.1X port authentication, RADIUS, EAP, NAC enforcement |
 | [urpf-antispoofing](labs/urpf-antispoofing/) | Practice | Unicast RPF, source IP anti-spoofing, strict vs loose mode |
@@ -420,7 +433,7 @@ HA:       ha-network-design-ceos
 ### Security
 
 ```
-acl-basics -> bgp-prefix-security -> ipsec-basics -> gre-ipsec
+acl-basics -> bgp-prefix-security -> ipsec-basics -> gre-ipsec -> black-core-routing
 -> macsec-basics -> dot1x-nac
 enterprise-edge-nat-firewall -> fortigate-firewall-capstone
 ```

@@ -296,7 +296,7 @@ cmd_cli() {
 
     if [[ "$cli_cmd" == "__vyos__" ]]; then
         echo "Connecting to $node (VyOS)"
-        docker exec -it "$container" su - admin
+        docker exec -it "$container" bash -lc 'exec su - admin'
         return
     fi
 

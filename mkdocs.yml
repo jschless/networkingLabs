@@ -1,5 +1,5 @@
 site_name: ContainerLab Networking Labs
-site_description: 105 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, and more.
+site_description: 106 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, and more.
 site_url: https://jschless.github.io/networkingLabs/
 repo_url: https://github.com/jschless/networkingLabs
 repo_name: jschless/networkingLabs
@@ -172,6 +172,7 @@ nav:
       - tracks/security/index.md
       - acl-basics: tracks/security/acl-basics.md
       - macsec-basics: tracks/security/macsec-basics.md
+      - black-core-routing: tracks/security/black-core-routing.md
       - fortigate-firewall-capstone: tracks/security/fortigate-firewall-capstone.md
       - dot1x-nac: tracks/security/dot1x-nac.md
       - urpf-antispoofing: tracks/security/urpf-antispoofing.md

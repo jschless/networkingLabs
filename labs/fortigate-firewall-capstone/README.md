@@ -4,13 +4,19 @@ Build a single-device FortiGate internet edge that exercises the core policy mec
 
 This lab is intentionally designed as a capstone with hints. You do the full FortiGate build yourself, but each major section includes hidden CLI guidance and GUI locations if you get stuck.
 
+FortiGate `7.4.11` does not behave cleanly under the normal vrnetlab bootstrap flow because first login and licensing are interactive. This lab therefore uses a hybrid model:
+
+- containerlab deploys the Linux endpoints and host bridges
+- QEMU/KVM runs the FortiGate VM directly from the FortiGate `qcow2`
+- helper scripts attach the FortiGate data interfaces to the containerlab bridges
+
 ## Topology
 
 ```mermaid
 flowchart TB
     public(["internet-client\n198.51.100.10\nDNS + HTTP + HTTPS"])
     isp["isp\n203.0.113.1\n198.51.100.1"]
-    fgt["fgt1\nFortiGate\nport2 WAN\nport3 CORP\nport4 GUEST\nport5 DMZ\nport6 DB"]
+    fgt["fgt1\nFortiGate VM\nport2 WAN\nport3 CORP\nport4 GUEST\nport5 DMZ\nport6 DB"]
     corp(["corp-client\n10.10.10.10"])
     guest(["guest-client\n10.20.20.10"])
     dmz(["dmz-web\n172.16.10.10\nHTTP + HTTPS"])
@@ -44,18 +50,28 @@ Public test network behind `isp`:
 ```bash
 docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/
 
-# Confirm the FortiGate image is present
+# Confirm the FortiGate source image is present
 docker image ls vrnetlab/vr-fortios:4.7.11
 
+# Create the host bridges that containerlab will attach to
+sudo labs/fortigate-firewall-capstone/prepare-bridges.sh
+
 ./scripts/lab.sh deploy fortigate-firewall-capstone
+
+# Extract the base qcow2 once
+labs/fortigate-firewall-capstone/extract-fortios.sh
+
+# Start the external FortiGate VM
+sudo labs/fortigate-firewall-capstone/start-fgt.sh
 ```
 
 ## Access And Licensing
 
-FortiGate uses the `fortinet_fortigate` kind. `port1` is reserved for management and is not part of the lab data plane.
+FortiGate runs directly under QEMU/KVM. `port1` is the management interface on a QEMU user-mode network. Data interfaces `port2` through `port6` attach to the containerlab host bridges.
 
 Access points:
 
+- FortiGate serial console: `labs/fortigate-firewall-capstone/console-fgt.sh`
 - FortiGate CLI: `ssh -o StrictHostKeyChecking=no -p 2222 admin@127.0.0.1`
 - FortiGate Web UI: `http://127.0.0.1:8080`
 - If your image uses HTTPS admin instead: `https://127.0.0.1:8443`
@@ -63,9 +79,21 @@ Access points:
 
 Important:
 
-- This image requires manual license activation before the firewall features are usable.
+- FortiGate `7.4.11` licensing and first login are fully manual in this lab.
+- Use the serial console if the GUI or SSH login flow is unclear.
+- You must complete first login, password change, and license activation manually before the lab tasks are usable.
 - Expect the FortiGate to take roughly two minutes to boot.
 - The first login may force an admin password change before any other work.
+
+Bridge names created by the topology:
+
+- `br-fgt-wan`
+- `br-fgt-corp`
+- `br-fgt-guest`
+- `br-fgt-dmz`
+- `br-fgt-db`
+
+Those bridges are host Linux bridges. The lab does not rely on containerlab to create them automatically; use `prepare-bridges.sh` before deploy.
 
 ## What Is Preconfigured
 
@@ -451,12 +479,14 @@ Expected results:
 ./scripts/lab.sh check fortigate-firewall-capstone
 ```
 
-This lab is intentionally not automatically validated because the FortiGate image requires manual license activation.
+This lab is intentionally not automatically validated because the FortiGate VM requires manual login and license activation.
 
 ## Cleanup
 
 ```bash
+sudo labs/fortigate-firewall-capstone/stop-fgt.sh
 ./scripts/lab.sh destroy fortigate-firewall-capstone
+sudo labs/fortigate-firewall-capstone/cleanup-bridges.sh
 ```
 
 ## Extensions

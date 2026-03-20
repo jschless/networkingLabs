@@ -2,14 +2,15 @@ name: fortigate-firewall-capstone
 
 # FortiGate Firewall Capstone
 #
-# One FortiGate with five data interfaces:
+# Containerlab deploys the surrounding hosts and five host bridges.
+# A separate QEMU/KVM FortiGate VM attaches to those bridges with:
 #   port2 = WAN
 #   port3 = corp
 #   port4 = guest
 #   port5 = DMZ
 #   port6 = db
-#
-# port1 is reserved for the management network by the fortinet_fortigate kind.
+# The FortiGate management plane stays on a QEMU user-mode NIC exposed on
+# localhost ports 2222/8080/8443.
 
 topology:
   defaults:
@@ -17,13 +18,20 @@ topology:
     image: fortigate-tools:local
 
   nodes:
-    fgt1:
-      kind: fortinet_fortigate
-      image: vrnetlab/vr-fortios:4.7.11
-      ports:
-        - 2222:22
-        - 8080:80
-        - 8443:443
+    br-fgt-wan:
+      kind: bridge
+
+    br-fgt-corp:
+      kind: bridge
+
+    br-fgt-guest:
+      kind: bridge
+
+    br-fgt-dmz:
+      kind: bridge
+
+    br-fgt-db:
+      kind: bridge
 
     isp:
       binds:
@@ -62,9 +70,9 @@ topology:
         - bash /setup.sh
 
   links:
-    - endpoints: ["fgt1:port2", "isp:eth1"]
+    - endpoints: ["br-fgt-wan:eth0", "isp:eth1"]
     - endpoints: ["isp:eth2", "internet-client:eth1"]
-    - endpoints: ["fgt1:port3", "corp-client:eth1"]
-    - endpoints: ["fgt1:port4", "guest-client:eth1"]
-    - endpoints: ["fgt1:port5", "dmz-web:eth1"]
-    - endpoints: ["fgt1:port6", "db-server:eth1"]
+    - endpoints: ["br-fgt-corp:eth0", "corp-client:eth1"]
+    - endpoints: ["br-fgt-guest:eth0", "guest-client:eth1"]
+    - endpoints: ["br-fgt-dmz:eth0", "dmz-web:eth1"]
+    - endpoints: ["br-fgt-db:eth0", "db-server:eth1"]

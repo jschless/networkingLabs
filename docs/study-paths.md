@@ -54,7 +54,7 @@ Capstones: enterprise-collapsed-core-capstone → enterprise-campus-capstone
 
 ```
 acl-basics → bgp-prefix-security → bgp-rpki
-ipsec-basics → gre-ipsec → flexvpn-basics
+ipsec-basics → gre-ipsec → black-core-routing → flexvpn-basics
 macsec-basics → dot1x-nac → dot1x-ceos-practice
 urpf-antispoofing → copp-basics
 enterprise-edge-nat-firewall → fortigate-firewall-capstone

@@ -11,6 +11,7 @@ This repository uses `vyos:local` for:
 - `ipsec-basics`
 - `gre-ipsec`
 - `macsec-basics`
+- `black-core-routing`
 - `dmvpn-phase1`
 - `dmvpn-phase2`
 - `dmvpn-phase3`

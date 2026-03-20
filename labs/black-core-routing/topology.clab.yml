@@ -1,0 +1,65 @@
+name: black-core-routing
+
+# Black Core Routing — VyOS + Linux
+#
+# Two red sites connected across a black core through inline encryptor stand-ins.
+# The black core carries only transport reachability and ciphertext after IPsec
+# is enabled. The red routers build a GRE overlay and run OSPF for service
+# reachability on the plaintext side.
+
+topology:
+  defaults:
+    kind: linux
+    image: black-core-tools:local
+
+  nodes:
+    client-a:
+      binds:
+        - configs/client-a/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    red-a:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/red-a/config.boot
+
+    enc-a:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/enc-a/config.boot
+
+    core1:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/core1/config.boot
+
+    core2:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/core2/config.boot
+
+    enc-b:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/enc-b/config.boot
+
+    red-b:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/red-b/config.boot
+
+    service-b:
+      binds:
+        - configs/service-b/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["client-a:eth1", "red-a:eth1"]     # Site A red LAN
+    - endpoints: ["red-a:eth2", "enc-a:eth1"]        # Site A red transit
+    - endpoints: ["enc-a:eth2", "core1:eth1"]        # Black core edge A
+    - endpoints: ["core1:eth2", "core2:eth1"]        # Black core middle
+    - endpoints: ["core2:eth2", "enc-b:eth1"]        # Black core edge B
+    - endpoints: ["enc-b:eth2", "red-b:eth1"]        # Site B red transit
+    - endpoints: ["red-b:eth2", "service-b:eth1"]    # Site B red LAN

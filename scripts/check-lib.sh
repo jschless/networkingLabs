@@ -29,8 +29,8 @@ frr()  { docker exec "clab-${TOPO_NAME}-$1" vtysh -c "$2" 2>/dev/null; }
 srl()  { docker exec "clab-${TOPO_NAME}-$1" sr_cli -c "$2" 2>/dev/null; }
 node() { docker exec "clab-${TOPO_NAME}-$1" bash -c "$2" 2>/dev/null; }
 vyos_op() {
-  docker exec "clab-${TOPO_NAME}-$1" su - admin -c \
-    "/bin/vbash -ic '$2'" 2>/dev/null
+  docker exec "clab-${TOPO_NAME}-$1" bash -lc \
+    "su - admin -c \"/bin/vbash -ic '$2'\"" 2>/dev/null
 }
 vyos_frr() { docker exec "clab-${TOPO_NAME}-$1" vtysh -c "$2" 2>/dev/null; }
 
