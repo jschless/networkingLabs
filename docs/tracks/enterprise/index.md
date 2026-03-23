@@ -28,11 +28,11 @@ Build an entire design from scratch with only IPs and interfaces pre-configured.
 
 | Lab | Type | What You Build |
 |-----|------|----------------|
-| [enterprise-campus-capstone](enterprise-campus-capstone.md) | Practice | Full 3-tier campus (OSPF, VRRP, STP) |
-| [enterprise-collapsed-core-capstone](enterprise-collapsed-core-capstone.md) | Practice | 2-tier collapsed-core campus |
+| [enterprise-campus-capstone](enterprise-campus-capstone.md) | Capstone | Full 3-tier campus (OSPF, VRRP, STP) |
+| [enterprise-collapsed-core-capstone](enterprise-collapsed-core-capstone.md) | Capstone | 2-tier collapsed-core campus |
 | [enterprise-dmz-capstone](enterprise-dmz-capstone.md) | Capstone | Dual-firewall screened-subnet DMZ with DNAT, SNAT, and segmentation policy |
-| [enterprise-routed-access-capstone](enterprise-routed-access-capstone.md) | Practice | L3-everywhere campus — OSPF multi-area, BFD |
-| [enterprise-wan-edge-capstone](enterprise-wan-edge-capstone.md) | Practice | Dual-homed BGP with traffic engineering |
+| [enterprise-routed-access-capstone](enterprise-routed-access-capstone.md) | Capstone | L3-everywhere campus — OSPF multi-area, BFD |
+| [enterprise-wan-edge-capstone](enterprise-wan-edge-capstone.md) | Capstone | Dual-homed BGP with traffic engineering |
 
 ## Platform
 

@@ -1,11 +1,10 @@
 # Tunnels & VPN Track
 
-Twelve labs covering GRE, IPsec, DMVPN (Phase 1/2/3 plus a certificate-IPsec capstone), FlexVPN, WireGuard, and VRF-Lite across FRR, VyOS, and Arista cEOS platforms.
+Ten labs covering GRE, IPsec, DMVPN (Phase 1/2/3 plus a certificate-IPsec capstone), FlexVPN, WireGuard, and VRF-Lite across Arista cEOS, VyOS, Linux/strongSwan, and WireGuard platforms.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
-| [gre-basics](gre-basics.md) | Practice | FRR | GRE tunnel, routing over GRE, recursive routing pitfall |
-| [gre-ceos](gre-ceos.md) | Practice | cEOS | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
+| [gre-basics](gre-basics.md) | Practice | cEOS | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
 | [gre-ipsec](gre-ipsec.md) | Practice | VyOS | GRE + IPsec transport mode |
 | [ipsec-basics](ipsec-basics.md) | Practice | VyOS | IKEv2 site-to-site IPsec, PSK, tunnel mode |
 | [dmvpn-phase1](dmvpn-phase1.md) | Practice | VyOS | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF |
@@ -18,7 +17,6 @@ Twelve labs covering GRE, IPsec, DMVPN (Phase 1/2/3 plus a certificate-IPsec cap
 
 ## Platform Notes
 
-- **FRR labs**: `docker build -t frr-lab:local images/frr/`
 - **VyOS labs**: `docker build -t vyos:local -f Dockerfile.vyos .`
 - **FlexVPN Linux lab**: `docker build -t ipsec-lab:local labs/ipsec-basics/`
 - **WireGuard lab**: `docker build -t wireguard-lab:local labs/wireguard/`

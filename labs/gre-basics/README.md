@@ -2,7 +2,7 @@
 
 Create a GRE point-to-point tunnel between two Arista EOS gateway routers across a simulated WAN. Route traffic between private LANs through the tunnel. Physical IP addressing is pre-configured — you configure `interface Tunnel0` and static routes using the native EOS CLI.
 
-Compare with the `gre-basics` lab which uses Linux `ip tunnel` commands; here you use the same `interface Tunnel` construct used on production Arista hardware.
+This lab uses the same `interface Tunnel` construct used on production Arista hardware, rather than Linux `ip tunnel` commands.
 
 ---
 

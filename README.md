@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **106 hands-on networking labs** covering OSPF, BGP, MPLS,
+A self-hosted lab environment with **102 hands-on networking labs** covering OSPF, BGP, MPLS,
 VPN, data center, enterprise design, security, operations, and more. Labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
 [Arista cEOS](https://www.arista.com/en/support/software-download),
@@ -29,9 +29,9 @@ sudo containerlab destroy -t labs/<name>/topology.clab.yml --cleanup
 
 **Example:**
 ```bash
-sudo containerlab deploy -t labs/ospf-multiarea/topology.clab.yml
-docker exec -it clab-ospf-multiarea-r1 vtysh
-sudo containerlab destroy -t labs/ospf-multiarea/topology.clab.yml --cleanup
+sudo containerlab deploy -t labs/eigrp-basics/topology.clab.yml
+docker exec -it clab-eigrp-basics-r1 vtysh
+sudo containerlab destroy -t labs/eigrp-basics/topology.clab.yml --cleanup
 ```
 
 ---
@@ -131,7 +131,7 @@ Import the cEOS image once:
 ```bash
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```
-Used by: `gre-ceos`, `spine-leaf-ceos`, `evpn-vxlan-ceos`,
+Used by: `gre-basics`, `spine-leaf`, `vxlan-evpn`,
 `evpn-border-ceos`, `vrf-lite`, `enterprise-*`, `ha-network-design-ceos`.
 
 ### Labs requiring VyOS
@@ -238,8 +238,7 @@ Note: manual first boot, password change, and license activation are required be
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
-| [gre-basics](labs/gre-basics/) | Practice | GRE tunnel, routing over GRE, recursive routing pitfall |
-| [gre-ceos](labs/gre-ceos/) | Practice | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
+| [gre-basics](labs/gre-basics/) | Practice | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
 | [gre-ipsec](labs/gre-ipsec/) | Practice | GRE + IPsec transport mode on VyOS |
 | [ipsec-basics](labs/ipsec-basics/) | Practice | IKEv2 site-to-site IPsec, PSK, tunnel mode |
 | [dmvpn-phase1](labs/dmvpn-phase1/) | Practice | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF over tunnel (VyOS) |
@@ -268,11 +267,9 @@ Note: manual first boot, password change, and license activation are required be
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
-| [spine-leaf](labs/spine-leaf/) | Practice | BGP CLOS fabric (FRR), unique AS per device, ECMP |
-| [spine-leaf-ceos](labs/spine-leaf-ceos/) | Practice | BGP CLOS fabric on Arista cEOS |
-| [vxlan-evpn](labs/vxlan-evpn/) | **Reference** | VXLAN + BGP EVPN control plane (FRR) |
+| [spine-leaf](labs/spine-leaf/) | Practice | BGP CLOS fabric on Arista cEOS |
+| [vxlan-evpn](labs/vxlan-evpn/) | Practice | VXLAN + EVPN on Arista cEOS, L2VNI + L3VNI, symmetric IRB |
 | [vxlan-evpn-srlinux](labs/vxlan-evpn-srlinux/) | **Reference** | VXLAN + BGP EVPN on Nokia SR-Linux |
-| [evpn-vxlan-ceos](labs/evpn-vxlan-ceos/) | Practice | VXLAN + EVPN on Arista cEOS, L2VNI + L3VNI, symmetric IRB |
 | [evpn-border-ceos](labs/evpn-border-ceos/) | Practice | EVPN border leaf, external eBGP in VRF, type-5 routes |
 
 ---
@@ -413,8 +410,8 @@ MPLS:     mpls-sr-blank -> mpls-sr-isis-bgp (reference) -> mpls-sr-srlinux (refe
 
 ```
 Prereq:   bgp-basics -> bgp-path-selection
-Fabric:   spine-leaf -> spine-leaf-ceos
-VXLAN:    vxlan-evpn (reference) -> evpn-vxlan-ceos -> evpn-border-ceos
+Fabric:   spine-leaf
+VXLAN:    vxlan-evpn -> evpn-border-ceos
 SR-Linux: vxlan-evpn-srlinux (reference)
 VRF:      vrf-lite
 ```

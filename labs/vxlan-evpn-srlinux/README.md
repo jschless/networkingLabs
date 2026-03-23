@@ -1,6 +1,6 @@
 # VXLAN with BGP EVPN — Nokia SR-Linux Reference Lab
 
-A fully-working VXLAN/BGP EVPN lab using Nokia SR-Linux. No Linux bridge setup scripts needed — VXLAN tunneling and EVPN MAC/IP learning are native SR-Linux features. Compare with the `vxlan-evpn` lab which requires Linux kernel bridge+vxlan workarounds.
+A fully-working VXLAN/BGP EVPN lab using Nokia SR-Linux. No Linux bridge setup scripts needed — VXLAN tunneling and EVPN MAC/IP learning are native SR-Linux features. Compare with the `vxlan-evpn` lab for the same design implemented on Arista cEOS.
 
 ---
 

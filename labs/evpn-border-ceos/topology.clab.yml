@@ -2,7 +2,7 @@ name: evpn-border-ceos
 
 # EVPN Border Leaf Lab — Arista cEOS
 #
-# Extends the evpn-vxlan-ceos fabric with a border leaf (bleaf1) that provides
+# Extends the vxlan-evpn fabric with a border leaf (bleaf1) that provides
 # external connectivity to Tenant-A via eBGP peering with an internet router.
 # Tenant-B remains fully isolated — no external connectivity.
 #

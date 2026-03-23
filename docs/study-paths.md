@@ -29,8 +29,8 @@ IPv6:     ipv6-transition
 
 ```
 Prereq:   bgp-basics → bgp-path-selection
-Fabric:   spine-leaf → spine-leaf-ceos
-VXLAN:    vxlan-evpn (reference) → evpn-vxlan-ceos → evpn-border-ceos
+Fabric:   spine-leaf
+VXLAN:    vxlan-evpn → evpn-border-ceos
 SR-Linux: vxlan-evpn-srlinux (reference)
 VRF:      vrf-lite
 ```

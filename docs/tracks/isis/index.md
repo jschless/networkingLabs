@@ -9,7 +9,7 @@ Two labs covering IS-IS fundamentals and multi-area design — essential prerequ
 
 ## Platform
 
-Both labs use **FRR 8.4** (`frr-lab:local`):
+Both labs use **Arista cEOS**:
 ```bash
-docker build -t frr-lab:local images/frr/
+docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```

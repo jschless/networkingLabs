@@ -3,9 +3,9 @@ title: spine-leaf
 ---
 
 !!! tip "Practice Lab"
-    BGP CLOS fabric (FRR), unique AS per device, ECMP
+    BGP CLOS fabric on Arista cEOS, unique AS per device, ECMP
 
-!!! note "Image" `frr-lab:local` — `docker build -t frr-lab:local images/frr/`
+!!! note "Image" Arista cEOS — `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 
 {%
   include-markdown "../../../labs/spine-leaf/README.md"

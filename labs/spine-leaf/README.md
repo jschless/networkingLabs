@@ -330,7 +330,7 @@ Suggested capstone drills:
 1. `labs/debug-spine-leaf` for structured troubleshooting practice.
 2. `labs/bfd-bgp` for deeper BFD behavior and timer tuning.
 3. `labs/vrf-lite` for segmentation concepts before EVPN.
-4. `labs/vxlan-evpn` as reference for full overlay build patterns.
+4. `labs/vxlan-evpn` as the follow-on overlay build lab.
 
 ---
 

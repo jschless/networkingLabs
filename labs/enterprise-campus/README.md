@@ -116,7 +116,7 @@ flowchart TB
 - Scales by adding distribution/access pairs without touching core
 
 **2-Tier (Collapsed Core)**
-- Distribution and core functions merged into one tier (typically used in `spine-leaf-ceos`)
+- Distribution and core functions merged into one tier (typically used in `spine-leaf`)
 - Suitable for medium campus or small branch (100-500 users)
 - Fewer hops, simpler management
 - Distribution switches ARE the highest routing layer — they peer directly with edge
@@ -390,8 +390,8 @@ Verify neighbors still form, then test with a wrong key to see OSPF drop.
 | Lab                  | Tier Design        | Protocols                    | Best For               |
 |----------------------|--------------------|------------------------------|------------------------|
 | **enterprise-campus**| 3-tier hierarchical| OSPF multi-area, BGP, VRRP, RSTP | Large campus, 500+ users |
-| spine-leaf-ceos      | 2-tier (spine/leaf)| eBGP ECMP, routed            | Modern DC, high bandwidth |
-| evpn-vxlan-ceos      | 2-tier + EVPN      | BGP EVPN, VXLAN overlay      | Multi-tenant DC        |
+| spine-leaf           | 2-tier (spine/leaf)| eBGP ECMP, routed            | Modern DC, high bandwidth |
+| vxlan-evpn           | 2-tier + EVPN      | BGP EVPN, VXLAN overlay      | Multi-tenant DC        |
 | vrf-lite             | 2-tier VRF         | Static routes, VRF isolation | Branch with segmentation |
 | ospf-multiarea       | Flat multi-area    | OSPF areas, ABR, stub        | SP backbone study      |
 

@@ -4,7 +4,7 @@
 !
 ! -------------------------------------------------------
 ! Step 1 — Enter the EOS CLI:
-!   docker exec -it clab-gre-ceos-gw-b Cli
+!   docker exec -it clab-gre-basics-gw-b Cli
 !
 ! Step 2 — Configure the GRE tunnel:
 !   configure

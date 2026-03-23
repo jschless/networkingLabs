@@ -39,7 +39,6 @@ show bgp evpn                         # EVPN routes
 show vrf                              # VRF summary
 show ip route vrf <name>              # routes in a specific VRF
 show interfaces Tunnel0               # tunnel interface state
-show ip nhrp                          # NHRP mappings (DMVPN)
 show spanning-tree                    # STP state
 show lacp                             # LACP/EtherChannel
 ```

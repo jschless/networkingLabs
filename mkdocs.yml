@@ -1,5 +1,5 @@
 site_name: ContainerLab Networking Labs
-site_description: 106 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, and more.
+site_description: 102 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, and more.
 site_url: https://jschless.github.io/networkingLabs/
 repo_url: https://github.com/jschless/networkingLabs
 repo_name: jschless/networkingLabs
@@ -112,14 +112,12 @@ nav:
     - Tunnels & VPN:
       - tracks/tunnels-vpn/index.md
       - gre-basics: tracks/tunnels-vpn/gre-basics.md
-      - gre-ceos: tracks/tunnels-vpn/gre-ceos.md
       - gre-ipsec: tracks/tunnels-vpn/gre-ipsec.md
       - ipsec-basics: tracks/tunnels-vpn/ipsec-basics.md
       - dmvpn-phase1: tracks/tunnels-vpn/dmvpn-phase1.md
       - dmvpn-phase2: tracks/tunnels-vpn/dmvpn-phase2.md
       - dmvpn-phase3: tracks/tunnels-vpn/dmvpn-phase3.md
       - dmvpn-phase3-ipsec-capstone: tracks/tunnels-vpn/dmvpn-phase3-ipsec-capstone.md
-      - dmvpn-ceos: tracks/tunnels-vpn/dmvpn-ceos.md
       - flexvpn-basics: tracks/tunnels-vpn/flexvpn-basics.md
       - wireguard: tracks/tunnels-vpn/wireguard.md
       - vrf-lite: tracks/tunnels-vpn/vrf-lite.md
@@ -133,10 +131,8 @@ nav:
     - Data Center:
       - tracks/data-center/index.md
       - spine-leaf: tracks/data-center/spine-leaf.md
-      - spine-leaf-ceos: tracks/data-center/spine-leaf-ceos.md
       - vxlan-evpn: tracks/data-center/vxlan-evpn.md
       - vxlan-evpn-srlinux: tracks/data-center/vxlan-evpn-srlinux.md
-      - evpn-vxlan-ceos: tracks/data-center/evpn-vxlan-ceos.md
       - evpn-border-ceos: tracks/data-center/evpn-border-ceos.md
     - High Availability:
       - tracks/high-availability/index.md

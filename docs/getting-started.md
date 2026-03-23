@@ -7,7 +7,7 @@
 | OS | Linux (Ubuntu 20.04+, Debian 11+) or macOS with Docker Desktop |
 | Docker | 20.10+ |
 | ContainerLab | 0.50+ |
-| RAM | 8 GB (16 GB recommended for enterprise/DC labs) |
+| RAM | 8 GB (16 GB recommended for larger cEOS/VyOS/enterprise labs) |
 | Disk | 20 GB free |
 
 ## Install ContainerLab
@@ -19,7 +19,7 @@ containerlab version
 
 ## Build the FRR Image
 
-Required for **all FRR-based labs** (most labs):
+Required for the FRR/Linux labs:
 
 ```bash
 docker build -t frr-lab:local images/frr/
@@ -50,8 +50,8 @@ Import the cEOS image once (requires a free Arista account to download):
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```
 
-Used by: `gre-ceos`, `spine-leaf-ceos`,
-`evpn-vxlan-ceos`, `evpn-border-ceos`, `vrf-lite`, `ha-network-design-ceos`, all `enterprise-*` labs,
+Used by: `gre-basics`, `spine-leaf`,
+`vxlan-evpn`, `evpn-border-ceos`, `vrf-lite`, `ha-network-design-ceos`, all `enterprise-*` labs,
 `stp-operations`, `lacp-etherchannel`, `dot1x-ceos-practice`.
 
 ## VyOS
@@ -95,26 +95,25 @@ Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
 
 ---
 
-## Your First Lab: ospf-multiarea
+## Your First Lab: eigrp-basics
 
 ```bash
 # 1. Deploy
-sudo containerlab deploy -t labs/ospf-multiarea/topology.clab.yml
+sudo containerlab deploy -t labs/eigrp-basics/topology.clab.yml
 
 # 2. Check what's running
-./scripts/lab.sh list ospf-multiarea
+./scripts/lab.sh list eigrp-basics
 
 # 3. Open r1's FRR CLI
-docker exec -it clab-ospf-multiarea-r1 vtysh
+docker exec -it clab-eigrp-basics-r1 vtysh
 
-# 4. Verify OSPF (wait ~15 seconds for convergence)
-show ip ospf neighbor
-show ip ospf database
-show ip route ospf
+# 4. Verify EIGRP (wait ~15 seconds for convergence)
+show ip eigrp neighbor
+show ip route eigrp
 
 # 5. Exit and destroy
 exit
-sudo containerlab destroy -t labs/ospf-multiarea/topology.clab.yml --cleanup
+sudo containerlab destroy -t labs/eigrp-basics/topology.clab.yml --cleanup
 ```
 
 !!! tip "Practice vs Reference"

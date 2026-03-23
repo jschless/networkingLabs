@@ -2,7 +2,7 @@
 
 ## Overview
 
-This lab extends the `evpn-vxlan-ceos` fabric with a **border leaf** (`bleaf1`) that connects
+This lab extends the `vxlan-evpn` fabric with a **border leaf** (`bleaf1`) that connects
 the EVPN fabric to a simulated internet router. Tenant-A gets external connectivity;
 Tenant-B remains completely isolated.
 

@@ -24,7 +24,7 @@ two-routers → ospf-multiarea → ospf-auth → ospf-summarization
 
 ## Platform
 
-All labs use **FRR 8.4** (`frr-lab:local`). Build once before deploying any lab:
+All labs use **Arista cEOS**:
 ```bash
-docker build -t frr-lab:local images/frr/
+docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```

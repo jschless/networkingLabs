@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-**106 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [FortiGate](https://www.fortinet.com/), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+**102 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [FortiGate](https://www.fortinet.com/), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 No cloud account. No license fees. Deploy, break things, learn.
 
@@ -14,13 +14,13 @@ No cloud account. No license fees. Deploy, break things, learn.
     docker build -t frr-lab:local images/frr/
 
     # Deploy a lab
-    sudo containerlab deploy -t labs/ospf-multiarea/topology.clab.yml
+    sudo containerlab deploy -t labs/eigrp-basics/topology.clab.yml
 
     # Open FRR CLI
-    docker exec -it clab-ospf-multiarea-r1 vtysh
+    docker exec -it clab-eigrp-basics-r1 vtysh
 
     # Destroy when done
-    sudo containerlab destroy -t labs/ospf-multiarea/topology.clab.yml --cleanup
+    sudo containerlab destroy -t labs/eigrp-basics/topology.clab.yml --cleanup
     ```
 
 === "Arista cEOS Lab"
@@ -29,13 +29,13 @@ No cloud account. No license fees. Deploy, break things, learn.
     docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 
     # Deploy
-    sudo containerlab deploy -t labs/spine-leaf-ceos/topology.clab.yml
+    sudo containerlab deploy -t labs/spine-leaf/topology.clab.yml
 
     # Open EOS CLI
-    docker exec -it clab-spine-leaf-ceos-spine1 Cli
+    docker exec -it clab-spine-leaf-spine1 Cli
 
     # Destroy
-    sudo containerlab destroy -t labs/spine-leaf-ceos/topology.clab.yml --cleanup
+    sudo containerlab destroy -t labs/spine-leaf/topology.clab.yml --cleanup
     ```
 
 === "VyOS Lab"
@@ -109,7 +109,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Route Control track](tracks/route-control/index.md)
 
-- :material-tunnel: **Tunnels & VPN** (12 labs)
+- :material-tunnel: **Tunnels & VPN** (10 labs)
 
     ---
     GRE, IPsec, DMVPN Phase 1/2/3, FlexVPN, WireGuard, VRF-Lite
@@ -123,7 +123,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: MPLS & SP track](tracks/mpls-sp/index.md)
 
-- :material-server-network: **Data Center** (6 labs)
+- :material-server-network: **Data Center** (4 labs)
 
     ---
     BGP CLOS, VXLAN, BGP EVPN, border leaf, symmetric IRB

@@ -11,7 +11,7 @@ Four labs covering VLAN/trunk fundamentals, edge hardening, Spanning Tree operat
 
 ## Platform
 
-Both labs use **Arista cEOS**:
+All labs use **Arista cEOS**:
 ```bash
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```
