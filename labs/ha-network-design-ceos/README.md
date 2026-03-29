@@ -3,6 +3,8 @@
 ## Purpose
 Build a comprehensive high-availability design using Arista cEOS and containerlab. This lab combines first-hop redundancy, link/node redundancy, control-plane fast convergence, and dual-WAN resiliency in one topology.
 
+The topology keeps the six cEOS control nodes and uses FRR/Linux helper nodes for the ISP and endpoint roles so the lab is lighter to run on smaller systems.
+
 You will implement and test:
 - LACP + MLAG (access/distribution HA)
 - VRRP with upstream tracking (gateway HA)
@@ -97,15 +99,22 @@ Access examples:
 ```bash
 docker exec -it clab-ha-network-design-ceos-dist1 Cli
 docker exec -it clab-ha-network-design-ceos-edge1 Cli
-docker exec -it clab-ha-network-design-ceos-hosta Cli
+docker exec -it clab-ha-network-design-ceos-isp1 vtysh
+docker exec -it clab-ha-network-design-ceos-hosta bash
+docker exec -it clab-ha-network-design-ceos-app1 bash
 ```
 
 ## Pre-configured
 - Interface IP addresses on all routed links
 - L2 interfaces present for MLAG/LACP but no MLAG config
-- hosta default route points to future VRRP VIP `192.168.10.254`
-- app1 has return routes to `192.168.10.0/24` via both ISPs
+- `hosta` is a Linux client with prebuilt `bond0` (802.3ad) toward `dist1`/`dist2`
+- `hosta` default route points to future VRRP VIP `192.168.10.254`
+- `isp1`/`isp2` are FRR Linux routers with base IP addressing and static reachability to `app1`
+- `app1` is a Linux endpoint with return routes to `192.168.10.0/24` via both ISPs
 - No OSPF/BFD/BGP/VRRP/MLAG protocol config
+
+Host note:
+- Linux bonding must be available on the host kernel for the `hosta` LACP client to start correctly.
 
 ## Your Tasks
 
@@ -161,8 +170,8 @@ show port-channel summary
 On `hosta`, LACP is preconfigured. Verify:
 
 ```
-show port-channel summary
-show ip interface brief
+cat /proc/net/bonding/bond0
+ip -br address show bond0
 ```
 
 ### Task 2 - Configure VRRP gateway HA on VLAN 10
@@ -314,20 +323,24 @@ On `edge2` use neighbor `203.0.113.3 remote-as 65102` and `network 10.255.0.32/3
 <details>
 <summary>Show configuration</summary>
 
-On `isp1`:
+On `isp1` (`vtysh`):
 
 ```
-configure
+configure terminal
 router bgp 65101
-   router-id 203.255.1.1
-   neighbor 203.0.113.0 remote-as 65010
-   address-family ipv4
-      neighbor 203.0.113.0 activate
-      network 172.20.20.20/32
+ bgp router-id 203.255.1.1
+ neighbor 203.0.113.0 remote-as 65010
+ !
+ address-family ipv4 unicast
+  neighbor 203.0.113.0 activate
+  network 172.20.20.20/32
+ exit-address-family
+end
+write memory
 ```
 </details>
 
-On `isp2` mirror with AS65102 and neighbor `203.0.113.2`.
+On `isp2`, mirror the config with AS65102 and neighbor `203.0.113.2`.
 
 Verify:
 
@@ -356,10 +369,10 @@ Optional policy-hardening:
 - Prefix-list only `172.20.20.20/32`
 - Route-map on redistribution
 
-Verify from host:
+Verify from `hosta`:
 
 ```
-hosta# ping 172.20.20.20
+ping -c 4 172.20.20.20
 ```
 
 ## Verification
@@ -379,7 +392,7 @@ show ip route 172.20.20.20
 On `hosta`:
 
 ```
-ping 172.20.20.20 repeat 20
+ping -c 20 172.20.20.20
 traceroute 172.20.20.20
 ```
 
@@ -473,7 +486,8 @@ Lab mapping:
 - Verify neighbor IP and remote AS on both sides.
 
 **hosta ping fails but control-plane looks healthy**
-- Check hosta default route (`192.168.10.254`)
+- Check `ip route` on `hosta`
+- Check `cat /proc/net/bonding/bond0`
 - Confirm VRRP master owns VIP
 - Confirm app1 return routes and ISP static route to app1 loopback
 

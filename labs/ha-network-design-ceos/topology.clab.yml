@@ -1,5 +1,9 @@
 name: ha-network-design-ceos
 
+mgmt:
+  network: clab-ha-network-design-ceos-mgmt
+  ipv4-subnet: 172.31.255.0/24
+
 # High-Availability Network Design Lab — Arista cEOS
 #
 # Focus areas:
@@ -7,6 +11,11 @@ name: ha-network-design-ceos
 # - Gateway HA: VRRP with upstream tracking
 # - Control-plane HA: OSPF ECMP + BFD + GR behavior checks
 # - WAN HA: dual edge + dual ISP using eBGP
+#
+# Resource optimization:
+# - Keep the six control-plane cEOS nodes (dist/core/edge)
+# - Replace ISP routers with FRR Linux containers
+# - Replace host/application endpoints with lightweight Linux containers
 #
 #                  (Campus / DC side)                     (WAN side)
 #
@@ -65,24 +74,48 @@ topology:
       startup-config: configs/edge2/startup-config
 
     isp1:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/isp1/startup-config
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/isp1/frr.conf:/etc/frr/frr.conf
+        - configs/isp1/setup.sh:/setup.sh
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - bash /setup.sh
+        - vtysh -b
 
     isp2:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/isp2/startup-config
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/isp2/frr.conf:/etc/frr/frr.conf
+        - configs/isp2/setup.sh:/setup.sh
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - bash /setup.sh
+        - vtysh -b
 
     hosta:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/hosta/startup-config
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/hosta/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
 
     app1:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/app1/startup-config
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/app1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
 
   links:
     # Host dual-homing to distribution (LACP/MLAG task)
