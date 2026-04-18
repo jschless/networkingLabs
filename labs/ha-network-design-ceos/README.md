@@ -109,12 +109,13 @@ docker exec -it clab-ha-network-design-ceos-app1 bash
 - L2 interfaces present for MLAG/LACP but no MLAG config
 - `hosta` is a Linux client with prebuilt `bond0` (802.3ad) toward `dist1`/`dist2`
 - `hosta` default route points to future VRRP VIP `192.168.10.254`
-- `isp1`/`isp2` are FRR Linux routers with base IP addressing and static reachability to `app1`
-- `app1` is a Linux endpoint with return routes to `192.168.10.0/24` via both ISPs
+- `isp1`/`isp2` are FRR Linux routers with base IP addressing, static reachability to `app1`, and static return routes for the host VLAN
+- `app1` is a Linux endpoint with a data-plane default route and host-VLAN return routes via both ISPs
 - No OSPF/BFD/BGP/VRRP/MLAG protocol config
 
 Host note:
 - Linux bonding must be available on the host kernel for the `hosta` LACP client to start correctly.
+- The helper endpoints remove the Docker management default route and use the lab data plane as their default path. This avoids accidental reachability via `eth0`.
 
 ## Your Tasks
 
@@ -245,6 +246,10 @@ Check `show vrrp` on both nodes; `dist2` should take Master.
 
 Use area 0 on all routed links and advertise Loopback0 on all six campus/edge nodes.
 
+Important:
+- If you want `hosta` to reach `172.20.20.20`, the campus also needs a return route to VLAN 10.
+- In this topology, that means `dist1` and `dist2` must advertise `192.168.10.0/24` into OSPF, or use another method to distribute that connected subnet.
+
 Example (`core1`):
 
 <details>
@@ -264,6 +269,13 @@ Apply equivalent per-node router-id and loopback network statements on:
 - `dist1`, `dist2`
 - `core1`, `core2`
 - `edge1`, `edge2`
+
+On `dist1` and `dist2`, also include VLAN 10:
+
+```eos
+router ospf 10
+   network 192.168.10.0/24 area 0
+```
 
 Verify:
 
@@ -328,6 +340,7 @@ On `isp1` (`vtysh`):
 ```
 configure terminal
 router bgp 65101
+ no bgp ebgp-requires-policy
  bgp router-id 203.255.1.1
  neighbor 203.0.113.0 remote-as 65010
  !
@@ -341,6 +354,11 @@ write memory
 </details>
 
 On `isp2`, mirror the config with AS65102 and neighbor `203.0.113.2`.
+
+FRR note:
+- The ISP nodes use FRR with `traditional` defaults.
+- FRR enables `bgp ebgp-requires-policy` in this mode, so an eBGP session can come up but still exchange zero routes.
+- `no bgp ebgp-requires-policy` disables that safeguard for this lab so the simple `network` statements advertise routes without adding route-maps on both neighbors.
 
 Verify:
 
@@ -374,6 +392,11 @@ Verify from `hosta`:
 ```
 ping -c 4 172.20.20.20
 ```
+
+If that ping fails:
+- Check that `edge1`/`edge2` have a route to `192.168.10.0/24`
+- Check that `dist1`/`dist2` are advertising VLAN 10 into OSPF
+- Check that `isp1`/`isp2` have return routes for `192.168.10.0/24`
 
 ## Verification
 
@@ -489,7 +512,8 @@ Lab mapping:
 - Check `ip route` on `hosta`
 - Check `cat /proc/net/bonding/bond0`
 - Confirm VRRP master owns VIP
-- Confirm app1 return routes and ISP static route to app1 loopback
+- Confirm `dist1`/`dist2` advertise `192.168.10.0/24` into OSPF
+- Confirm app1 return routes and ISP static routes for both `172.20.20.20/32` and `192.168.10.0/24`
 
 ## Destroy
 

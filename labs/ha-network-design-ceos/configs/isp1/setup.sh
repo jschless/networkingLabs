@@ -9,3 +9,4 @@ ip addr add 203.0.113.1/31 dev eth1
 ip addr add 198.51.100.0/31 dev eth2
 
 ip route add 172.20.20.20/32 via 198.51.100.1
+ip route add 192.168.10.0/24 via 203.0.113.0
