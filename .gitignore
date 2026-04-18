@@ -33,3 +33,9 @@ labs/network-automation-netbox/automation/__pycache__/
 labs/network-automation-netbox/automation/generated/
 labs/network-automation-netbox/automation/backups/
 labs/network-automation-netbox/automation/facts/
+
+# Security infrastructure lab runtime artifacts
+labs/soc-*/runtime/
+labs/soc-*/pcap/
+labs/soc-*/logs/
+labs/soc-*/data/

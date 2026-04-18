@@ -60,6 +60,16 @@ urpf-antispoofing → copp-basics
 enterprise-edge-nat-firewall → fortigate-firewall-capstone
 ```
 
+## Security Infrastructure / SOC
+
+```
+Prereq:   packet-analysis-basics → network-assurance → enterprise-dmz
+SOC:      soc-dmz-foundation → soc-zeek-analysis → soc-suricata-ids
+Files:    soc-yara-file-pipeline
+SIEM:     soc-elk-ingest → soc-kibana-hvt-dashboard → soc-arkime-pcap
+Ops:      soc-adversary-simulation → soc-threat-intel-misp → soc-ir-case-management
+```
+
 ## Network Operations
 
 ```

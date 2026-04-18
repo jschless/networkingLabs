@@ -1,0 +1,39 @@
+# soc-zeek-analysis — Zeek Protocol Analysis
+
+Use the shared DMZ topology to study Zeek-style protocol logs and behavioral notices. This lab provides deterministic JSON logs so the analysis workflow is usable even before replacing the artifact generator with a full Zeek runtime.
+
+## Build And Deploy
+
+```bash
+docker build -t soc-endpoint:local images/soc-endpoint/
+docker build -t soc-sensor:local images/soc-sensor/
+docker build -t soc-attacker:local images/soc-attacker/
+
+./scripts/lab.sh deploy soc-zeek-analysis
+./scripts/lab.sh check soc-zeek-analysis
+```
+
+## Key Tasks
+
+1. Generate HTTP, API, scan, and SSH probe traffic from `attacker`.
+2. Inspect `/var/log/zeek/conn.log` for source, destination, port, service, and connection state.
+3. Inspect `/var/log/zeek/http.log` for URI, host, status code, and user-agent.
+4. Read `/var/log/zeek/notice.log` and identify the scan behavior.
+5. Use `jq` filters to answer analyst questions.
+
+## Useful Commands
+
+```bash
+docker exec clab-soc-zeek-analysis-attacker /opt/soc-lab/run-attack-sequence.sh
+
+docker exec clab-soc-zeek-analysis-sensor \
+  jq -r '"\(.["id.orig_h"]) -> \(.["id.resp_h"]):\(.["id.resp_p"]) \(.service)"' \
+  /var/log/zeek/conn.log
+
+docker exec clab-soc-zeek-analysis-sensor \
+  jq -r '.uri' /var/log/zeek/http.log
+```
+
+## Outcome
+
+You can use Zeek connection, HTTP, and notice records to explain what happened on the DMZ wire without reading raw packets first.

@@ -1,7 +1,7 @@
 # ContainerLab Networking Labs
 
-A self-hosted lab environment with **102 hands-on networking labs** covering OSPF, BGP, MPLS,
-VPN, data center, enterprise design, security, operations, and more. Labs run locally using
+A self-hosted lab environment with **112 hands-on networking labs** covering OSPF, BGP, MPLS,
+VPN, data center, enterprise design, security, SOC infrastructure, operations, and more. Labs run locally using
 [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
 [Arista cEOS](https://www.arista.com/en/support/software-download),
 [FortiGate](https://www.fortinet.com/), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
@@ -123,6 +123,11 @@ docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/
 
 # black-core-routing
 docker build -t black-core-tools:local labs/black-core-routing/
+
+# security infrastructure / SOC labs
+docker build -t soc-endpoint:local images/soc-endpoint/
+docker build -t soc-sensor:local images/soc-sensor/
+docker build -t soc-attacker:local images/soc-attacker/
 ```
 
 ### Labs requiring Arista cEOS

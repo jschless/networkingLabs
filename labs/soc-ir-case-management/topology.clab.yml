@@ -1,0 +1,45 @@
+name: soc-ir-case-management
+
+topology:
+  defaults:
+    kind: linux
+    image: soc-endpoint:local
+  nodes:
+    attacker:
+      image: soc-attacker:local
+      binds:
+        - ../soc-common/configs/attacker/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    router-fw:
+      binds:
+        - ../soc-common/configs/router-fw/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    dmz-web:
+      binds:
+        - ../soc-common/configs/dmz-web/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    dmz-api:
+      binds:
+        - ../soc-common/configs/dmz-api/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    sensor:
+      image: soc-sensor:local
+      binds:
+        - ../soc-common/configs/sensor/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    case-mgmt:
+      binds:
+        - ../soc-common/configs/case-mgmt/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+  links:
+    - endpoints: ["attacker:eth1", "router-fw:eth1"]
+    - endpoints: ["router-fw:eth2", "dmz-web:eth1"]
+    - endpoints: ["router-fw:eth3", "dmz-api:eth1"]
+    - endpoints: ["router-fw:eth4", "sensor:eth1"]
+    - endpoints: ["sensor:eth2", "case-mgmt:eth1"]

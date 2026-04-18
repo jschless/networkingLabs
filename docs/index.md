@@ -1,6 +1,6 @@
 # ContainerLab Networking Labs
 
-**102 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [FortiGate](https://www.fortinet.com/), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+**112 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [FortiGate](https://www.fortinet.com/), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
 
 No cloud account. No license fees. Deploy, break things, learn.
 
@@ -157,6 +157,13 @@ No cloud account. No license fees. Deploy, break things, learn.
     ACLs, black-core routing, FortiGate firewall policy, MACsec, 802.1X/NAC, uRPF, CoPP, dot1x on EOS
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
+
+- :material-shield-search: **Security Infrastructure** (10 labs)
+
+    ---
+    DMZ visibility, Zeek, Suricata, YARA, SIEM ingest, dashboards, packet search, threat intel, IR workflow
+
+    [:octicons-arrow-right-24: Security Infrastructure track](tracks/security-infrastructure/index.md)
 
 - :material-chart-line: **Network Operations** (10 labs)
 
