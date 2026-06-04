@@ -215,6 +215,9 @@ nav:
       - debug-spine-leaf: tracks/debug/debug-spine-leaf.md
       - debug-mpls-sr-isis-bgp: tracks/debug/debug-mpls-sr-isis-bgp.md
       - debug-vxlan-evpn: tracks/debug/debug-vxlan-evpn.md
+  - Enterprise IT 101:
+    - tracks/enterprise-it-101/index.md
+    - "01 Active Directory": tracks/enterprise-it-101/01-active-directory.md
   - Platforms:
     - FRR: platforms/frr.md
     - Arista cEOS: platforms/ceos.md
