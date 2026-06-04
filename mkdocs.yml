@@ -215,6 +215,24 @@ nav:
       - debug-spine-leaf: tracks/debug/debug-spine-leaf.md
       - debug-mpls-sr-isis-bgp: tracks/debug/debug-mpls-sr-isis-bgp.md
       - debug-vxlan-evpn: tracks/debug/debug-vxlan-evpn.md
+  - Enterprise IT 101:
+    - tracks/enterprise-it-101/index.md
+    - "01 Active Directory": tracks/enterprise-it-101/01-active-directory.md
+    - "02 NTP & Time": tracks/enterprise-it-101/02-ntp-time-services.md
+    - "03 Certificate Authority": tracks/enterprise-it-101/03-certificate-authority.md
+    - "04 Domain Join": tracks/enterprise-it-101/04-domain-join.md
+    - "05 DNS Deep Dive": tracks/enterprise-it-101/05-dns-deep-dive.md
+    - "06 DHCP & DDNS": tracks/enterprise-it-101/06-dhcp-dynamic-dns.md
+    - "07 File Shares": tracks/enterprise-it-101/07-file-shares.md
+    - "08 Group Policy & Config Mgmt": tracks/enterprise-it-101/08-group-policy.md
+    - "09 Email Gateway": tracks/enterprise-it-101/09-email-gateway.md
+    - "10 SSO & Federation": tracks/enterprise-it-101/10-sso-federation.md
+    - "11 Web Proxy": tracks/enterprise-it-101/11-web-proxy.md
+    - "12 RADIUS": tracks/enterprise-it-101/12-radius.md
+    - "13 Monitoring": tracks/enterprise-it-101/13-monitoring.md
+    - "14 SIEM & Logging": tracks/enterprise-it-101/14-siem-logging.md
+    - "15 Backup & Recovery": tracks/enterprise-it-101/15-backup-recovery.md
+    - "16 Capstone": tracks/enterprise-it-101/16-capstone.md
   - Platforms:
     - FRR: platforms/frr.md
     - Arista cEOS: platforms/ceos.md

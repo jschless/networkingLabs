@@ -180,3 +180,20 @@ No cloud account. No license fees. Deploy, break things, learn.
     [:octicons-arrow-right-24: Debug track](tracks/debug/index.md)
 
 </div>
+
+---
+
+## Enterprise IT 101
+
+<div class="grid cards" markdown>
+
+- :material-domain: **Enterprise IT 101** (16 labs)
+
+    ---
+    Build a complete mini enterprise domain from scratch: AD, PKI, DNS, DHCP, email, SSO, web proxy, RADIUS, monitoring, SIEM, and backups — using only open-source containers.
+
+    Uses **Docker Compose** (not ContainerLab). Each lab builds on the last; the capstone runs the full stack.
+
+    [:octicons-arrow-right-24: Enterprise IT 101](tracks/enterprise-it-101/index.md)
+
+</div>

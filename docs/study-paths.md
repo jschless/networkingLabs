@@ -91,3 +91,17 @@ debug-ospf-multiarea → debug-bgp-basics → debug-eigrp-basics → debug-isis-
 → debug-bgp-filtering → debug-gre-basics → debug-spine-leaf
 → debug-vxlan-evpn → debug-mpls-sr-isis-bgp
 ```
+
+## Enterprise IT 101
+
+A cumulative curriculum — each lab extends the previous one. Uses Docker Compose, not ContainerLab.
+
+```
+Foundation:  01-active-directory → 02-ntp-time-services
+             → 03-certificate-authority → 04-domain-join
+Core:        05-dns-deep-dive → 06-dhcp-dynamic-dns
+             → 07-file-shares → 08-group-policy → 09-email-gateway
+Advanced:    10-sso-federation → 11-web-proxy → 12-radius
+Operations:  13-monitoring → 14-siem-logging
+             → 15-backup-recovery → 16-capstone
+```
