@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cifs-utils \
     iproute2 \
     procps \
+    tcpdump \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
