@@ -23,4 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
+COPY krb5.conf /etc/krb5.conf
+
 CMD ["sleep", "infinity"]

@@ -20,8 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
-COPY supervisord.conf /etc/supervisor/conf.d/samba.conf
+COPY supervisord.conf /etc/supervisor/supervisord.conf
 
 EXPOSE 53 88 135 139 389 445 464 636 3268 3269
 
-CMD ["/usr/bin/supervisord", "-n"]
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]

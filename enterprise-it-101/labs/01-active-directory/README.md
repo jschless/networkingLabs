@@ -289,9 +289,12 @@ ldapsearch -H ldap://10.100.1.10 -b "DC=lab,DC=corp" \
 
 # Kerberos — get and verify ticket
 kdestroy 2>/dev/null
-echo 'P@ssw0rd1' | kinit alice@LAB.CORP
+kinit alice@LAB.CORP      # enter password: P@ssw0rd1 when prompted
 klist | grep krbtgt
 ```
+
+!!! warning "Scripting `kinit`"
+    MIT `kinit` reads the password from the terminal, not from a pipe — `echo 'pass' | kinit alice@LAB.CORP` will **not** authenticate. For non-interactive use, supply the credential via a keytab (`kinit -kt alice.keytab alice@LAB.CORP`) instead of piping a password.
 
 All three should succeed. If any fail, you have a broken foundation — fix it before moving to Lab 02.
 

@@ -28,8 +28,6 @@ services:
       - dc1-data:/var/lib/samba
       - ./configs/provision.sh:/provision.sh:ro
       - ./configs/smb.conf:/etc/samba/smb.conf.reference:ro
-    cap_add:
-      - SYS_ADMIN
     privileged: true
     tty: true
     stdin_open: true
