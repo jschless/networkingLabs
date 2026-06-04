@@ -88,3 +88,14 @@ All containers share a single Docker bridge network (`lab-corp`, `10.100.0.0/16`
 2. **Cumulative state.** Labs 1-4 produce a foundation that every subsequent lab extends.
 3. **Practice-lab style.** Core infrastructure is pre-wired; interesting config is left for you.
 4. **CLI-first, GUI-assisted.** Learn the commands first, then verify visually in web UIs.
+
+## Contributing a Lab
+
+The series follows a strict practice-lab format so every lab teaches the same
+way and at a predictable difficulty. Before authoring or revising a lab, read:
+
+- **[`AUTHORING.md`](AUTHORING.md)** — the authoring contract: difficulty bands,
+  task anatomy (objective → predict → hints → solution → check), required
+  sections, and the pre-publish checklist.
+- **[`DESIGN.md`](DESIGN.md)** — the curriculum vision and per-lab scope.
+- **`labs/01-active-directory/`** — the reference implementation of every rule.
