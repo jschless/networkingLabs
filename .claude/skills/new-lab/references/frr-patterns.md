@@ -1,4 +1,4 @@
-# FRR Config Patterns (frrouting/frr:latest = 8.4_git)
+# FRR Config Patterns (frr-lab:local, based on frrouting/frr:latest = 8.4_git)
 
 ## daemons file (shared across nodes unless node-specific)
 
@@ -38,7 +38,7 @@ Enable needed daemons by setting `=yes` (e.g., `ospfd=yes`, `bgpd=yes`).
 service integrated-vtysh-config
 ```
 
-## topology.yml bind mounts (FRR)
+## topology.clab.yml bind mounts (FRR)
 
 ```yaml
 binds:
@@ -122,7 +122,7 @@ ip link set eth1 master VRF-A
 vtysh -b
 ```
 
-In topology.yml:
+In topology.clab.yml:
 ```yaml
 binds:
   - configs/pe1/setup.sh:/setup.sh

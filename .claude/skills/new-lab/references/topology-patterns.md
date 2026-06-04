@@ -60,8 +60,13 @@ Use for: GRE, IPsec, GRE+IPsec
 [leaf1][leaf2][leaf3][leaf4]
 ```
 
-Each leaf connects to both spines (/31 links)
+Each leaf connects to both spines (`/31` point-to-point links)
 Use for: BGP ECMP, VXLAN/EVPN fabric
+
+Spine-leaf IP convention:
+- `10.1.0.0/31` leaf1↔spine1, `10.2.0.0/31` leaf1↔spine2
+- `10.1.0.2/31` leaf2↔spine1, `10.2.0.2/31` leaf2↔spine2
+- Increment by 2 per leaf; `10.1.x` = spine1 fabric, `10.2.x` = spine2 fabric
 
 ## IP addressing conventions
 

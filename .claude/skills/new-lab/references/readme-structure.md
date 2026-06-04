@@ -36,9 +36,12 @@ The README is the primary guide — it's read on the docs page. The intent is:
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/<name>/topology.yml
+# Deploy
+sudo containerlab deploy -t labs/<name>/topology.clab.yml
+# OR
+./scripts/lab.sh deploy <name>
 
-# Open CLI on any node
+# Open CLI on any node (auto-detects: cEOS → Cli, FRR → vtysh, SRL → sr_cli)
 ./scripts/lab.sh cli <name> r1
 ```
 
@@ -151,10 +154,12 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/<name>/topology.yml
+sudo containerlab deploy -t labs/<name>/topology.clab.yml
+# OR
+./scripts/lab.sh deploy <name>
 
-docker exec -it clab-<name>-r1 Cli
-./scripts/lab.sh Cli <name> r1
+# Open CLI on any node
+./scripts/lab.sh cli <name> r1
 ```
 
 Wait ~15 seconds after deploy for <protocol> to attempt convergence.
