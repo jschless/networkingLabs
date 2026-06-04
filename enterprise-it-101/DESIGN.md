@@ -38,6 +38,15 @@ management, a web proxy, RADIUS, monitoring, a SIEM, and backups.
 5. **Separate from networking labs.** Lives under `enterprise-it-101/` at the
    repo root, not under `labs/`. Gets its own section in the mkdocs nav.
 
+6. **CLI-first, GUI-assisted.** Real Windows AD administration is heavily GUI
+   (ADUC, GPMC, DNS Manager). Since we use Samba (CLI-driven), we include
+   **LDAP Account Manager (LAM)** as a web GUI that runs alongside the CLI
+   workflow. Students learn the commands first (scriptable, automatable), then
+   verify and explore visually in LAM — mirroring how Windows admins use ADUC
+   daily but automate with PowerShell. Other labs with GUIs (Keycloak, Grafana,
+   Wazuh Dashboard) use them as primary interfaces where that's how the tool is
+   actually operated in production.
+
 ---
 
 ## Repository structure
@@ -189,6 +198,7 @@ enterprise-it-101/
 |------|-------|----|------|
 | `dc1` | `samba-ad:local` (custom) | `10.100.1.10` | Samba AD Domain Controller |
 | `admin-ws` | `workstation:local` (custom) | `10.100.10.10` | Admin workstation with ldap-utils, krb5-user |
+| `lam` | `ghcr.io/ldapaccountmanager/lam:stable` | `10.100.1.11` | LDAP Account Manager web GUI |
 
 **Custom image: `samba-ad:local`**
 - Base: `ubuntu:22.04`
@@ -241,10 +251,33 @@ kvno ldap/dc1.lab.corp@LAB.CORP
 - OUs are organizational containers; groups are permission containers — different purposes
 - `kinit` + `klist` is how you debug Kerberos, not logs
 
+**GUI exploration — LDAP Account Manager (LAM):**
+
+In a real Windows enterprise, AD administration happens in GUI tools like Active
+Directory Users & Computers (ADUC) and Group Policy Management Console (GPMC).
+Samba's `samba-tool` CLI is more scriptable, but the visual experience matters
+for building intuition about directory structure.
+
+LAM (`https://lam.lab.corp:443`) provides a web-based GUI for managing the
+Samba AD directory. After completing the CLI steps above, the student should:
+
+1. Open LAM in a browser, configure it to connect to `ldap://dc1.lab.corp`
+   with base DN `DC=lab,DC=corp`
+2. Browse the OU tree visually — see how `OU=Employees` nests under the domain root
+3. Click into alice's user object — see all LDAP attributes (displayName, memberOf,
+   userPrincipalName, objectSID, etc.)
+4. Create a user via the GUI (bob), then verify via CLI: `samba-tool user list`
+5. Compare the experience: GUI shows you the full attribute set and tree structure
+   at a glance; CLI is faster for scripting and bulk operations
+
+This mirrors the real-world workflow: Windows admins use ADUC daily, but
+automation uses PowerShell/CLI. Both perspectives matter.
+
 **Experiments:**
 - Delete the `_ldap._tcp.lab.corp` SRV record, then try `kinit` from admin-ws — watch it fail
 - Create a Group Policy Object with `samba-tool gpo create` (preview of Lab 08)
 - Add a second user and test cross-user LDAP search permissions
+- In LAM, explore the `CN=Configuration` and `CN=Schema` partitions to see AD's internal structure
 
 ---
 
@@ -404,6 +437,15 @@ su - alice@lab.corp -c "klist"
 docker exec dc1 samba-tool computer list
 ```
 
+**GUI checkpoint — LAM:**
+
+After joining both workstations, open LAM and navigate to the Computers container.
+The student should see `ws1$` and `ws2$` machine accounts alongside `admin-ws$`.
+Click into a computer object to see attributes like `operatingSystem`,
+`dNSHostName`, and `servicePrincipalName` — this is the same view a Windows
+admin sees in ADUC's "Computers" container. Understanding what a domain join
+actually creates in the directory reinforces that it's not magic.
+
 **What this lab teaches:**
 - Domain join is what makes a machine trust AD for authentication
 - `realmd` automates what used to be 15 manual config file edits
@@ -416,6 +458,7 @@ docker exec dc1 samba-tool computer list
 - Clear the sssd cache (`sss_cache -E`), stop dc1, try again — it fails
 - Create a second domain admin, delegate OU-level join permissions
 - Check `journalctl -u sssd` to understand the LDAP/Kerberos conversation during login
+- In LAM, move a computer object between OUs and verify GPO targeting changes (preview of Lab 08)
 
 ---
 
@@ -1224,7 +1267,8 @@ Given: a new employee "Dave" is joining the engineering team. Provision him end-
 ```
 [ ] AD account created in correct OU
 [ ] Member of engineering group
-[ ] Workstation domain-joined, appears in AD computer list
+[ ] Visible in LAM with correct attributes and group membership
+[ ] Workstation domain-joined, appears in AD computer list (verify in LAM)
 [ ] Can kinit and get TGT
 [ ] File share access: engineering=yes, finance=no
 [ ] Email send/receive works
