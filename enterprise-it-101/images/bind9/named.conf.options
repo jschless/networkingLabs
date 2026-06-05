@@ -1,0 +1,20 @@
+// Baseline resolver options.
+//
+// This is a bare, recursion-OFF server: it listens on port 53 but will not
+// resolve anything for anyone yet. Your job in the lab is to turn it into a
+// real enterprise resolver. Edit this file (and named.conf.local) in place,
+// then apply changes with `rndc reconfig`.
+
+options {
+    directory "/var/cache/bind";
+
+    listen-on    { any; };
+    listen-on-v6 { none; };
+
+    // Recursion is OFF by default. A resolver that recurses for the whole
+    // internet but answers *anyone* is an open resolver (a DDoS amplifier).
+    // Task 1 turns recursion on — but only for trusted clients.
+    recursion no;
+
+    dnssec-validation auto;
+};
