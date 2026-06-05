@@ -1,0 +1,16 @@
+#!/bin/bash
+# Start the Kea daemons detached (survive your shell exiting) with logs in
+# /var/log/kea/. Re-run it after editing a config to (re)start cleanly.
+# kea-dhcp-ddns is only started if you've written its config (Task 4+).
+mkdir -p /var/log/kea
+pkill -x kea-dhcp4 2>/dev/null
+pkill -x kea-dhcp-ddns 2>/dev/null
+sleep 1
+if [ -f /etc/kea/kea-dhcp-ddns.conf ]; then
+    setsid kea-dhcp-ddns -c /etc/kea/kea-dhcp-ddns.conf >/var/log/kea/ddns.log 2>&1 </dev/null &
+fi
+setsid kea-dhcp4 -c /etc/kea/kea-dhcp4.conf >/var/log/kea/dhcp4.log 2>&1 </dev/null &
+sleep 1
+echo "running:"
+pgrep -a kea-dhcp4
+pgrep -a kea-dhcp-ddns
