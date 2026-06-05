@@ -1,12 +1,13 @@
 ---
-title: "02 — NTP & Time Services"
+title: "02 NTP & Time Services"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Chrony NTP hierarchy — and proving Kerberos's 5-minute clock-skew rule with `faketime`
 
-Deploy a Chrony NTP server and learn why clock synchronization is not optional in a Kerberos environment.
+!!! note "Platform"
+    Docker Compose — custom `samba-ad:local` and `workstation:local` images
 
-**Duration:** 1.5–2 hours  
-**Directory:** `enterprise-it-101/labs/02-ntp-time-services/`  
-**Requires:** Lab 01
+{%
+  include-markdown "../../../enterprise-it-101/labs/02-ntp-time-services/README.md"
+%}
