@@ -246,6 +246,23 @@ These keep the series consistent and the cumulative state working. See
 - **Tooling in images.** If a task needs a tool (`tcpdump`, `ldap-utils`,
   `swaks`), add it to the image — don't assume it's present and don't have the
   student `apt-get` it mid-lab.
+- **Don't publish container ports to the host except for browser-reached GUIs.**
+  Containers talk to each other over the `lab-corp` network and the student
+  reaches CLIs via `docker exec`, so service ports never need a host mapping.
+  Publishing them invites collisions that block `docker compose up` on the
+  student's machine — `53:53` in particular always clashes with the host DNS
+  resolver (mDNSResponder / systemd-resolved). Only map a host port for a web UI
+  the student opens in a browser (LAM, Keycloak, Grafana, Wazuh).
+- **Authenticated LDAP without a TLS cert uses Kerberos GSSAPI, not a simple
+  bind.** Samba AD rejects cleartext simple binds (`ldap_bind: Strong(er)
+  authentication required ... Transport encryption required`), and there is no
+  CA until Lab 03. The working pattern is `kinit <user>` then
+  `ldapsearch -Y GSSAPI -H ldap://<dc-fqdn> ...` (no `-D`/`-w`). GSSAPI also
+  needs `SASL_NOCANON on` in the client's `/etc/ldap/ldap.conf` (baked into
+  `workstation:local`) — the lab DCs have no PTR records, so SASL's reverse-DNS
+  canonicalisation would request a non-existent SPN (`ldap/<ip>`) and fail with
+  "Server not found in Kerberos database". Reach for a simple bind only once
+  LDAPS is available.
 
 ---
 
@@ -301,6 +318,8 @@ Correctness (deploy and walk it)
 [ ] Every Check claim matches actual output (counts, names, errors)
 [ ] Break/delete commands are exact-match safe (query-first where needed)
 [ ] Required tools are baked into images
+[ ] No host port mappings except browser-reached GUIs (no `53:53`, etc.)
+[ ] Authenticated LDAP uses GSSAPI until LDAPS exists (no cleartext simple binds)
 
 Integration
 [ ] Static IPs follow the subnet plan; container names match DESIGN.md
