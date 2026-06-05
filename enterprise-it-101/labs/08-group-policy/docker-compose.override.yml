@@ -1,0 +1,112 @@
+# Lab 08 — Group Policy & Configuration Management
+#
+# Layered on top of the foundation network in base/docker-compose.yml.
+# Run from the enterprise-it-101/ directory:
+#
+#   docker compose -f base/docker-compose.yml \
+#                  -f labs/08-group-policy/docker-compose.override.yml up -d
+#
+# Compose uses the FIRST -f file's directory (base/) as the project directory,
+# so every relative path below is written relative to base/.
+#
+# Part A: Samba Group Policy on dc1. Part B (the core): Ansible from ansible1
+# managing ws1/ws2 over SSH. ws1/ws2 run an intentionally permissive sshd that
+# your hardening playbook will tighten.
+
+name: eit101-lab08
+
+services:
+  dc1:
+    build:
+      context: ../images/samba-ad
+    image: samba-ad:local
+    container_name: dc1
+    hostname: dc1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      AUTO_PROVISION: "true"
+      SAMBA_AUTOSTART: "true"
+    volumes:
+      - dc1-data:/var/lib/samba
+    privileged: true
+    tty: true
+    stdin_open: true
+
+  ansible1:
+    build:
+      context: ../images/ansible
+    image: ansible:local
+    container_name: ansible1
+    hostname: ansible1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    # Install the control-node SSH key with correct perms, then idle. You write
+    # the inventory + playbooks in /root (e.g. /root/ansible).
+    command:
+      - bash
+      - -c
+      - |
+        install -m 700 -d /root/.ssh
+        install -m 600 /lab/ansible_ed25519 /root/.ssh/id_ed25519
+        exec sleep infinity
+    volumes:
+      - ../labs/08-group-policy/configs:/lab:ro
+    depends_on:
+      - dc1
+      - ws1
+      - ws2
+    tty: true
+    stdin_open: true
+
+  ws1:
+    image: workstation:local
+    container_name: ws1
+    hostname: ws1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.11
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    command: ["bash", "/lab/ws-setup.sh"]
+    volumes:
+      - ../labs/08-group-policy/configs:/lab:ro
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  ws2:
+    image: workstation:local
+    container_name: ws2
+    hostname: ws2
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.12
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    command: ["bash", "/lab/ws-setup.sh"]
+    volumes:
+      - ../labs/08-group-policy/configs:/lab:ro
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+volumes:
+  dc1-data:
