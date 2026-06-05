@@ -1,0 +1,6 @@
+// Local zone / view definitions go here.
+//
+// It starts empty. Over the lab you will add:
+//   * a conditional-forward zone for lab.corp  (Task 2)
+//   * internal / external views for split-horizon DNS  (Task 3)
+//   * a reverse zone for 10.100.1.0/24  (Task 5)

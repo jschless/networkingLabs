@@ -1,0 +1,108 @@
+# Lab 05 — DNS Deep Dive
+#
+# Layered on top of the foundation network in base/docker-compose.yml.
+# Run from the enterprise-it-101/ directory:
+#
+#   docker compose -f base/docker-compose.yml \
+#                  -f labs/05-dns-deep-dive/docker-compose.override.yml up -d
+#
+# Compose uses the FIRST -f file's directory (base/) as the project directory,
+# so every relative path below is written relative to base/.
+#
+# dc1 auto-provisions + seeds the Lab 01 foundation (OUs, alice/bob/charlie,
+# groups) via the image entrypoint. dns1 starts as a bare recursion-off BIND9
+# resolver — building it into a real enterprise resolver is the lab.
+#
+# admin-ws is an INTERNAL client (10.100.10.x). ext-client sits in the
+# "network devices" band (10.100.20.x) and is deliberately OUTSIDE the
+# internal view's match-clients list, so it sees the EXTERNAL split-horizon
+# answers — that contrast is the whole point of Task 4.
+
+name: eit101-lab05
+
+services:
+  dc1:
+    build:
+      context: ../images/samba-ad
+    image: samba-ad:local
+    container_name: dc1
+    hostname: dc1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      AUTO_PROVISION: "true"
+      SAMBA_AUTOSTART: "true"
+    volumes:
+      - dc1-data:/var/lib/samba
+    privileged: true
+    tty: true
+    stdin_open: true
+
+  dns1:
+    build:
+      context: ../images/bind9
+    image: bind9:local
+    container_name: dns1
+    hostname: dns1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.40
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  admin-ws:
+    build:
+      context: ../images/workstation
+    image: workstation:local
+    container_name: admin-ws
+    hostname: admin-ws
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.10
+    # Starts pointed at the AD DNS (the foundation default). Re-pointing this
+    # resolver at dns1 is Task 4 — you'll edit /etc/resolv.conf in-container.
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    volumes:
+      - admin-ws-home:/home
+    depends_on:
+      - dc1
+      - dns1
+    tty: true
+    stdin_open: true
+
+  ext-client:
+    image: workstation:local
+    container_name: ext-client
+    hostname: ext-client
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.20.50
+    # An "outside" client: it uses dns1 as its resolver but its source IP is
+    # outside the internal view, so it receives the EXTERNAL answers.
+    dns:
+      - 10.100.1.40
+    dns_search:
+      - lab.corp
+    depends_on:
+      - dns1
+    tty: true
+    stdin_open: true
+
+volumes:
+  dc1-data:
+  admin-ws-home:

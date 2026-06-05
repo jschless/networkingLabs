@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ldap-utils \
     adcli \
     samba-common-bin \
+    smbclient \
     dnsutils \
     curl \
     vim \
@@ -26,6 +27,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     faketime \
     openssl \
     ca-certificates \
+    isc-dhcp-client \
+    openssh-server \
+    swaks \
+    libnet-ssleay-perl \
     && rm -rf /var/lib/apt/lists/*
 
 # step CLI (Smallstep) — Lab 03 bootstraps CA trust and issues/verifies

@@ -1,0 +1,4 @@
+#!/bin/bash
+pkill -x kea-dhcp4 2>/dev/null
+pkill -x kea-dhcp-ddns 2>/dev/null
+echo "kea stopped"

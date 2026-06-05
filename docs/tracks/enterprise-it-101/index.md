@@ -30,8 +30,17 @@ Build these once before starting the labs:
 ```bash
 docker build -t samba-ad:local    enterprise-it-101/images/samba-ad/
 docker build -t workstation:local  enterprise-it-101/images/workstation/
+docker build -t bind9:local        enterprise-it-101/images/bind9/
+docker build -t kea:local          enterprise-it-101/images/kea/
+docker build -t ansible:local      enterprise-it-101/images/ansible/
 docker build -t freeradius-ad:local enterprise-it-101/images/freeradius-ad/
 docker build -t squid-ad:local     enterprise-it-101/images/squid-ad/
+```
+
+Lab 09 additionally uses a registry image (no build):
+
+```bash
+docker pull ghcr.io/docker-mailserver/docker-mailserver:latest
 ```
 
 ## Lab Curriculum

@@ -1,12 +1,13 @@
 ---
-title: "09 — Email Gateway"
+title: "09 Email Gateway"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Stand up a Postfix + Dovecot mail server backed by AD over LDAP (mailboxes and logins come from the directory), add MX, prove TLS by reading a password off the wire, sign mail with DKIM, catch spam, and diagnose a broken LDAP bind
 
-Deploy docker-mailserver with LDAP authentication, SMTP/IMAP/TLS, DKIM signing, and spam filtering.
+!!! note "Platform"
+    Docker Compose — `docker-mailserver` (registry image) + custom `samba-ad:local` and `workstation:local` images
 
-**Duration:** 2–3 hours  
-**Directory:** `enterprise-it-101/labs/09-email-gateway/`  
-**Requires:** Foundation + Labs 05–08
+{%
+  include-markdown "../../../enterprise-it-101/labs/09-email-gateway/README.md"
+%}

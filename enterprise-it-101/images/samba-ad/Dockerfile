@@ -23,6 +23,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     openssl \
     vim \
+    acl \
+    attr \
+    smbclient \
     && rm -rf /var/lib/apt/lists/*
 
 # step CLI (Smallstep) — used in Lab 03 to bootstrap CA trust and issue

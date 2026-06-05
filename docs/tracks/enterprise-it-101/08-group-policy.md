@@ -1,12 +1,13 @@
 ---
-title: "08 — Group Policy & Configuration Management"
+title: "08 Group Policy & Config Mgmt"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Create and link a Samba GPO (and see why Linux can't apply it), then enforce NTP, an SSH banner, and SSH hardening across hosts with idempotent Ansible playbooks — including drift detection with check mode
 
-Apply enterprise configuration management with Samba GPOs and Ansible desired-state playbooks.
+!!! note "Platform"
+    Docker Compose — custom `ansible:local`, `samba-ad:local`, and `workstation:local` images
 
-**Duration:** 2–3 hours  
-**Directory:** `enterprise-it-101/labs/08-group-policy-config-mgmt/`  
-**Requires:** Foundation + Labs 05–07
+{%
+  include-markdown "../../../enterprise-it-101/labs/08-group-policy/README.md"
+%}
