@@ -1,0 +1,6 @@
+networks:
+  lab-corp:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${SUBNET:-10.100.0.0/16}

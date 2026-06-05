@@ -1,5 +1,9 @@
 # Enterprise IT 101 — Design Document
 
+> **Building or revising a lab?** Read [`AUTHORING.md`](AUTHORING.md) — it is the
+> contract for *how* a lab is built (difficulty calibration, task structure,
+> required sections). This document covers *what* the curriculum contains.
+
 ## Vision
 
 A 16-lab curriculum that walks a network engineer through building a complete
