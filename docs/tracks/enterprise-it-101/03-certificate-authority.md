@@ -1,12 +1,13 @@
 ---
-title: "03 — Certificate Authority & PKI"
+title: "03 Certificate Authority & PKI"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Smallstep internal CA, LDAPS on the DC, and the trust chain — break it and watch the error blame the wrong layer
 
-Stand up a Smallstep internal CA, enable LDAPS on the domain controller, and learn the certificate lifecycle.
+!!! note "Platform"
+    Docker Compose — custom `samba-ad:local` / `workstation:local` images + `smallstep/step-ca`
 
-**Duration:** 2–3 hours  
-**Directory:** `enterprise-it-101/labs/03-certificate-authority/`  
-**Requires:** Labs 01–02
+{%
+  include-markdown "../../../enterprise-it-101/labs/03-certificate-authority/README.md"
+%}
