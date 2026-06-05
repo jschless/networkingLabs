@@ -37,6 +37,12 @@ docker build -t freeradius-ad:local enterprise-it-101/images/freeradius-ad/
 docker build -t squid-ad:local     enterprise-it-101/images/squid-ad/
 ```
 
+Lab 09 additionally uses a registry image (no build):
+
+```bash
+docker pull ghcr.io/docker-mailserver/docker-mailserver:latest
+```
+
 ## Lab Curriculum
 
 ### Phase 1 — Foundation (Labs 01–04)

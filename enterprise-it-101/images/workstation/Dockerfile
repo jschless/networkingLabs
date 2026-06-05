@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     isc-dhcp-client \
     openssh-server \
     swaks \
+    libnet-ssleay-perl \
     && rm -rf /var/lib/apt/lists/*
 
 # step CLI (Smallstep) — Lab 03 bootstraps CA trust and issues/verifies
