@@ -1,12 +1,13 @@
 ---
-title: "07 — File Shares & ACLs"
+title: "07 File Shares & ACLs"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Configure a Samba member file server with per-department shares whose access is driven by AD group membership, bridge SMB share ACLs to POSIX filesystem ACLs, and prove Kerberos keeps passwords off the wire
 
-Deploy a Samba member file server with per-department shares, AD group ACLs, and Kerberos-authenticated CIFS mounts.
+!!! note "Platform"
+    Docker Compose — custom `samba-ad:local` (member mode) and `workstation:local` images
 
-**Duration:** 2–3 hours  
-**Directory:** `enterprise-it-101/labs/07-file-shares/`  
-**Requires:** Foundation + Labs 05–06
+{%
+  include-markdown "../../../enterprise-it-101/labs/07-file-shares/README.md"
+%}
