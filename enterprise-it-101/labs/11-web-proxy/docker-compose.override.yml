@@ -1,0 +1,112 @@
+# Lab 11 — Web Proxy & Filtering
+#
+# Layered on top of the foundation network in base/docker-compose.yml.
+# Run from the enterprise-it-101/ directory:
+#
+#   docker compose -f base/docker-compose.yml \
+#                  -f labs/11-web-proxy/docker-compose.override.yml up -d --build
+#
+# Compose uses the FIRST -f file's directory (base/) as the project directory,
+# so every relative path below is written relative to base/.
+#
+# dc1 auto-provisions + seeds the Lab 01 foundation. proxy1 joins the domain and
+# mints an HTTP/proxy1.lab.corp keytab (squid-join.sh) — you write the Squid auth
+# and group-ACL policy in configs/squid.conf. ws1 is the authenticating client.
+# webserver1/2 are the "allowed" and "blocked" origin sites.
+
+name: eit101-lab11
+
+services:
+  dc1:
+    build:
+      context: ../images/samba-ad
+    image: samba-ad:local
+    container_name: dc1
+    hostname: dc1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      AUTO_PROVISION: "true"
+      SAMBA_AUTOSTART: "true"
+    volumes:
+      - dc1-data:/var/lib/samba
+    privileged: true
+    tty: true
+    stdin_open: true
+
+  proxy1:
+    build:
+      context: ../images/squid-ad
+    image: squid-ad:local
+    container_name: proxy1
+    hostname: proxy1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.40
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "webserver1.lab.corp:10.100.2.41"
+      - "webserver2.lab.corp:10.100.2.42"
+    volumes:
+      - ../labs/11-web-proxy/configs/squid.conf:/etc/squid/squid.conf
+      - ../labs/11-web-proxy/configs/squid-join.sh:/usr/local/bin/squid-join.sh:ro
+    command: ["bash", "/usr/local/bin/squid-join.sh"]
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  webserver1:
+    image: nginx:alpine
+    container_name: webserver1
+    hostname: webserver1.lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.41
+    volumes:
+      - ../labs/11-web-proxy/configs/sites/webserver1:/usr/share/nginx/html:ro
+
+  webserver2:
+    image: nginx:alpine
+    container_name: webserver2
+    hostname: webserver2.lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.42
+    volumes:
+      - ../labs/11-web-proxy/configs/sites/webserver2:/usr/share/nginx/html:ro
+
+  ws1:
+    build:
+      context: ../images/workstation
+    image: workstation:local
+    container_name: ws1
+    hostname: ws1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.11
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "proxy1.lab.corp:10.100.2.40"
+    depends_on:
+      - dc1
+      - proxy1
+    tty: true
+    stdin_open: true
+
+volumes:
+  dc1-data:

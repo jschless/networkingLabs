@@ -33,7 +33,8 @@ if [ "${AUTO_PROVISION}" = "true" ] && [ ! -f /var/lib/samba/private/sam.ldb ]; 
         --server-role=dc \
         --dns-backend=SAMBA_INTERNAL \
         --adminpass="${ADMIN_PASS}" \
-        --option="dns forwarder = ${DNS_FORWARDER}"
+        --option="dns forwarder = ${DNS_FORWARDER}" \
+        --option="ntlm auth = mschapv2-and-ntlmv2-only"
     cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
 
     echo "==> [entrypoint] Seeding foundation objects (Lab 01 equivalents)..."
