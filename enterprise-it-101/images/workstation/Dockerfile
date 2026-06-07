@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     faketime \
     openssl \
+    oathtool \
     ca-certificates \
     isc-dhcp-client \
     openssh-server \

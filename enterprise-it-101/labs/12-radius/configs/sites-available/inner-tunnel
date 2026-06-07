@@ -1,0 +1,48 @@
+# Inner-tunnel virtual server — runs the PEAP/TTLS inner authentication.
+# For PEAP-MSCHAPv2 the inner method is mschap -> ntlm_auth -> AD.
+server inner-tunnel {
+    authorize {
+        chap
+        mschap
+        eap {
+            ok = return
+        }
+        ldap
+        if ((ok || updated) && User-Password && !control:Auth-Type) {
+            update {
+                control:Auth-Type := ldap
+            }
+        }
+        pap
+    }
+
+    authenticate {
+        Auth-Type PAP {
+            pap
+        }
+        Auth-Type MS-CHAP {
+            mschap
+        }
+        Auth-Type LDAP {
+            ldap
+        }
+        eap
+    }
+
+    post-auth {
+        if (&User-Name && (LDAP-Group == "engineering")) {
+            update reply {
+                Tunnel-Type             := VLAN
+                Tunnel-Medium-Type      := IEEE-802
+                Tunnel-Private-Group-Id := "10"
+            }
+        }
+        elsif (&User-Name && (LDAP-Group == "finance")) {
+            update reply {
+                Tunnel-Type             := VLAN
+                Tunnel-Medium-Type      := IEEE-802
+                Tunnel-Private-Group-Id := "20"
+            }
+        }
+    }
+}

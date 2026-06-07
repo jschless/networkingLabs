@@ -1,12 +1,13 @@
 ---
-title: "10 — SSO & Federation"
+title: "10 SSO & Federation"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Run Keycloak as an OIDC identity provider, federate it to Active Directory (AD owns the password, Keycloak brokers it), log into a sample app via the Authorization-Code flow, read the AD groups out of the decoded token, enforce TOTP MFA, and break the federation to watch SSO collapse
 
-Deploy Keycloak as an OIDC identity provider, federate it with Active Directory, and add TOTP MFA.
+!!! note "Platform"
+    Docker Compose — Keycloak + PostgreSQL (registry images), a custom Flask OIDC app, and `samba-ad:local` / `workstation:local`
 
-**Duration:** 2–3 hours  
-**Directory:** `enterprise-it-101/labs/10-sso-federation/`  
-**Requires:** Foundation + Labs 05–09
+{%
+  include-markdown "../../../enterprise-it-101/labs/10-sso-federation/README.md"
+%}

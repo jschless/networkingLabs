@@ -1,12 +1,13 @@
 ---
-title: "12 — RADIUS & AD Integration"
+title: "12 RADIUS & AD Integration"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Run FreeRADIUS as the bridge between network gear and AD: authenticate users with PAP (LDAP bind), PEAP/MSCHAPv2 (validated against AD via ntlm_auth), and EAP-TLS (certificates, no password), return a dynamic VLAN by AD group, and break the shared secret to feel RADIUS's silent failure
 
-Deploy FreeRADIUS with LDAP auth, EAP-PEAP and EAP-TLS, and dynamic VLAN assignment from AD group membership.
+!!! note "Platform"
+    Docker Compose — custom `freeradius-ad:local` (domain-joined FreeRADIUS) and `samba-ad:local`
 
-**Duration:** 2–3 hours  
-**Directory:** `enterprise-it-101/labs/12-radius/`  
-**Requires:** Foundation + Labs 05–11
+{%
+  include-markdown "../../../enterprise-it-101/labs/12-radius/README.md"
+%}

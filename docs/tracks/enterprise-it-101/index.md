@@ -37,10 +37,16 @@ docker build -t freeradius-ad:local enterprise-it-101/images/freeradius-ad/
 docker build -t squid-ad:local     enterprise-it-101/images/squid-ad/
 ```
 
-Lab 09 additionally uses a registry image (no build):
+Some labs additionally use registry images (pulled automatically on `up`, no build):
 
 ```bash
+# Lab 09
 docker pull ghcr.io/docker-mailserver/docker-mailserver:latest
+# Lab 10 (SSO)
+docker pull quay.io/keycloak/keycloak:26.0
+docker pull postgres:15
+# Lab 11 (web origins)
+docker pull nginx:alpine
 ```
 
 ## Lab Curriculum
