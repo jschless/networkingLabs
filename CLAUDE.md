@@ -91,3 +91,42 @@ sysctls:
   net.mpls.platform_labels: "1048575"
 ```
 Set via `sysctls:` (not `exec`) so the kernel label space is ready before FRR starts.
+
+## Enterprise IT 101 (separate ecosystem)
+
+The top-level `enterprise-it-101/` directory is a **different kind of lab** and does **not**
+use ContainerLab or `scripts/lab.sh`. It teaches enterprise IT services (Active Directory,
+PKI, DNS, DHCP, email, SSO, RADIUS) with **Docker Compose**. Don't apply the containerlab
+patterns above to it.
+
+Key differences:
+- **Orchestration**: Docker Compose, not ContainerLab. Lab 01 ships a standalone
+  `docker-compose.yml` (defines its own `lab-corp` network); Labs 02–12 are
+  `docker-compose.override.yml` files layered on `base/docker-compose.yml`.
+- **Cumulative state**: each lab re-declares the foundation services it needs (dc1, admin-ws)
+  with `AUTO_PROVISION: "true"` so the Lab 01 foundation (OUs, users, groups) is seeded
+  automatically. Each compose project is namespaced via `name: eit101-labNN`, and persistent
+  volumes (`dc1-data`, `admin-ws-home`) survive teardown unless you pass `-v`.
+- **Container naming**: fixed role names (`dc1`, `admin-ws`, `dns1`, `mail1`, …), not the
+  `clab-<lab>-<node>` scheme — reach them with `docker exec -it <name>`.
+- **Custom images** (build once, tagged `<name>:local`):
+  ```bash
+  for img in samba-ad workstation bind9 kea ansible freeradius-ad squid-ad; do
+    docker build -t "$img:local" "enterprise-it-101/images/$img/"
+  done
+  ```
+
+Use the `enterprise-it-101/eit.sh` helper for everything (`build`, `up <NN>`, `down <NN>`,
+`exec <NN> <container>`, `ps`, `logs`, `list`). Deploy by hand from the `enterprise-it-101/`
+directory:
+```bash
+# Lab 01 (standalone)
+docker compose -f labs/01-active-directory/docker-compose.yml up -d
+# Labs 02–12 (base + override)
+docker compose -f base/docker-compose.yml \
+  -f labs/05-dns-deep-dive/docker-compose.override.yml up -d
+```
+
+Authoring rules and per-lab scope live in `enterprise-it-101/AUTHORING.md` and
+`enterprise-it-101/DESIGN.md`. Labs 13–16 (monitoring, SIEM, backup, capstone) are planned,
+not yet built.

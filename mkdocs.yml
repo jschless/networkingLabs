@@ -1,5 +1,5 @@
 site_name: ContainerLab Networking Labs
-site_description: 112 hands-on networking labs covering OSPF, BGP, MPLS, VPN, data center, enterprise design, security, SOC infrastructure, and more.
+site_description: Self-hosted hands-on labs across three tracks — networking (routing, switching, data center), security operations (SOC), and enterprise IT services.
 site_url: https://jschless.github.io/networkingLabs/
 repo_url: https://github.com/jschless/networkingLabs
 repo_name: jschless/networkingLabs
@@ -72,7 +72,7 @@ nav:
   - How It Works: how-it-works.md
   - Study Paths: study-paths.md
   - Quick Reference: quick-reference.md
-  - Labs:
+  - Networking Labs:
     - OSPF:
       - tracks/ospf/index.md
       - two-routers: tracks/ospf/two-routers.md
@@ -174,18 +174,6 @@ nav:
       - urpf-antispoofing: tracks/security/urpf-antispoofing.md
       - copp-basics: tracks/security/copp-basics.md
       - dot1x-ceos-practice: tracks/security/dot1x-ceos-practice.md
-    - Security Infrastructure:
-      - tracks/security-infrastructure/index.md
-      - soc-dmz-foundation: tracks/security-infrastructure/soc-dmz-foundation.md
-      - soc-zeek-analysis: tracks/security-infrastructure/soc-zeek-analysis.md
-      - soc-suricata-ids: tracks/security-infrastructure/soc-suricata-ids.md
-      - soc-yara-file-pipeline: tracks/security-infrastructure/soc-yara-file-pipeline.md
-      - soc-elk-ingest: tracks/security-infrastructure/soc-elk-ingest.md
-      - soc-kibana-hvt-dashboard: tracks/security-infrastructure/soc-kibana-hvt-dashboard.md
-      - soc-arkime-pcap: tracks/security-infrastructure/soc-arkime-pcap.md
-      - soc-adversary-simulation: tracks/security-infrastructure/soc-adversary-simulation.md
-      - soc-threat-intel-misp: tracks/security-infrastructure/soc-threat-intel-misp.md
-      - soc-ir-case-management: tracks/security-infrastructure/soc-ir-case-management.md
     - Network Operations:
       - tracks/operations/index.md
       - management-access-control: tracks/operations/management-access-control.md
@@ -215,6 +203,18 @@ nav:
       - debug-spine-leaf: tracks/debug/debug-spine-leaf.md
       - debug-mpls-sr-isis-bgp: tracks/debug/debug-mpls-sr-isis-bgp.md
       - debug-vxlan-evpn: tracks/debug/debug-vxlan-evpn.md
+  - Security Operations (SOC):
+    - tracks/security-infrastructure/index.md
+    - soc-dmz-foundation: tracks/security-infrastructure/soc-dmz-foundation.md
+    - soc-zeek-analysis: tracks/security-infrastructure/soc-zeek-analysis.md
+    - soc-suricata-ids: tracks/security-infrastructure/soc-suricata-ids.md
+    - soc-yara-file-pipeline: tracks/security-infrastructure/soc-yara-file-pipeline.md
+    - soc-elk-ingest: tracks/security-infrastructure/soc-elk-ingest.md
+    - soc-kibana-hvt-dashboard: tracks/security-infrastructure/soc-kibana-hvt-dashboard.md
+    - soc-arkime-pcap: tracks/security-infrastructure/soc-arkime-pcap.md
+    - soc-adversary-simulation: tracks/security-infrastructure/soc-adversary-simulation.md
+    - soc-threat-intel-misp: tracks/security-infrastructure/soc-threat-intel-misp.md
+    - soc-ir-case-management: tracks/security-infrastructure/soc-ir-case-management.md
   - Enterprise IT 101:
     - tracks/enterprise-it-101/index.md
     - "01 Active Directory": tracks/enterprise-it-101/01-active-directory.md

@@ -41,6 +41,12 @@ Some labs require additional custom images. Build only what you need:
 | `telemetry-lab:local` | telemetry-monitoring-hybrid | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
 | `netbox-automation:local` | network-automation-netbox | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
 | `fortigate-tools:local` | fortigate-firewall-capstone | `docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/` |
+| `ops-lab:local` | management-access-control, dhcp-dns-troubleshooting, ipv6-access-services | `docker build -t ops-lab:local images/ops-lab/` |
+| `enterprise-services-infra:local` | enterprise-services-infra | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |
+| `enterprise-tacacs:local` | aaa-ops-troubleshooting | `docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/` |
+| `dmz-lab:local` | enterprise-edge-nat-firewall | `docker build -t dmz-lab:local labs/enterprise-edge-nat-firewall/` |
+| `enterprise-access-tools:local` | enterprise-access-security | `docker build -t enterprise-access-tools:local labs/enterprise-access-security/` |
+| `nac-practice:local` | dot1x-ceos-practice | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
 
 ## Arista cEOS
 
@@ -92,6 +98,26 @@ docker pull ghcr.io/nokia/srlinux:latest
 ```
 
 Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
+
+## Security Operations (SOC) Images
+
+The `soc-*` labs share three custom images:
+
+```bash
+docker build -t soc-endpoint:local images/soc-endpoint/
+docker build -t soc-sensor:local   images/soc-sensor/
+docker build -t soc-attacker:local images/soc-attacker/
+```
+
+## Enterprise IT 101 Images
+
+The Enterprise IT 101 track uses Docker Compose and its own helper. Build its images with:
+
+```bash
+cd enterprise-it-101 && ./eit.sh build
+```
+
+See [enterprise-it-101/README.md](https://github.com/jschless/networkingLabs/tree/main/enterprise-it-101) for that track's workflow.
 
 ---
 
