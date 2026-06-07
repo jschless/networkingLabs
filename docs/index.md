@@ -1,6 +1,16 @@
-# ContainerLab Networking Labs
+# Self-Hosted Labs
 
-**112 hands-on networking labs** running locally with [ContainerLab](https://containerlab.dev/), [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/en/support/software-download), [FortiGate](https://www.fortinet.com/), [VyOS](https://vyos.io/), and [Nokia SR-Linux](https://learn.srlinux.dev/).
+Hands-on labs across **three tracks**, all running locally on your own machine:
+
+- **Networking** — routing, switching, data center, tunnels/VPN, and enterprise design on
+  [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
+  [Arista cEOS](https://www.arista.com/en/support/software-download),
+  [VyOS](https://vyos.io/), [Nokia SR-Linux](https://learn.srlinux.dev/), and
+  [FortiGate](https://www.fortinet.com/).
+- **Security Operations (SOC)** — DMZ visibility, Zeek, Suricata, YARA, SIEM ingest,
+  dashboards, threat intel, and incident response (also ContainerLab).
+- **Enterprise IT 101** — build a complete mini enterprise domain from scratch (AD, PKI, DNS,
+  DHCP, email, SSO, RADIUS) using **Docker Compose**.
 
 No cloud account. No license fees. Deploy, break things, learn.
 
@@ -70,7 +80,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
 ---
 
-## Lab Tracks
+## Networking Labs
 
 <div class="grid cards" markdown>
 
@@ -158,13 +168,6 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-shield-search: **Security Infrastructure** (10 labs)
-
-    ---
-    DMZ visibility, Zeek, Suricata, YARA, SIEM ingest, dashboards, packet search, threat intel, IR workflow
-
-    [:octicons-arrow-right-24: Security Infrastructure track](tracks/security-infrastructure/index.md)
-
 - :material-chart-line: **Network Operations** (10 labs)
 
     ---
@@ -183,16 +186,33 @@ No cloud account. No license fees. Deploy, break things, learn.
 
 ---
 
+## Security Operations (SOC)
+
+A separate domain — security tooling rather than routing, but the same ContainerLab workflow.
+
+<div class="grid cards" markdown>
+
+- :material-shield-search: **Security Operations (SOC)** (10 labs)
+
+    ---
+    DMZ visibility, Zeek, Suricata, YARA, SIEM ingest, dashboards, packet search, threat intel, IR workflow
+
+    [:octicons-arrow-right-24: Security Operations track](tracks/security-infrastructure/index.md)
+
+</div>
+
+---
+
 ## Enterprise IT 101
 
 <div class="grid cards" markdown>
 
-- :material-domain: **Enterprise IT 101** (16 labs)
+- :material-domain: **Enterprise IT 101** (12 labs, 16 planned)
 
     ---
-    Build a complete mini enterprise domain from scratch: AD, PKI, DNS, DHCP, email, SSO, web proxy, RADIUS, monitoring, SIEM, and backups — using only open-source containers.
+    Build a complete mini enterprise domain from scratch: AD, PKI, DNS, DHCP, email, SSO, web proxy, RADIUS — using only open-source containers. (Monitoring, SIEM, backup, and capstone labs are planned.)
 
-    Uses **Docker Compose** (not ContainerLab). Each lab builds on the last; the capstone runs the full stack.
+    Uses **Docker Compose** (not ContainerLab). Each lab builds on the last.
 
     [:octicons-arrow-right-24: Enterprise IT 101](tracks/enterprise-it-101/index.md)
 

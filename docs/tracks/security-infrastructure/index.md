@@ -1,6 +1,9 @@
-# Security Infrastructure Track
+# Security Operations (SOC) Track
 
-Ten labs covering SOC infrastructure: DMZ visibility, Zeek protocol logs, Suricata IDS, YARA file analysis, SIEM ingest, HVT dashboards, packet search, adversary simulation, threat intel, and incident response workflow.
+A security-operations curriculum — security tooling rather than routing, but built on the same
+ContainerLab workflow as the networking labs. Ten labs covering DMZ visibility, Zeek protocol
+logs, Suricata IDS, YARA file analysis, SIEM ingest, HVT dashboards, packet search, adversary
+simulation, threat intel, and incident response workflow.
 
 | Lab | Type | Tools | What You Learn |
 |-----|------|-------|----------------|

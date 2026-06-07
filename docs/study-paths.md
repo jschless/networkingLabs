@@ -94,7 +94,8 @@ debug-ospf-multiarea → debug-bgp-basics → debug-eigrp-basics → debug-isis-
 
 ## Enterprise IT 101
 
-A cumulative curriculum — each lab extends the previous one. Uses Docker Compose, not ContainerLab.
+A cumulative curriculum — each lab extends the previous one. Uses Docker Compose, not
+ContainerLab; drive it with `enterprise-it-101/eit.sh`.
 
 ```
 Foundation:  01-active-directory → 02-ntp-time-services
@@ -102,6 +103,8 @@ Foundation:  01-active-directory → 02-ntp-time-services
 Core:        05-dns-deep-dive → 06-dhcp-dynamic-dns
              → 07-file-shares → 08-group-policy → 09-email-gateway
 Advanced:    10-sso-federation → 11-web-proxy → 12-radius
-Operations:  13-monitoring → 14-siem-logging
-             → 15-backup-recovery → 16-capstone
+Operations:  13-monitoring → 14-siem-logging          (planned)
+             → 15-backup-recovery → 16-capstone        (planned)
 ```
+
+Labs 01–12 are built; 13–16 are planned.

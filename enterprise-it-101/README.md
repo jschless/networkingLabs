@@ -12,23 +12,49 @@ A 16-lab curriculum that walks you through building a complete mini enterprise d
 
 ## Quick Start
 
-```bash
-# Build custom images (run once)
-cd enterprise-it-101
-docker compose -f labs/01-active-directory/docker-compose.yml build
+Use the `eit.sh` helper — it hides the `docker compose -f base/… -f labs/…/override`
+plumbing. Run it from the `enterprise-it-101/` directory:
 
-# Deploy Lab 01
+```bash
+cd enterprise-it-101
+
+# Build the custom images (run once)
+./eit.sh build
+
+# Deploy a lab (number or full name; 01 = Active Directory)
+./eit.sh up 01
+
+# Shell into a container (fixed role names: dc1, admin-ws, dns1, mail1, ...)
+./eit.sh exec 01 dc1
+./eit.sh exec 01 admin-ws
+
+# See what's running / follow logs
+./eit.sh ps 01
+./eit.sh logs 01
+
+# Tear down (add -v to also wipe that lab's volumes)
+./eit.sh down 01
+./eit.sh down 01 -v
+```
+
+Run `./eit.sh help` for the full command list, or `./eit.sh list` to see every lab.
+
+<details>
+<summary>Doing it by hand (without the helper)</summary>
+
+Lab 01 ships a standalone compose file; Labs 02–12 are override files layered on the
+base network. From `enterprise-it-101/`:
+
+```bash
+# Lab 01 (standalone)
 docker compose -f labs/01-active-directory/docker-compose.yml up -d
 
-# Shell into the domain controller
-docker exec -it dc1 bash
-
-# Shell into the admin workstation
-docker exec -it admin-ws bash
-
-# Tear down
-docker compose -f labs/01-active-directory/docker-compose.yml down -v
+# Labs 02–12 (base + override)
+docker compose \
+  -f base/docker-compose.yml \
+  -f labs/05-dns-deep-dive/docker-compose.override.yml up -d
 ```
+</details>
 
 ## Curriculum
 
