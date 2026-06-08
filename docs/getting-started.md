@@ -17,72 +17,59 @@ bash -c "$(curl -sL https://get.containerlab.dev)"
 containerlab version
 ```
 
-## Build the FRR Image
+## Images
 
-Required for the FRR/Linux labs:
+Every lab's README header lists the exact image(s) it needs — **build or download only those.**
+This page is the single authoritative reference. The lists below track what each lab's
+`topology.clab.yml` actually references, so if a lab and this table ever disagree, the
+topology wins.
 
-```bash
-docker build -t frr-lab:local images/frr/
-```
+### Images you download
 
-## Custom Images
+| Image | Acquire it with |
+|-------|-----------------|
+| `ceos:4.35.2F` | `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` (needs a free Arista account) |
+| `ghcr.io/nokia/srlinux:latest` | `docker pull ghcr.io/nokia/srlinux:latest` |
 
-Some labs require additional custom images. Build only what you need:
+`ceos` powers most routing, switching, data-center, and enterprise labs. SR-Linux is used only by
+`mpls-sr-srlinux` and `vxlan-evpn-srlinux`. FortiGate uses a separate VM flow (see below).
 
-| Image | Labs | Build Command |
-|-------|------|---------------|
-| `vyos:local` | ipsec-basics, gre-ipsec, macsec-basics, DMVPN labs | `docker build -t vyos:local -f Dockerfile.vyos .` |
-| `ipsec-lab:local` | flexvpn-basics | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
-| `wireguard-lab:local` | wireguard | `docker build -t wireguard-lab:local labs/wireguard/` |
-| `black-core-tools:local` | black-core-routing | `docker build -t black-core-tools:local labs/black-core-routing/` |
-| `nac-lab:local` | dot1x-nac | `docker build -t nac-lab:local labs/dot1x-nac/` |
-| `assurance-lab:local` | network-assurance | `docker build -t assurance-lab:local labs/network-assurance/` |
-| `qos-lab:local` | qos-enterprise | `docker build -t qos-lab:local labs/qos-enterprise/` |
-| `telemetry-lab:local` | telemetry-monitoring-hybrid | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
-| `netbox-automation:local` | network-automation-netbox | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
-| `fortigate-tools:local` | fortigate-firewall-capstone | `docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/` |
-| `ops-lab:local` | management-access-control, dhcp-dns-troubleshooting, ipv6-access-services | `docker build -t ops-lab:local images/ops-lab/` |
-| `enterprise-services-infra:local` | enterprise-services-infra | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |
-| `enterprise-tacacs:local` | aaa-ops-troubleshooting | `docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/` |
-| `dmz-lab:local` | enterprise-edge-nat-firewall | `docker build -t dmz-lab:local labs/enterprise-edge-nat-firewall/` |
-| `enterprise-access-tools:local` | enterprise-access-security | `docker build -t enterprise-access-tools:local labs/enterprise-access-security/` |
-| `nac-practice:local` | dot1x-ceos-practice | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
+### Images you build
 
-## Arista cEOS
+Build only what the lab you're running needs. Many labs combine images (e.g. a cEOS router with an
+`frr-lab:local` host), so check the lab README.
 
-Import the cEOS image once (requires a free Arista account to download):
+| Image | Used by | Build command |
+|-------|---------|---------------|
+| `frr-lab:local` | the FRR/Linux labs (most non-cEOS labs) | `docker build -t frr-lab:local images/frr/` |
+| `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | `docker build -t vyos:local -f Dockerfile.vyos .` |
+| `ipsec-lab:local` | `ipsec-basics`, `flexvpn-basics` | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
+| `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
+| `black-core-tools:local` | `black-core-routing` | `docker build -t black-core-tools:local labs/black-core-routing/` |
+| `ops-lab:local` | `aaa-ops-troubleshooting`, `dhcp-dns-troubleshooting`, `ipv6-access-services`, `management-access-control` | `docker build -t ops-lab:local images/ops-lab/` |
+| `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
+| `nac-practice:local` | `dot1x-ceos-practice` | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
+| `nac-practice-tacacs:local` | `dot1x-ceos-practice` | `docker build -f labs/dot1x-ceos-practice/Dockerfile.tacacs -t nac-practice-tacacs:local labs/dot1x-ceos-practice/` |
+| `assurance-lab:local` | `network-assurance` | `docker build -t assurance-lab:local labs/network-assurance/` |
+| `qos-lab:local` | `qos-enterprise` | `docker build -t qos-lab:local labs/qos-enterprise/` |
+| `telemetry-lab:local` | `telemetry-monitoring-hybrid` | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
+| `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
+| `fortigate-tools:local` | `fortigate-firewall-capstone` | `docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/` |
+| `enterprise-services-infra:local` | `enterprise-services-infra` | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |
+| `enterprise-tacacs:local` | `aaa-ops-troubleshooting`, `enterprise-services-infra` | `docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/` |
+| `enterprise-access-tools:local` | `enterprise-access-security` | `docker build -t enterprise-access-tools:local labs/enterprise-access-security/` |
+| `enterprise-multicast:local` | `enterprise-multicast` | `docker build -t enterprise-multicast:local labs/enterprise-multicast/` |
+| `enterprise-wireless-architecture:local` | `enterprise-wireless-architecture` | `docker build -t enterprise-wireless-architecture:local labs/enterprise-wireless-architecture/` |
+| `dmz-lab:local` | `enterprise-dmz`, `enterprise-dmz-capstone`, `enterprise-edge-nat-firewall` | `docker build -t dmz-lab:local labs/enterprise-edge-nat-firewall/` |
+| `soc-attacker:local`, `soc-endpoint:local`, `soc-sensor:local` | all `soc-*` labs | `docker build -t soc-attacker:local images/soc-attacker/` (repeat for `soc-endpoint`, `soc-sensor`) |
 
-```bash
-docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
-```
+### FortiGate (separate VM flow)
 
-Used by: `gre-basics`, `spine-leaf`,
-`vxlan-evpn`, `evpn-border-ceos`, `vrf-lite`, `ha-network-design-ceos`, all `enterprise-*` labs,
-`stp-operations`, `lacp-etherchannel`, `dot1x-ceos-practice`.
-
-## VyOS
-
-```bash
-docker build -t vyos:local -f Dockerfile.vyos .
-```
-
-Used by: `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `dmvpn-phase1`,
-`dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`,
-`black-core-routing`.
-
-## FortiGate
-
-Use the downloaded FortiGate image as the source of the FortiGate `qcow2`:
+`fortigate-firewall-capstone` runs a FortiGate VM rather than a container. Confirm the source image,
+then let the lab extract and boot the VM:
 
 ```bash
 docker image ls vrnetlab/vr-fortios:4.7.11
-```
-
-Used by: `fortigate-firewall-capstone`.
-
-The lab then extracts and runs the VM directly:
-
-```bash
 sudo labs/fortigate-firewall-capstone/prepare-bridges.sh
 ./scripts/lab.sh deploy fortigate-firewall-capstone
 labs/fortigate-firewall-capstone/extract-fortios.sh
@@ -90,24 +77,6 @@ sudo labs/fortigate-firewall-capstone/start-fgt.sh
 ```
 
 Note: manual license activation is required before the lab can be completed.
-
-## Nokia SR-Linux
-
-```bash
-docker pull ghcr.io/nokia/srlinux:latest
-```
-
-Used by: `mpls-sr-srlinux`, `vxlan-evpn-srlinux`.
-
-## Security Operations (SOC) Images
-
-The `soc-*` labs share three custom images:
-
-```bash
-docker build -t soc-endpoint:local images/soc-endpoint/
-docker build -t soc-sensor:local   images/soc-sensor/
-docker build -t soc-attacker:local images/soc-attacker/
-```
 
 ## Enterprise IT 101 Images
 
