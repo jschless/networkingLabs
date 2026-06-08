@@ -31,45 +31,20 @@ docker exec -it clab-<name>-<node> bash
 
 ### Custom image builds (required before deploying any lab)
 
-```bash
-docker build -t frr-lab:local images/frr/             # used by: all FRR labs (adds tcpdump, tshark)
-docker build -t ipsec-lab:local labs/ipsec-basics/    # used by: ipsec-basics, gre-ipsec
-docker build -t wireguard-lab:local labs/wireguard/   # used by: wireguard
-```
+`frr-lab:local` (`docker build -t frr-lab:local images/frr/`) is the base for most FRR/Linux
+labs. Every other image and exactly which labs need it is documented in one authoritative
+table — **`docs/getting-started.md` → "Images you build"**. Don't re-list image→lab mappings
+here; each lab's `topology.clab.yml` is the ground truth, and the getting-started table is
+generated from it.
 
 ## Architecture
 
-### Lab layout
+Lab anatomy (directory layout, `configs/` structure), the two lab types, the
+FRR/cEOS/VyOS node patterns, the deploy/startup sequence (why `vtysh -b` is required),
+`setup.sh` vs inline `exec`, and container naming (`clab-<topology-name>-<node-name>`,
+from the `name:` field) are all documented in **`docs/how-it-works.md`** — read that first.
 
-```
-labs/<name>/
-  topology.clab.yml          # ContainerLab topology — nodes, links, binds, exec, sysctls
-  README.md             # Lab guide: tasks and verification commands
-  configs/
-    daemons             # Which FRR daemons to enable (often shared across all nodes)
-    vtysh.conf          # Always "service integrated-vtysh-config" (shared)
-    <node>/
-      frr.conf          # FRR routing config for this node
-      setup.sh          # (some nodes) Linux network setup: VRF creation, VXLAN bridges, IP config
-```
-
-### Two lab types
-
-- **Practice labs**: IP addressing pre-configured; routing protocols/features left for the user to implement. `frr.conf` files contain commented hints showing expected config.
-- **Reference labs**: Fully working out-of-the-box (`mpls-sr-isis-bgp`, `vxlan-evpn`). Deploy and explore.
-
-### Topology patterns
-
-All nodes use `kind: linux` with `image: frrouting/frr:latest` (or a custom image). The `defaults:` block in `topology.clab.yml` avoids repetition — `kind`, `image`, `sysctls`, and `exec` can all be set there and inherited by every node.
-
-Key topology fields:
-- `binds`: bind-mounts host files into the container (FRR configs, setup scripts)
-- `sysctls`: kernel parameters set **before** container starts — use this (not `exec`) for `net.mpls.platform_labels`
-- `exec`: commands run after container starts; always include `vtysh -b` on FRR nodes to re-apply config after veth pairs are created
-
-### When to use `setup.sh` vs inline `exec`
-
-Use a bind-mounted `setup.sh` (called via `exec: - bash /setup.sh`) when a node needs multiple Linux commands: creating Linux VRFs (`ip link add … type vrf`), building VXLAN+bridge interfaces, or setting IP addresses (non-FRR nodes). The script ends with `vtysh -b` to load FRR config after Linux setup completes.
+The repo-specific gotchas that aren't obvious from the topology files:
 
 ### FRR version and syntax
 
@@ -78,10 +53,6 @@ FRR 8.4 (`frrouting/frr:latest`). Notable syntax:
 - BGP VPNv4 AF: `address-family ipv4 vpn` (not `address-family vpnv4`)
 - eBGP requires policy by default — add `no bgp ebgp-requires-policy` to each BGP instance
 - MPLS on interface: `mpls enable`
-
-### Container naming
-
-ContainerLab names containers `clab-<topology-name>-<node-name>`. The topology name comes from the `name:` field at the top of `topology.clab.yml`, not the directory name (though they always match here).
 
 ### MPLS labs
 
@@ -94,39 +65,21 @@ Set via `sysctls:` (not `exec`) so the kernel label space is ready before FRR st
 
 ## Enterprise IT 101 (separate ecosystem)
 
-The top-level `enterprise-it-101/` directory is a **different kind of lab** and does **not**
-use ContainerLab or `scripts/lab.sh`. It teaches enterprise IT services (Active Directory,
-PKI, DNS, DHCP, email, SSO, RADIUS) with **Docker Compose**. Don't apply the containerlab
-patterns above to it.
+`enterprise-it-101/` is a **different kind of lab** — **Docker Compose**, not ContainerLab,
+driven by `enterprise-it-101/eit.sh` (not `scripts/lab.sh`). Don't apply the ContainerLab
+patterns above to it. See **`enterprise-it-101/README.md`** for the curriculum, helper
+commands (`build` / `up` / `down` / `exec` / …), and deploy steps; **`AUTHORING.md`** and
+**`DESIGN.md`** for authoring rules and per-lab scope.
 
-Key differences:
-- **Orchestration**: Docker Compose, not ContainerLab. Lab 01 ships a standalone
-  `docker-compose.yml` (defines its own `lab-corp` network); Labs 02–12 are
-  `docker-compose.override.yml` files layered on `base/docker-compose.yml`.
-- **Cumulative state**: each lab re-declares the foundation services it needs (dc1, admin-ws)
-  with `AUTO_PROVISION: "true"` so the Lab 01 foundation (OUs, users, groups) is seeded
-  automatically. Each compose project is namespaced via `name: eit101-labNN`, and persistent
-  volumes (`dc1-data`, `admin-ws-home`) survive teardown unless you pass `-v`.
+Agent-relevant specifics that aren't obvious from the compose files:
+- **Layering**: Lab 01 is a standalone `docker-compose.yml` (defines the `lab-corp` network);
+  Labs 02–12 are `docker-compose.override.yml` files layered on `base/docker-compose.yml`.
+- **Cumulative state via auto-provision**: each lab re-declares the foundation services it
+  needs (dc1, admin-ws) with `AUTO_PROVISION: "true"`, so the Lab 01 foundation (OUs, users,
+  groups) is seeded automatically.
+- **Namespacing & persistence**: each compose project is `name: eit101-labNN`; volumes
+  (`dc1-data`, `admin-ws-home`) survive teardown unless you pass `-v`.
 - **Container naming**: fixed role names (`dc1`, `admin-ws`, `dns1`, `mail1`, …), not the
   `clab-<lab>-<node>` scheme — reach them with `docker exec -it <name>`.
-- **Custom images** (build once, tagged `<name>:local`):
-  ```bash
-  for img in samba-ad workstation bind9 kea ansible freeradius-ad squid-ad; do
-    docker build -t "$img:local" "enterprise-it-101/images/$img/"
-  done
-  ```
-
-Use the `enterprise-it-101/eit.sh` helper for everything (`build`, `up <NN>`, `down <NN>`,
-`exec <NN> <container>`, `ps`, `logs`, `list`). Deploy by hand from the `enterprise-it-101/`
-directory:
-```bash
-# Lab 01 (standalone)
-docker compose -f labs/01-active-directory/docker-compose.yml up -d
-# Labs 02–12 (base + override)
-docker compose -f base/docker-compose.yml \
-  -f labs/05-dns-deep-dive/docker-compose.override.yml up -d
-```
-
-Authoring rules and per-lab scope live in `enterprise-it-101/AUTHORING.md` and
-`enterprise-it-101/DESIGN.md`. Labs 13–16 (monitoring, SIEM, backup, capstone) are planned,
-not yet built.
+- Custom images are built by `enterprise-it-101/eit.sh build`. Labs 13–16 (monitoring, SIEM,
+  backup, capstone) are planned, not yet built.
