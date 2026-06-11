@@ -4,6 +4,14 @@ A fully-working MPLS SR-MPLS / BGP L3VPN lab using Nokia SR-Linux — the platfo
 
 > **Note:** SR-Linux uses a YANG-based CLI that differs from IOS/FRR. Configuration is applied via `enter candidate` / `commit now` in `sr_cli`. The startup configs in this lab are pre-applied at container boot.
 
+## How to use this lab
+
+This is a **practice lab** on a working reference build — you observe and
+explain rather than configure. Predict each verification's output before
+running it, and read the "what it proves" note after. If you've done
+`mpls-sr-isis-bgp` (FRR) or `mpls-sr-blank`, treat this as the same stack
+on a production-grade NOS and notice what the YANG model changes.
+
 ---
 
 ## Topology
@@ -141,6 +149,33 @@ docker exec -it clab-mpls-sr-srlinux-ce1 vtysh -c 'ping 10.100.2.1'
 ```
 
 Traffic path: ce1 → pe1 (MPLS label push 16003) → p1 → p2 → pe2 (pop) → ce2
+
+**Predict first (before the ping):** how many labels does pe1 push, what
+does p2 do at the penultimate hop, and which label does pe2 actually use
+to choose the VRF? Then confirm against `show network-instance default
+mpls forwarding-table` on the transit routers.
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. SR-Linux needs no `net.mpls.platform_labels` sysctl, but the FRR labs
+   do. What does that tell you about where MPLS forwarding lives in each
+   platform, and why does it matter for performance at scale?
+2. SR-Linux's `l3vpn-ipv4-unicast` is the same RFC 4364 VPNv4 you used in
+   the FRR labs. Map the FRR concepts (`vrf`, `rd vpn export`, `rt vpn
+   both`) onto SR-Linux's `network-instance` + `bgp-vpn` model, and note
+   which one forces you to be explicit about import/export policy.
+3. SR-Linux requires an explicit `accept-all` routing policy where FRR
+   accepted routes by default. Argue why default-deny BGP policy is the
+   safer production posture, and what class of outage default-accept
+   invites.
+4. Pick a transit link and predict what `show ... mpls forwarding-table`
+   shows for the SR label toward pe2 (swap vs. pop). Verify, then explain
+   where PHP happens and why the SRGB makes the label predictable network-
+   wide.
 
 ---
 

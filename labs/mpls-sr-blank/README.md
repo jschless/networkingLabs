@@ -1,7 +1,20 @@
 # MPLS / IS-IS / SR / BGP L3VPN — Practice Lab
 
-Build a working service provider network from scratch. The topology and IP addressing
-are pre-configured. You implement each protocol layer yourself.
+Build a working service provider network from scratch — IS-IS, SR-MPLS,
+BGP VPNv4, and L3VPN — one layer at a time. The topology and IP addressing
+are pre-configured; you implement every protocol. This is the build-it
+counterpart to the `mpls-sr-isis-bgp` reference lab.
+
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each step gives you an
+objective and hints; configuration is behind solution toggles.
+
+- **Predict before each verify**: commit to what `show` will return
+  before you run it — a half-built stack has a *specific* failure at each
+  layer, and predicting it is how you learn to read the stack.
+- **Build bottom-up**: each layer depends on the one below. Don't move on
+  until the current layer's verify passes.
 
 ---
 
@@ -94,38 +107,47 @@ and `do show ...` to run show commands from config mode.
 
 ## Step 1 — IS-IS underlay
 
-Configure IS-IS on **rr1, pe1, pe2, p1, p2** (not the CE routers).
+**Objective:** Configure IS-IS Level-2 on **rr1, pe1, pe2, p1, p2** (not
+the CEs) so every SP loopback is reachable from every other.
 
-### On each SP router: global IS-IS process
+**Predict first:** the loopbacks are advertised `passive` and transit
+links are `point-to-point`. What would happen if you forgot `isis passive`
+on a loopback — would it break reachability, or just create a pointless
+behavior? Name it.
 
-```
+<details>
+<summary>Hints</summary>
+
+- Process: `router isis CORE`, `net <NET>` (from the table),
+  `is-type level-2-only`, `metric-style wide` (SR needs wide metrics).
+- Per interface: `ip router isis CORE` on lo *and* all transit links;
+  add `isis network point-to-point` + `isis metric 10` on transit only;
+  `isis passive` on lo.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+```text
 router isis CORE
  net <NET>
  is-type level-2-only
  metric-style wide
-```
-
-Use each router's NET from the table above.
-
-### On each SP router: enable IS-IS on interfaces
-
-```
-interface <name>
+!
+interface <transit>
  ip router isis CORE
- isis network point-to-point   ! on transit links (not loopback)
- isis metric 10                ! on transit links
-```
-
-```
+ isis network point-to-point
+ isis metric 10
+!
 interface lo
  ip router isis CORE
- isis passive                  ! loopback — advertise but no adjacency
+ isis passive
 ```
 
-Apply `ip router isis CORE` to: **lo, and all transit interfaces**.
-Apply `isis network point-to-point` and `isis metric 10` to transit interfaces only.
+</details>
 
-### Verify IS-IS
+### Verify IS-IS (predict each before running)
 
 ```
 ! On p1 — should see pe1, rr1, p2 as level-2 neighbours
@@ -400,6 +422,54 @@ A successful ping means:
 - Labels were swapped/popped at p1 and p2
 - The VPN label delivered the packet to the correct VRF at pe2
 - BGP carried the CE routes end-to-end
+
+---
+
+## Step 5 — Break it: disable MPLS on one transit interface
+
+**Objective:** Once the end-to-end ping works, run `no mpls enable` on
+**p1**'s interface toward p2, then diagnose ce1 → ce2 from the symptom.
+
+**Predict first:** IS-IS and BGP are untouched, so the control plane still
+looks healthy everywhere. Will the ping fail, and if so, which `show`
+command will *look fine* and which will reveal the real problem?
+
+<details>
+<summary>What you should observe</summary>
+
+The ping breaks, but `show isis neighbor`, `show bgp ipv4 vpn`, and `show
+ip route vrf CUST-A` all still look **perfectly healthy** — the control
+plane never noticed. The failure is purely in the data plane: with MPLS
+disabled on that hop, labeled packets arriving there are dropped, so the
+SR-transported VPN traffic dies even though every routing protocol agrees
+on the path. The truth is in `show mpls table` / `ip -M route show` and a
+`traceroute` that stops at p1. This is the signature MPLS outage —
+control plane green, data plane black-holed — and the reason MPLS
+troubleshooting always checks `mpls enable` per interface early. Restore
+it and re-verify.
+
+</details>
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. SR derives pe2's label (16003) from its SID index and the SRGB. If two
+   routers were configured with *different* SRGB ranges, what exactly
+   would break, and why is a network-wide consistent SRGB a hard
+   requirement that LDP never had?
+2. The VPN label is allocated `auto` per-VRF at each PE. Trace why the VPN
+   label is locally significant to the egress PE while the SR transport
+   label must be understood network-wide — and what that means for who can
+   safely renumber what.
+3. You add a second customer with overlapping address space (both use
+   10.100.1.0/24). Walk through every place the RD and RT each do their
+   job to keep the two customers isolated end to end.
+4. Compare this SR build with adding LDP instead at Step 2: list the
+   protocols, sessions, and per-hop state LDP would require, and the one
+   scaling property SR gains by piggybacking on IS-IS.
 
 ---
 

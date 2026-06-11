@@ -97,6 +97,16 @@ docker exec -it clab-vxlan-evpn-host-b1 Cli
 
 ---
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The spines, hosts, and all
+addressing are pre-built; you configure the **four leaves**. Configuration
+is behind solution toggles.
+
+- **Predict before you configure**, **open the solution to check or when
+  stuck**, and **verify** at each layer (underlay → VXLAN → EVPN →
+  segmentation) before moving on.
+
 ## What's Pre-Configured
 
 - All Ethernet and loopback **IP addresses** on leaves and spines
@@ -321,6 +331,12 @@ show vxlan address-table
 
 ### Step 6 — Segmentation validation (the key test)
 
+**Predict first:** host-a1 and host-b1 are attached to leaves in the same
+fabric, reachable over the same VXLAN underlay. So *why* will a1→b1
+(cross-tenant) fail while a1→a2 (same tenant, different leaf) succeeds?
+What exactly is missing that blocks it — a filter, or a route? Decide
+before running, then prove it with the `show ip route vrf` lines.
+
 ```
 ! ✓ PASS — same tenant, cross-fabric
 docker exec -it clab-vxlan-evpn-host-a1 Cli -c "ping 10.10.10.12 repeat 5"
@@ -421,7 +437,11 @@ This is the EVPN equivalent of physical network segmentation, enforced in softwa
 
 ---
 
-## Challenge Exercises
+## Challenge questions
+
+No answers provided — reason them through. (Exercises 1, 4, and 5 double as
+the lab's required "make it / break it / observe it" work — do those
+hands-on; the rest are pure reasoning.)
 
 1. **Add a fifth leaf** (`leaf5`, AS65005, loopback 10.0.0.5) with a new Tenant-A host
    (`host-a3`, 10.10.10.13). After configuring, verify host-a1 can ping host-a3 without

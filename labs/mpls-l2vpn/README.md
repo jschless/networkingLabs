@@ -18,6 +18,14 @@ segment even though they are separated by three MPLS routers.
 In this lab, **ce1 and ce2 share subnet 10.100.0.0/24** and communicate via
 ARP and direct L2 forwarding — just like hosts on the same switch.
 
+## How to use this lab
+
+This is a **practice lab** on a working pseudowire build — you verify and
+explain rather than configure. At each verification step, **predict the
+output first** (especially the label values and session types), then read
+the "Expected" note to check your understanding. The real test is the
+break-it task and the challenge questions, where nothing is handed to you.
+
 ## Topology
 
 ```mermaid
@@ -450,6 +458,54 @@ MPLS transport network. Required for PW label negotiation.
 The IETF term for a point-to-point pseudowire with a manually configured
 sender ID, receiver ID, and PW-ID. "FEC 128" refers to the LDP TLV type
 used to advertise the PW label binding.
+
+---
+
+## Break it — snap the pseudowire
+
+**Objective:** With the pseudowire UP and ce1↔ce2 pinging, disable MPLS on
+**p1**'s core interface (or clear the targeted LDP session), then diagnose
+from the CE's point of view.
+
+**Predict first:** ce1 and ce2 share a subnet, so to the customer this
+looks like a single switch. When the core breaks, what will the customer
+*see* — a routing error, or something that looks like a dead cable? Which
+PE-side command reveals the true cause?
+
+<details>
+<summary>What you should observe</summary>
+
+From the CE it looks like a **layer-2 failure**: ARP for the peer stops
+resolving, pings fail with no route/host error — exactly as if someone
+unplugged a switch port, because the customer has no visibility into the
+MPLS core carrying their frames. The truth is PE-side: `show mpls ldp
+pseudowires` shows the PW DOWN, or `show mpls table` shows the transport
+label gone. This opacity is the whole selling point *and* the operational
+catch of L2VPN — the customer sees a wire, you debug an MPLS stack two
+labels deep. Restore MPLS and confirm the PW returns to UP and ARP
+re-resolves.
+
+</details>
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The pseudowire pushes two labels (transport + PW). Explain precisely
+   what each one does, which router assigns each, and why the targeted LDP
+   session can exist between pe1 and pe2 even though they share no direct
+   link.
+2. Contrast this VPWS (point-to-point) with VPLS (multipoint). If a third
+   site joined, what breaks about the pseudowire model, and what does VPLS
+   add to emulate a multi-site switch?
+3. ce1 and ce2 share a broadcast domain across the core. Trace what
+   happens to an ARP broadcast from ce1 — how does it reach ce2, and what
+   would a broadcast storm in the customer L2 do to the MPLS core?
+4. Compare L2VPN here with the L3VPN of `mpls-sr-isis-bgp`: for a customer
+   who wants the provider invisible (their own routing across sites),
+   which fits, and what does each hide from / expose to the customer?
 
 ---
 

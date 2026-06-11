@@ -4,6 +4,14 @@ This lab demonstrates **6PE (RFC 4798)** — carrying IPv6 prefixes across an
 IPv4-only MPLS/SR core using BGP labeled-unicast. A companion section covers
 **NAT64/DNS64** conceptually (Jool installation required; see below).
 
+## How to use this lab
+
+This is a **practice lab** on a working 6PE build — you observe and explain
+rather than configure. At each verification step, **predict the output
+first** (especially the IPv4-mapped next-hop and the two-label stack),
+then check against the "Expected" note. The challenge questions are where
+you reason without scaffolding.
+
 ---
 
 ## Background: Why Transition Mechanisms?
@@ -146,6 +154,11 @@ show bgp ipv6 labeled-unicast fd00:1::/48
 ```
 
 #### Step 4: 6PE routes on pe2 (routes reflected by p1)
+
+**Predict first:** pe2 learns ce1's IPv6 prefix via BGP, but the core is
+IPv4-only. What will the BGP *next-hop* for an IPv6 prefix look like on
+pe2 — a normal IPv6 address, or something stranger? Write down the exact
+form before you run the command.
 
 ```
 # On pe2: should see ce1's prefixes with pe1's loopback as next-hop
@@ -308,6 +321,28 @@ On a standard `frr-lab:local` container the host kernel module would need to be
 pre-installed, or the container would need `--privileged` + `--net=host` access.
 The 6PE topology above is fully self-contained and demonstrates a more
 operationally common IPv6 transition mechanism used in real SP networks.
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The 6PE next-hop is `::ffff:10.0.0.1` (an IPv4-mapped IPv6 address).
+   Explain *why* 6PE encodes the next-hop this way instead of using pe1's
+   real IPv6 address, and what it lets the IPv4-only P routers avoid
+   knowing.
+2. Forwarding uses two labels (SR transport + 6PE). The P routers only
+   ever look at the outer one. Walk through what each P router does with
+   an IPv6 packet, and prove (from Step 7's capture) that no P router ever
+   parses an IPv6 header.
+3. 6PE carries IPv6 across an IPv4 core; 6VPE (RFC 4659) adds VRFs. Given
+   the L3VPN labs, sketch what changes between 6PE and 6VPE — which extra
+   labels/attributes appear, and which customer problem 6VPE solves that
+   6PE can't.
+4. NAT64/DNS64 (Part 2) and 6PE solve *different* coexistence problems.
+   State precisely which problem each addresses, and give a scenario where
+   you'd need both at once.
 
 ---
 

@@ -57,6 +57,17 @@ flowchart TB
 - **ext-router**: AS65500, eBGP to bleaf1, advertising 100.64.0.0/24.
 - **hosts**: Static IPs + default routes.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The fabric, spines, hosts, and
+the external router are pre-built; you configure the **border leaf
+(bleaf1)** from the task summary below, using the hints in
+`configs/bleaf1/startup-config`.
+
+- **Predict before you configure** — especially what each tenant should
+  and should *not* be able to reach. **Verify** at each step before moving
+  on.
+
 ## Your task: configure bleaf1
 
 bleaf1 has interface IPs and Loopback0 pre-configured. Everything else is yours to implement.
@@ -180,6 +191,11 @@ Expected: 5/5 success (via leaf3 → bleaf1).
 
 ### Step 7 — Tenant-B isolation: verify no external reachability
 
+**Predict first:** Tenant-A reaches the internet via bleaf1. The external
+eBGP session lives in VRF TENANT-A only. Will Tenant-B reach 100.64.0.1?
+*Why* — is it blocked by a firewall rule, or simply absent from a routing
+table? Name the exact mechanism before running the ping.
+
 ```
 host-b1# ping 100.64.0.1
 ```
@@ -225,3 +241,26 @@ Type-5 routes carry IP prefixes (not individual MAC+IP pairs). They are used for
 
 Type-5 routes have no MAC — they're pure IP prefix advertisements distributed over the EVPN control plane,
 installed in the VRF routing table of every leaf that imports the matching route-target.
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The border leaf uses `redistribute bgp` (external routes) and the
+   fabric leaves use `redistribute connected` (their SVI subnets), both
+   producing type-5 EVPN routes. Explain why type-5 (IP-prefix) is the
+   right route type for both, and what would be wrong with trying to carry
+   an external /24 as a type-2 (MAC/IP) route.
+2. Tenant-B's isolation came "for free" — no ACL, just the absence of a
+   route. Argue the security pros and cons of isolation-by-VRF versus
+   isolation-by-firewall, and where a determined operator could
+   accidentally leak Tenant-B to the internet.
+3. **Break it:** change the external eBGP session's VRF from TENANT-A to
+   the default VRF on bleaf1. Predict what happens to Tenant-A's internet
+   reachability and to the type-5 advertisement, then verify and explain.
+4. You must add internet access for Tenant-B too, but through a *different*
+   external router for compliance. Sketch the bleaf1 changes (interfaces,
+   VRF, eBGP, redistribution) and confirm the two tenants' external paths
+   stay isolated end to end.
