@@ -12,6 +12,16 @@ You will implement and test:
 - eBGP dual ISP edge (WAN HA)
 - GR/NSF/NSR/SSO concepts and validation approach
 
+## How to use this lab
+
+This is a **capstone practice lab** — it assembles the redundancy
+techniques from the `vrrp`, `bfd-ospf`, `bfd-bgp`, `graceful-restart`, and
+`spine-leaf` labs into one design. Do those first. Each task gives an
+objective; build it, then **run the matching Failure Drill and predict the
+outcome before you trigger it**. The design is only "done" when every drill
+behaves as you predicted — a layer that *looks* configured but fails its
+drill is the whole point of catching.
+
 ## Topology
 
 ```mermaid
@@ -421,6 +431,14 @@ traceroute 172.20.20.20
 
 ## Failure Drills
 
+**Predict each before you trigger it.** For every drill below, write down
+(a) which redundancy mechanism should catch it, (b) roughly how long the
+recovery takes, and (c) what a continuous `ping` from hosta to app1 should
+show — zero loss, a few dropped packets, or a multi-second gap. Then run
+the drill with the ping going and compare. A drill whose recovery is slower
+than you predicted usually means a missing knob (BFD, VRRP tracking, ECMP)
+one layer down.
+
 | Drill | Trigger | Expected Result |
 |------|---------|-----------------|
 | Access link member loss | down one hosta member link | Traffic continues over remaining member |
@@ -478,6 +496,26 @@ Lab mapping:
 | NSF | Behaviorally testable via dataplane continuity tests |
 | NSR | Potentially testable, image-dependent |
 | SSO | Conceptual only in this environment |
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Rank the five HA layers (MLAG, VRRP, OSPF/ECMP, BFD, dual-ISP eBGP) by
+   how fast each recovers from its failure, and explain why they *stack*
+   — i.e. why a single layer (say just VRRP) leaves gaps the others fill.
+2. VRRP upstream tracking (Task 3) decrements priority when an uplink
+   fails. Construct the failure where, *without* tracking, the VRRP master
+   keeps the VIP but black-holes traffic — and show how tracking fixes it.
+3. Aggressive BFD (Task 5) and BGP graceful restart pull in opposite
+   directions during a control-plane restart. For the "OSPF/BGP process
+   restart" failure drill, which behavior do you actually want, and how do
+   you tune both so a *planned* restart is lossless but a *real* crash
+   still fails over fast?
+4. A single fiber cut takes out *both* dist-to-core uplinks (they share a
+   conduit). Walk through which HA layers help and which are useless
+   against correlated failure, and what design change (diverse paths)
+   actually addresses it.
 
 ## Experiments
 

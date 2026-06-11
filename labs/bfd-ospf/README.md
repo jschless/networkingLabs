@@ -4,6 +4,16 @@
 Learn BFD (Bidirectional Forwarding Detection) integrated with OSPF. See how BFD enables
 sub-second failure detection — dramatically faster than OSPF's default 40-second dead timer.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Steps give you an objective and
+hide config behind solution toggles.
+
+- **Predict before you configure**, **open the solution to check or when
+  stuck**, and — most importantly here — **measure**: this lab is about
+  *timing* the difference BFD makes, so do the before/after convergence
+  test yourself rather than taking the numbers on faith.
+
 ## Topology
 
 ```mermaid
@@ -139,7 +149,12 @@ show ip ospf neighbor
 
 You should see BFD sessions in UP state for each OSPF neighbor.
 
-### Step 5: Simulate a link failure
+### Step 5: Break it — measure convergence with and without BFD
+
+**Predict first:** with BFD enabled (default 300ms × 3), how long after a
+link failure will OSPF declare the neighbor down? And *without* BFD, what
+timer governs it — and roughly how many seconds of black-holed traffic
+does that mean? Commit to both numbers, then measure.
 
 <details>
 <summary>Show configuration</summary>
@@ -266,19 +281,24 @@ BFD Peers:
                 Echo receive interval: 50ms
 ```
 
-## Challenge Exercises
+## Challenge questions
 
-1. Before enabling BFD, time how long it takes OSPF to detect a downed link
-   by running `watch` on `show ip ospf neighbor` and then doing `ip link set eth1 down`.
-   Record the convergence time.
+No answers provided — reason them through. (1 and 2 are the required
+hands-on measurement; the rest are reasoning + observation.)
 
-2. Enable BFD and repeat the test. Compare convergence times.
-
-3. Try setting very aggressive BFD timers (50ms × 3). Do BFD sessions stay stable
-   in a virtual environment? What happens if the host is under load?
-
-4. Check `show bfd peers detail` for packet counters. What do `TX` and `RX` counts
-   tell you about the BFD health?
-
-5. Configure BFD on the loopback as well (for completeness). Does it form a session?
-   Why or why not?
+1. Time OSPF's *native* failure detection: remove BFD, `watch` the neighbor
+   table, drop a link, record the seconds. Then re-enable BFD and repeat.
+   Quantify the black-hole window you eliminated.
+2. Set aggressive timers (50ms × 3) and watch session stability while the
+   host is busy. Explain *why* over-aggressive BFD causes false positives
+   in a virtualized/loaded environment, and the production rule of thumb
+   that prevents flapping.
+3. BFD detects failure and notifies OSPF — but BFD is protocol-independent.
+   If this router also ran BGP and IS-IS over the same link, what happens
+   to all three when BFD declares the peer down, and why is that single
+   shared detector better than three separate dead timers?
+4. A link's *physical* layer stays up (transceiver lit) but the path beyond
+   a media converter is dead. Does OSPF's dead timer catch it? Does BFD?
+   Explain what BFD actually tests that hello timers don't.
+5. Would BFD form a session on a loopback? Reason from what BFD verifies
+   (a forwarding path between two endpoints) to the answer.

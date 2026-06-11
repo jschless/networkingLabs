@@ -1,7 +1,10 @@
-# Lab: VRRP (Virtual Router Redundancy Protocol)
+# VRRP (First-Hop Redundancy) — Practice Lab
 
-## Purpose
-Learn how VRRP provides first-hop redundancy: two routers share a single virtual IP address. Hosts use the VIP as their default gateway. If the master router fails, the backup takes over the VIP within seconds.
+A host has one default gateway, but a gateway is a single point of failure.
+VRRP fixes that: two routers share one virtual IP, hosts point at the VIP,
+and a backup takes over within seconds when the master dies — without the
+host ever changing its ARP entry. You configure the pair, prove a failover,
+and reason about *why* the host doesn't notice.
 
 ## Topology
 
@@ -25,156 +28,184 @@ flowchart TB
     class host,server host
 ```
 
+**Pre-configured:** all IP addresses; static routes to the server on r1/r2;
+return routes on the server via both; host's default gateway is the VIP
+192.168.1.254.
+
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an objective
+and hints; configuration is behind solution toggles.
+
+- **Predict before you configure**, **open the solution to check or when
+  stuck**, and **verify** with `show vrrp` and failover pings.
+
 ## Deploy
 
 ```bash
 sudo containerlab deploy -t topology.clab.yml
+docker exec -it clab-vrrp-r1 Cli
 ```
 
-## Pre-configured
+---
 
-- All IP addresses and interface configs
-- Static routes: r1 and r2 each have a route to 10.99.0.1/32 via their server-facing link
-- server has return routes toward 192.168.1.0/24 via both r1 and r2
-- host uses 192.168.1.254 (the VRRP VIP) as default gateway
+## Task 1 — Configure the VRRP pair
 
-## Your Tasks
+**Objective:** Make r1 the master (priority 110, preempt) and r2 the backup
+(default priority) for VRID 1, VIP 192.168.1.254 on Ethernet1.
 
-### Task 1 — Configure VRRP on r1 (master, priority 110)
+**Predict first:** the VIP is 192.168.1.254 — an address neither router
+*owns* as a real interface IP. What MAC will the host see for that VIP, and
+which router answers ARP for it?
 
-```
-Cli -c "enable" -c "configure" -c "interface Ethernet1" \
-      -c "vrrp 1 ip 192.168.1.254" \
-      -c "vrrp 1 priority 110" \
-      -c "vrrp 1 preempt"
-```
-
-Or enter vtysh interactively:
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-```
+- On the LAN interface: `vrrp 1 ip 192.168.1.254`, plus `vrrp 1 priority
+  110` and `vrrp 1 preempt` on r1.
+- r2 just needs the VIP; priority defaults to 100.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **r1**:
+```text
 interface Ethernet1
  vrrp 1 ip 192.168.1.254
  vrrp 1 priority 110
  vrrp 1 preempt
 ```
-</details>
 
-### Task 2 — Configure VRRP on r2 (backup, default priority 100)
-
-<details>
-<summary>Show configuration</summary>
-
-```
+On **r2**:
+```text
 interface Ethernet1
  vrrp 1 ip 192.168.1.254
 ```
+
 </details>
 
-Priority defaults to 100, which is lower than r1's 110 — r1 wins the election.
+<details>
+<summary>Check your work</summary>
 
-### Task 3 — Verify
+`show vrrp` on r1 shows `State Master`, `Priority 110`, `Virtual MAC
+00:00:5e:00:01:01`; r2 shows `Backup`. Prediction answer: the host sees
+the **virtual MAC** `00:00:5e:00:01:<VRID>` (here `...01:01`), and whichever
+router is master answers ARP for the VIP with that MAC. Because the MAC is
+derived from the VRID and is *identical* on whichever router is master, a
+failover doesn't change it — which is the whole reason the host never has
+to re-ARP (Task 3 proves it).
 
-On r1:
-```
-show vrrp
-show vrrp interface Ethernet1
-```
+</details>
 
-Expected output for r1:
-```
-Virtual Router ID  1
-  State           Master
-  Priority        110
-  Virtual IP      192.168.1.254
-  Virtual MAC     00:00:5e:00:01:01
-```
+---
 
-On r2, State should show `Backup`.
+## Task 2 — Verify steady state and end-to-end path
 
-### Task 4 — Test connectivity
+**Objective:** Confirm the roles and that the host reaches the server
+through the VIP.
 
-From host, ping the server loopback through the VIP:
-```
-ping 10.99.0.1
+```text
+# on r1:  show vrrp ; show vrrp interface Ethernet1
+# on host: ping 10.99.0.1
 ```
 
-### Task 5 — Failover test
+<details>
+<summary>Check your work</summary>
 
-Bring down r1's LAN interface to simulate a failure:
-```bash
-# On r1:
-ip link set eth1 down
-```
+r1 Master, r2 Backup, and the host pings the server loopback through
+192.168.1.254 (currently riding r1). Only the master forwards for the VIP;
+the backup sits silent, listening for advertisements. That idle backup is
+the cost of active/standby FHRP — half your gateway capacity is unused
+until a failure (a tradeoff the challenge questions revisit).
 
-Immediately check r2:
-```
-show vrrp
-```
+</details>
 
-r2 should now show `Master`. Within ~3 seconds (3 missed advertisements) r2 takes over.
+---
 
-Ping from host should resume within a few seconds.
+## Task 3 — Break it: fail the master, time the recovery
 
-### Task 6 — Preemption / recovery
+**Objective:** Shut r1's LAN interface, watch r2 take over, and observe the
+host recover — *without changing its ARP entry*.
 
-Restore r1's interface:
-```bash
-# On r1:
-ip link set eth1 up
-```
+Break it: `ip link set eth1 down` on r1. Check `show vrrp` on r2.
 
-Because `vrrp 1 preempt` is configured on r1, it will re-send advertisements with priority 110 and reclaim the Master role from r2 (which has priority 100).
+**Predict first:** how long until r2 becomes master — instantly, or after a
+timeout? What's the timer, and does the host have to re-ARP for the VIP to
+keep working?
 
-Observe r1 transitioning: Backup -> Master, and r2 transitioning: Master -> Backup.
+<details>
+<summary>What you should observe</summary>
+
+r2 transitions to Master after ~3 seconds — three missed 1-second
+advertisements — then sends a **gratuitous ARP** so the L2 switches relearn
+which port the virtual MAC now lives behind. The host's ARP cache is
+untouched (same VIP, same virtual MAC); only the *switch* MAC table moves.
+Pings resume in 3–4 s. This is the elegance of VRRP: failover is a
+control-plane event between the routers plus an L2 relearn, completely
+invisible to the host's IP stack. Sub-second failover would need BFD
+(see the bfd-* labs) or tuned timers.
+
+</details>
+
+---
+
+## Task 4 — Preemption: the master reclaims its role
+
+**Objective:** Restore r1 and observe it take the master role back.
+
+Restore: `ip link set eth1 up` on r1.
+
+**Predict first:** r1 comes back with priority 110 > r2's 100, and has
+`preempt` configured. Will it reclaim master immediately, or wait? What
+would happen if `preempt` were *off*?
+
+<details>
+<summary>Check your work</summary>
+
+With `preempt`, r1 reclaims master on its first advertisement (priority
+110 beats 100) — r1 Backup→Master, r2 Master→Backup. Without `preempt`,
+r1 would come back as *backup* and leave r2 as master indefinitely, since
+a working master isn't displaced. Preempt is the knob that decides
+"always prefer the designated primary" vs. "avoid an extra failover by
+leaving whoever's up in charge" — both are valid; the second avoids a
+second traffic blip on recovery.
+
+</details>
+
+---
 
 ## Key Concepts
 
-### VRRP Virtual MAC
-The VIP always has the same MAC address regardless of which physical router is master:
-```
-00:00:5e:00:01:<VRID>
-```
-For VRID 1: `00:00:5e:00:01:01`
+- **Virtual MAC** `00:00:5e:00:01:<VRID>` — stable across failover, so
+  hosts never re-ARP.
+- **Master election** — highest priority (1–254, default 100); tiebreak
+  highest IP; the address *owner* (real IP == VIP) always wins at 255.
+- **Timers** — master advertises every 1 s; backup declares it dead after
+  3 missed (~3 s).
+- `show vrrp`, `show vrrp interface <if>`, `debug vrrp events`.
 
-This is why ARP doesn't need to update on failover — the MAC is stable.
+---
 
-### Master Election
-- Highest priority wins (range 1–254, default 100)
-- Tiebreaker: highest IP address
-- The IP address owner (router whose real IP equals the VIP) always wins (priority 255)
+## Challenge questions
 
-### Preemption
-When `vrrp X preempt` is set, a router that recovers and has a higher priority than the current master will take over. cEOS behavior depends on explicit configuration in this lab.
+No answers provided — reason them through.
 
-### Advertisement Interval
-The master sends VRRP advertisements every 1 second. If the backup misses 3 consecutive advertisements (3 seconds), it declares the master dead and transitions to Master state.
-
-### Useful Commands
-
-```
-show vrrp                          # summary of all VRRP instances
-show vrrp interface Ethernet1           # detail for specific interface
-show vrrp 1                        # detail for VRID 1
-```
-
-```
-debug vrrp packets                 # log VRRP advertisement packets
-debug vrrp events                  # log state transitions
-```
-
-## Failover Timing
-
-| Event | Time |
-|-------|------|
-| Master fails | 0s |
-| Backup detects (3 missed adv) | ~3s |
-| Backup sends gratuitous ARP for VIP | ~3s |
-| Hosts update ARP cache | ~3s |
-| Traffic resumes | ~3–4s |
-
-Preemption back to master is immediate (first advertisement with higher priority triggers it).
+1. The backup sits idle until failover — half your gateway capacity wasted.
+   Design an *active/active* setup using two VRID groups with opposite
+   priorities across two VLANs, and explain how it balances load while
+   keeping redundancy.
+2. r1 is master but its *uplink to the server* fails while its LAN
+   interface stays up. With plain VRRP, does failover happen? What feature
+   ties VRRP priority to upstream reachability, and how would you configure
+   it?
+3. VRRP failover takes ~3 s. Walk through exactly where that time goes, and
+   which knobs (advertisement interval, BFD) you'd tune for sub-second —
+   and the risk of tuning them too aggressively.
+4. Compare VRRP with anycast-gateway (as used in the vxlan-evpn lab) for
+   first-hop redundancy. Which scales to a large fabric and why, and what
+   does VRRP do that anycast gateway doesn't need to?
 
 ## Destroy
 
@@ -184,9 +215,9 @@ sudo containerlab destroy -t topology.clab.yml
 
 ## Extensions
 
-These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+Optional follow-on ideas (not part of the validated workflow):
 
-- Add interface or object tracking so VRRP priority changes are tied to upstream reachability instead of interface state alone.
-- Disable preemption and compare the steady-state master behavior after the original master returns.
-- Capture gratuitous ARP during failover and map it to the end-host recovery timeline.
-- Add a second VLAN and different master priorities to compare active/active gateway placement across segments.
+- Add interface/object tracking so priority follows upstream reachability.
+- Disable preemption and compare steady-state behavior after the master
+  returns.
+- Capture the gratuitous ARP during failover and map it to host recovery.
