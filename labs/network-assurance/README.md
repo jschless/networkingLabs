@@ -2,6 +2,13 @@
 
 Demonstrates four core network observability mechanisms using Linux containers with FRR for the routed underlay.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The environment is pre-built;
+you produce the configuration or the diagnosis from the objectives.
+**Predict each result before you verify**, and treat the challenge
+questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -157,3 +164,19 @@ docker exec clab-network-assurance-management \
 3. **SPAN forensics**: use the analyzer to capture traffic while client pings server, then open the pcap in Wireshark — confirm you see the original ICMP plus enclosing frames
 4. **NetFlow top-N**: run `iperf3` between client and server, then query NetFlow for top flows by byte count
 5. **SNMPv3 vs v2c**: capture snmp traffic on management:eth1 — v2c community is in plaintext, v3 auth+priv is encrypted
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Assurance is "prove the network is doing what you intended," not just
+   "is it up." Pick one mechanism in this lab and state the *intent* it
+   verifies and the failure it would catch that a simple ping wouldn't.
+2. Active probing (IP SLA-style) vs. passive telemetry (streaming counters):
+   give a failure each one sees first, and why you want both.
+3. A link is up, the protocol is up, but an application is degraded. What
+   layers of assurance would surface that, and where does ping-based
+   monitoring go blind?
+4. Design a minimal set of assurance checks for this topology that would
+   alert before users notice — and justify why each is worth the
+   operational cost.

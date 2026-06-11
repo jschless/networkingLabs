@@ -5,6 +5,13 @@ This lab focuses on two quiet failure domains that break user experience fast:
 - DHCP lease delivery
 - DNS resolver correctness
 
+## How to use this lab
+
+This is a **practice troubleshooting lab**. Something is broken (or about to
+be); your job is to find and fix it from the symptom, not a script. **Form
+a hypothesis before each command**, predict what a healthy vs. broken output
+looks like, and only then run it. The challenge questions test transfer.
+
 ## Topology
 
 ```mermaid
@@ -74,3 +81,18 @@ docker exec clab-dhcp-dns-troubleshooting-client1 dig app.internal.lab A
 - successful DHCP does not mean the client learned correct service options
 - IP reachability and name resolution fail differently and should be tested separately
 - service troubleshooting starts with the lease contents, not guesswork
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. A client gets no IP. Lay out the ordered checklist from the client's
+   DISCOVER to the server's ACK, and which single missing piece (relay,
+   scope, reachability) each step would expose.
+2. DHCP works but DNS resolution fails for some names only. What layers
+   could cause "some names" specifically, and how do you bisect them?
+3. `ip helper-address` forwards DHCP across a routed boundary — what exactly
+   does the relay rewrite, and how does the server pick the right subnet to
+   offer from?
+4. A rogue DHCP server hands out a bad gateway. Why does the client believe
+   it, and which L2 feature stops it (tie back to campus-l2-hardening)?

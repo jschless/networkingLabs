@@ -4,6 +4,13 @@ This lab isolates a management-plane problem that shows up everywhere: the box i
 
 You will protect router-local management services by source subnet and interface.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The environment is pre-built;
+you produce the configuration or the diagnosis from the objectives.
+**Predict each result before you verify**, and treat the challenge
+questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -79,3 +86,19 @@ docker exec clab-management-access-control-device1 iptables -L MGMT-IN -n -v --l
 - management-plane reachability is a separate design problem from data-plane reachability
 - interface placement matters for management policy
 - counters are the fastest way to prove that an access rule is doing what you think
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. You lock down management with an ACL on the VTY/mgmt interface. Construct
+   the mistake that locks *you* out, and the safe procedure (reservation /
+   console fallback) that prevents it.
+2. In-band vs. out-of-band management: give a failure where in-band
+   management dies exactly when you need it most, and what OOB buys you.
+3. Role-based admin access (read-only vs. config) — why enforce it on the
+   device even when you "trust" your team, and how does it limit blast
+   radius after a credential leak?
+4. SSH vs. the legacy alternatives: what specifically does each protect, and
+   what's still exposed even with SSH if the management plane shares the
+   data plane?

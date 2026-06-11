@@ -27,6 +27,13 @@ Think of the tools this way:
 - gNMIc: collector that turns gNMI telemetry into Prometheus metrics
 - syslog collector: device-generated event context
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The environment is pre-built;
+you produce the configuration or the diagnosis from the objectives.
+**Predict each result before you verify**, and treat the challenge
+questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -545,6 +552,22 @@ sudo containerlab destroy -t labs/telemetry-monitoring-hybrid/topology-full.clab
 docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/
 sudo containerlab deploy -t labs/telemetry-monitoring-hybrid/topology-full.clab.yml
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Streaming telemetry vs. SNMP polling: compare them on latency,
+   granularity, and load on the device. Give a failure that streaming
+   catches in seconds and polling misses for a minute.
+2. This lab is "hybrid" — multiple collection methods. Why not standardize
+   on one, and what does each method uniquely see?
+3. A dashboard shows green but users complain. Walk through how metric
+   choice, aggregation interval, and alert thresholds can all hide a real
+   problem, and how you'd close each gap.
+4. Design the three or four alerts you'd actually page on for this topology
+   (vs. merely record), and justify why each is symptom-of-user-impact, not
+   just a raw counter.
 
 ## Extensions
 

@@ -10,6 +10,13 @@ Early Detection), and SFQ (Stochastic Fair Queuing).
 docker build -t qos-lab:local labs/qos-enterprise/
 ```
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The environment is pre-built;
+you produce the configuration or the diagnosis from the objectives.
+**Predict each result before you verify**, and treat the challenge
+questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -269,3 +276,19 @@ tc filter add dev eth3 parent ffff: protocol ip prio 1 \
 ```bash
 sudo containerlab destroy -t labs/qos-enterprise/topology.clab.yml --cleanup
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Classification, marking, queuing, and policing/shaping are distinct
+   stages. Trace a voice packet through all four and explain what each does
+   to it (or doesn't).
+2. Trust boundaries: why do you re-mark (or not trust) DSCP at the access
+   edge, and what attack does trusting endpoint markings enable?
+3. Policing drops; shaping buffers. For a bursty TCP application crossing a
+   slow WAN link, which behaves better and why — and what's the cost of the
+   one that's better?
+4. Under congestion, your priority queue starves best-effort traffic. Show
+   how that happens and the mechanism (queue limits / bandwidth guarantees)
+   that prevents starvation while still protecting voice.
