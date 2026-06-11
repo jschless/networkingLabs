@@ -4,6 +4,14 @@ Practice lab: configure dual-homed BGP with traffic engineering policies plus OS
 
 See `labs/enterprise-wan-edge/` for the fully-working reference solution.
 
+## How to use this lab
+
+This is a **capstone practice lab**. The foundation is pre-built; the
+"Your Tasks" section gives you objectives (not full configs) to implement,
+then verify. Build it from the objectives and your knowledge of the
+component labs — reach for those labs' solutions only when stuck. Predict
+each verification's result before you run it.
+
 ## Topology
 
 ```mermaid
@@ -93,6 +101,23 @@ sudo containerlab deploy -t labs/enterprise-wan-edge-capstone/topology.clab.yml
 # or
 ./scripts/lab.sh deploy enterprise-wan-edge-capstone
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. With two ISPs, design the inbound and outbound traffic policy for
+   "ISP-A primary, ISP-B backup" — name the BGP attribute, direction, and
+   router for each half, and which half you cannot guarantee.
+2. The edge advertises only the enterprise aggregate to both ISPs. What
+   does an outbound prefix-list protect against, and what happens if a more
+   specific leaks?
+3. Fail ISP-A and trace, step by step, how outbound and inbound traffic
+   each shift to ISP-B — and why the two directions can recover at
+   different speeds.
+4. A default-only design vs. taking full tables from both ISPs: compare
+   memory, convergence, and path quality, and state which this lab uses and
+   why.
 
 ## Extensions
 

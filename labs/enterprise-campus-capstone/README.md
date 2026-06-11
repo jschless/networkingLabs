@@ -4,6 +4,14 @@ Practice lab: configure a full 3-tier campus network from scratch. IPs and inter
 
 See `labs/enterprise-campus/` for the fully-working reference solution.
 
+## How to use this lab
+
+This is a **capstone practice lab**. The foundation is pre-built; the
+"Your Tasks" section gives you objectives (not full configs) to implement,
+then verify. Build it from the objectives and your knowledge of the
+component labs — reach for those labs' solutions only when stuck. Predict
+each verification's result before you run it.
+
 ## Topology
 
 ```mermaid
@@ -146,6 +154,23 @@ sudo containerlab deploy -t labs/enterprise-campus-capstone/topology.clab.yml
 # or
 ./scripts/lab.sh deploy enterprise-campus-capstone
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. STP root and VRRP master are both assigned per-VLAN to the same dist
+   switch. Explain why aligning them matters, and trace the suboptimal path
+   if VLAN 20's STP root and VRRP master ended up on different switches.
+2. The edge uses an outbound prefix-list so only 198.51.100.0/24 is
+   advertised to the ISP. What disaster does that one filter prevent, and
+   what's the blast radius if it's removed?
+3. dist1/dist2 are OSPF ABRs (SVIs in area 1, uplinks in area 0). Why put
+   the access VLANs in a non-backbone area at all — what does it buy you as
+   the campus grows?
+4. Trigger a single failure (kill dist1) and build the incident timeline
+   from operational commands only: which of STP, VRRP, and OSPF reconverge,
+   in what order, and what does client-a experience?
 
 ## Extensions
 

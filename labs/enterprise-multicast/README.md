@@ -14,6 +14,15 @@ docker build -t enterprise-multicast:local labs/enterprise-multicast/
 sudo containerlab deploy -t labs/enterprise-multicast/topology.clab.yml
 ```
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+the "What You Configure" section gives you objectives, not commands — you
+produce the configuration. Work the suggested steps, **predict each
+result before you verify**, and use the success criteria to grade
+yourself. The break-it steps and challenge questions are where the
+learning sticks.
+
 ## Topology
 
 ```mermaid
@@ -101,3 +110,20 @@ Then explain why local receivers may still work while remote receivers fail.
 - multicast is built from receiver state, not destination routing alone
 - unicast reachability does not guarantee multicast forwarding
 - RP, IGMP, and PIM each solve different pieces of the problem
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. After your Break-It, the *local* receiver kept working while the
+   *remote* one failed when you removed the RP. Explain precisely why the
+   RP matters for one and not the other (shared tree vs. local source).
+2. Unicast reachability between source and remote receiver is fine, yet
+   multicast fails. Name the three independent pieces of state (IGMP, PIM
+   neighbor, mroute) and which one each failure mode removes.
+3. PIM-SM builds a shared tree rooted at the RP, then may switch to a
+   shortest-path tree. What triggers the SPT switchover, and why does the
+   design bother with two trees instead of one?
+4. The RP is a single point of failure here. Sketch how you'd add RP
+   redundancy (Anycast-RP / BSR) and what each receiver/source would need
+   to keep working through an RP failure.

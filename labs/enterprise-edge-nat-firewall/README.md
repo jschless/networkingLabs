@@ -15,6 +15,15 @@ docker build -t dmz-lab:local labs/enterprise-edge-nat-firewall/
 sudo containerlab deploy -t labs/enterprise-edge-nat-firewall/topology.clab.yml
 ```
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+the "What You Configure" section gives you objectives, not commands — you
+produce the configuration. Work the suggested steps, **predict each
+result before you verify**, and use the success criteria to grade
+yourself. The break-it steps and challenge questions are where the
+learning sticks.
+
 ## Topology
 
 ```mermaid
@@ -127,6 +136,24 @@ Then verify guest cannot reach corp/internal services.
 - NAT is separate from security policy
 - “inside can get out” and “outside can reach published service” are different design problems
 - guest policy is best enforced explicitly, not assumed
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. "Inside can get out" (PAT) and "outside can reach a published service"
+   (static NAT) are different problems. Explain why, and what would break
+   if you tried to serve the DMZ web server with PAT instead of static NAT.
+2. NAT and security policy are separate. Construct a case where a flow is
+   *translated* correctly but *denied* by policy, and one where it's
+   permitted but un-NATed and therefore unreachable — and the show/log
+   commands that distinguish them.
+3. Guest isolation is enforced explicitly, not assumed. List every
+   destination guest must be denied and argue why a single "deny guest to
+   RFC1918" rule is both necessary and insufficient.
+4. Design hairpin NAT so an inside user reaches the DMZ web server via its
+   public address. Why does the naive setup fail, and what extra
+   translation fixes it?
 
 ## Extensions
 

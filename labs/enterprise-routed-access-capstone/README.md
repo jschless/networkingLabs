@@ -4,6 +4,14 @@ Practice lab: configure a full L3-everywhere campus with OSPF multi-area, BFD, a
 
 See `labs/enterprise-routed-access/` for the fully-working reference solution.
 
+## How to use this lab
+
+This is a **capstone practice lab**. The foundation is pre-built; the
+"Your Tasks" section gives you objectives (not full configs) to implement,
+then verify. Build it from the objectives and your knowledge of the
+component labs — reach for those labs' solutions only when stuck. Predict
+each verification's result before you run it.
+
 ## Topology
 
 ```mermaid
@@ -130,6 +138,22 @@ sudo containerlab deploy -t labs/enterprise-routed-access-capstone/topology.clab
 # or
 ./scripts/lab.sh deploy enterprise-routed-access-capstone
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Routed access pushes the L3 boundary down to the access switch — no STP
+   between access and distribution. What failure modes does that eliminate,
+   and what new requirement does it put on the access switches?
+2. Each access switch is its own L3 hop. How do client subnets stay
+   reachable as you add access switches — what's advertised, and by which
+   protocol?
+3. Compare first-hop redundancy here vs. a VLAN-spanning campus: why is
+   VRRP often unnecessary in routed access, and what replaces it?
+4. Trigger an access-uplink failure and trace reconvergence. Why is it
+   faster than the equivalent STP+VRRP reconvergence in a layer-2 access
+   design?
 
 ## Extensions
 

@@ -4,6 +4,14 @@ Practice lab: build a screened-subnet DMZ from scratch. IPs, routes, and service
 
 See `labs/enterprise-dmz/` for the fully-working reference solution.
 
+## How to use this lab
+
+This is a **capstone practice lab**. The foundation is pre-built; the
+"Your Tasks" section gives you objectives (not full configs) to implement,
+then verify. Build it from the objectives and your knowledge of the
+component labs — reach for those labs' solutions only when stuck. Predict
+each verification's result before you run it.
+
 ## Topology
 
 ```mermaid
@@ -151,6 +159,22 @@ nft monitor
 ```bash
 ./scripts/lab.sh destroy enterprise-dmz-capstone
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. State the default-deny posture between each zone pair (inside↔dmz,
+   dmz↔outside, inside↔outside) and justify each direction from a threat
+   model, not convenience.
+2. A web server in the DMZ is compromised. Walk through exactly which
+   firewall rules contain the blast radius and which (if mis-set) would let
+   the attacker pivot to inside.
+3. Where does NAT happen for DMZ-published services vs. inside-to-internet
+   traffic, and why are they different translations?
+4. Add a second DMZ service on a new port. Enumerate every policy and NAT
+   object you must touch, and how you'd verify you didn't open anything
+   extra.
 
 ## Extensions
 

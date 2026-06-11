@@ -34,6 +34,14 @@ This lab demonstrates the **L3-everywhere** (also called "routed access") campus
 
 ---
 
+## How to use this lab
+
+This is a **practice lab** on a fully pre-configured reference design — you
+observe, predict, and explain rather than build. The payoff is the **demo
+tasks**: at each one, predict what will happen (what reconverges, how long,
+what the client sees) *before* you trigger it, then verify. The design
+rationale sections are reference material for the challenge questions.
+
 ## Topology
 
 ```mermaid
@@ -231,6 +239,8 @@ The stub area configuration means acc1 receives only a default route (0.0.0.0/0)
 
 ### Task 1: Fast Failover via BFD
 
+**Predict first:** before you fail the link — with BFD on the routed access uplink, how many seconds of client loss do you expect, and how does that compare to the same failure detected by an IGP dead timer alone?
+
 Simulate an uplink failure on dist1 and observe sub-second reconvergence:
 
 **Terminal 1 — watch routes on core1:**
@@ -359,3 +369,19 @@ sudo containerlab destroy -t labs/enterprise-routed-access/topology.clab.yml --c
 4. **Stub areas keep the LSDB lean.** Access switches don't need to know about external routes — they just need a default route to reach everything else. The `area 0.0.0.1 stub` configuration suppresses type-5 LSAs from reaching area 1.
 
 5. **Host migration is trivial.** The only thing that needs to change when moving a host is the host's own IP configuration. The network self-heals via routing.
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Routed access removes STP between access and distribution. List the
+   failure modes that eliminates and the new requirement it places on the
+   access switch (hint: it's now a router).
+2. With BFD on the access uplinks, quantify the failover improvement versus
+   STP+VRRP in a layer-2 access design, and explain where the time goes in
+   each.
+3. Client subnets live on the access switch now. What advertises them
+   upward, and what happens to a subnet when its access switch reboots —
+   compared to a VLAN that spanned the distribution layer?
+4. Why is VRRP usually unnecessary in routed access, and what provides
+   first-hop resilience instead?
