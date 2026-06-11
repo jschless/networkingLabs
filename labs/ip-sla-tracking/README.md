@@ -1,11 +1,11 @@
-# Lab: IP SLA + Object Tracking + Floating Static Routes
+# IP SLA + Object Tracking + Floating Static Routes — Practice Lab
 
-## Overview
-
-This lab teaches IP SLA probes combined with object tracking and floating static
-routes to achieve automatic failover. When the primary ISP link goes down, a
-tracked static route is withdrawn from the routing table and the backup static
-route (with higher administrative distance) takes its place automatically.
+A floating static route fails over when the *next-hop* dies — but what if
+the link stays up while the path beyond it is dead? IP SLA fixes that: a
+probe actively tests reachability, an object track turns the result into
+Up/Down, and a tracked static route is withdrawn the moment the probe
+fails. You'll build the chain and prove it fails over on a *path* failure
+that a plain floating static would miss.
 
 ## Topology
 
@@ -24,231 +24,220 @@ flowchart LR
     class isp1,isp2 isp
 ```
 
-## IP Addressing
+router faces isp1 on eth1 (primary) and isp2 on eth2 (backup). Both ISPs
+advertise the same probe target loopback 10.99.0.1/32.
 
-| Node   | Interface | Address       | Notes                        |
-|--------|-----------|---------------|------------------------------|
-| router | eth1      | 10.0.1.1/30   | primary uplink               |
-| isp1   | eth1      | 10.0.1.2/30   |                              |
-| isp1   | lo        | 10.99.0.1/32  | SLA probe target             |
-| router | eth2      | 10.0.2.1/30   | backup uplink                |
-| isp2   | eth1      | 10.0.2.2/30   |                              |
-| isp2   | lo        | 10.99.0.1/32  | same IP — both ISPs reachable|
+## How to use this lab
 
-## Lab Steps
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
 
-### Step 1: Start the lab
+- **Predict before you configure**, **open hints before the solution**,
+  and **verify** with `show track`, `show ip sla statistics`, `show ip
+  route`.
+
+## Deploy
 
 ```bash
 sudo containerlab deploy -t topology.clab.yml
+docker exec -it clab-ip-sla-tracking-router Cli
 ```
 
-Verify both ISPs are reachable:
-```
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "ping 10.0.1.2"
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "ping 10.0.2.2"
-```
+---
 
-### Step 2: Configure floating static routes (no tracking yet)
+## Task 1 — Floating static routes (no tracking yet)
+
+**Objective:** Install a default via isp1 at AD 5 and a backup via isp2 at
+AD 10. Confirm only the primary is in the RIB.
+
+**Predict first:** both routes are configured. How many appear in
+`show ip route`, and where does the AD-10 route "live" while it's not
+installed?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
+
+- `ip route 0.0.0.0/0 <next-hop> <AD>` — the trailing number is the
+  administrative distance.
+- `show ip route` shows installed routes; the higher-AD one is in config
+  but not the RIB.
+
+</details>
+
+<details>
+<summary>Solution</summary>
 
 On **router**:
-```
-Cli
-conf t
+```text
 ip route 0.0.0.0/0 10.0.1.2 5
 ip route 0.0.0.0/0 10.0.2.2 10
 ```
 
-Check routing table:
-```
-show ip route
-```
+</details>
 
-Only one route will appear: `S>* 0.0.0.0/0 [5/0] via 10.0.1.2` (AD=5 wins).
-The backup at AD=10 exists but is not installed in the RIB (lower priority).
+<details>
+<summary>Check your work</summary>
 
-Verify both routes are configured:
-```
-show ip route 0.0.0.0/0 longer-prefixes
-```
+Only `S>* 0.0.0.0/0 [5/0] via 10.0.1.2` is installed; the AD-10 backup is
+configured but held out of the RIB because a lower-AD path to the same
+prefix exists. This is the floating static mechanism — but note its blind
+spot, which the next tasks expose: it only reacts when the *next-hop*
+(10.0.1.2) becomes unreachable. A failure *past* isp1 leaves the link up
+and the route happily installed.
 
 </details>
 
-### Step 3: Configure IP SLA probe
+---
+
+## Task 2 — Add an IP SLA probe and a track object
+
+**Objective:** Probe 10.99.0.1 via eth1 with IP SLA, and bind a track
+object to its reachability.
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
+
+- `ip sla 1` / `icmp-echo 10.99.0.1 source-interface eth1` / `frequency 5`,
+  then `ip sla schedule 1 life forever start-time now`.
+- `track 1 ip sla 1 reachability`.
+- Verify `show ip sla statistics` (return code Success) and
+  `show track 1` (State is Up).
+
+</details>
+
+<details>
+<summary>Solution</summary>
 
 On **router**:
-```
-Cli
-conf t
+```text
 ip sla 1
  icmp-echo 10.99.0.1 source-interface eth1
  frequency 5
 ip sla schedule 1 life forever start-time now
-```
-
-Check SLA status:
-```
-show ip sla statistics
-```
-
-You should see `Latest operation return code: Success` and the round-trip time
-for ICMP echo probes to 10.99.0.1 via eth1.
-
-</details>
-
-### Step 4: Configure track object
-
-<details>
-<summary>Show configuration</summary>
-
-On **router**:
-```
-Cli
-conf t
+!
 track 1 ip sla 1 reachability
 ```
 
-Check track status:
-```
-show track 1
-```
+</details>
 
-Output will show `State is Up` when the SLA probe succeeds.
+<details>
+<summary>Check your work</summary>
+
+`show ip sla statistics` shows `Latest operation return code: Success`
+with an RTT; `show track 1` shows `State is Up`. The track object's whole
+job is translation: it turns a continuous stream of probe results into a
+single binary Up/Down signal that a route (or HSRP, or anything else) can
+consume. Right now nothing uses it yet — that's Task 3.
 
 </details>
 
-### Step 5: Tie primary route to track object
+---
+
+## Task 3 — Tie the primary route to the track
+
+**Objective:** Replace the untracked primary with a tracked version so the
+RIB follows the probe, not just the link.
+
+**Predict first:** with track 1 Up, will the routing table look any
+different than in Task 1? When *exactly* will tying the route to the track
+matter?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
-On **router** — remove the untracked primary route and replace with tracked version:
-```
-Cli
-conf t
+On **router**:
+```text
 no ip route 0.0.0.0/0 10.0.1.2 5
 ip route 0.0.0.0/0 10.0.1.2 5 track 1
 ```
 
-Verify routing table still shows primary as active:
-```
-show ip route
-```
-
 </details>
-
-### Step 6: Simulate isp1 failure
 
 <details>
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-On the **router** node, bring down eth1:
-```
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- ip link set eth1 down
-```
-
-Wait a few seconds (SLA frequency is 5 seconds), then check:
-
-```
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "show track 1"
-```
-
-Track state changes to `Down`. Then check routing table:
-
-```
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "show ip route"
-```
-
-The primary route (AD=5) should be gone. The backup (AD=10) should now be
-installed: `S>* 0.0.0.0/0 [10/0] via 10.0.2.2`.
-
-Test connectivity via backup path:
-```
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- ping 10.0.2.2
-```
+With the track Up, the table is identical to Task 1 — primary installed,
+backup floating. Nothing visibly changed, and that's expected: the
+tracking only earns its keep on *failure*. The key difference from a plain
+floating static is *what* triggers withdrawal — not "next-hop
+unreachable" but "the probe to a destination beyond the link stopped
+succeeding." Next task makes that distinction real.
 
 </details>
 
-### Step 7: Restore isp1 and verify recovery
+---
 
-```
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- ip link set eth1 up
-```
+## Task 4 — Break it: fail over on probe loss
 
-Wait for the SLA probe to succeed (up to 5 seconds), then:
-```
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "show track 1"
-sudo containerlab exec -t topology.clab.yml --label clab-node-name=router -- Cli -c "show ip route"
-```
+**Objective:** Drop eth1 (simulating isp1's path failing), watch the track
+flip Down and the backup install, then restore and watch recovery.
 
-Primary route reinstalls and backup returns to standby state.
+Break it (from the host shell): `ip link set eth1 down` on the router
+node. Wait ~5 s (the SLA frequency), then check `show track 1` and
+`show ip route`. Restore with `ip link set eth1 up`.
 
-## Key Concepts
-
-### IP SLA probe types
-
-| Type         | Command                           | Use case                    |
-|--------------|-----------------------------------|-----------------------------|
-| icmp-echo    | `icmp-echo <target>`              | Reachability probe (ping)   |
-| tcp-connect  | `tcp-connect <target> <port>`     | Service availability check  |
-| udp-echo     | `udp-echo <target> <port>`        | UDP service check           |
-
-In cEOS, only `icmp-echo` is fully supported in current versions.
-
-### Track object states
-
-```
-track 1 ip sla 1 reachability
-```
-
-- `Up`: the SLA probe is succeeding (return code = Success)
-- `Down`: the SLA probe is failing (timeout, unreachable, etc.)
-
-The track object translates SLA results into binary Up/Down for use by routes.
-
-### Floating static route
-
-A floating static route has a higher administrative distance than the primary.
-It stays in the configuration but is only installed in the RIB when all
-lower-AD paths to the same prefix are absent.
+**Predict first:** how long until the backup takes over — instant, or
+bounded by the probe frequency/threshold? And what's the symptom
+difference between this and a plain floating static reacting to a dead
+next-hop?
 
 <details>
-<summary>Show configuration</summary>
+<summary>What you should observe</summary>
 
-```
-ip route 0.0.0.0/0 10.0.1.2 5    ! Primary: AD=5 (installed when track up)
-ip route 0.0.0.0/0 10.0.2.2 10   ! Backup:  AD=10 (installed when primary withdrawn)
-```
+After the probe fails (bounded by `frequency` and any failure threshold —
+*not* instant), `show track 1` flips to **Down**, the tracked AD-5 route
+is withdrawn, and the AD-10 backup installs:
+`S>* 0.0.0.0/0 [10/0] via 10.0.2.2`. Traffic now uses isp2. On restore,
+the probe succeeds again, the track returns Up, and the primary
+reinstalls.
+
+The lesson is the failure *mode* this catches: imagine isp1's link to
+*you* stays up but its upstream is dead. A plain floating static sees a
+healthy next-hop and never fails over — black hole. The SLA probe tests
+something *beyond* the link (10.99.0.1), so it detects the brownout and
+withdraws the route anyway. That gap between "link up" and "path working"
+is the entire reason IP SLA tracking exists. Tune `frequency`/threshold
+to trade detection speed against flap sensitivity.
+
 </details>
 
-### Track + static route interaction
+---
 
-Adding `track 1` to a static route means:
-- When track 1 = Up: route is eligible for installation (subject to AD)
-- When track 1 = Down: route is immediately withdrawn from the RIB
+## Reference
 
-This is different from the route simply failing (e.g., next-hop unreachable). The
-track check is proactive — the SLA probe detects failure independently of the
-routing table.
+| SLA type | Command | Use |
+|----------|---------|-----|
+| icmp-echo | `icmp-echo <target>` | reachability (only type fully supported on cEOS) |
+| tcp-connect | `tcp-connect <target> <port>` | service availability |
 
-### SLA timing
-
-The `frequency` parameter sets the probe interval in seconds. The `ip sla schedule`
-command activates the probe. By default, a single probe failure does NOT
-immediately flip the track to Down — cEOS uses configurable thresholds.
-
-To check:
-```
+```text
 show ip sla configuration 1
 show ip sla statistics 1
-show track
+show track 1
+show ip route 0.0.0.0/0 longer-prefixes
 ```
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Probing isp1's directly-connected loopback (10.99.0.1) would *not*
+   catch an upstream brownout — but this lab's target is reachable via
+   both ISPs. Explain what you'd actually want to probe in production to
+   detect "internet is down beyond my ISP," and the new failure mode that
+   choice introduces.
+2. With `frequency 5` and a single-failure threshold, a brief glitch
+   flaps the route. Design a probe/track configuration that fails over
+   fast but doesn't oscillate on transient loss — name the specific knobs
+   and the tradeoff.
+3. Compare this floating-static-plus-track design with running BGP to both
+   ISPs for failover. What does each cost (state, complexity, detection
+   time), and when is the static approach clearly the right call?
+4. The backup route has AD 10 and no track. Should it *also* be tracked?
+   Walk through what happens if isp2 is quietly down when isp1 fails, and
+   how dual tracking would change the outcome.
 
 ## Teardown
 

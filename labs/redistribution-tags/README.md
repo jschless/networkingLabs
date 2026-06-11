@@ -1,10 +1,10 @@
-# Lab: Redistribution Tags — Loop Prevention
+# Redistribution Tags — Loop Prevention — Practice Lab
 
-## Overview
-
-This lab teaches how route tags prevent routing loops when two ASBRs perform
-mutual redistribution between OSPF and EIGRP. This is a classic problem in
-networks with dual redistribution points.
+Mutual redistribution between two protocols at *two* border routers is one
+of the classic ways to melt a network: a route can bounce
+OSPF→EIGRP→OSPF→EIGRP forever. The fix is route tags — stamp a route's
+origin on the way in, refuse it on the way back. In this lab you build the
+dual-ASBR sandwich, *create the loop on purpose*, then kill it with tags.
 
 ## Topology
 
@@ -25,208 +25,153 @@ flowchart LR
     class r1,asbr1,r2,asbr2,r3 router
 ```
 
-Two separate OSPF area 0 domains, one EIGRP AS 100 domain in the middle.
+Two separate OSPF area-0 domains with one EIGRP AS 100 domain between them,
+joined by two ASBRs (asbr1, asbr2) that each speak both protocols.
 
-## IP Addressing
+| Node  | Loopback   | Touches            |
+|-------|------------|--------------------|
+| r1    | 10.0.0.1   | OSPF (left)        |
+| asbr1 | 10.0.0.2   | OSPF + EIGRP       |
+| r2    | 10.0.0.3   | EIGRP              |
+| asbr2 | 10.0.0.4   | EIGRP + OSPF       |
+| r3    | 10.0.0.5   | OSPF (right)       |
 
-| Node  | Interface | Address         | Protocol    |
-|-------|-----------|-----------------|-------------|
-| r1    | lo        | 10.0.0.1/32     | OSPF area 0 |
-| r1    | eth1      | 10.1.10.1/30    | OSPF area 0 |
-| asbr1 | lo        | 10.0.0.2/32     | both        |
-| asbr1 | eth1      | 10.1.10.2/30    | OSPF area 0 |
-| asbr1 | eth2      | 10.2.10.1/30    | EIGRP 100   |
-| r2    | lo        | 10.0.0.3/32     | EIGRP 100   |
-| r2    | eth1      | 10.2.10.2/30    | EIGRP 100   |
-| r2    | eth2      | 10.2.20.1/30    | EIGRP 100   |
-| asbr2 | lo        | 10.0.0.4/32     | both        |
-| asbr2 | eth1      | 10.2.20.2/30    | EIGRP 100   |
-| asbr2 | eth2      | 10.1.30.1/30    | OSPF area 0 |
-| r3    | lo        | 10.0.0.5/32     | OSPF area 0 |
-| r3    | eth1      | 10.1.30.2/30    | OSPF area 0 |
+## How to use this lab
 
-## Lab Steps
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
 
-### Step 1: Start the lab
+- **Predict before you configure**, **open hints before the solution**,
+  and **verify** routes and tags after each step.
+
+## Deploy
 
 ```bash
 sudo containerlab deploy -t topology.clab.yml
+docker exec -it clab-redistribution-tags-r1 vtysh
 ```
 
-### Step 2: Configure OSPF (left domain — r1 and asbr1)
+---
+
+## Task 1 — Build the two protocol domains
+
+**Objective:** OSPF area 0 in the left domain (r1, asbr1) and right domain
+(asbr2, r3); EIGRP AS 100 across the middle (asbr1, r2, asbr2). No
+redistribution yet. Success: each protocol island is internally
+reachable.
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On **r1**:
-```
-vtysh
-conf t
-router ospf
- router-id 10.0.0.1
- network 10.0.0.1/32 area 0
- network 10.1.10.0/30 area 0
-```
-
-On **asbr1**:
-```
-vtysh
-conf t
-router ospf
- router-id 10.0.0.2
- network 10.0.0.2/32 area 0
- network 10.1.10.0/30 area 0
-```
+- OSPF: `router ospf` + `network ... area 0` on r1/asbr1 and asbr2/r3.
+- EIGRP: `router eigrp 100` + `network` for loopback and EIGRP links on
+  asbr1/r2/asbr2.
+- Verify `show ip ospf neighbor` and `show ip eigrp neighbors`.
 
 </details>
 
-### Step 3: Configure OSPF (right domain — asbr2 and r3)
-
 <details>
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-On **asbr2**:
-```
-vtysh
-conf t
-router ospf
- router-id 10.0.0.4
- network 10.0.0.4/32 area 0
- network 10.1.30.0/30 area 0
-```
-
-On **r3**:
-```
-vtysh
-conf t
-router ospf
- router-id 10.0.0.5
- network 10.0.0.5/32 area 0
- network 10.1.30.0/30 area 0
-```
+Each island converges, but r1 cannot yet reach r3 — the two OSPF domains
+are isolated by the EIGRP core, with no route exchange between protocols.
+That's the gap redistribution fills, and the trap it sets when done at two
+points.
 
 </details>
 
-### Step 4: Configure EIGRP AS 100
+---
+
+## Task 2 — Mutual redistribution, no tags: make the loop
+
+**Objective:** On *both* ASBRs, redistribute EIGRP↔OSPF with plain
+permit-everything route-maps, then hunt for evidence of the loop.
+
+**Predict first:** r1's own loopback 10.0.0.1 originates in the left OSPF
+domain. After dual redistribution, do you expect to see 10.0.0.1 come
+*back* to asbr1 as an external/EIGRP route — i.e. the network learning
+about its own prefix from the far side?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On **asbr1**, **r2**, and **asbr2**:
-```
-vtysh
-conf t
-router eigrp 100
- network 10.0.0.X/32        ! (use node's loopback)
- network 10.2.XX.0/30       ! (use node's EIGRP links)
-```
-
-Verify: `show ip eigrp neighbors` should show adjacencies on all EIGRP nodes.
+- Permit-only maps: `route-map EIGRP-TO-OSPF permit 10` and
+  `route-map OSPF-TO-EIGRP permit 10`, applied via `redistribute eigrp
+  route-map ...` (under OSPF) and `redistribute ospf route-map ...`
+  (under EIGRP). Same on both ASBRs.
+- Look at `show ip eigrp topology` and `show ip ospf database external`
+  on the ASBRs — find prefixes that should only exist on the *other*
+  side coming back around.
 
 </details>
 
-### Step 5: Mutual redistribution WITHOUT tags (observe the problem)
-
 <details>
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
-On **asbr1**:
-```
-vtysh
-conf t
+On **asbr1** and **asbr2** (identical):
+```text
 route-map EIGRP-TO-OSPF permit 10
 route-map OSPF-TO-EIGRP permit 10
+!
 router ospf
  redistribute eigrp route-map EIGRP-TO-OSPF
 router eigrp 100
  redistribute ospf route-map OSPF-TO-EIGRP
 ```
 
-On **asbr2** (mirror):
-```
-vtysh
-conf t
-route-map EIGRP-TO-OSPF permit 10
-route-map OSPF-TO-EIGRP permit 10
-router ospf
- redistribute eigrp route-map EIGRP-TO-OSPF
-router eigrp 100
- redistribute ospf route-map OSPF-TO-EIGRP
-```
+</details>
 
-#### Observe the loop problem
+<details>
+<summary>Check your work</summary>
 
-On **r1**:
-```
-show ip route
-```
-
-You will see routes from r3's OSPF domain (10.0.0.5, 10.1.30.0/30) appearing as
-OSPF external routes. These came from: r3 -> asbr2 (OSPF) -> EIGRP -> asbr1 -> OSPF.
-
-Now look on **r3**:
-```
-show ip route
-```
-
-Routes from r1's domain appear as OSPF external routes too. So far so good —
-that is the desired reachability.
-
-**The problem**: On **asbr1**, run:
-```
-show ip eigrp topology
-```
-
-You may see routes that originated in OSPF (e.g. r1's loopback 10.0.0.1) being
-redistributed back into EIGRP by asbr2, then coming back to asbr1, creating a
-potential loop. With two ASBRs, a route can bounce: OSPF-left -> EIGRP -> OSPF-right
--> EIGRP -> OSPF-left (loop).
+Reachability *appears* to work (r1 sees r3's prefixes), but the danger is
+in the feedback: a route that originated in left-OSPF gets redistributed
+into EIGRP by asbr1, picked up by asbr2, pushed into right-OSPF, and — if
+nothing stops it — fed back into EIGRP and around again. You'll see
+prefixes appearing as externals where they shouldn't, sometimes with
+climbing metrics. With native OSPF↔OSPF the administrative distance can
+mask it; with two protocols and two ASBRs the mutual redistribution has
+no built-in split horizon. This is a real outage pattern, not a
+curiosity.
 
 </details>
 
-### Step 6: Fix with route tags
+---
+
+## Task 3 — Fix it with origin tags
+
+**Objective:** Replace the permit maps with tagging logic: stamp tag 100
+on OSPF→EIGRP routes and tag 200 on EIGRP→OSPF routes, and on each ASBR
+**deny** the opposite tag from re-crossing.
+
+**Predict first:** write the four route-map stanzas on paper first. What
+*exactly* must the EIGRP-TO-OSPF map deny, and what tag must it set?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-The solution: each ASBR stamps routes with a tag when redistributing, and denies
-routes with the other direction's tag on the way back.
+- Convention: tag 100 = "was OSPF, now in EIGRP"; tag 200 = "was EIGRP,
+  now in OSPF."
+- EIGRP-TO-OSPF: `deny` routes already tagged 100 (they started in
+  OSPF — don't send them back), then `permit` + `set tag 200`.
+- OSPF-TO-EIGRP: `deny` tag 200, then `permit` + `set tag 100`.
+- Apply identically on both ASBRs.
 
-**Tag convention for this lab:**
-- Tag 100: routes redistributed from OSPF into EIGRP
-- Tag 200: routes redistributed from EIGRP into OSPF
+</details>
 
-On **asbr1** — replace the permit-only maps:
-```
-vtysh
-conf t
+<details>
+<summary>Solution</summary>
+
+On **asbr1** and **asbr2** (identical):
+```text
 no route-map EIGRP-TO-OSPF permit 10
 no route-map OSPF-TO-EIGRP permit 10
-
-! Block routes that were originally OSPF (tag 100) from going back into OSPF
+!
 route-map EIGRP-TO-OSPF deny 10
  match tag 100
 route-map EIGRP-TO-OSPF permit 20
  set tag 200
-
-! Block routes that were originally EIGRP (tag 200) from going back into EIGRP
-route-map OSPF-TO-EIGRP deny 10
- match tag 200
-route-map OSPF-TO-EIGRP permit 20
- set tag 100
-```
-
-On **asbr2** — identical configuration:
-```
-vtysh
-conf t
-no route-map EIGRP-TO-OSPF permit 10
-no route-map OSPF-TO-EIGRP permit 10
-
-route-map EIGRP-TO-OSPF deny 10
- match tag 100
-route-map EIGRP-TO-OSPF permit 20
- set tag 200
+!
 route-map OSPF-TO-EIGRP deny 10
  match tag 200
 route-map OSPF-TO-EIGRP permit 20
@@ -235,78 +180,79 @@ route-map OSPF-TO-EIGRP permit 20
 
 </details>
 
-### Step 7: Verify loop-free operation
+<details>
+<summary>Check your work</summary>
 
-On **r1**:
-```
-show ip route
-```
-Expect: r3's loopback 10.0.0.5 and prefix 10.1.30.0/30 as O E2 routes.
-Should NOT see routes looping back (e.g. 10.0.0.1 should not appear as external).
+On r1: r3's prefixes appear as `O E2` with **tag 200**, and r1's own
+10.0.0.1 no longer shows up as an external coming back around. On r3, the
+mirror. `show ip ospf database external` shows the tags; `ping 10.0.0.5
+source 10.0.0.1` works cleanly. The deny stanza is the whole defense: a
+route carrying tag 100 means "I already entered EIGRP from OSPF once," so
+the EIGRP-TO-OSPF map refuses to send it back into OSPF — breaking the
+bounce regardless of which ASBR sees it. Tags are the manual split-horizon
+that mutual redistribution lacks.
 
-On **r3**:
-```
-show ip route
-```
-Expect: r1's loopback 10.0.0.1 and prefix 10.1.10.0/30 as O E2 routes.
+</details>
 
-On **r1**, ping r3's loopback:
-```
+---
+
+## Task 4 — Break it: forget one ASBR's tags
+
+**Objective:** Remove the tagging maps from asbr2 only (leave asbr1
+correct) and observe whether the loop returns.
+
+**Predict first:** asbr1 still tags and filters correctly. Is one
+correctly-configured ASBR enough to prevent the loop, or do both need the
+logic?
+
+<details>
+<summary>What you should observe</summary>
+
+The loop comes back. Tag-based loop prevention only works if **every**
+redistribution point honors it — asbr1 dutifully tags and denies, but
+asbr2 happily re-injects whatever it sees, so the bounce path reopens
+through asbr2. This is the operational lesson: redistribution policy is a
+property of the *whole boundary*, not a single router. A consistent tag
+scheme applied at all mutual-redistribution points (often templated
+exactly to avoid this) is the only safe way. Restore asbr2's maps and
+re-verify.
+
+</details>
+
+---
+
+## Verification Commands
+
+```text
+show ip route                     # routing table per node
+show ip ospf database external    # external LSAs with tags
+show ip eigrp topology            # EIGRP topology with tags
+show route-map                    # route-map hit counters
 ping 10.0.0.5 source 10.0.0.1
 ```
 
-Check OSPF database for tag presence:
-```
-show ip ospf database external
-```
-External LSAs should show tag 200 (redistributed from EIGRP into OSPF).
+---
 
-## Key Concepts
+## Challenge questions
 
-### Why loops happen
+No answers provided — reason them through.
 
-When two ASBRs both redistribute between the same two protocols:
-
-1. Route X originates in OSPF (left)
-2. asbr1 redistributes X into EIGRP
-3. asbr2 sees X in EIGRP, redistributes it back into OSPF (right)
-4. asbr1 sees X coming back in OSPF (right), redistributes it back into EIGRP
-5. Loop: X bounces forever with increasing metrics
-
-### How tags prevent loops
-
-Tags are integers attached to redistributed routes. The rule is simple:
-- When a route enters a protocol, tag it to show where it came from
-- When redistributing back to the source protocol, deny routes with that tag
-
-This ensures a route redistributed OSPF->EIGRP is never redistributed back
-EIGRP->OSPF by the other ASBR.
-
-### Tag matching in FRR
-
-<details>
-<summary>Show configuration</summary>
-
-```
-route-map NAME deny 10
- match tag 100        ! Drop routes with tag 100
-
-route-map NAME permit 20
- set tag 200          ! Apply tag 200 to accepted routes
-```
-</details>
-
-Tags propagate with the route through the protocol. OSPF carries tags in
-external LSAs. EIGRP carries tags in the topology table.
-
-### Verification commands
-
-```
-show ip route                          ! Check routing table
-show ip ospf database external         ! OSPF external LSAs with tags
-show ip eigrp topology                 ! EIGRP topology table with tags
-show route-map                         ! Route-map hit counters
-```
+1. Tags broke the loop, but administrative distance is the *other*
+   classic tool. Explain how mismatched ADs between OSPF-external and
+   EIGRP-external could create a sub-optimal path (or a different loop)
+   even with tags in place, and how you'd tune AD to complement the tags.
+2. A third ASBR is added to the same two domains. Does the tag 100/200
+   scheme still work unchanged, or does it need extending? Reason about
+   what "origin" a tag really encodes when there are three crossing
+   points.
+3. Without looking at config, you suspect a redistribution loop in a live
+   network: metrics on certain external routes keep climbing. Describe the
+   exact `show` evidence that distinguishes a redistribution loop from a
+   simple flapping link.
+4. OSPF carries the tag in external LSAs; EIGRP carries it in the topology
+   table. What happens to your tag if a route is redistributed through a
+   *third* protocol (say BGP) that didn't preserve it — and what does
+   that imply about multi-protocol redistribution chains?
 
 ## Teardown
 
