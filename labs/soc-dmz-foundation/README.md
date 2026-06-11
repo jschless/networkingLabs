@@ -2,6 +2,14 @@
 
 Build the shared DMZ/SOC topology used by the Security Infrastructure track. The lab focuses on routed segmentation, high-value DMZ services, and a mirror feed into a sensor.
 
+
+## How to use this lab
+
+This is a **practice analysis lab**. The environment and evidence are
+pre-built; your job is to *investigate*, not to follow a script. For each
+task, **form a hypothesis about what the logs/PCAP will show before you
+query them**, then run the filter and compare. The challenge questions push
+you from "find the indicator" to "explain and respond."
 ## Topology
 
 ```mermaid
@@ -61,3 +69,15 @@ docker exec clab-soc-dmz-foundation-attacker curl -s http://172.16.20.10:8080/
 ## Outcome
 
 You have a repeatable DMZ topology with a working sensor mirror. Later labs reuse the same design and add Zeek, Suricata, YARA, SIEM, packet search, threat intel, and case workflow layers.
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The sensor sees a *mirror* of traffic, not inline. What can a mirror-fed sensor detect that an inline device can't easily, and what can it never *prevent*? Why does that shape where you place each.
+2. Distinguish a true positive from a false positive in this lab's data, and
+   state the *one* corroborating source you'd pull to raise confidence.
+3. From detection to response: given a confirmed finding here, what's the
+   minimal containment action, and what evidence must you preserve first?
+4. What single additional log source or visibility gap, if added, would have
+   made this investigation faster — and why isn't it free?
