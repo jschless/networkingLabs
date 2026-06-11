@@ -1,12 +1,10 @@
-# Lab: OSPF MD5 Authentication
+# OSPF MD5 Authentication — Practice Lab
 
-## Overview
-
-This lab teaches you how to configure and troubleshoot OSPF MD5 authentication.
-Without authentication, any router that connects to a network segment can inject
-false LSAs, potentially poisoning routing tables across the entire OSPF domain.
-MD5 authentication ensures that only routers sharing the correct key can form
-adjacencies and exchange LSAs.
+Without authentication, any device that connects to a network segment can
+speak OSPF and inject false LSAs, poisoning routing tables across the whole
+domain. In this lab you bring up a three-router OSPF area, lock it down with
+MD5 authentication, deliberately break a key, and perform a zero-downtime
+key rollover — the procedure that matters in production.
 
 ## Topology
 
@@ -23,15 +21,26 @@ flowchart LR
     class r1,r2,r3 router
 ```
 
-| Segment       | Subnet        | r1/r2/r3 address |
+| Segment       | Subnet        | Addresses        |
 |---------------|---------------|------------------|
 | r1 -- r2      | 10.1.12.0/30  | r1=.1, r2=.2     |
 | r2 -- r3      | 10.1.23.0/30  | r2=.1, r3=.2     |
-| r1 loopback   | 10.0.0.1/32   |                  |
-| r2 loopback   | 10.0.0.2/32   |                  |
-| r3 loopback   | 10.0.0.3/32   |                  |
+| Loopbacks     | 10.0.0.1–3/32 | one per router   |
 
-All interfaces are in OSPF area 0.
+All interfaces are in OSPF area 0. IP addressing is pre-configured.
+
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure.** When a task asks for a prediction,
+  commit to an answer before touching the CLI. Being wrong and finding out
+  why is the point.
+- **Open the hints before the solution.** The solution toggle is the answer
+  key — use it to check your work or when genuinely stuck, not as step one.
+- **Verify like an operator.** After each task, prove the state is what you
+  think it is with `show` commands before moving on.
 
 ## Lab Setup
 
@@ -44,16 +53,30 @@ Connect to a router:
 sudo docker exec -it clab-ospf-auth-r1 Cli
 ```
 
-## Step 1 — Basic OSPF (No Authentication)
+---
+
+## Task 1 — Baseline OSPF, no authentication
+
+**Objective:** Bring up OSPF on all three routers (router-ids = loopbacks,
+loopbacks passive, everything in area 0) so that r2 has two `Full` neighbors
+and `ping 10.0.0.3 source 10.0.0.1` succeeds.
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-Get OSPF adjacencies working first. Configure all three routers with basic OSPF
-before adding authentication. This confirms the base topology is working.
+- This lab's solution uses `network <prefix> area 0` statements under
+  `router ospf` (the alternative is per-interface `ip ospf area`).
+- Each router needs a `network` statement for its loopback and for each
+  connected transit subnet.
+- `show ip ospf neighbor` and `show ip route ospf` are your checks.
+
+</details>
+
+<details>
+<summary>Solution</summary>
 
 On **r1**:
-```
+```text
 configure terminal
 router ospf
  ospf router-id 10.0.0.1
@@ -63,7 +86,7 @@ router ospf
 ```
 
 On **r2**:
-```
+```text
 configure terminal
 router ospf
  ospf router-id 10.0.0.2
@@ -74,7 +97,7 @@ router ospf
 ```
 
 On **r3**:
-```
+```text
 configure terminal
 router ospf
  ospf router-id 10.0.0.3
@@ -83,212 +106,247 @@ router ospf
  passive-interface Loopback0
 ```
 
-Verify adjacencies are up:
-```
-show ip ospf neighbor
+</details>
+
+<details>
+<summary>Check your work</summary>
+
+`show ip ospf neighbor` on r2 shows both neighbors `Full`:
+
+```text
+Neighbor ID Instance VRF      Pri State        Dead Time   Address     Interface
+10.0.0.1         1 default     1 Full/DR        00:00:39   10.1.12.1   Ethernet1
+10.0.0.3         1 default     1 Full/BDR       00:00:37   10.1.23.2   Ethernet2
 ```
 
-Expected output — all neighbors in `Full` state:
+and `ping 10.0.0.3 source 10.0.0.1` succeeds from r1. The baseline matters:
+when you add authentication next, any breakage is provably caused by auth,
+not by the underlying OSPF config.
 
-```
-r2# show ip ospf neighbor
+</details>
 
-Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
-10.0.0.1         1 default     1 Full/DR                  00:00:39   10.1.12.1       Ethernet1
-10.0.0.3         1 default     1 Full/BDR                 00:00:37   10.1.23.2       Ethernet2
-```
+---
 
-Verify end-to-end reachability:
-```
-r1# ping 10.0.0.3 source 10.0.0.1
+## Task 2 — Add MD5 authentication on every link
+
+**Objective:** Enable MD5 authentication on all OSPF interfaces using key ID
+`1`, key string `SecretKey123`, without any adjacency staying down.
+
+**Predict first:** when you enable auth on r2's Ethernet1 *before* touching
+r1, what happens to that adjacency — and roughly how quickly?
+
+<details>
+<summary>Hints</summary>
+
+- Two per-interface commands: one turns on `message-digest` authentication
+  for the interface, the other defines `message-digest-key <id> md5 <key>`.
+- The key and key **ID** must match on both ends of each link.
+- r2 needs it on two interfaces; r1 and r3 on one each.
+- `show ip ospf interface Ethernet1` shows auth type and active key IDs.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **r1** (Ethernet1), **r3** (Ethernet1), and **r2** (Ethernet1 *and*
+Ethernet2):
+
+```text
+configure terminal
+interface Ethernet1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 SecretKey123
 ```
 
 </details>
 
-## Step 2 — Add MD5 Authentication
-
 <details>
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-Now add MD5 authentication to every OSPF interface. The key **must match on both
-ends** of each link — a mismatch prevents adjacency formation.
+`show ip ospf interface Ethernet1` on r2 shows:
 
-The authentication key is **per-interface** and identified by a numeric key ID.
-Multiple keys can coexist on an interface (used for key rollover).
-
-On **r1** (Ethernet1 only):
-```
-configure terminal
-interface Ethernet1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 SecretKey123
-```
-
-On **r2** (both Ethernet1 and Ethernet2):
-```
-configure terminal
-interface Ethernet1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 SecretKey123
-interface Ethernet2
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 SecretKey123
-```
-
-On **r3** (Ethernet1 only):
-```
-configure terminal
-interface Ethernet1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 SecretKey123
-```
-
-Verify authentication is configured on an interface:
-```
-r2# show ip ospf interface Ethernet1
-```
-
-Look for the line `Internet Address ... Area ... MTU ...` followed by:
-```
+```text
   Authentication MD5
   Cryptographic sequence number 0
   Key ID: 1, Auth data length: 16, Auth data: 0x...
 ```
 
-Verify adjacencies are still `Full` after adding auth:
-```
-show ip ospf neighbor
-```
+and `show ip ospf neighbor` is back to two `Full` neighbors.
+
+Your prediction: the moment one side requires MD5 and the other doesn't,
+hellos are rejected and the adjacency drops once the dead interval expires —
+authentication type is checked before anything else in the packet. This is
+why auth rollouts on live networks are sequenced link by link, fastest
+config first on the far end.
 
 </details>
 
-## Step 3 — Experiment: Deliberate Key Mismatch
+---
 
-<details>
-<summary>Show configuration</summary>
+## Task 3 — Break it: key mismatch
 
-This simulates a misconfiguration or a rogue router. Change the key on **r1 only**:
+**Objective:** Simulate a typo'd key (or rogue router) and diagnose the
+symptom from the *other* side of the link.
 
-```
-r1# configure terminal
-r1(config)# interface Ethernet1
-r1(config-if)# ip ospf message-digest-key 1 md5 WrongKeyHere
-```
+Apply the break on **r1**:
 
-Wait about 40 seconds (the default dead interval). Observe on **r2**:
-```
-r2# show ip ospf neighbor
-```
-
-The neighbor `10.0.0.1` will disappear from the table.
-
-Notice that r3 is **unaffected** — the mismatch is localized to the r1-r2 link.
-
-</details>
-
-## Step 4 — Fix the Mismatch
-
-<details>
-<summary>Show configuration</summary>
-
-Restore the correct key on r1:
-```
-r1# configure terminal
-r1(config)# interface Ethernet1
-r1(config-if)# ip ospf message-digest-key 1 md5 SecretKey123
-```
-
-The adjacency will recover within the hello interval (10 seconds default). Watch
-it come back:
-```
-r2# show ip ospf neighbor
-```
-
-</details>
-
-## Per-Interface Auth vs. Area Auth
-
-There are two ways to enable OSPF authentication:
-
-**Per-interface** (what we did above — more flexible):
-```
+```text
+configure terminal
 interface Ethernet1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 MyKey
+ ip ospf message-digest-key 1 md5 WrongKeyHere
 ```
 
-**Area-wide** (set auth type once, still configure key per-interface):
+**Predict first:** what exactly will r2 show — a neighbor in a broken state,
+or no neighbor at all? Will r3 be affected?
+
 <details>
-<summary>Show configuration</summary>
+<summary>Diagnosis hints (try before revealing)</summary>
 
-```
-router ospf
- area 0 authentication message-digest
+- Wait out the dead interval (~40 s), then `show ip ospf neighbor` on r2.
+- Nothing in the neighbor table? `debug ospf packet all` on r2 (disable
+  afterwards with `no debug ospf packet all`) — what does it log about
+  packets arriving on Ethernet1?
+- Check `show ip route ospf` on r3: which prefixes vanished?
 
-interface Ethernet1
- ip ospf message-digest-key 1 md5 MyKey
-```
 </details>
 
-Area-wide auth is easier to manage in large deployments but the key must still
-be configured on every interface. Per-interface auth overrides area auth if both
-are present.
+<details>
+<summary>What you should observe</summary>
 
-## Key Rollover Procedure (Zero-Downtime)
+Neighbor `10.0.0.1` disappears from r2's table entirely — there is no
+"auth-failed" neighbor state, because packets failing MD5 verification are
+dropped before the neighbor state machine ever sees them. The only direct
+evidence is in the debug log (`authentication failure` / mismatched digest).
+A silent missing neighbor with both interfaces up is the classic
+authentication-failure signature.
 
-In production, changing authentication keys without dropping adjacencies requires
-a two-step rollover. OSPF supports multiple simultaneous keys per interface for
-exactly this purpose.
+r3 keeps its adjacency (the mismatch is per-link) but loses routes to
+10.0.0.1/32 and 10.1.12.0/30 — a localized auth failure still has
+domain-wide reachability consequences.
 
-**Step 1 — Add the new key (key ID 2) on ALL routers simultaneously:**
-```
+**Repair:** restore `SecretKey123` on r1's Ethernet1 and watch the adjacency
+return to `Full` within a hello interval or two.
+
+</details>
+
+---
+
+## Task 4 — Zero-downtime key rollover
+
+**Objective:** Replace `SecretKey123` (key ID 1) with `NewSecretKey456` (key
+ID 2) on **all** links without any adjacency dropping at any point.
+
+**Predict first:** OSPF allows multiple keys on one interface. In what order
+must "add key 2" and "remove key 1" happen across the three routers so no
+link is ever left without a shared key?
+
+<details>
+<summary>Hints</summary>
+
+- Phase 1: add the new key (`message-digest-key 2`) on *every* interface of
+  *every* router, old key still in place.
+- cEOS accepts packets signed with any configured key and signs with the
+  highest key ID.
+- Phase 2: only after the new key is everywhere, remove key 1 everywhere.
+- Keep `show ip ospf neighbor` running on r2 throughout — it must never
+  lose a neighbor.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+Phase 1 — on every OSPF interface of all three routers:
+
+```text
 interface Ethernet1
  ip ospf message-digest-key 2 md5 NewSecretKey456
 ```
 
-Both key 1 and key 2 are now active. cEOS will accept packets signed with either
-key and will use the highest key ID to sign outgoing packets. Adjacencies remain
-up throughout.
+Phase 2 — only after phase 1 is complete everywhere:
 
-**Step 2 — Remove the old key (key ID 1) on ALL routers:**
-```
+```text
 interface Ethernet1
  no ip ospf message-digest-key 1 md5 SecretKey123
 ```
 
-Only key 2 remains. The rollover is complete with no adjacency disruption.
+</details>
 
-**Important:** Add the new key everywhere before removing the old key anywhere.
-If you remove the old key on one side before the other side has the new key, the
-adjacency will drop.
+<details>
+<summary>Check your work</summary>
+
+`show ip ospf interface` now lists only `Key ID: 2`, and at no point did
+`show ip ospf neighbor` lose an entry. The order is the whole lesson:
+**add everywhere, then remove anywhere**. If you remove key 1 on one side
+while the other side doesn't yet have key 2, that link has no key in common
+and drops — which answers the prediction.
+
+</details>
+
+---
+
+## Verification
+
+```text
+show ip ospf neighbor                # both adjacencies Full
+show ip ospf interface Ethernet1     # Authentication MD5, Key ID: 2 only
+show ip route ospf                   # all loopbacks present
+ping 10.0.0.3 source 10.0.0.1        # end-to-end
+```
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. An attacker plugs into the r1–r2 segment and replays *captured* OSPF
+   packets from earlier (they have valid MD5 digests). What field in the
+   authenticated header defeats this, and what operational habit could
+   accidentally weaken that protection?
+2. There are two places to enable message-digest auth: per-interface or
+   `area 0 authentication message-digest` under the OSPF process. A network
+   has both configured with different intents. Which wins, and when would
+   you deliberately choose area-wide auth?
+3. During a rollover, a router reloads after phase 1 but its startup-config
+   was saved *before* phase 1. Walk through what happens to its adjacencies
+   when it comes back, and how you'd detect the situation quickly.
+4. MD5 is cryptographically broken for collision resistance, yet OSPF MD5
+   auth is still considered useful. What threat does it actually defend
+   against here, and what would push you to HMAC-SHA (and what's the
+   interop cost)?
+
+---
 
 ## Troubleshooting Reference
 
 | Command | What to look for |
 |---------|-----------------|
-| `show ip ospf neighbor` | Neighbor state (`Full` = healthy) |
+| `show ip ospf neighbor` | Neighbor state (`Full` = healthy; *absent* = likely auth) |
 | `show ip ospf interface Ethernet1` | Auth type, active key IDs |
 | `show ip ospf database` | LSA count — should be consistent across all routers |
 | `show ip route ospf` | OSPF-learned routes with `O` prefix |
-| `debug ospf packet all` | Live packet events (verbose — disable after use) |
+| `debug ospf packet all` | Live packet events incl. auth failures (disable after use) |
 
 To disable debug:
-```
+```text
 no debug ospf packet all
 ```
 
-## SHA Authentication (cEOS Extension)
+## Reference — SHA Authentication (cEOS Extension)
 
-cEOS also supports HMAC-SHA authentication as an extension beyond the standard:
-```
+cEOS also supports HMAC-SHA authentication beyond the standard:
+
+```text
 interface Ethernet1
  ip ospf authentication hmac-sha-256
  ip ospf authentication-key MySharedKey
 ```
 
-SHA-256 provides stronger cryptographic guarantees than MD5. However, this is
-**not interoperable** with vendors that only implement RFC 5709 HMAC-SHA or with
-older Cisco IOS. Use MD5 when interoperability is required.
+SHA-256 is cryptographically stronger than MD5, but is **not interoperable**
+with vendors that only implement RFC 5709 HMAC-SHA or older Cisco IOS. Use
+MD5 when interoperability is required.
 
 ## Cleanup
 

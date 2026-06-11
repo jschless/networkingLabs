@@ -1,4 +1,10 @@
-# Lab: OSPF Virtual Links
+# OSPF Virtual Links — Practice Lab
+
+OSPF's cardinal rule: every non-backbone area must touch Area 0. This
+topology violates it on purpose — Area 2 hangs off Area 1, with no backbone
+connection. You'll build the broken design, study exactly *how* it fails,
+then repair it with a virtual link that extends Area 0 through the transit
+area — and understand why RFC 2328 calls that a workaround, not a design.
 
 ## Topology
 
@@ -25,76 +31,22 @@ flowchart LR
 
 Loopbacks:
 - r1=10.0.0.1/32 (area 2)
-- r2=10.0.0.2/32 (area 1 — needed by virtual link peer lookup)
+- r2=10.0.0.2/32 (**area 1** — the placement matters; you'll see why)
 - r3=10.0.0.3/32 (area 0)
 - r4=10.0.0.4/32 (area 0)
 
-## The Problem
+## How to use this lab
 
-OSPF requires that **all non-backbone areas must be directly connected to
-Area 0 (the backbone)**. All inter-area routing traffic must transit Area 0.
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
 
-In this topology:
-- Area 2 connects to Area 1 via r2 (ABR)
-- Area 1 connects to Area 0 via r3 (ABR)
-- Area 2 has NO direct connection to Area 0
-
-Without a virtual link:
-- r1 and r4 cannot exchange routes
-- r2 cannot act as a proper ABR for area 2 because it has no path to area 0
-- `show ip ospf database` on r4 will show no area 2 LSAs
-
-## The Solution: Virtual Link
-
-A virtual link is a **logical OSPF adjacency** that extends Area 0 through
-a transit area. It makes r2 and r3 behave as if they share a direct Area 0
-link, even though they actually communicate through Area 1.
-
-```
-[r2] ======== virtual link (area 0) ======== [r3]
-     --------- area 1 physical path ---------
-```
-
-The virtual link:
-- Is established between two ABRs that share a transit area
-- Carries OSPF protocol traffic (Hellos, LSAs) over the physical area 1 path
-- Appears to OSPF as an unnumbered point-to-point Area 0 link
-- Allows area 2 to exchange Type-3 (inter-area summary) LSAs with area 0
-
-## Configuration
-
-### On r2 (ABR between area 2 and area 1):
-
-<details>
-<summary>Show configuration</summary>
-
-```
-router ospf
- router-id 10.0.0.2
- network 10.0.0.2/32 area 1
- network 10.1.12.0/30 area 2
- network 10.1.23.0/30 area 1
- area 1 virtual-link 10.0.0.3
-```
-</details>
-
-### On r3 (ABR between area 1 and area 0):
-
-<details>
-<summary>Show configuration</summary>
-
-```
-router ospf
- router-id 10.0.0.3
- network 10.0.0.3/32 area 0
- network 10.1.23.0/30 area 1
- network 10.1.34.0/30 area 0
- area 1 virtual-link 10.0.0.2
-```
-</details>
-
-The argument to `area 1 virtual-link` is the **router-id** of the other
-endpoint, NOT an IP address. Both routers must be reachable within area 1.
+- **Predict before you configure.** When a task asks for a prediction,
+  commit to an answer before touching the CLI. Being wrong and finding out
+  why is the point.
+- **Open the hints before the solution.** The solution toggle is the answer
+  key — use it to check your work or when genuinely stuck, not as step one.
+- **Verify like an operator.** After each task, prove the state is what you
+  think it is with `show` commands before moving on.
 
 ## Deployment
 
@@ -102,175 +54,205 @@ endpoint, NOT an IP address. Both routers must be reachable within area 1.
 sudo containerlab deploy -t topology.clab.yml
 ```
 
-## Tasks
+---
 
-### Step 1: Configure OSPF without virtual link
+## Task 1 — Build the (deliberately) broken design
 
-Configure all four routers with their respective areas. Do NOT add the
-virtual-link statement yet.
+**Objective:** Configure OSPF on all four routers exactly per the topology
+table — areas 2, 1, 0 in a chain — with **no** virtual link. All physical
+adjacencies must reach `Full`.
+
+**Predict first:** every adjacency will come up, yet routing will be
+partial. Specifically: which OSPF routes will r1 have, and which will it be
+missing? Same question for r4. Commit to an answer per router.
+
+<details>
+<summary>Hints</summary>
+
+- Plain `router ospf` + `network ... area ...` statements; r2 and r3 each
+  straddle two areas.
+- Put r2's loopback in area 1 (per the table).
+- Nothing here is exotic — the breakage comes from the *area design*, not
+  the config.
+
+</details>
+
+<details>
+<summary>Solution</summary>
 
 r1:
-<details>
-<summary>Show configuration</summary>
-
-```
+```text
 router ospf
  router-id 10.0.0.1
  network 10.0.0.1/32 area 2
  network 10.1.12.0/30 area 2
 ```
-</details>
 
 r2:
-<details>
-<summary>Show configuration</summary>
-
-```
+```text
 router ospf
  router-id 10.0.0.2
  network 10.0.0.2/32 area 1
  network 10.1.12.0/30 area 2
  network 10.1.23.0/30 area 1
 ```
-</details>
 
 r3:
-<details>
-<summary>Show configuration</summary>
-
-```
+```text
 router ospf
  router-id 10.0.0.3
  network 10.0.0.3/32 area 0
  network 10.1.23.0/30 area 1
  network 10.1.34.0/30 area 0
 ```
-</details>
 
 r4:
-<details>
-<summary>Show configuration</summary>
-
-```
+```text
 router ospf
  router-id 10.0.0.4
  network 10.0.0.4/32 area 0
  network 10.1.34.0/30 area 0
 ```
+
 </details>
 
-### Step 2: Observe the broken state
+<details>
+<summary>Check your work</summary>
 
-From r1:
-```
-show ip ospf neighbor
-show ip route ospf
-ping 10.0.0.4 source 10.0.0.1
-```
+All three physical adjacencies are `Full` — and yet:
 
-Expected: neighbors form locally, but r1 cannot reach r4. The routing
-table on r1 shows area 2 and area 1 routes but nothing from area 0.
+- r1 has area 2 routes and (via r2) area 1 routes, but **nothing from
+  area 0** — no 10.0.0.4/32, no 10.1.34.0/30.
+- r4 has area 0 routes (plus area 1 prefixes via r3, a legal
+  area-0-attached ABR), but **no area 2 routes**.
+- `ping 10.0.0.4 source 10.0.0.1` fails.
 
-From r4:
-```
-show ip route ospf
-```
+The mechanism: an ABR only generates Type-3 summaries *into and out of*
+the backbone. r2 is an "ABR" between areas 1 and 2 — but with no area 0
+connection it has no backbone to summarize into, so area 2's prefixes go
+nowhere. Inter-area routing in OSPF is hub-and-spoke through Area 0 by
+construction; this topology has a spoke hanging off a spoke.
 
-Expected: only area 0 routes — no visibility of area 2.
+</details>
 
-### Step 3: Add virtual link on r2 and r3
+---
+
+## Task 2 — Repair it with a virtual link
+
+**Objective:** Bring up a virtual link between r2 and r3 across transit
+area 1, so that Area 0 logically extends to r2 and full r1 ↔ r4
+reachability is restored.
+
+**Predict first:** the virtual-link command takes an identifier for the far
+end. Is it the peer's interface IP or something else — and through which
+area's LSDB will each router have to *find* that peer for the link to come
+up?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
+
+- One command on each ABR, under `router ospf`:
+  `area <transit-area> virtual-link <peer>`.
+- The `<peer>` is **not** an IP address on the transit link.
+- Watch it come up with `show ip ospf virtual-links`; also re-check
+  `show ip ospf neighbor` on r2 — count r3's entries.
+
+</details>
+
+<details>
+<summary>Solution</summary>
 
 On r2:
-```
+```text
 router ospf
  area 1 virtual-link 10.0.0.3
 ```
-</details>
-
-<details>
-<summary>Show configuration</summary>
 
 On r3:
-```
+```text
 router ospf
  area 1 virtual-link 10.0.0.2
 ```
+
 </details>
 
-### Step 4: Verify virtual link is up
+<details>
+<summary>Check your work</summary>
 
-```
-show ip ospf virtual-links
-```
+`show ip ospf virtual-links` on r2:
 
-Expected on r2:
-```
+```text
 Virtual Link OSPF_VL0 to router 10.0.0.3 is up
   Transit area 1, via interface Ethernet2, Cost of using 10
-  Transmit Delay is 1 sec, State Point-to-Point,
-  ...
+  ... State Point-to-Point,
   Adjacency state Full
 ```
 
-State must be **Full** for the virtual link to function.
+and r2's neighbor table now lists r3 **twice**:
 
-### Step 5: Verify full reachability
-
-From r1:
-```
-ping 10.0.0.4 source 10.0.0.1
-show ip route ospf
+```text
+Neighbor ID  ...  State      Address    Interface
+10.0.0.3     ...  Full/DR    10.1.23.2  Ethernet2
+10.0.0.3     ...  Full/      10.1.23.2  OSPF_VL0
 ```
 
-Expected routing table on r1:
-```
-O IA   10.1.23.0/30 [110/20] via 10.1.12.2, Ethernet1
-O IA   10.1.34.0/30 [110/30] via 10.1.12.2, Ethernet1
-O IA   10.0.0.3/32  [110/30] via 10.1.12.2, Ethernet1
-O IA   10.0.0.4/32  [110/30] via 10.1.12.2, Ethernet1
-```
+— the physical area 1 adjacency plus a second, *area 0* adjacency tunneled
+through it. Prediction answer: the argument is the peer's **router-id**,
+and each side locates that router-id through the **transit area's** LSDB —
+area 1 must already be converged or the virtual link has no path to form
+over. (That's also why r2's loopback lives in area 1: it must be reachable
+within the transit area.)
 
-From r4:
-```
-ping 10.0.0.1 source 10.0.0.4
-show ip route ospf
-```
+r1 now has `O IA` routes to 10.0.0.4/32 and 10.1.34.0/30, and
+`ping 10.0.0.4 source 10.0.0.1` succeeds — verify the reverse from r4 too.
 
-## Virtual Link Constraints and Caveats
+</details>
 
-### Requirements
-- Both endpoints must be ABRs
-- Both endpoints must share the same transit area
-- The transit area must NOT be a stub area (stub areas block virtual links)
-- Both routers must be reachable from each other within the transit area
-  (OSPF must have converged in the transit area before the VL comes up)
+---
 
-### The transit area and router-id reachability
-The virtual link uses the router-id as the peer identifier. The router-id
-is announced in LSAs. The transit area must have full LSA exchange before
-the VL endpoint can be found. This is why r2's loopback is placed in
-area 1 — it must be reachable within the transit area so r3 can find it.
+## Task 3 — Break it: stub the transit area
 
-### Virtual links are a design compromise
-OSPF RFC 2328 explicitly states virtual links are a workaround, not a
-permanent solution. Preferred alternatives:
-- Add a physical link from the disconnected area to area 0
-- Renumber areas to attach directly to area 0
-- Use GRE tunnels if physical redesign is not possible
+**Objective:** Try to convert area 1 into a stub area (`area 1 stub` on r2
+and r3) while the virtual link is running, and explain what you observe
+before undoing it.
 
-### Virtual links do NOT support:
-- Stub areas as transit (area 1 cannot be stub if used for VL)
-- NSSA areas as transit
-- Authentication mismatch between VL neighbors (must use same auth)
+**Predict first:** will the CLI even accept it? If it does, what dies
+first — the physical adjacency or the virtual link?
+
+<details>
+<summary>What you should observe</summary>
+
+Depending on platform, the config is either rejected outright or the
+virtual link collapses: **a virtual link cannot transit a stub or NSSA
+area**. The reason is structural — a virtual link is an Area 0 adjacency,
+and stub areas exist precisely to *exclude* backbone-scale information;
+RFC 2328 forbids the combination. The transit area must remain a regular
+area, which is one of the operational taxes of using virtual links at all.
+
+Undo the stub config and confirm `show ip ospf virtual-links` returns to
+`Full` and r1 ↔ r4 pings recover.
+
+</details>
+
+---
+
+## Reference — Virtual link constraints
+
+- Both endpoints must be ABRs sharing the same transit area.
+- The transit area must not be stub or NSSA.
+- The peer is identified by **router-id**, which must be reachable through
+  the transit area's converged LSDB.
+- Authentication on the virtual link must match (it's an area 0 interface —
+  area 0 auth applies to it).
+- RFC 2328 positions virtual links as a temporary workaround. Preferred
+  fixes: a real link to area 0, renumbering the area, or a GRE tunnel if
+  physical redesign is impossible.
 
 ## Verification Commands
 
 | Command | Where | Expected |
 |---------|-------|---------|
-| `show ip ospf neighbor` | r2, r3 | Physical + VL neighbors |
+| `show ip ospf neighbor` | r2, r3 | Physical + VL neighbors (peer listed twice) |
 | `show ip ospf virtual-links` | r2, r3 | VL to peer, state Full |
 | `show ip route ospf` | r1 | O IA routes to area 0 |
 | `show ip route ospf` | r4 | O IA routes to area 2 |
@@ -278,21 +260,27 @@ permanent solution. Preferred alternatives:
 | `ping 10.0.0.1 source 10.0.0.4` | r4 | Success after VL up |
 | `show ip ospf database` | r2 | Type-1 LSAs from area 0 and area 2 |
 
-## Neighbor Output with Virtual Link
+---
 
-After virtual link is up, r2's neighbor table will show r3 twice:
+## Challenge questions
 
-```
-show ip ospf neighbor
+No answers provided — reason them through.
 
-Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
-10.0.0.3         1 default     1 Full/DR                  00:00:38   10.1.23.2       Ethernet2
-10.0.0.3         1 default     0 Full/                    00:00:38   10.1.23.2       OSPF_VL0
-```
-
-The first entry is the physical area 1 adjacency. The second entry
-(`OSPF_VL0`) is the virtual link — an area 0 adjacency tunneled through
-area 1.
+1. The link r2–r3 flaps frequently. Compare how quickly the *physical*
+   adjacency and the *virtual link* each detect and recover, and explain
+   why a VL through an unstable transit area multiplies convergence pain.
+2. Company A (areas 0,1) acquires Company B (their own area 0). You're
+   asked to "just virtual-link the two backbones together through a shared
+   area." Does that work? What rule about Area 0 are you actually trying
+   to satisfy, and what's the honest fix?
+3. MD5 authentication is enabled for area 0 on r3 (`area 0
+   authentication message-digest`) but nobody touched r2. The physical
+   adjacencies stay up. What happens to the virtual link, and why does an
+   *area 1* link care about *area 0* auth settings?
+4. Rank the three permanent alternatives to this virtual link (new
+   physical r2–r3 area 0 link, renumbering area 1 into area 0, GRE tunnel
+   into area 0) by operational risk in a production migration, and justify
+   the ordering.
 
 ## Teardown
 

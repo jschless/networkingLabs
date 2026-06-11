@@ -122,7 +122,7 @@ You inspect the CA and learn its trust model, make it resolvable, **establish tr
     The CA's HTTPS endpoint certificate has a SAN list of `ca1.lab.corp, ca1, localhost, 127.0.0.1`. If you tried to bootstrap trust using `--ca-url https://10.100.1.30:9000` (the raw IP) instead of the name, would it work? Why or why not?
 
 ??? note "Hints"
-    - You created DNS records in Lab 01 with `samba-tool dns add`. Grammar: `samba-tool dns add <server> <zone> <name> <type> <data> -U Administrator`.
+    - Use `samba-tool dns add` on `dc1`. Grammar: `samba-tool dns add <server> <zone> <name> <type> <data> -U Administrator`.
     - Here: server `127.0.0.1`, zone `lab.corp`, name `ca1`, type `A`, data `10.100.1.30`.
     - Verify resolution from both `dc1` and `admin-ws` with `getent hosts ca1.lab.corp`.
 

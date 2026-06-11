@@ -1,8 +1,23 @@
-# BGP RPKI / Route Origin Validation Lab
+# BGP RPKI / Route Origin Validation — Practice Lab
 
-This lab teaches BGP RPKI (Resource Public Key Infrastructure) and Route Origin
-Validation (ROV) using FRR's built-in `rpkid` daemon and a lightweight Python
-RTR server serving pre-loaded ROA data.
+RPKI is how the internet finally got a way to ask "is this AS *allowed* to
+announce this prefix?" In this lab a validator feeds signed ROA data to an
+edge router over the RTR protocol, and you watch route-origin validation
+sort a legitimate announcement from an identical-looking hijack — then you
+tune the policy and discover why "just drop everything not VALID" isn't
+yet realistic.
+
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The RPKI infrastructure
+(validator, ROAs, the `RPKI-POLICY` route-map) is pre-built — your job is
+to *observe, predict, and tune* the policy.
+
+- **Predict before you check.** Each task asks you to call the RPKI state
+  or the surviving route before you run the show command.
+- **Open the solution toggle only to confirm or when stuck.**
+- **Verify on edge.** Its BGP table and the `rpki` state flags are ground
+  truth.
 
 ## Topology
 
@@ -150,6 +165,11 @@ inbound route-map.
 
 ### Task 1 — Verify the RPKI session
 
+**Predict first:** the ROA table (see above) has two entries but only one
+of those prefixes is announced by anyone in this lab. Before you look —
+how many entries will `show rpki prefix-table` contain, and does an
+unannounced ROA still load into the table?
+
 Open a vtysh session on `edge` and confirm the RTR connection is up:
 
 ```
@@ -157,13 +177,25 @@ edge# show rpki cache-connection
 edge# show rpki prefix-table
 ```
 
-**Questions:**
-- How many ROA entries are in the prefix table?
-- What does `show rpki as-number 65100` tell you?
+<details>
+<summary>Check your work</summary>
+
+Both ROAs load (10.100.0.0/24→AS65100 and 10.200.0.0/24→AS65200) — the
+prefix table reflects what the *validator* knows, entirely independent of
+what any BGP peer announces. That separation is the whole RTR design: the
+router caches the full validated dataset, then matches received routes
+against it locally. `show rpki as-number 65100` filters that table to one
+origin AS.
+
+</details>
 
 ---
 
 ### Task 2 — Observe RPKI states on received routes
+
+**Predict first:** isp1 and hijacker announce the *identical* prefix
+10.100.0.0/24. Which RPKI state will each get, and given the pre-built
+policy, which one survives into edge's BGP table?
 
 Check the BGP table:
 
@@ -172,9 +204,18 @@ edge# show bgp ipv4 unicast
 edge# show bgp ipv4 unicast 10.100.0.0/24
 ```
 
-**Questions:**
-- What RPKI state is shown for the route received from isp1?
-- Is the hijacker's route present? Why or why not?
+<details>
+<summary>Check your work</summary>
+
+isp1's route is **VALID** (origin AS65100 matches the ROA); hijacker's is
+**INVALID** (origin AS65999 doesn't). The policy drops INVALID, so only
+isp1's path is in the table — even though `show bgp neighbors 10.0.2.2
+received-routes` proves the hijack *arrived*. This is the payoff: two
+byte-identical announcements, sorted by cryptographic origin authority
+rather than by best-path luck (contrast the bgp-prefix-security lab, where
+the same hijack won on a router-id tiebreaker).
+
+</details>
 
 ---
 
@@ -345,6 +386,28 @@ edge# clear bgp * soft in
 </details>
 
 ---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. RPKI validates the route's *origin* AS, not the AS-path. Sketch a
+   hijack that announces 10.100.0.0/24 such that edge marks it **VALID**
+   yet the traffic still goes to the attacker. What does this prove RPKI
+   cannot do, and what protocol was designed to close that gap?
+2. Task 3 showed that even without the explicit INVALID drop, the VALID
+   route won on local-preference. Compare the two enforcement styles —
+   "drop INVALID outright" vs. "merely de-prefer it via local-pref" — and
+   give a scenario where the softer policy lets a hijack succeed.
+3. A ROA says `10.100.0.0/24, maxLength 24, AS65100`. An attacker (or even
+   AS65100 itself) announces 10.100.0.128/25. What state results, and why
+   does maxLength make this both a powerful protection *and* an easy
+   self-inflicted outage?
+4. Strict ROV (Task 6) drops NOT-FOUND and would isolate you from most of
+   the internet today. Design a realistic migration path to stricter
+   policy for a transit AS — what do you drop first, what do you only
+   de-prefer, and what telemetry would you watch before tightening
+   further?
 
 ## Reference: FRR RPKI Commands
 
