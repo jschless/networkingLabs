@@ -1,10 +1,11 @@
-# GRE Basics — Arista cEOS Practice Lab
+# GRE Basics — Practice Lab (Arista cEOS)
 
-Create a GRE point-to-point tunnel between two Arista EOS gateway routers across a simulated WAN. Route traffic between private LANs through the tunnel. Physical IP addressing is pre-configured — you configure `interface Tunnel0` and static routes using the native EOS CLI.
-
-This lab uses the same `interface Tunnel` construct used on production Arista hardware, rather than Linux `ip tunnel` commands.
-
----
+Build a GRE point-to-point tunnel between two Arista EOS gateways across a
+simulated WAN, route two private LANs through it, then run OSPF over the
+tunnel and walk into the two classic GRE traps (TTL-in-TTL and recursive
+routing). Physical addressing is pre-configured; you build `interface
+Tunnel0` and the routing — using the same construct as production Arista
+hardware, not Linux `ip tunnel`.
 
 ## Topology
 
@@ -38,62 +39,86 @@ flowchart LR
 | internet — gw-b   | 203.0.113.4/30  | 203.0.113.5     | 203.0.113.6     |
 | gw-b — host-b     | 192.168.2.0/24  | 192.168.2.1     | 192.168.2.10    |
 
-### GRE tunnel (you create this)
+### GRE tunnel (you build this)
 
-| Parameter          | gw-a            | gw-b            |
-|--------------------|-----------------|-----------------|
-| Tunnel source      | Ethernet2       | Ethernet1       |
-| Tunnel destination | 203.0.113.6     | 203.0.113.1     |
-| Tunnel IP          | 172.16.0.1/30   | 172.16.0.2/30   |
-| Interface name     | Tunnel0         | Tunnel0         |
+| Parameter | gw-a | gw-b |
+|-----------|------|------|
+| Tunnel source | Ethernet2 | Ethernet1 |
+| Tunnel destination | 203.0.113.6 | 203.0.113.1 |
+| Tunnel IP | 172.16.0.1/30 | 172.16.0.2/30 |
 
----
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure**, **open hints before the solution**,
+  and **verify** with `show interfaces Tunnel0` and end-to-end pings.
 
 ## Deploy and access
 
 ```bash
 sudo containerlab deploy -t labs/gre-basics/topology.clab.yml
-
-# EOS CLI on gw-a
-docker exec -it clab-gre-basics-gw-a Cli
-
-# Host shell (for ping tests)
-docker exec -it clab-gre-basics-host-a bash
+docker exec -it clab-gre-basics-gw-a Cli       # EOS CLI
+docker exec -it clab-gre-basics-host-a bash    # host shell for pings
 ```
 
 ---
 
-## Step 1 — Verify WAN reachability
+## Task 1 — Confirm the WAN, confirm the LANs can't reach each other
 
-Before building the tunnel, confirm gw-a can reach gw-b's WAN IP:
+**Objective:** Establish the before-state: gw-a can reach gw-b's WAN IP,
+but host-a cannot reach host-b.
 
+**Predict first:** the WAN (203.0.113.x) is routed end to end, but the
+LANs (192.168.x) are not advertised anywhere. Will host-a → host-b
+succeed or fail, and what's the precise reason?
+
+```text
+# gw-a EOS CLI
+ping 203.0.113.6 repeat 3        # should succeed
+# host-a shell
+ping 192.168.2.10 -c 3           # should fail
 ```
-# From gw-a EOS CLI (privileged exec mode)
-ping 203.0.113.6 repeat 3
-```
-
-This should succeed — the `internet` router forwards between the two WAN subnets. If this fails, check `show ip route` and `show interfaces status`.
-
-Also confirm host-to-host traffic fails without the tunnel:
-```bash
-docker exec -it clab-gre-basics-host-a bash
-ping 192.168.2.10 -c 3    # should FAIL — no route to LAN B
-```
-
----
-
-## Step 2 — Configure Tunnel0 on gw-a
 
 <details>
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-Enter the EOS CLI on gw-a:
-```bash
-docker exec -it clab-gre-basics-gw-a Cli
-```
+WAN ping works (the `internet` router forwards between the two /30s);
+host-to-host fails with no route — neither gateway knows how to reach the
+other's private LAN, and the public WAN wouldn't route RFC1918 anyway.
+GRE's job is to carry the private traffic *inside* a packet the WAN will
+route. That encapsulation is what the rest of the lab builds.
 
-Configure the GRE tunnel interface:
-```
+</details>
+
+---
+
+## Task 2 — Build the GRE tunnel both ends
+
+**Objective:** Create `Tunnel0` on each gateway (source interface,
+destination = far WAN IP, tunnel /30 address) and bring the tunnel
+protocol up.
+
+**Predict first:** the tunnel interface comes "up" based on what — the far
+*tunnel* IP (172.16.0.2) being reachable, or the far *WAN* IP
+(203.0.113.6) being reachable? Which must work first?
+
+<details>
+<summary>Hints</summary>
+
+- `interface Tunnel0` with `tunnel source <Eth>`, `tunnel destination
+  <far WAN IP>`, `ip address 172.16.0.X/30`, `no shutdown`.
+- The EOS model mirrors physical Arista — no Linux `ip tunnel`.
+- `show interfaces Tunnel0` → look for `line protocol is up`.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+gw-a:
+```text
 configure
 interface Tunnel0
    tunnel source Ethernet2
@@ -102,29 +127,8 @@ interface Tunnel0
    no shutdown
 ```
 
-> **EOS vs Linux:** In Linux you run `ip tunnel add tun0 mode gre local 203.0.113.1 remote 203.0.113.6` from bash. In EOS you configure `interface Tunnel0` with `tunnel source` and `tunnel destination` — exactly the same model used on physical Arista routers.
-
-Verify the tunnel is up:
-```
-show interfaces Tunnel0
-```
-
-Look for `line protocol is up` in the output. The tunnel comes up as soon as both endpoints have the GRE encap/decap in place.
-
----
-
-</details>
-
-## Step 3 — Configure Tunnel0 on gw-b
-
-<details>
-<summary>Show configuration</summary>
-
-```bash
-docker exec -it clab-gre-basics-gw-b Cli
-```
-
-```
+gw-b:
+```text
 configure
 interface Tunnel0
    tunnel source Ethernet1
@@ -133,189 +137,194 @@ interface Tunnel0
    no shutdown
 ```
 
-Test the tunnel endpoint reachability from gw-b:
-```
-ping 172.16.0.1 repeat 3    ← gw-a tunnel IP; should succeed now
-```
+</details>
 
----
+<details>
+<summary>Check your work</summary>
+
+`ping 172.16.0.1 repeat 3` from gw-b succeeds. Prediction answer: the
+tunnel depends on the **WAN** IP being reachable — GRE encapsulation has
+no keepalive by default, so the line protocol comes up as soon as the
+endpoints are configured and the underlay can carry the encapsulated
+packets. A tunnel showing "up" is *not* proof the far end is alive; it's
+proof the local config is valid and the source interface is up. That
+weak liveness is why production GRE often adds keepalives or runs a
+routing protocol over the tunnel (Task 4).
 
 </details>
 
-## Step 4 — Add static routes through the tunnel
+---
+
+## Task 3 — Route the LANs through the tunnel
+
+**Objective:** Add static routes so each LAN is reachable via the far
+tunnel IP, then prove host-a ↔ host-b works.
 
 <details>
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
-On **gw-a**:
-```
-ip route 192.168.2.0/24 172.16.0.2
-```
-
-On **gw-b**:
-```
-ip route 192.168.1.0/24 172.16.0.1
-```
-
----
+gw-a: `ip route 192.168.2.0/24 172.16.0.2`
+gw-b: `ip route 192.168.1.0/24 172.16.0.1`
 
 </details>
 
-## Step 5 — Verify end-to-end
+<details>
+<summary>Check your work</summary>
 
-```bash
-# From host-a
-docker exec -it clab-gre-basics-host-a bash
-ping 192.168.2.10 -c 3    # should now SUCCEED
+host-a → host-b now succeeds, and `traceroute` shows the WAN hops are
+**invisible** — the path looks like gw-a → host-b because the WAN
+transit happens inside the GRE encapsulation, below the inner TTL. That
+hidden-hop behavior is GRE's signature and the reason it's a building
+block for overlays. (Both ends need their static route — a one-sided
+route gives you a forward path and a dead return path.)
 
-# Traceroute — WAN hops are invisible (tunnelled)
-traceroute 192.168.2.10
-# Expected path: 192.168.1.1 (gw-a) → 192.168.2.10 (host-b)
-```
+</details>
 
 ---
 
-## Experiment A — OSPF over GRE
+## Task 4 — OSPF over GRE, and the cEOS gotchas
+
+**Objective:** Replace the statics with OSPF running over the tunnel,
+treating GRE as the point-to-point medium it is — and survive the two
+EOS-specific traps.
+
+**Predict first:** GRE is point-to-point. If you leave OSPF in its default
+broadcast network type on the tunnel, what will it keep trying (and
+failing) to do?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-Replace static routes with OSPF running over the tunnel. Remove the static LAN routes first, then configure OSPF on gw-a:
+- Remove the static LAN routes first.
+- On Tunnel0: `ip ospf area 0` and `ip ospf network point-to-point`.
+- **TTL trap:** EOS copies inner TTL to the outer header; OSPF hellos
+  (inner TTL=1) die at the transit router. Add `tunnel
+  path-mtu-discovery` then `tunnel ttl 255` (in that order) on Tunnel0.
+- **Install trap:** add `tunnel routes` under `router ospf 1` or routes
+  won't install despite a Full neighbor.
 
-```
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **gw-a** (mirror on gw-b with router-id 10.0.0.2):
+```text
 configure
 no ip route 192.168.2.0/24 172.16.0.2
-
 interface Tunnel0
    tunnel path-mtu-discovery
    tunnel ttl 255
    ip ospf area 0
    ip ospf network point-to-point
-
 interface Ethernet1
    ip ospf area 0
    ip ospf passive
-
 router ospf 1
    router-id 10.0.0.1
    passive-interface Loopback0
    tunnel routes
 ```
+
 </details>
 
-Mirror on gw-b (router-id 10.0.0.2, `no ip route 192.168.1.0/24 172.16.0.1`).
+<details>
+<summary>Check your work</summary>
 
-Check adjacency:
-```
-show ip ospf neighbor
-show ip route ospf
-```
+`show ip ospf neighbor` reaches Full and `show ip route ospf` is now
+populated. Three lessons, all platform-real: (1) without `network
+point-to-point`, OSPF tries DR/BDR election on a medium where it can
+never complete — prediction answer; (2) without `tunnel ttl 255`, the
+adjacency never forms because hellos are dropped at the transit hop on
+outer-TTL=0; (3) without `tunnel routes`, the neighbor goes Full but EOS
+refuses to install tunnel-learned routes — a maddening "adjacency healthy,
+routing table empty" symptom. Each is a thing the docs warn about and
+operators still hit.
 
-> **Why point-to-point?** GRE is a point-to-point medium. Without `ip ospf network point-to-point`, OSPF defaults to broadcast mode and tries to elect a DR/BDR — which never succeeds over a GRE tunnel.
-
-> **EOS gotcha — TTL=1:** EOS copies the inner IP TTL to the outer GRE header. OSPF hellos have inner TTL=1, so the GRE packet arrives at the `internet` transit router with outer TTL=1, gets decremented to 0, and is dropped. You need `tunnel path-mtu-discovery` and `tunnel ttl 255` on Tunnel0 (in that order — EOS won't let you set the TTL without PMTUD enabled first).
-
-> **EOS gotcha — `tunnel routes`:** Even after the OSPF adjacency reaches Full state, EOS does not install routes learned over tunnel interfaces by default. Without `tunnel routes` under `router ospf 1`, you'll see `show ip ospf neighbor` show Full but `show ip route ospf` will be empty. Add it on both routers.
+</details>
 
 ---
 
-## Experiment B — Recursive routing pitfall
+## Task 5 — Break it: recursive routing
 
-This demonstrates a common GRE misconfiguration: routing the tunnel destination *through* the tunnel.
+**Objective:** Create the canonical GRE meltdown — route the tunnel
+*destination* through the tunnel — then diagnose and fix.
 
-On gw-a, add a bad route:
-```
-ip route 203.0.113.6/32 172.16.0.2
-```
+Break it on gw-a: `ip route 203.0.113.6/32 172.16.0.2`.
 
-This tells gw-a "to reach gw-b's WAN IP, use the tunnel" — but the tunnel endpoint IS gw-b's WAN IP, creating an infinite loop. The tunnel line protocol will flap and traffic fails.
+**Predict first:** what does this tell gw-a to do when it needs to send a
+GRE packet to 203.0.113.6, and why does that make the tunnel flap?
 
-Fix it by routing the tunnel destination via the physical interface:
-```
+<details>
+<summary>What you should observe</summary>
+
+The tunnel line protocol flaps and traffic dies. The route says "to reach
+gw-b's WAN IP, go through the tunnel" — but the tunnel's *own* far
+endpoint *is* that WAN IP, so encapsulating a packet requires already
+having reached the destination it's trying to reach: infinite recursion.
+EOS detects it and tears the tunnel down (better platforms log "recursive
+routing detected"). The fix is the rule for all tunnels: the far
+endpoint's /32 must resolve via the **physical** underlay, never the
+overlay —
+
+```text
 no ip route 203.0.113.6/32 172.16.0.2
 ip route 203.0.113.6/32 203.0.113.2
 ```
 
-The /32 host route for the remote tunnel endpoint must always go out the physical WAN interface.
+This trap appears for real when someone redistributes a default route
+*into* the protocol running over the tunnel, accidentally pulling the
+tunnel endpoint into the overlay. Keep underlay and overlay reachability
+strictly separate.
 
----
-
-## Verification commands (EOS)
-
-```
-show interfaces Tunnel0               # tunnel state, encaps/decaps counters
-show ip route                         # routing table — look for 192.168.x.0/24
-show ip ospf neighbor                 # (after Experiment A) should show Full/  -
-ping 172.16.0.2 repeat 5             # tunnel liveness
-ping 192.168.2.10 repeat 5           # end-to-end via tunnel
-traceroute 192.168.2.10               # path — should skip WAN hops
-```
-
----
-
-## Troubleshooting
-
-**`show interfaces Tunnel0` shows `line protocol is down`**
-- Check `ping 203.0.113.6` — physical WAN must be reachable before GRE can form
-- Verify `tunnel destination` on both ends matches the other side's WAN IP
-- `show interfaces Ethernet2` — confirm physical interface is up
-
-**Traffic fails despite tunnel being up**
-- `show ip route 192.168.2.0/24` — is the static route installed?
-- Both ends need routes installed (gw-a routes to LAN B, gw-b routes to LAN A)
-- `ping 172.16.0.2` from gw-a — if this fails, the tunnel encap/decap is broken
-- If `ping 172.16.0.2` works from gw-a but host-a can't reach host-b, the iptables `EOS_FORWARD` drop rule is likely the culprit (see cEOS Caveats below — the topology already handles this via `exec`)
-
-**OSPF over GRE not forming adjacency**
-- Confirm `ip ospf network point-to-point` on Tunnel0 on both ends
-- `show ip ospf interface Tunnel0` — check network type and hello/dead timers
-- Make sure you added `tunnel path-mtu-discovery` and `tunnel ttl 255` on Tunnel0 — without these, OSPF hellos (inner TTL=1) are dropped by the transit `internet` router
-
-**OSPF adjacency is Full but no routes appear**
-- Check `show ip route ospf` — if empty despite Full neighbor, you're missing `tunnel routes` under `router ospf 1`
-- EOS does not install routes learned via tunnel interfaces by default; `tunnel routes` opts in
-
----
-
-## cEOS-specific caveats
-
-These are behaviors unique to Arista EOS running in ContainerLab — you won't hit them on Linux `ip tunnel` or Cisco IOS.
-
-### 1. OSPF TTL=1 drop over multi-hop GRE
-
-EOS copies the **inner** IP TTL directly into the **outer** GRE encap header. OSPF hellos are sent with inner TTL=1. In this topology the `internet` router sits between the two tunnel endpoints, so the outer GRE packet arrives there with TTL=1, gets decremented to 0, and is silently discarded.
-
-<details>
-<summary>Show configuration</summary>
-
-Fix — add to `interface Tunnel0` on both gateways (order matters; EOS rejects `tunnel ttl` without PMTUD enabled first):
-```
-tunnel path-mtu-discovery
-tunnel ttl 255
-```
 </details>
 
-### 2. OSPF `tunnel routes` disabled by default
+---
 
-EOS OSPF will form a Full adjacency over a tunnel interface but will not install the learned routes into the routing table unless you explicitly opt in. Without `tunnel routes`, `show ip ospf neighbor` looks healthy but `show ip route ospf` stays empty.
+## Verification commands
 
-Fix — add to `router ospf 1` on both gateways:
+```text
+show interfaces Tunnel0       # state, encap/decap counters
+show ip route                 # look for 192.168.x.0/24
+show ip ospf neighbor         # Full after Task 4
+ping 172.16.0.2 repeat 5      # tunnel liveness
+ping 192.168.2.10 repeat 5    # end-to-end
+traceroute 192.168.2.10       # WAN hops hidden
 ```
-tunnel routes
-```
-
-### 3. iptables `EOS_FORWARD` drops transit traffic
-
-cEOS installs a DROP rule in the `EOS_FORWARD` iptables chain for each data-plane interface. Traffic **originated by EOS itself** (e.g., self-ping across the tunnel) bypasses this via the OUTPUT chain. But **transit traffic** — a frame entering from the LAN port and being forwarded into the GRE tunnel — hits the DROP rule and is silently discarded.
-
-The `topology.clab.yml` already handles this: the `exec:` block on gw-a and gw-b runs:
-```bash
-iptables -D EOS_FORWARD -i eth1 -j DROP 2>/dev/null || true   # gw-a
-iptables -D EOS_FORWARD -i eth2 -j DROP 2>/dev/null || true   # gw-b
-```
-This removes the DROP rule for the LAN-facing interface so host → tunnel forwarding works. The rule is added fresh each time the container starts, so it must be in `exec:` (not a one-time fix).
 
 ---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. GRE adds no encryption and no authentication. List exactly what an
+   on-path attacker on the WAN can see and do to your tunneled traffic,
+   and what you'd layer on to fix it (preview of the gre-ipsec lab).
+2. The tunnel "up" state doesn't prove the far end is alive (Task 2).
+   Compare three ways to get real liveness — GRE keepalives, a routing
+   protocol over the tunnel, IP SLA tracking — and when you'd choose each.
+3. GRE adds 24 bytes of overhead; with a 1500-byte underlay MTU, what's
+   the largest inner packet that fits, and walk through what breaks for a
+   1500-byte inner packet with the DF bit set. How does `tunnel
+   path-mtu-discovery` change the outcome?
+4. Recursive routing (Task 5) came from a /32. Describe the more common
+   real-world trigger — redistributing a default into the overlay
+   protocol — and a design rule that structurally prevents the tunnel
+   endpoint from ever being learned over the tunnel.
+
+---
+
+## cEOS-specific caveats (reference)
+
+- **Inner→outer TTL copy:** OSPF hellos (TTL=1) die at the transit hop;
+  fixed by `tunnel path-mtu-discovery` + `tunnel ttl 255` (that order).
+- **`tunnel routes`:** EOS won't install tunnel-learned OSPF routes
+  without it, even at Full.
+- **`EOS_FORWARD` iptables DROP:** transit LAN→tunnel frames are dropped
+  by a per-interface rule; the topology's `exec:` block removes it on
+  boot for the LAN interface (self-originated pings bypass it, which is
+  why a router self-ping can work while host transit fails).
 
 ## Cleanup
 
