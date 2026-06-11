@@ -8,6 +8,13 @@ This lab isolates the access-layer mechanics that get buried inside larger campu
 - allowed VLAN lists
 - failure symptoms when one VLAN is missing from the trunk
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -115,3 +122,18 @@ show running-config interfaces Ethernet3
 - VLANs do not exist on a link until you carry them explicitly
 - same-subnet failure across switches is often a trunk or access-port problem, not an IP problem
 - allowed-VLAN pruning creates selective failure, which is why it is useful and dangerous
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. An access port and a trunk port both carry VLAN 10 frames — what's
+   actually different on the wire, and what happens if you cable two
+   switches access-port-to-access-port instead of trunk-to-trunk?
+2. The native VLAN is sent untagged on a trunk. Describe the VLAN-hopping
+   attack this enables and the one-line config that defeats it.
+3. A host in VLAN 10 can't reach VLAN 20 even though both are "up." What's
+   missing, and at which layer — and why is that *by design*?
+4. You add VLAN 30 to one switch but forget the trunk allowed-list. Predict
+   exactly which hosts can talk and which can't, and the show command that
+   exposes it.

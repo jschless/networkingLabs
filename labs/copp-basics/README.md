@@ -4,6 +4,13 @@ You will protect the control plane of **r2** by classifying inbound traffic (BGP
 
 ---
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -68,6 +75,8 @@ Wait ~15 seconds for BGP and OSPF to converge before starting.
 ---
 
 ## Step 1 — Verify the baseline
+
+**Predict first:** CoPP polices traffic *destined to the router's own CPU*, not transit. Before building any policy, predict which of these get punted to the CPU and would be subject to CoPP: a transit data ping through the router, a ping *to* the router, an OSPF hello, an SSH session to the router.
 
 Before configuring CoPP, confirm the existing adjacencies are healthy and check whether any CoPP policy is active.
 
@@ -330,3 +339,20 @@ Watch `CLASS-BGP` counters — does the legitimate BGP session survive?
 **Policy-map changes not taking effect**
 - After modifying an active policy-map, the changes apply immediately in EOS — no need to re-apply under `control-plane`
 - Confirm with `show policy-map type copp`
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. CoPP protects the control plane (the CPU), not transit traffic. Explain
+   what "punted to CPU" means and which packet types get punted, with
+   examples from this lab.
+2. A too-aggressive CoPP policer drops legitimate control traffic. Construct
+   the failure where BGP/OSPF sessions flap because of CoPP, and how you'd
+   diagnose it from policer drop counters.
+3. Rank the control-plane protocols by how catastrophic it is to starve
+   each (routing protocols, ARP, SSH/mgmt, ICMP) and design the relative
+   policer rates.
+4. Without CoPP, describe a control-plane DoS that wedges the router while
+   the data plane still forwards — and why that split makes it hard to
+   notice.

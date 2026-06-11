@@ -8,6 +8,13 @@ This is a focused Layer 2 campus lab for spanning-tree operations and failure ha
 sudo containerlab deploy -t labs/stp-operations/topology.clab.yml
 ```
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -116,3 +123,19 @@ docker exec clab-stp-operations-client-a ping -c 3 10.10.10.1
 
 - STP is about enforcing design intent, not just preventing loops
 - the useful operational questions are: who is root, which uplink is blocked, and which edge ports must never accept BPDUs
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Root bridge election is by lowest bridge ID. Walk through how you'd force
+   a *specific* switch to be root deterministically, and why leaving it to
+   default MACs is an operational hazard.
+2. RSTP converges far faster than classic STP. What roles/states did RSTP
+   add or remove to achieve that, and what's the role of edge (portfast)
+   ports?
+3. A link flaps repeatedly. Trace what STP does on each flap and why
+   topology-change notifications can briefly disrupt unrelated VLANs.
+4. Per-VLAN STP lets different VLANs have different roots. Explain how that
+   enables load-sharing across redundant uplinks, and the failure if two
+   switches disagree on a VLAN's root.

@@ -4,6 +4,13 @@ Demonstrates the full 802.1X / NAC control plane in Linux containers: RADIUS pro
 exchange, EAP-TLS, PEAP/MSCHAPv2, MAB, dynamic VLAN assignment, pre-auth port blocking,
 and RADIUS accounting.
 
+## How to use this lab
+
+This is a **practice lab** on a working build — observe, predict, and
+explain. **Predict each verification's output before you run it**, then
+check. The break-it steps and challenge questions are where you reason
+without scaffolding.
+
 ## Topology
 
 ```mermaid
@@ -251,3 +258,19 @@ CA (ca.pem)
 3. After 10s timeout, hostapd sends RADIUS Access-Request with MAC as User-Name/Password
 4. FreeRADIUS DEFAULT entry matches → Accept + VLAN 30
 5. Port moves to VLAN 30
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. 802.1X has three roles: supplicant, authenticator, authentication
+   server. Trace an EAP exchange through all three and identify what each
+   one does and does not trust.
+2. What happens to a port before authentication succeeds, and what are the
+   failure modes (no supplicant, server unreachable, auth reject)? How does
+   each differ in what the user experiences?
+3. Dynamic VLAN assignment puts a device on a VLAN based on identity. What
+   attack does MAC-auth-bypass (MAB) reintroduce, and when is it
+   unavoidable?
+4. Compare 802.1X with the L2 hardening features (DHCP snooping, port
+   security): which threats does NAC stop that they can't, and vice versa?

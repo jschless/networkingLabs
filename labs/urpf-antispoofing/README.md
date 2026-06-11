@@ -41,6 +41,13 @@ LOOSE MODE  (reachable-via any)
 
 **When to use loose:** Multi-homed environments where asymmetric routing is expected (traffic comes in one link, goes out another). Strict would drop legitimate traffic; loose still catches completely bogus source addresses.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -101,6 +108,8 @@ Expected: all pings succeed, edge has OSPF adjacency with internet, routing tabl
 ---
 
 ## Task 2: Enable uRPF Strict Mode on edge eth1
+
+**Predict first:** strict uRPF checks the packet's *source* against the FIB's best path out that interface. Before enabling it, predict which of the later test cases (legitimate, spoofed, asymmetric) will pass and which will drop — and why.
 
 Connect to the edge router and enable uRPF strict mode on the attacker-facing interface:
 
@@ -406,3 +415,17 @@ The output shows the RPF interface and next-hop. If the RPF interface does not m
 ```bash
 sudo containerlab destroy -t labs/urpf-antispoofing/topology.clab.yml --cleanup
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Strict vs. loose uRPF: define each precisely and give a legitimate
+   topology (asymmetric routing / multihoming) where strict mode drops
+   valid traffic and loose mode is required.
+2. uRPF checks the *source* against the FIB. Walk through exactly how that
+   blocks a spoofed-source DDoS at the edge, and what it cannot stop.
+3. Where in the network is uRPF appropriate (edge/access) and where is it
+   dangerous (core/transit)? Justify from the asymmetry of real routing.
+4. An attacker spoofs a source inside your own prefix. Does uRPF catch it?
+   What additional filtering (BCP 38) is required and where?

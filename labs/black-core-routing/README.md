@@ -8,6 +8,13 @@ This lab is designed as a guided capstone with hints. You build the control plan
 - the black core carries only transport reachability
 - after IPsec is enabled, the black core sees ciphertext while the red overlay still carries plaintext routing and service traffic
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -179,6 +186,8 @@ exit
 </details>
 
 ## Task 2: Prove Black-Side Transport Reachability
+
+**Predict first:** the black core must route the *encrypted* transport but must never learn red-side (plaintext) routes. Before testing, predict what the black core's routing table will and will not contain, and what a black-core capture of red traffic shows.
 
 Before building the overlay, confirm the red-router transport endpoints are reachable across the black core.
 
@@ -471,6 +480,21 @@ You should be able to state:
 ```bash
 ./scripts/lab.sh destroy black-core-routing
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. A "black core" carries only encrypted transport and never sees plaintext
+   or red-side routes. Explain what the core *must not* learn and how the
+   design enforces that separation.
+2. If the encryptors fail open vs. fail closed, what's the security and
+   availability consequence of each? Which does this design choose and why?
+3. Trace a red-side packet end to end: where is it encrypted, what does the
+   black core route on, and where is the red-side reachability information
+   actually exchanged?
+4. Key compromise on one encryptor — what's the blast radius, and how does
+   per-pair vs. group keying change it?
 
 ## Extensions
 

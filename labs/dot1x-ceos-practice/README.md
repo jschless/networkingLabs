@@ -24,6 +24,13 @@ You configure on the switch:
 
 Treat this as a CLI and control-plane practice lab. Arista documents the relevant EOS dot1x and AAA commands on supported EOS platforms, but `cEOS-lab` is still a virtual training target rather than a hardware forwarding ASIC. That makes it useful for learning syntax, workflow, AAA behavior, and basic validation, but not a perfect substitute for hardware switch validation.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -132,6 +139,8 @@ On Linux nodes:
 - `supplicant-fail` sends wrong PEAP credentials
 
 ## Task 1 — Verify the baseline
+
+**Predict first:** before 802.1X authenticates, what should the supplicant be able to reach through the port — nothing, only the auth server, or everything? Predict the port's pre-auth state, then verify.
 
 Before touching dot1x, confirm the switch can reach both backends:
 
@@ -476,3 +485,19 @@ After working through the lab, you should be able to explain:
 ```bash
 sudo containerlab destroy -t labs/dot1x-ceos-practice/topology.clab.yml --cleanup
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Trace a full 802.1X EAP exchange (supplicant → authenticator → RADIUS)
+   and identify exactly what the switch trusts before vs. after a successful
+   auth.
+2. What are the distinct failure modes — no supplicant, RADIUS unreachable,
+   auth reject — and how should the port behave in each (guest VLAN,
+   auth-fail VLAN, closed)? Why does "fail open" defeat the purpose?
+3. MAC Authentication Bypass exists for printers and IoT. What attack does
+   it reintroduce, and what compensating controls limit the damage?
+4. Admin AAA (login to the switch) and port AAA (802.1X) both use RADIUS
+   here. Contrast what each protects and why local fallback matters
+   differently for each.

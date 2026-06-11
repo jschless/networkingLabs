@@ -18,6 +18,13 @@ This lab teaches 802.3ad LACP (Link Aggregation Control Protocol) and EtherChann
 
 ---
 
+## How to use this lab
+
+This is a **practice lab** on a working build — observe, predict, and
+explain. **Predict each verification's output before you run it**, then
+check. The break-it steps and challenge questions are where you reason
+without scaffolding.
+
 ## Topology
 
 ```mermaid
@@ -321,6 +328,8 @@ This tells you which physical interface that flow will exit on without sending a
 ---
 
 ## Task 4: Simulate a Link Failure
+
+**Predict first:** before you pull a member link — how many seconds of traffic loss do you expect on the bundle, and what happens to flows that were hashed onto the failed member versus flows on the surviving one?
 
 Shut down one member and observe that the bundle stays up with reduced bandwidth.
 
@@ -699,3 +708,19 @@ sudo containerlab destroy -t labs/lacp-etherchannel/topology.clab.yml --cleanup
 # or:
 ./scripts/lab.sh destroy lacp-etherchannel
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. LACP negotiates a bundle; static "on" mode does not. Construct the
+   miscabling/misconfig where static mode silently creates a forwarding
+   loop that LACP would have prevented.
+2. Load balancing across members is per-flow (hash-based), not per-packet.
+   Explain why, and what a single large flow does to a bundle's effective
+   bandwidth.
+3. A member link fails. How fast does traffic shift, what does LACP do, and
+   why is bundle failover usually faster than STP reconvergence?
+4. Both ends must agree on the hash inputs for symmetry? Or not? Reason
+   about whether the two ends of a port-channel must use the same
+   load-balance algorithm, and what breaks if they don't.
