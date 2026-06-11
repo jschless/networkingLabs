@@ -17,6 +17,15 @@ docker build -t enterprise-wireless-architecture:local labs/enterprise-wireless-
 sudo containerlab deploy -t labs/enterprise-wireless-architecture/topology.clab.yml
 ```
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+the "What You Configure" section gives you objectives, not commands — you
+produce the configuration. Work the suggested steps, **predict each
+result before you verify**, and use the success criteria to grade
+yourself. The break-it steps and challenge questions are where the
+learning sticks.
+
 ## Topology
 
 ```mermaid
@@ -111,3 +120,20 @@ Use this lab to reason through:
 - enterprise wireless is mostly wired policy plus management-plane dependency
 - AP uplinks are trunk designs, not magic
 - corp and guest are different policy products, not just different SSID names
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Compare a controller-based (CAPWAP-tunneled) wireless design with a
+   bridged/local-mode design: where does client traffic decapsulate in
+   each, and what does that imply for the wired VLAN/firewall design?
+2. A wireless client roams between APs. What must stay constant for the
+   session to survive (IP, gateway, security association), and which design
+   keeps it constant — centralized or distributed?
+3. Guest wireless and corporate wireless share the same RF but must be
+   isolated end to end. Trace where that isolation is actually enforced
+   (SSID → VLAN → firewall) and the weakest link in the chain.
+4. RF is a shared medium with no STP. What wireless mechanisms play the
+   role wired networks give to spanning tree and switching capacity, and
+   where do they break down under load?

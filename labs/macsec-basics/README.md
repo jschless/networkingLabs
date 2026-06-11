@@ -5,6 +5,13 @@ This lab uses native VyOS MACsec interfaces to show the difference between:
 - a normal Ethernet link carrying plain IPv4/ICMP
 - a MACsec-protected Ethernet link carrying the same traffic encrypted on the wire
 
+## How to use this lab
+
+This is a **practice lab** on a working build — observe, predict, and
+explain. **Predict each verification's output before you run it**, then
+check. The break-it steps and challenge questions are where you reason
+without scaffolding.
+
 ## Topology
 
 ```mermaid
@@ -171,6 +178,20 @@ tshark -r /tmp/macsec-inner-macsec0.pcap -Y icmp
 ```bash
 ./scripts/lab.sh destroy macsec-basics
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. MACsec encrypts at L2, hop-by-hop. Contrast that with IPsec (L3,
+   end-to-end): what does MACsec protect that IPsec can't, and vice versa?
+2. From your packet capture, what is and isn't visible on a MACsec link —
+   MAC addresses? VLAN tags? payload? Explain each.
+3. MACsec uses a connectivity association with rotating keys (MKA). Why
+   rotate keys at L2 at all, and what happens to a link if the two ends'
+   keys drift out of sync?
+4. Where in a campus would you deploy MACsec and where is it pointless?
+   Justify from the threat model (who can tap which links).
 
 ## Extensions
 

@@ -3,6 +3,13 @@
 This lab teaches high-value filtering mechanics on router-local services.
 You will build an interface-aware ACL with `iptables-legacy`, apply it in the INPUT path, and verify hit counters.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -112,3 +119,20 @@ docker exec clab-acl-basics-router iptables-legacy -L MGMT-ACL -n -v --line-numb
 - source, protocol, port, and interface filtering solve different problems
 - counters are part of the ACL workflow, not an afterthought
 - interface placement is part of the ACL design, not a syntax detail
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. ACLs are evaluated top-down, first-match, with an implicit deny at the
+   end. Write the classic ordering bug where a broad permit shadows a
+   specific deny, and how you'd catch it from hit counters.
+2. Inbound vs. outbound ACL placement changes what the router has already
+   done to the packet (routing, NAT). Pick a rule and explain how its
+   meaning shifts by direction.
+3. Standard vs. extended ACLs: give a policy each one can express that the
+   other cannot, and why "place standard ACLs close to the destination" is
+   the rule.
+4. You permit established return traffic without a stateful firewall. How do
+   you approximate statefulness with ACLs, and what attack does the naive
+   "permit tcp any any" return rule allow?

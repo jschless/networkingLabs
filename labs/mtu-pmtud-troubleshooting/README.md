@@ -9,6 +9,13 @@ This lab demonstrates one of the most common day-2 overlay problems:
 
 The underlay links are forced to MTU `1400`, but the GRE tunnel is left at its default.
 
+## How to use this lab
+
+This is a **practice troubleshooting lab**. Something is broken (or about to
+be); your job is to find and fix it from the symptom, not a script. **Form
+a hypothesis before each command**, predict what a healthy vs. broken output
+looks like, and only then run it. The challenge questions test transfer.
+
 ## Topology
 
 ```mermaid
@@ -166,3 +173,18 @@ print(s.recvfrom(4096))
 - control-plane success does not prove the data plane is healthy
 - overlay overhead changes the effective packet budget
 - packet capture plus exact-size probes is the fastest way to prove an MTU problem
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Small pings work, large transfers hang. Explain the exact mechanism
+   (DF bit, ICMP "fragmentation needed", a firewall dropping that ICMP) that
+   produces this classic "PMTUD black hole."
+2. Where do MTU mismatches typically hide (tunnels, VLANs, providers), and
+   why does adding any encapsulation (GRE/IPsec/VXLAN) make this lab's
+   symptom more likely?
+3. MSS clamping "fixes" it for TCP — what does it actually change, why only
+   TCP, and what non-TCP traffic is still broken?
+4. Give the ordered diagnostic that isolates the exact hop where the MTU
+   drops, using only ping with varying sizes and the DF bit.

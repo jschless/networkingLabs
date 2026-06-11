@@ -8,8 +8,17 @@ redundant switch pair. This is the standard choice for medium-sized campuses
 (roughly 50–500 users) where the cost and complexity of a full 3-tier hierarchy
 is not justified.
 
-The lab is fully pre-configured and working out of the box. Deploy it, explore
-the VRRP, STP, and OSPF behaviour, then run the demo tasks to observe failover.
+The lab is fully pre-configured and working out of the box.
+
+## How to use this lab
+
+This is a **practice lab** on a working reference design — you observe,
+predict, and explain rather than configure. The value is in the **demo
+tasks**: at each one, predict the failover behavior (what moves, how long,
+what the client sees) *before* you trigger it, then verify. The design
+rationale at the end is reference material — read it to answer the
+challenge questions. (Prereqs: the `vrrp`, `stp-operations`, and
+`ospf-default-route` labs cover the pieces in isolation.)
 
 ---
 
@@ -239,6 +248,12 @@ Expected hops:
 Simulate a complete cc1 failure and observe client-a losing its active gateway
 then switching to cc2.
 
+**Predict first:** cc1 is *both* the VRRP active and the STP root for
+VLAN 10. When it dies, **two** independent things must reconverge (L3
+gateway and L2 root). Which is faster, roughly how many seconds of client-a
+loss do you expect, and when cc1 returns, will it reclaim both roles? Commit
+before triggering.
+
 **Step 1**: watch VRRP state on cc2 before failure:
 ```bash
 # On cc2
@@ -406,3 +421,26 @@ multicast traffic in the VLAN segments.
 OSPF even if its own RIB does not have one (useful during BGP convergence after
 a restart). Without `always`, if the ISP BGP session goes down, the default
 disappears from OSPF and the campus loses internet access.
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The design aligns VRRP-active and STP-root on the same switch per VLAN.
+   Construct the suboptimal traffic path that results if you *mis*-align
+   them (STP root cc1, VRRP active cc2 for the same VLAN), and explain why
+   it wastes the cc-interlink.
+2. `default-information originate always` injects a default even when edge
+   has none. Describe the exact outage `always` *prevents* during BGP
+   convergence — and the worse outage it can *cause* if the ISP link is
+   truly down. When is each tradeoff right?
+3. acc1 is single-homed (Task 3 isolates it). Redesign it dual-homed to
+   both cc1 and cc2 and walk through what STP does with the second uplink in
+   steady state and on failure — and why that's the recommended access
+   design.
+4. The collapsed-core pair is the whole campus's redundancy. Quantify the
+   "blast radius" of losing one cc switch versus losing one distribution
+   switch in a 3-tier design, and state the user/campus size where you'd
+   migrate from 2-tier to 3-tier.

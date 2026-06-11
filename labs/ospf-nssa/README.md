@@ -1,4 +1,10 @@
-# Lab: OSPF NSSA (Not-So-Stubby Area)
+# OSPF NSSA (Not-So-Stubby Area) — Practice Lab
+
+A stub area blocks external (Type-5) LSAs — which also makes it illegal to
+put an ASBR *inside* one. NSSA is the workaround: almost-stub, but external
+routes redistributed inside the area travel as **Type-7** LSAs and get
+translated to Type-5 at the ABR. In this lab you build the area, redistribute
+at the edge, and watch the Type-7 → Type-5 translation happen in the LSDB.
 
 ## Topology
 
@@ -27,9 +33,20 @@ flowchart LR
 
 Loopbacks: r1=10.0.0.1/32 (area1), r2=10.0.0.2/32 (area0), r3=10.0.0.3/32 (area0)
 
-## Concepts
+## How to use this lab
 
-### OSPF Area Types Comparison
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure.** When a task asks for a prediction,
+  commit to an answer before touching the CLI. Being wrong and finding out
+  why is the point.
+- **Open the hints before the solution.** The solution toggle is the answer
+  key — use it to check your work or when genuinely stuck, not as step one.
+- **Verify like an operator.** After each task, prove the state is what you
+  think it is with `show` commands before moving on.
+
+## Area type background
 
 | Area Type | Type-3 (inter-area) | Type-5 (external) | Type-7 (NSSA ext) | ASBR inside? |
 |-----------|--------------------|--------------------|-------------------|--------------|
@@ -39,52 +56,7 @@ Loopbacks: r1=10.0.0.1/32 (area1), r2=10.0.0.2/32 (area0), r3=10.0.0.3/32 (area0
 | NSSA | Yes | No | Yes | **Yes** |
 | Totally NSSA | Default only | No | Yes | Yes |
 
-The key insight: **NSSA allows an ASBR inside a stub-like area**. This is
-the "Not So Stubby" part — it's almost a stub (blocks Type-5), but not
-completely (allows Type-7 for internal redistribution).
-
-### Type-7 LSA (NSSA External)
-
-When an ASBR inside an NSSA redistributes an external route, it generates
-a **Type-7 LSA** instead of Type-5:
-
-- Type-7 LSAs are **only flooded within the NSSA** (not to other areas)
-- The Type-7 LSA contains a **Forward Address** — the actual next-hop IP
-  that other routers should use to reach the external destination
-- Type-7 LSAs have the **P-bit** (Propagate bit) set if the ABR should
-  translate them to Type-5
-
-### Type-7 to Type-5 Translation
-
-The ABR (r2) automatically translates Type-7 → Type-5 when:
-1. The area is configured as NSSA on the ABR
-2. The ABR has the highest router-id in the NSSA (in multi-ABR scenarios)
-3. The P-bit is set in the Type-7 LSA
-
-After translation:
-- r3 (area 0) sees a **Type-5 LSA** originated by r2 (not r1)
-- The route appears as **O E2** in the routing table
-- r3 has no knowledge that Type-7 existed — it looks like normal redistribution
-
-### `area X nssa no-summary` (Totally NSSA)
-
-<details>
-<summary>Show configuration</summary>
-
-```
-router ospf
- area 1 nssa no-summary
-```
-</details>
-
-This adds the "totally" modifier: the ABR stops sending Type-3 (inter-area
-summary) LSAs into area 1. Area 1 routers only receive:
-- Intra-area routes (Type-1, Type-2)
-- A default route (Type-3 default 0.0.0.0/0 from the ABR)
-- Type-7 LSAs from local ASBRs
-
-This minimises the LSA database in the NSSA and forces all external traffic
-through the ABR's default route.
+Keep this table handy — the tasks make you prove most of its cells.
 
 ## Deployment
 
@@ -92,166 +64,210 @@ through the ABR's default route.
 sudo containerlab deploy -t topology.clab.yml
 ```
 
-## Tasks
+---
 
-### Step 1: Configure basic OSPF (without NSSA first)
+## Task 1 — Baseline: regular areas, then redistribute
+
+**Objective:** Bring up OSPF with area 1 as a *regular* area (r1 ↔ r2) and
+area 0 (r2 ↔ r3), loopbacks included per the topology table. Then make r1 an
+ASBR with `redistribute connected` and find the external route in r3's LSDB.
+
+**Predict first:** with area 1 still a regular area, which LSA type carries
+192.168.100.0/30 to r3, and which router will r3 list as the advertising
+router?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On r1:
-```
+- Standard `router ospf` + `network ... area ...` statements on all three
+  routers (r2 straddles both areas).
+- After `redistribute connected` on r1: `show ip ospf database external`
+  on r3 and read the "Advertising Router" field.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **r1**:
+```text
 router ospf
  router-id 10.0.0.1
  network 10.0.0.1/32 area 1
  network 10.1.12.0/30 area 1
+ redistribute connected
 ```
-</details>
 
-<details>
-<summary>Show configuration</summary>
-
-On r2:
-```
+On **r2**:
+```text
 router ospf
  router-id 10.0.0.2
  network 10.0.0.2/32 area 0
  network 10.1.12.0/30 area 1
  network 10.1.23.0/30 area 0
 ```
-</details>
 
-<details>
-<summary>Show configuration</summary>
-
-On r3:
-```
+On **r3**:
+```text
 router ospf
  router-id 10.0.0.3
  network 10.0.0.3/32 area 0
  network 10.1.23.0/30 area 0
 ```
-</details>
 
-Verify neighbors:
-```
-show ip ospf neighbor
-```
-
-### Step 2: Attempt redistribution WITHOUT NSSA
-
-<details>
-<summary>Show configuration</summary>
-
-On r1, try to redistribute connected:
-```
-router ospf
- redistribute connected
-```
-</details>
-
-Check the database on r3:
-```
-show ip ospf database external
-```
-
-If area 1 is a regular area, you'll see Type-5 LSAs. If it were configured
-as a stub area, redistribution would be blocked entirely. NSSA is the
-middle ground.
-
-### Step 3: Configure area 1 as NSSA
-
-<details>
-<summary>Show configuration</summary>
-
-On r1:
-```
-router ospf
- area 1 nssa
-```
 </details>
 
 <details>
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-On r2:
-```
+Adjacencies `Full` on both links. r3's `show ip ospf database external`
+shows a **Type-5** LSA for 192.168.100.0/30 with **Advertising Router
+10.0.0.1** — r1's own LSA, flooded unchanged across the whole domain.
+That's normal redistribution in a regular area. Remember both facts (type
+and advertiser); both change once the area becomes NSSA.
+
+</details>
+
+---
+
+## Task 2 — Convert area 1 to NSSA
+
+**Objective:** Make area 1 an NSSA on every router that touches it, without
+permanently losing the external route on r3.
+
+**Predict first:** two predictions. (1) What happens to the r1–r2 adjacency
+the moment you configure NSSA on r1 but haven't yet on r2? (2) Once both
+sides agree, what will r3's external LSA look like — same type, same
+advertising router as in Task 1?
+
+<details>
+<summary>Hints</summary>
+
+- `area 1 nssa` under `router ospf` — on **both** r1 and r2.
+- Area type is negotiated in hellos (N/E option bits), same mechanism that
+  makes stub mismatches fatal.
+- Compare `show ip ospf database nssa-external` (on r1/r2) with
+  `show ip ospf database external` (on r3).
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **r1** and **r2**:
+```text
 router ospf
  area 1 nssa
 ```
+
 </details>
 
-Both routers in area 1 must agree on the area type.
+<details>
+<summary>Check your work</summary>
 
-### Step 4: Verify Type-7 LSA on r1
+(1) With only r1 converted, the r1–r2 adjacency **drops** — hello option
+bits no longer match, the routers won't even be neighbors. (2) After both
+agree: inside area 1 the external route now exists as a **Type-7**
+(`show ip ospf database nssa-external`, advertising router 10.0.0.1, note
+the **Forward Address** field = r1's external-segment IP). On r3 the route
+is back as a **Type-5** — but the advertising router is now **10.0.0.2**:
+the ABR re-originated (translated) it. r3 cannot tell NSSA was ever
+involved.
 
-```
-show ip ospf database nssa-external
-```
+</details>
 
-Expected output:
-```
-OSPF Router with ID (10.0.0.1) (Process ID 0)
+---
 
-        NSSA-external Link States (Area 1)
+## Task 3 — Read the translation like a protocol engineer
 
- LS age: 42
-Options: (No TOS-capability, DC, Upward)
- LS Type: AS NSSA-external Link State
-Link State ID: 192.168.100.0 (External Network Number For This Type)
-Advertising Router: 10.0.0.1
-...
-Forward Address: 192.168.100.1
-```
+**Objective:** Use the LSDB views to document the full Type-7 → Type-5
+pipeline: who originates what, where each LSA floods, and what the P-bit
+and Forward Address do.
 
-The **Forward Address** is r1's address on the external segment. Area 0
-routers use this as the next-hop for the external prefix.
+<details>
+<summary>Hints</summary>
 
-### Step 5: Verify Type-5 LSA on r3 (ABR translation)
+- `show ip ospf database nssa-external` on r1 and r2 — both see the
+  Type-7 (it floods within area 1 only).
+- `show ip ospf database external detail` on r3 — find the forward
+  address in the translated Type-5.
+- The P-bit ("Propagate") in the Type-7 is what permits translation.
 
-```
-show ip ospf database external
-```
+</details>
 
-Expected: Type-5 for 192.168.100.0/30, **Advertising Router: 10.0.0.2** (r2).
-Note that r2 is the advertising router even though r1 originated the route.
+<details>
+<summary>Check your work</summary>
 
-```
-show ip route ospf
-```
+The chain you should be able to narrate: r1 redistributes → originates
+Type-7 with P-bit set and Forward Address 192.168.100.1 → floods only
+within area 1 → r2 (the NSSA ABR; with multiple ABRs, the highest
+router-id wins the translator role) re-originates it as Type-5 into the
+rest of the domain → r3 routes to the prefix as `O E2`, and thanks to the
+preserved forward address, traffic still goes *through* r2 toward r1
+without extra recursion surprises.
 
-Expected:
-```
+```text
+r3# show ip route ospf
 O E2   192.168.100.0/30 [110/20] via 10.1.23.1, Ethernet1
 ```
 
-### Step 6: Test end-to-end reachability
+`ping 192.168.100.2 source 10.0.0.3` proves it end to end (ext has a
+static default back via r1).
 
-```
-ping 192.168.100.2 source 10.0.0.3
-```
+</details>
 
-ext has a static default route toward r1, so it can return the pings.
+---
 
-### Step 7 (Optional): Try totally NSSA
+## Task 4 — Totally NSSA
+
+**Objective:** Stop r2 from sending inter-area (Type-3) routes into area 1,
+leaving r1 with intra-area routes, its own Type-7, and just a default.
+
+**Predict first:** which router(s) need the change — and as what route type
+will r1's new default appear (`O IA`, `O E2`, or `O N2`)?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On r2 only (the ABR):
-```
+- One keyword added to the NSSA command, on the **ABR only**.
+- Compare r1's `show ip route ospf` before and after.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **r2** only:
+```text
 router ospf
  area 1 nssa no-summary
 ```
+
 </details>
 
-On r1, check the routing table — the inter-area routes (O IA) to r3's
-loopback should disappear and be replaced by a single default route:
-```
-show ip route ospf
-```
+<details>
+<summary>Check your work</summary>
 
-Expected: `O N2 0.0.0.0/0` (default from ABR) instead of specific Type-3 routes.
+r1's `O IA` routes (r3's loopback, the area-0 link) disappear, replaced by
+a single default originated by the ABR — shown as **`O N2 0.0.0.0/0`**
+(it's delivered via the NSSA mechanism, hence N2 rather than IA or E2).
+Internal routers only ever needed "send it to the ABR" anyway; totally-NSSA
+makes that explicit and shrinks the area's database to the minimum while
+still allowing the local ASBR.
+
+</details>
+
+---
+
+## Verification Summary
+
+| Command | Where | Expected result |
+|---------|-------|----------------|
+| `show ip ospf neighbor` | r2 | r1 (area 1) and r3 (area 0), both Full |
+| `show ip ospf database nssa-external` | r1, r2 | Type-7 from r1 (10.0.0.1) |
+| `show ip ospf database external` | r3 | Type-5 from r2 (10.0.0.2) |
+| `show ip route ospf` | r3 | O E2 192.168.100.0/30 |
+| `ping 192.168.100.2 source 10.0.0.3` | r3 | Success |
 
 ## OSPF Database Commands
 
@@ -265,15 +281,27 @@ Expected: `O N2 0.0.0.0/0` (default from ABR) instead of specific Type-3 routes.
 | `show ip ospf database nssa-external` | Type-7 (NSSA External LSAs) |
 | `show ip ospf database external detail` | Full Type-5 detail with forward addr |
 
-## Verification Summary
+---
 
-| Command | Where | Expected result |
-|---------|-------|----------------|
-| `show ip ospf neighbor` | r2 | r1 (area 1) and r3 (area 0) |
-| `show ip ospf database nssa-external` | r1, r2 | Type-7 from r1 (10.0.0.1) |
-| `show ip ospf database external` | r3 | Type-5 from r2 (10.0.0.2) |
-| `show ip route ospf` | r3 | O E2 192.168.100.0/30 |
-| `ping 192.168.100.2 source 10.0.0.3` | r3 | Success |
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Area 1 gains a second ABR (r2b) with a higher router-id, connected to
+   both area 1 and area 0. What changes about the translation, why does
+   the protocol elect exactly one translator, and what could go wrong if
+   both translated?
+2. Your security team wants area 1 to receive *no* knowledge of the
+   outside world, while still injecting its own external route. Which area
+   type satisfies this, and which direction of traffic still needs the
+   default route to work?
+3. A plain stub area would have rejected r1's `redistribute connected`
+   outright. Explain *mechanically* why an ASBR is incompatible with a
+   stub area — which LSA can't exist there, and what would break if it
+   were allowed in?
+4. r3 suddenly loses the external route. List, in the order you'd check
+   them, three distinct places in the Type-7 → Type-5 pipeline that could
+   have failed, and the one command that tests each.
 
 ## Teardown
 

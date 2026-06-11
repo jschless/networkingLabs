@@ -18,6 +18,15 @@ docker build -t enterprise-access-tools:local labs/enterprise-access-security/
 sudo containerlab deploy -t labs/enterprise-access-security/topology.clab.yml
 ```
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+the "What You Configure" section gives you objectives, not commands — you
+produce the configuration. Work the suggested steps, **predict each
+result before you verify**, and use the success criteria to grade
+yourself. The break-it steps and challenge questions are where the
+learning sticks.
+
 ## Topology
 
 ```mermaid
@@ -154,6 +163,24 @@ docker exec clab-enterprise-access-security-client-a ping -c 3 10.10.10.2
 - the legitimate server path must be trusted explicitly
 - edge ports are where you stop L2 attacks before they become campus-wide problems
 - the useful mindset is not “feature by feature,” but “what class of failure am I trying to stop?”
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. DHCP snooping, DAI, and IP Source Guard form a dependency chain — DAI
+   and IPSG both consume the snooping binding table. Explain the chain, and
+   what silently breaks for legitimate users if you mark the wrong uplink
+   "trusted."
+2. For each L2 attack (rogue DHCP, ARP spoof, MAC flood, rogue root
+   bridge), name the single feature that stops it and *where* (which port)
+   it must be applied. Why is "at the edge" the rule?
+3. BPDU Guard and Root Guard both protect spanning tree but react
+   differently to an unexpected BPDU. Contrast their actions and when you'd
+   choose each.
+4. The lab framing is "what class of failure am I stopping," not "feature
+   by feature." Take port-security and argue what it does and does *not*
+   defend against — and what a determined attacker does to bypass it.
 
 ## Extensions
 

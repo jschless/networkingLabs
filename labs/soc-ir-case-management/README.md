@@ -2,6 +2,14 @@
 
 Tie the SOC layers together into an incident workflow: alert triage, Zeek context, packet evidence, observables, case tasks, and timeline output.
 
+
+## How to use this lab
+
+This is a **practice analysis lab**. The environment and evidence are
+pre-built; your job is to *investigate*, not to follow a script. For each
+task, **form a hypothesis about what the logs/PCAP will show before you
+query them**, then run the filter and compare. The challenge questions push
+you from "find the indicator" to "explain and respond."
 ## Build And Deploy
 
 ```bash
@@ -32,3 +40,15 @@ docker exec clab-soc-ir-case-management-sensor cat /var/log/soc/incident-timelin
 ## Outcome
 
 You can work an incident from detection through evidence gathering and case documentation.
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Good IR is reproducible. Walk through the chain of custody and timeline you'd build from this lab's evidence so a second analyst reaches the same conclusion independently.
+2. Distinguish a true positive from a false positive in this lab's data, and
+   state the *one* corroborating source you'd pull to raise confidence.
+3. From detection to response: given a confirmed finding here, what's the
+   minimal containment action, and what evidence must you preserve first?
+4. What single additional log source or visibility gap, if added, would have
+   made this investigation faster — and why isn't it free?

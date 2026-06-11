@@ -1,10 +1,10 @@
-# Lab: ipv6-bgp
+# IPv6 BGP (MP-BGP) — Practice Lab
 
-## Purpose
-Learn IPv6 BGP (MP-BGP for IPv6 unicast, RFC 4760). Understand the two approaches to carrying
-IPv6 routes: native IPv6 BGP sessions, and IPv4 sessions with IPv6 NLRI using the extended
-next-hop capability. Explore dual-stack BGP peering and how iBGP next-hop handling differs
-for IPv6.
+There are two ways to carry IPv6 routes in BGP: native IPv6 sessions, and
+the more common trick of reusing an IPv4 session to also carry IPv6 NLRI
+with an IPv6 next-hop (RFC 5549 extended next-hop). In this lab you build
+one of them across a three-AS chain, then deliberately compare the
+next-hop behavior of both — which is where the real understanding lives.
 
 ## Topology
 
@@ -23,11 +23,11 @@ flowchart LR
     class r1,r2,r3,r4 router
 ```
 
-| Link | IPv4 Subnet | IPv6 Subnet | Left | Right | Session |
-|------|------------|-------------|------|-------|---------|
-| r1:Ethernet1 -- r2:Ethernet1 | 10.1.12.0/30 (.1/.2) | 2001:db8:12::/64 (::1/::2) | r1 | r2 | eBGP 65001-65002 |
-| r2:Ethernet2 -- r3:Ethernet1 | 10.1.23.0/30 (.1/.2) | 2001:db8:23::/64 (::1/::2) | r2 | r3 | iBGP 65002 |
-| r3:Ethernet2 -- r4:Ethernet1 | 10.1.34.0/30 (.1/.2) | 2001:db8:34::/64 (::1/::2) | r3 | r4 | eBGP 65002-65003 |
+| Link | IPv4 Subnet | IPv6 Subnet | Session |
+|------|------------|-------------|---------|
+| r1 -- r2 | 10.1.12.0/30 | 2001:db8:12::/64 | eBGP 65001-65002 |
+| r2 -- r3 | 10.1.23.0/30 | 2001:db8:23::/64 | iBGP 65002 |
+| r3 -- r4 | 10.1.34.0/30 | 2001:db8:34::/64 | eBGP 65002-65003 |
 
 | Node | IPv4 Loopback | IPv6 Loopback | AS |
 |------|--------------|---------------|----|
@@ -36,246 +36,221 @@ flowchart LR
 | r3   | 10.0.0.3/32  | 2001:db8::3/128 | 65002 |
 | r4   | 10.0.0.4/32  | 2001:db8::4/128 | 65003 |
 
-## Deploy / Destroy
+All IP addressing and `ipv6 unicast-routing` are pre-configured.
 
-```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
-```
+## How to use this lab
 
-Access a node:
-```bash
-docker exec -it clab-ipv6-bgp-r1 Cli
-```
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
 
-## What You Configure
+- **Predict before you configure**, **open hints before the solution**,
+  and **verify** with `show bgp ipv6 unicast` after each step.
 
-All IP addresses are pre-configured. Choose one of the two approaches below (or try both):
+## Background — MP-BGP
 
----
+Standard BGP carries only IPv4. MP-BGP (RFC 4760) adds address families:
+IPv6 unicast is AFI 2 / SAFI 1, negotiated in the OPEN message. The two
+designs:
 
-### Approach A: IPv4 sessions + extended next-hop for IPv6
+- **Extended next-hop (RFC 5549):** an IPv4-peered session also activated
+  in `address-family ipv6` carries IPv6 prefixes with an IPv6 next-hop.
+  EOS negotiates the capability automatically — no explicit command. Reuses
+  existing IPv4 peering; one session for both families.
+- **Native IPv6 sessions:** peer over IPv6 addresses, carry only IPv6.
+  Simpler conceptually, separate management plane.
 
-<details>
-<summary>Show configuration</summary>
-
-This is the most common enterprise/ISP approach. BGP sessions run over IPv4, but also carry
-IPv6 prefixes. In EOS, when an IPv4 BGP neighbor is activated in `address-family ipv6`, EOS
-automatically negotiates the extended next-hop capability (RFC 5549). No explicit capability
-command is needed.
-
-On **r1** (AS65001):
-```
-r1# configure
-r1(config)# router bgp 65001
-r1(config-router-bgp)# bgp router-id 10.0.0.1
-r1(config-router-bgp)# neighbor 10.1.12.2 remote-as 65002
-r1(config-router-bgp)# address-family ipv4
-r1(config-router-bgp-af)# neighbor 10.1.12.2 activate
-r1(config-router-bgp-af)# network 10.0.0.1/32
-r1(config-router-bgp-af)# exit
-r1(config-router-bgp)# address-family ipv6
-r1(config-router-bgp-af)# neighbor 10.1.12.2 activate
-r1(config-router-bgp-af)# network 2001:db8::1/128
-r1(config-router-bgp-af)# end
-r1# write memory
-```
-
-On **r2** (AS65002, eBGP to r1, iBGP to r3):
-```
-r2# configure
-r2(config)# router bgp 65002
-r2(config-router-bgp)# bgp router-id 10.0.0.2
-r2(config-router-bgp)# neighbor 10.1.12.1 remote-as 65001
-r2(config-router-bgp)# neighbor 10.1.23.2 remote-as 65002
-r2(config-router-bgp)# address-family ipv4
-r2(config-router-bgp-af)# neighbor 10.1.12.1 activate
-r2(config-router-bgp-af)# neighbor 10.1.23.2 activate
-r2(config-router-bgp-af)# neighbor 10.1.23.2 next-hop-self
-r2(config-router-bgp-af)# network 10.0.0.2/32
-r2(config-router-bgp-af)# exit
-r2(config-router-bgp)# address-family ipv6
-r2(config-router-bgp-af)# neighbor 10.1.12.1 activate
-r2(config-router-bgp-af)# neighbor 10.1.23.2 activate
-r2(config-router-bgp-af)# neighbor 10.1.23.2 next-hop-self
-r2(config-router-bgp-af)# network 2001:db8::2/128
-r2(config-router-bgp-af)# end
-r2# write memory
-```
-
-On **r3** (AS65002, iBGP to r2, eBGP to r4):
-```
-r3# configure
-r3(config)# router bgp 65002
-r3(config-router-bgp)# bgp router-id 10.0.0.3
-r3(config-router-bgp)# neighbor 10.1.23.1 remote-as 65002
-r3(config-router-bgp)# neighbor 10.1.34.2 remote-as 65003
-r3(config-router-bgp)# address-family ipv4
-r3(config-router-bgp-af)# neighbor 10.1.23.1 activate
-r3(config-router-bgp-af)# neighbor 10.1.23.1 next-hop-self
-r3(config-router-bgp-af)# neighbor 10.1.34.2 activate
-r3(config-router-bgp-af)# network 10.0.0.3/32
-r3(config-router-bgp-af)# exit
-r3(config-router-bgp)# address-family ipv6
-r3(config-router-bgp-af)# neighbor 10.1.23.1 activate
-r3(config-router-bgp-af)# neighbor 10.1.23.1 next-hop-self
-r3(config-router-bgp-af)# neighbor 10.1.34.2 activate
-r3(config-router-bgp-af)# network 2001:db8::3/128
-r3(config-router-bgp-af)# end
-r3# write memory
-```
-
-On **r4** (AS65003):
-```
-r4# configure
-r4(config)# router bgp 65003
-r4(config-router-bgp)# bgp router-id 10.0.0.4
-r4(config-router-bgp)# neighbor 10.1.34.1 remote-as 65002
-r4(config-router-bgp)# address-family ipv4
-r4(config-router-bgp-af)# neighbor 10.1.34.1 activate
-r4(config-router-bgp-af)# network 10.0.0.4/32
-r4(config-router-bgp-af)# exit
-r4(config-router-bgp)# address-family ipv6
-r4(config-router-bgp-af)# neighbor 10.1.34.1 activate
-r4(config-router-bgp-af)# network 2001:db8::4/128
-r4(config-router-bgp-af)# end
-r4# write memory
-```
+`next-hop-self` matters for IPv6 iBGP exactly as it does for IPv4.
 
 ---
 
-</details>
+## Task 1 — Carry IPv6 over the IPv4 sessions (extended next-hop)
 
-### Approach B: Native IPv6 BGP sessions
+**Objective:** Build eBGP/iBGP IPv4 sessions along the chain, activate each
+neighbor in **both** the ipv4 and ipv6 address families, advertise each
+loopback in its family, and apply `next-hop-self` on the AS65002 iBGP
+sessions. Success: `ping ipv6 2001:db8::4` works from r1.
+
+**Predict first:** the BGP session to r1 is built on the IPv4 address
+10.1.12.x. When r2 receives 2001:db8::1/128 over that session, what will
+the **next-hop** be — an IPv4 address, or an IPv6 one? How can an
+IPv4-transport session even express an IPv6 next-hop?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-Sessions run over IPv6 link-local or global IPv6 addresses. Only IPv6 prefixes are carried.
-
-On **r1**:
-```
-r1# configure
-r1(config)# router bgp 65001
-r1(config-router-bgp)# bgp router-id 10.0.0.1
-r1(config-router-bgp)# neighbor 2001:db8:12::2 remote-as 65002
-r1(config-router-bgp)# address-family ipv6
-r1(config-router-bgp-af)# neighbor 2001:db8:12::2 activate
-r1(config-router-bgp-af)# network 2001:db8::1/128
-r1(config-router-bgp-af)# end
-r1# write memory
-```
-
-On **r2**:
-```
-r2# configure
-r2(config)# router bgp 65002
-r2(config-router-bgp)# bgp router-id 10.0.0.2
-r2(config-router-bgp)# neighbor 2001:db8:12::1 remote-as 65001
-r2(config-router-bgp)# neighbor 2001:db8:23::2 remote-as 65002
-r2(config-router-bgp)# address-family ipv6
-r2(config-router-bgp-af)# neighbor 2001:db8:12::1 activate
-r2(config-router-bgp-af)# neighbor 2001:db8:23::2 activate
-r2(config-router-bgp-af)# neighbor 2001:db8:23::2 next-hop-self
-r2(config-router-bgp-af)# network 2001:db8::2/128
-r2(config-router-bgp-af)# end
-r2# write memory
-```
-
-(Continue similarly for r3 and r4 with their respective IPv6 peer addresses.)
+- Define neighbors with IPv4 `remote-as`, then activate them under *both*
+  `address-family ipv4` and `address-family ipv6`.
+- IPv6 prefixes go in as `network 2001:db8::X/128` under the ipv6 AF.
+- Apply `next-hop-self` in *each* AF on r2/r3's iBGP session — it's
+  per-family.
+- EOS auto-negotiates RFC 5549; no capability command needed.
 
 </details>
+
+<details>
+<summary>Solution</summary>
+
+On **r1** (r4 mirrors; r2/r3 add their iBGP neighbor + next-hop-self):
+```text
+router bgp 65001
+   bgp router-id 10.0.0.1
+   neighbor 10.1.12.2 remote-as 65002
+   address-family ipv4
+      neighbor 10.1.12.2 activate
+      network 10.0.0.1/32
+   address-family ipv6
+      neighbor 10.1.12.2 activate
+      network 2001:db8::1/128
+```
+
+On **r2** (the iBGP next-hop handling, both families):
+```text
+router bgp 65002
+   bgp router-id 10.0.0.2
+   neighbor 10.1.12.1 remote-as 65001
+   neighbor 10.1.23.2 remote-as 65002
+   address-family ipv4
+      neighbor 10.1.12.1 activate
+      neighbor 10.1.23.2 activate
+      neighbor 10.1.23.2 next-hop-self
+      network 10.0.0.2/32
+   address-family ipv6
+      neighbor 10.1.12.1 activate
+      neighbor 10.1.23.2 activate
+      neighbor 10.1.23.2 next-hop-self
+      network 2001:db8::2/128
+```
+
+(r3 is symmetric — iBGP to r2, eBGP to r4; r4 is like r1.)
+
+</details>
+
+<details>
+<summary>Check your work</summary>
+
+`show bgp ipv6 unicast 2001:db8::1/128` on r2 shows an **IPv6** next-hop
+even though the session runs over IPv4 — that's RFC 5549 at work: the
+MP_REACH_NLRI attribute carries an IPv6 next-hop independent of the
+session's transport address. `show bgp neighbors 10.1.12.2` confirms the
+extended-nexthop capability was negotiated. One session, both families,
+and the next-hop the *data plane* needs (IPv6) rather than the one the
+*control plane* used (IPv4).
+
+</details>
+
+---
+
+## Task 2 — Forget next-hop-self in the IPv6 AF
+
+**Objective:** On r2, remove `next-hop-self` from the iBGP IPv6 session to
+r3 only (leave the IPv4 AF intact), and diagnose from r3.
+
+**Predict first:** which prefixes break on r3 — IPv4, IPv6, or both? And
+will the IPv4 reachability survive because you left its next-hop-self
+alone?
+
+<details>
+<summary>What you should observe</summary>
+
+Only the **IPv6** routes learned via r2 from the eBGP peer r1 go
+inaccessible on r3: they now carry r1's IPv6 link address as next-hop,
+which r3 (inside AS65002) has no route to. IPv4 keeps working — the two
+address families are configured and resolved independently, so a fix or a
+mistake in one doesn't touch the other. The trap in dual-stack BGP is
+exactly this: people copy their IPv4 policy mentally and forget that
+`next-hop-self`, route-maps, and activation are all *per-AF*. Restore it
+and re-verify.
+
+</details>
+
+---
+
+## Task 3 — Prove the families are independent
+
+**Objective:** Confirm that IPv4 and IPv6 reachability are carried
+separately by examining the per-AF tables.
+
+<details>
+<summary>Hints</summary>
+
+- `show bgp ipv4 unicast summary` vs `show bgp ipv6 unicast summary` —
+  same neighbors, separate prefix counts.
+- `show bgp ipv6 unicast` and `show ipv6 route bgp`.
+
+</details>
+
+<details>
+<summary>Check your work</summary>
+
+Each neighbor appears in both summaries with its own accepted-prefix
+count; the IPv6 table has IPv6 next-hops, the IPv4 table IPv4 ones. The
+session is shared, the NLRI is not. This is why you can run IPv6-only on
+some peers and dual-stack on others over identical infrastructure — the
+capability negotiation per AF decides what each session carries.
+
+</details>
+
+---
 
 ## Verification Commands
 
-```
-# Session state across all address families
-show bgp summary
-
-# Session state for IPv4 AF
-show bgp ipv4 unicast summary
-
-# Session state for IPv6 AF
-show bgp ipv6 unicast summary
-
-# Full IPv6 BGP table (routes with IPv6 next-hops)
-show bgp ipv6 unicast
-
-# Specific prefix
-show bgp ipv6 unicast 2001:db8::4/128
-
-# Installed routes
-show ipv6 route bgp
-
-# Ping test (IPv6 end-to-end)
-ping ipv6 2001:db8::4
-
-# Check neighbor capability negotiation (shows extended-nexthop if Approach A)
-show bgp neighbors 10.1.12.2
+```text
+show bgp summary                        # all AFs
+show bgp ipv6 unicast summary           # IPv6 session/prefix state
+show bgp ipv6 unicast                   # IPv6 table with next-hops
+show bgp ipv6 unicast 2001:db8::4/128   # one prefix
+show ipv6 route bgp                      # installed IPv6 routes
+ping ipv6 2001:db8::4                     # end-to-end
+show bgp neighbors 10.1.12.2             # capability negotiation (extended-nexthop)
 ```
 
-## Concepts
+---
 
-### MP-BGP (Multiprotocol BGP, RFC 4760)
+## Challenge questions
 
-Standard BGP only carries IPv4 prefixes. MP-BGP extends BGP to support multiple address
-families (AFIs) and sub-address families (SAFIs):
+No answers provided — reason them through.
 
+1. In Task 1 an IPv4-transport session carried an IPv6 next-hop. Argue
+   the operational case *for* RFC 5549 (one session, reuse IPv4 infra)
+   and *against* it (debugging, vendor support, what happens the day you
+   want to turn off IPv4). Which would you pick for a greenfield network?
+2. Approach B uses native IPv6 sessions, often on **link-local**
+   (`fe80::`) peer addresses. What extra neighbor config does link-local
+   peering require, and what failure does using link-local *avoid*
+   compared to global-address peering?
+3. A dual-stack peer reports "IPv4 is fine, IPv6 routes missing." Give an
+   ordered checklist of the per-AF things that could be wrong (activation,
+   next-hop-self, route-map, capability) and the single show command that
+   tests each.
+4. SAFI values include unicast (1), labeled-unicast (4), and L3VPN (128).
+   Explain how the same MP-BGP machinery you used here generalizes to
+   VPNv6, and why "one BGP, many address families" is considered one of
+   the most important design decisions in the protocol's history.
+
+## Reference — Native IPv6 sessions (Approach B)
+
+If you'd rather peer over IPv6 directly, define neighbors by their IPv6
+address and activate only the ipv6 AF:
+
+<details>
+<summary>Example (r1 ↔ r2)</summary>
+
+```text
+! r1
+router bgp 65001
+   neighbor 2001:db8:12::2 remote-as 65002
+   address-family ipv6
+      neighbor 2001:db8:12::2 activate
+      network 2001:db8::1/128
+! r2
+router bgp 65002
+   neighbor 2001:db8:12::1 remote-as 65001
+   neighbor 2001:db8:23::2 remote-as 65002
+   address-family ipv6
+      neighbor 2001:db8:12::1 activate
+      neighbor 2001:db8:23::2 activate
+      neighbor 2001:db8:23::2 next-hop-self
+      network 2001:db8::2/128
 ```
-AFI  1 = IPv4
-AFI  2 = IPv6
-SAFI 1 = Unicast
-SAFI 2 = Multicast
-SAFI 4 = Labeled Unicast (BGP-LU)
-SAFI 128 = L3VPN (VPNv4/VPNv6)
-```
 
-IPv6 unicast = AFI 2, SAFI 1. It is negotiated during BGP OPEN via the
-Multiprotocol Extensions capability.
-
-### Approach A: Extended Next-Hop
-
-When using IPv4 sessions to carry IPv6 prefixes, there's a problem: the BGP next-hop
-attribute is an IPv4 address, but IPv6 prefixes need an IPv6 next-hop.
-
-RFC 5549 (extended next-hop) allows an IPv4 BGP session to carry an IPv6 next-hop in the
-MP_REACH_NLRI attribute. In EOS, when an IPv4 BGP neighbor is activated under
-`address-family ipv6`, EOS automatically negotiates this capability — no explicit
-`capability extended-nexthop` command is needed.
-
-This approach is popular because:
-- Existing IPv4 peering infrastructure is reused
-- Single session carries both IPv4 and IPv6 NLRI
-
-### Approach B: Native IPv6 Sessions
-
-Sessions run over IPv6 addresses. No special capabilities needed. Simpler in pure
-IPv6 environments, but requires separate IPv6 management plane.
-
-### iBGP Next-Hop Self for IPv6
-
-Same as IPv4: when r2 learns an IPv6 route from eBGP peer r1 (with r1's IPv6 address
-as next-hop), it must change the next-hop for iBGP peers who cannot reach r1 directly.
-Use `next-hop-self` on iBGP sessions.
-
-### IPv6 Forwarding
-
-IPv6 routing is enabled via `ipv6 unicast-routing` in each node's startup-config
-(pre-configured).
-
-## Challenge Exercises
-
-1. Compare the BGP next-hop in `show bgp ipv6 unicast` for Approach A vs Approach B.
-   In Approach A, what IPv6 address appears as the next-hop?
-
-2. Configure only the IPv6 AF (omit IPv4 unicast AF entirely) and verify IPv4 routes
-   are NOT exchanged. Does ping to IPv4 loopbacks still work?
-
-3. Add route-maps to set communities on IPv6 prefixes. Use `show bgp ipv6 unicast`
-   to verify community values are carried.
-
-4. Try using link-local IPv6 addresses (fe80::) as BGP peer addresses in Approach B.
-   What additional configuration is needed? (`update-source Ethernet1`)
-
-5. Enable both Approach A and Approach B simultaneously on the same router (different
-   neighbors). Can a router maintain both session types at the same time?
+</details>

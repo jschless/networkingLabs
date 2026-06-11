@@ -4,6 +4,13 @@ This lab uses cEOS to show what BGP graceful restart looks like on a live router
 
 The practical goal is simple: compare what `r1` sees when the BGP process on `r2` restarts with graceful restart disabled versus enabled.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. It's an A/B experiment — you
+run the *same* failure (restart r2's BGP) twice, once with graceful restart
+off and once on, and compare. **Predict the difference before the second
+run**; that prediction is the entire learning. Config is behind toggles.
+
 ## Topology
 
 ```mermaid
@@ -149,6 +156,12 @@ You should now see the graceful-restart capability again.
 
 ## Step 5 — Repeat The Restart And Compare
 
+**Predict first:** the BGP session will still reset when r2's process
+restarts — graceful restart does *not* keep the session up. So what
+exactly is different this time? Specifically: what happens to r1's
+`172.16.3.1/32` route during the restart window, and is data-plane
+forwarding through r2 interrupted? Commit before you run it.
+
 On `r1`, watch the BGP route again:
 
 ```eos
@@ -168,6 +181,26 @@ Expected:
 - the route is refreshed after `r2` comes back
 
 That is the behavior graceful restart is designed to provide.
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Graceful restart's premise is "control plane and data plane are
+   separate." Explain how r2 can keep *forwarding* packets while its BGP
+   *process* is dead and restarting — what hardware/software split makes
+   this safe, and when is it a dangerous lie?
+2. r1 holds r2's routes as "stale" during the restart window. What's the
+   risk if r2's restart is *not* a clean process restart but a genuine
+   crash that changes the topology — and how do `restart-time` /
+   `stalepath-time` bound that risk?
+3. This lab pairs poorly with aggressive BFD (bfd-bgp lab): one tries to
+   *keep* routes through a blip, the other tries to *drop* them instantly.
+   Describe a network where you'd want both, and how you'd reconcile them
+   (hint: what failure is each actually for?).
+4. Graceful restart helps a *planned* software upgrade. Compare it with
+   NSR (non-stop routing) and with simply draining traffic off the router
+   first — what does each cost, and which would you choose for a core RR?
 
 ## Scope Note
 

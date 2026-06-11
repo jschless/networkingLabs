@@ -7,6 +7,13 @@ This lab is a smaller companion to `stp-operations`. It isolates the edge-harden
 - Root Guard
 - storm control
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -102,3 +109,18 @@ show logging last 20
 - host-facing ports and switch-facing ports should not share the same trust model
 - Root Guard and BPDU Guard solve different problems
 - small edge protections stop campus-wide surprises
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. For each hardening feature you enabled, name the specific L2 attack it
+   stops and the port type it belongs on. Why is "apply at the edge" the
+   governing rule?
+2. BPDU Guard vs. Root Guard: both involve unexpected BPDUs but react
+   differently. Contrast their actions and when you'd choose each.
+3. Port-security limits MAC addresses per port. What legitimate scenario
+   (think IP phone + PC) does a naive limit break, and how do you fix it?
+4. A misconfigured "trusted" uplink silently breaks DHCP snooping for real
+   users. Trace the dependency chain (snooping → DAI → IP source guard) and
+   what fails first.

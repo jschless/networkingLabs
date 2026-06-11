@@ -1,10 +1,11 @@
-# Lab: wireguard
+# WireGuard — Practice Lab
 
-## Purpose
-Learn WireGuard — a modern, high-performance VPN built into the Linux kernel. Understand
-WireGuard's public-key cryptography model, how to configure a hub-and-spoke VPN, and how
-WireGuard compares to traditional VPN protocols (IPsec, OpenVPN) in terms of simplicity,
-performance, and attack surface.
+WireGuard is the modern VPN that fits in a few thousand lines of kernel
+code: no negotiation, no cipher suites, no certificates — just static
+key pairs and a property called `AllowedIPs` that does double duty as both
+routing and access control. You'll build a hub-and-spoke WireGuard VPN,
+prove the traffic is opaque on the wire, and discover that the single most
+misunderstood field (`AllowedIPs`) is what makes or breaks it.
 
 ## Topology
 
@@ -32,259 +33,229 @@ flowchart TB
 
 | Node | WAN IP | WireGuard IP | Role |
 |------|--------|--------------|------|
-| hub  | 10.0.0.1/24  | 192.168.100.1/24  | VPN server (always listening) |
-| gw-a | 10.0.0.10/24 | 192.168.100.10/32 | Site A gateway (client) |
-| gw-b | 10.0.0.20/24 | 192.168.100.20/32 | Site B gateway (client) |
+| hub  | 10.0.0.1/24  | 192.168.100.1/24  | server (listens :51820) |
+| gw-a | 10.0.0.10/24 | 192.168.100.10/32 | site A (client) |
+| gw-b | 10.0.0.20/24 | 192.168.100.20/32 | site B (client) |
 
-## Prerequisites: Build the Image
+## How to use this lab
 
-WireGuard tools are not in the standard FRR image. Build a custom image first:
+This is a **practice lab**, not a tutorial.
+
+- **Predict before you configure**, **open hints before the solution**,
+  **verify** with `wg show` and a WAN capture.
+
+## Deploy
 
 ```bash
-docker build -t wireguard-lab:local labs/wireguard/
-```
-
-## Deploy / Destroy
-
-```bash
-# Build image first (only needed once)
-docker build -t wireguard-lab:local labs/wireguard/
-
+docker build -t wireguard-lab:local labs/wireguard/    # once
 sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml --cleanup
 ```
 
-## What You Configure
+WAN IPs are pre-configured; you generate keys and write
+`/etc/wireguard/wg0.conf` on each node.
 
-WAN IPs are pre-configured by setup.sh. Your task is to generate WireGuard key pairs
-and configure `/etc/wireguard/wg0.conf` on each node.
+---
 
-### Step 1: Generate key pairs on each node
+## Task 1 — Generate key pairs
+
+**Objective:** On each node, generate a private key and derive its public
+key; collect the three public keys.
+
+**Predict first:** WireGuard has no usernames, passwords, or certificate
+authority. Given only static key pairs, *how does the hub know it's
+really talking to gw-a* and not an impostor — what binds identity to a
+peer?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 ```bash
-# Generate hub key pair
-docker exec clab-wireguard-hub bash -c \
-  'wg genkey | tee /etc/wireguard/hub.key | wg pubkey > /etc/wireguard/hub.pub'
-
-# Print hub public key (you'll need this for client configs)
+docker exec clab-wireguard-hub  bash -c 'wg genkey | tee /etc/wireguard/hub.key | wg pubkey > /etc/wireguard/hub.pub'
+docker exec clab-wireguard-gw-a bash -c 'wg genkey | tee /etc/wireguard/gwa.key | wg pubkey > /etc/wireguard/gwa.pub'
+docker exec clab-wireguard-gw-b bash -c 'wg genkey | tee /etc/wireguard/gwb.key | wg pubkey > /etc/wireguard/gwb.pub'
+# print each .pub — you need them for peer configs
 docker exec clab-wireguard-hub cat /etc/wireguard/hub.pub
-
-# Generate gw-a key pair
-docker exec clab-wireguard-gw-a bash -c \
-  'wg genkey | tee /etc/wireguard/gwa.key | wg pubkey > /etc/wireguard/gwa.pub'
-docker exec clab-wireguard-gw-a cat /etc/wireguard/gwa.pub
-
-# Generate gw-b key pair
-docker exec clab-wireguard-gw-b bash -c \
-  'wg genkey | tee /etc/wireguard/gwb.key | wg pubkey > /etc/wireguard/gwb.pub'
-docker exec clab-wireguard-gw-b cat /etc/wireguard/gwb.pub
 ```
-
-Note the three public keys — you need them for the peer configurations.
 
 </details>
 
-### Step 2: Configure hub
+<details>
+<summary>Check your work</summary>
+
+Three public keys printed; private keys never leave their device.
+Prediction answer: identity *is* the public key — a peer is authenticated
+precisely because it can prove possession of the private key matching the
+public key you listed. There's nothing else to trust and nothing to
+revoke except removing the key. This "the key is the identity" model is
+why WireGuard has no PKI and why protecting (and rotating) private keys
+is the entire security model.
+
+</details>
+
+---
+
+## Task 2 — Configure the hub and the two spokes
+
+**Objective:** Write `wg0.conf` on each node: hub listens with both spokes
+as peers; each spoke points its `Endpoint` at the hub.
+
+**Predict first:** the hub lists each spoke with `AllowedIPs =
+192.168.100.X/32`, while each spoke lists the hub with `AllowedIPs =
+192.168.100.0/24`. Why is the spoke's value a /24 and the hub's a /32 —
+what would break if you swapped them?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-Replace `GWA_PUBKEY` and `GWB_PUBKEY` with the actual public keys from Step 1.
+- Hub `[Interface]` has `ListenPort = 51820`, no `Endpoint`. Each `[Peer]`
+  is a spoke with its /32.
+- Spokes have no `ListenPort`; their `[Peer]` (the hub) has
+  `Endpoint = 10.0.0.1:51820`, `AllowedIPs = 192.168.100.0/24`, and
+  `PersistentKeepalive = 25`.
+- Substitute the real public keys from Task 1.
 
-```bash
-docker exec clab-wireguard-hub bash -c 'cat > /etc/wireguard/wg0.conf << EOF
+</details>
+
+<details>
+<summary>Solution</summary>
+
+Hub:
+```ini
 [Interface]
-PrivateKey = $(cat /etc/wireguard/hub.key)
+PrivateKey = <hub.key>
 Address = 192.168.100.1/24
 ListenPort = 51820
 
-[Peer]
-# gw-a (Site A)
-PublicKey = GWA_PUBKEY
+[Peer]   # gw-a
+PublicKey = <gwa.pub>
 AllowedIPs = 192.168.100.10/32
 
-[Peer]
-# gw-b (Site B)
-PublicKey = GWB_PUBKEY
+[Peer]   # gw-b
+PublicKey = <gwb.pub>
 AllowedIPs = 192.168.100.20/32
-EOF'
 ```
 
-</details>
-
-### Step 3: Configure gw-a
-
-<details>
-<summary>Show configuration</summary>
-
-Replace `HUB_PUBKEY` with hub's public key from Step 1.
-
-```bash
-docker exec clab-wireguard-gw-a bash -c 'cat > /etc/wireguard/wg0.conf << EOF
+gw-a (gw-b mirrors with its own address):
+```ini
 [Interface]
-PrivateKey = $(cat /etc/wireguard/gwa.key)
+PrivateKey = <gwa.key>
 Address = 192.168.100.10/32
 
-[Peer]
-# hub
-PublicKey = HUB_PUBKEY
+[Peer]   # hub
+PublicKey = <hub.pub>
 Endpoint = 10.0.0.1:51820
 AllowedIPs = 192.168.100.0/24
 PersistentKeepalive = 25
-EOF'
 ```
 
 </details>
-
-### Step 4: Configure gw-b
 
 <details>
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-```bash
-docker exec clab-wireguard-gw-b bash -c 'cat > /etc/wireguard/wg0.conf << EOF
-[Interface]
-PrivateKey = $(cat /etc/wireguard/gwb.key)
-Address = 192.168.100.20/32
-
-[Peer]
-# hub
-PublicKey = HUB_PUBKEY
-Endpoint = 10.0.0.1:51820
-AllowedIPs = 192.168.100.0/24
-PersistentKeepalive = 25
-EOF'
-```
+Prediction answer: `AllowedIPs` is *both* the routing table and the
+inbound filter for a peer. The hub lists each spoke as a /32 because that
+spoke may only send (and may only be sent) its own one address. Each
+spoke lists the hub as /24 because the hub is the spoke's gateway to the
+*whole* overlay. Swap them and you'd either black-hole everything or let
+a spoke source-spoof any overlay address. `AllowedIPs` is the field
+people get wrong — it's not just routing, it's cryptographic access
+control.
 
 </details>
 
-### Step 5: Start WireGuard on all nodes
+---
+
+## Task 3 — Bring it up and prove it's encrypted
+
+**Objective:** Start WireGuard everywhere, confirm peers and handshakes,
+and capture the WAN to show the payload is opaque.
 
 ```bash
-docker exec clab-wireguard-hub wg-quick up wg0
+docker exec clab-wireguard-hub  wg-quick up wg0
 docker exec clab-wireguard-gw-a wg-quick up wg0
 docker exec clab-wireguard-gw-b wg-quick up wg0
+docker exec clab-wireguard-hub  wg show
+docker exec clab-wireguard-gw-a ping -c3 192.168.100.20      # via hub
+docker exec clab-wireguard-hub  tcpdump -i eth1 -n udp port 51820 -c5
 ```
 
-### Step 6: Verify
+<details>
+<summary>Check your work</summary>
+
+`wg show` lists two peers with recent handshakes after traffic; gw-a can
+reach gw-b *through the hub* (hub-and-spoke). The capture shows only
+opaque UDP/51820 — no inner addresses, no payload — versus the
+clear-text OSPF/BGP you'd see in the routing labs. Note `wg show` only
+populates `latest handshake` *after* real traffic: WireGuard is silent
+until it has something to send, which is why `PersistentKeepalive` exists
+for NAT'd clients (next challenge).
+
+</details>
+
+---
+
+## Task 4 — Break it: the AllowedIPs trap
+
+**Objective:** On the hub, change gw-a's peer `AllowedIPs` to a /32 of the
+*wrong* address (e.g. 192.168.100.99/32), reload, and diagnose why gw-a
+becomes unreachable.
+
+**Predict first:** gw-a's keys and config are unchanged and the handshake
+may even still succeed. Will the hub→gw-a ping work? Where exactly does
+the packet die — encryption, routing, or filtering?
+
+<details>
+<summary>What you should observe</summary>
+
+hub→gw-a fails. The handshake can still complete (keys are valid), but
+`AllowedIPs` no longer contains 192.168.100.10, so the hub has *no route*
+to encrypt traffic to gw-a toward that peer **and** would reject inbound
+packets claiming that source. The failure is in `AllowedIPs`' dual role,
+not in crypto or the network — and there's no error, just silence, which
+is exactly why mis-set `AllowedIPs` is the #1 WireGuard support issue.
+Restore the correct /32 and confirm reachability returns.
+
+</details>
+
+---
+
+## Reference
+
+| Field | Role |
+|-------|------|
+| PrivateKey | device identity; never shared |
+| PublicKey | the peer's identity; listed by peers |
+| Endpoint | where to send (clients set it; servers usually don't) |
+| AllowedIPs | outbound routing **and** inbound source filter |
+| PersistentKeepalive | keeps a NAT mapping alive (clients only) |
+
+WireGuard uses fixed primitives (Curve25519, ChaCha20-Poly1305, BLAKE2s)
+— no cipher negotiation, which removes a whole class of downgrade attacks.
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. WireGuard is silent until it has traffic to send (Task 3). Explain
+   exactly why a client behind NAT needs `PersistentKeepalive` but the
+   server doesn't, and what happens to the tunnel at the NAT timeout if
+   you omit it.
+2. Convert this hub-and-spoke into a direct gw-a↔gw-b mesh: what entries
+   must each spoke add, and what new operational burden does full mesh
+   create that hub-and-spoke avoided (compare to DMVPN's answer)?
+3. Contrast WireGuard's "no negotiation, fixed ciphers" with IPsec's
+   proposal negotiation (ipsec-basics lab). What does WireGuard gain in
+   attack surface, and what does it lose in flexibility/interop?
+4. `AllowedIPs` is both routing and access control. Construct a
+   misconfiguration where overlapping `AllowedIPs` across two peers
+   causes traffic to silently go to the wrong peer, and the rule that
+   prevents it.
+
+## Cleanup
 
 ```bash
-# Hub status (should show 2 peers, handshake times after traffic)
-docker exec clab-wireguard-hub wg show
-
-# Ping gw-a from hub via WireGuard tunnel
-docker exec clab-wireguard-hub ping -c3 192.168.100.10
-
-# Ping gw-b from hub
-docker exec clab-wireguard-hub ping -c3 192.168.100.20
-
-# Ping gw-b from gw-a (traffic goes through hub in hub-and-spoke)
-docker exec clab-wireguard-gw-a ping -c3 192.168.100.20
+sudo containerlab destroy -t topology.clab.yml --cleanup
 ```
-
-## Verification Commands
-
-```bash
-# Show WireGuard interface status (peers, allowed IPs, handshake, traffic)
-docker exec clab-wireguard-hub wg show
-
-# Show specific interface detail
-docker exec clab-wireguard-hub wg show wg0
-
-# Show WireGuard interface via ip
-docker exec clab-wireguard-hub ip addr show wg0
-
-# Show routes added by wg-quick (AllowedIPs become routes)
-docker exec clab-wireguard-hub ip route show
-
-# Capture WireGuard UDP traffic on WAN
-docker exec clab-wireguard-hub tcpdump -i eth1 -n udp port 51820 -c5
-```
-
-## Concepts
-
-### Cryptography Model
-
-WireGuard uses modern, fixed cryptographic primitives (no negotiation):
-- **Curve25519** for key exchange (ECDH)
-- **ChaCha20-Poly1305** for authenticated encryption
-- **BLAKE2s** for hashing
-- **SipHash24** for hashtable keys
-
-Each device has a static **private key** and derived **public key**. Peers are identified
-only by their public key — there are no usernames, passwords, or certificates.
-
-### Key Concepts
-
-**Private key**: Never leaves the device. Generated with `wg genkey`.
-**Public key**: Derived from private key with `wg pubkey`. Shared with peers.
-**Endpoint**: Optional. If set, this peer initiates connections to that IP:port.
-             Servers typically have no Endpoint (they listen). Clients set Endpoint to server.
-
-**AllowedIPs**: Serves two purposes:
-1. **Outbound routing**: Traffic to these IPs is encrypted and sent to this peer
-2. **Inbound filtering**: Only packets claiming to be from these IPs are accepted from this peer
-
-**PersistentKeepalive**: Sends a keepalive packet every N seconds. Needed for clients
-behind NAT to maintain the NAT mapping. Set on clients, not on the server.
-
-### Hub-and-Spoke vs Mesh
-
-This lab is **hub-and-spoke**: gw-a to gw-b traffic routes through hub.
-
-For direct gw-a to gw-b connectivity, each would need the other as a peer with
-the correct AllowedIPs and Endpoint. That's a **mesh** topology.
-
-### WireGuard vs IPsec vs OpenVPN
-
-| Feature | WireGuard | IPsec | OpenVPN |
-|---------|-----------|-------|---------|
-| Lines of code | ~4,000 | Massive | Large |
-| Config complexity | Minimal | High | Medium |
-| Key management | Public key pairs | Certs or PSK | Certs or PSK |
-| Protocol | UDP custom | ESP/AH (IPsec SAs) | UDP/TCP TLS |
-| Performance | Excellent | Good | Moderate |
-| Kernel integration | Yes (kernel module) | Yes (xfrm) | No (userspace) |
-| Standard compliance | No (proprietary) | RFC standards | No |
-
-### How wg-quick Works
-
-`wg-quick up wg0` reads `/etc/wireguard/wg0.conf` and:
-1. Creates the `wg0` kernel network interface
-2. Sets the private key and listen port
-3. Configures each peer (public key, allowed IPs, endpoint)
-4. Adds routes for each peer's `AllowedIPs`
-5. Brings the interface up
-
-`wg-quick down wg0` reverses this.
-
-## Challenge Exercises
-
-1. Capture WireGuard traffic: `docker exec clab-wireguard-hub tcpdump -i eth1 -n udp port 51820`.
-   Note that the payload is completely opaque (encrypted). Compare to unencrypted OSPF or BGP traffic.
-
-2. Add site subnets behind the gateways. On gw-a, add a loopback `ip addr add 192.168.10.1/24 dev lo`.
-   Update hub's AllowedIPs for gw-a to include `192.168.10.0/24`. Verify hub can ping 192.168.10.1.
-
-3. Configure direct spoke-to-spoke connectivity: add gw-b as a peer on gw-a (with Endpoint and
-   AllowedIPs 192.168.100.20/32). After bringing tunnels up, does ping from gw-a to gw-b go
-   directly or still through hub? (Check `wg show` to see which peer the packet uses.)
-
-4. Remove `PersistentKeepalive` from gw-a and observe: does the tunnel come up without it?
-   (Yes, if gw-a initiates traffic to hub.) When would `PersistentKeepalive` be required?
-
-5. Use `wg show` after successful tunnels are established. Examine the `latest handshake` field.
-   Initiate traffic and watch the `transfer` counters increment. Notice handshake re-keys
-   automatically every ~3 minutes (WireGuard's default rekey interval).
-
-## Extensions
-
-These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
-
-- Add site LANs behind each gateway and compare host-to-host routing to the original point-to-point design.
-- Change `AllowedIPs` deliberately to create overlap and observe how WireGuard chooses peers for the same destination space.
-- Remove one endpoint and test how roaming or endpoint learning behaves when a peer initiates from a new source address.
-- Capture the WAN traffic during rekey events and compare the opaque UDP flow to the clear routing traffic in other tunnel labs.

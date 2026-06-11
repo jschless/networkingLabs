@@ -2,6 +2,14 @@
 
 This lab demonstrates the **screened subnet** (dual-firewall DMZ) pattern — the industry-standard design for protecting public-facing services while keeping internal hosts isolated from both the internet and the DMZ.
 
+## How to use this lab
+
+This is a **practice lab** on a fully pre-configured reference design — you
+observe, predict, and explain rather than build. The payoff is the **demo
+tasks**: at each one, predict what will happen (what reconverges, how long,
+what the client sees) *before* you trigger it, then verify. The design
+rationale sections are reference material for the challenge questions.
+
 ## Topology
 
 ```mermaid
@@ -111,6 +119,8 @@ docker exec -it clab-enterprise-dmz-isp Cli            # EOS CLI
 ## Demo Tasks
 
 ### Task 1 — Verify allowed HTTP access (internet → web-server)
+
+**Predict first:** the internet client reaches the DMZ web server, but the *same* client reaching an inside host must fail. Before testing, state which firewall rule permits the first and which denies the second — and whether the denial is a rule or just the absence of a NAT.
 
 From **internet-client**, connect to the web-server through fw-outside:
 
@@ -330,3 +340,20 @@ permitted flow. With stateful filtering, only the initial connection direction n
 ```bash
 sudo containerlab destroy -t labs/enterprise-dmz/topology.clab.yml --cleanup
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Write out the default-deny matrix for the three zones (inside, dmz,
+   outside) in both directions and justify each cell from a threat model —
+   not from "it works."
+2. A DMZ web server is compromised. Walk through which firewall rules
+   contain the attacker to the DMZ, and which single mis-set rule would let
+   them pivot to the inside.
+3. NAT for published DMZ services differs from NAT for inside-to-internet.
+   Explain the two translation directions and why collapsing them into one
+   rule is wrong.
+4. You must add an SMTP service in the DMZ. Enumerate every policy and NAT
+   object to touch, and how you'd verify you opened *only* port 25 and
+   nothing else.

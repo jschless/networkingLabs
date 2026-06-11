@@ -45,6 +45,13 @@ ssh -N -L 8001:127.0.0.1:8001 <user>@<lab-host>
 
 Then browse to `http://127.0.0.1:8001`.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The environment is pre-built;
+you produce the configuration or the diagnosis from the objectives.
+**Predict each result before you verify**, and treat the challenge
+questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -421,6 +428,22 @@ The workflow should make the distinction clear:
 - source of truth, intended config, and running state are different datasets
 - external discovery plus reconciliation is a normal NetBox operating model
 - a small fabric is enough to practice a real automation workflow end to end
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. NetBox is a "source of truth." Explain the difference between
+   intended state (NetBox) and actual state (the devices), and the two
+   directions of drift that automation must reconcile.
+2. Modeling IPAM/DCIM in NetBox before pushing config — what class of
+   outage (overlapping subnets, duplicate IPs, wrong VLANs) does
+   source-of-truth-first prevent?
+3. Generating device config from NetBox data (templating): where does a
+   bad template or bad data do the *most* damage, and what guardrails
+   (dry-run, diff, CI) limit it?
+4. When should the network be reconciled *to* NetBox vs. NetBox updated *to*
+   the network? Give a case for each and the danger of always trusting one.
 
 ## Extensions
 

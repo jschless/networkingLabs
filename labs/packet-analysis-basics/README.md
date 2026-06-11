@@ -7,6 +7,13 @@ You will capture packets in three places:
 - on a mirrored transit link to see OSPF, ICMP, and TCP between routers
 - in a saved pcap so you can inspect it with `tshark` or Wireshark later
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The environment is pre-built;
+you produce the configuration or the diagnosis from the objectives.
+**Predict each result before you verify**, and treat the challenge
+questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -236,6 +243,23 @@ docker exec clab-packet-analysis-basics-services ss -ltn
 - mirrored transit traffic is useful for routing and application forensics
 - `tshark` is fast for answering targeted questions from a saved pcap
 - packet analysis is not separate from routing knowledge; it proves whether a problem is network, transport, or application
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Capturing at the wrong point hides the problem. For a client→server flow
+   through two routers, where would you capture to prove (a) the client
+   sent, (b) the server received, (c) where a drop occurred?
+2. A TCP connection is "slow." From a capture, what distinguishes loss
+   (retransmits) from latency (RTT) from a small window — and the fix each
+   implies?
+3. Encryption hides payload but not metadata. List what you can still infer
+   about a TLS flow from the capture alone, and why that matters for both
+   ops and privacy.
+4. Display vs. capture filters in tshark/tcpdump: when does the distinction
+   change *what you can see at all*, and how would using the wrong one make
+   you miss the bug?
 
 ## Extensions
 

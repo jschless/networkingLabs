@@ -2,6 +2,14 @@
 
 A fully-working VXLAN/BGP EVPN lab using Nokia SR-Linux. No Linux bridge setup scripts needed — VXLAN tunneling and EVPN MAC/IP learning are native SR-Linux features. Compare with the `vxlan-evpn` lab for the same design implemented on Arista cEOS.
 
+## How to use this lab
+
+This is a **practice lab** on a working reference build — you observe and
+explain rather than configure. **Predict each verification's output
+before running it**, then check the note. If you've done the `vxlan-evpn`
+(cEOS) lab, treat this as the same design on a YANG-modeled NOS and notice
+what changes. The challenge questions are where you reason unaided.
+
 ---
 
 ## Topology
@@ -83,6 +91,10 @@ Both vtep1 (10.0.0.1) and vtep2 (10.0.0.2) should show `Established`.
 
 ### Step 3 — EVPN routes
 
+**Predict first:** before host1 and host2 ever exchange a packet, will
+vtep1 already have *any* EVPN routes from vtep2? If so, which route type,
+and what is it for?
+
 ```
 # On vtep1 — check EVPN routes received from spine
 show network-instance default protocols bgp routes evpn route-type 3
@@ -150,6 +162,25 @@ You should see host2's MAC address learned via EVPN (remote entry from vtep2).
 | MPLS sysctl | N/A for VXLAN | Not needed |
 
 ---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Type-3 (IMET) routes exist before any host traffic; type-2 (MAC/IP)
+   only appear after a host speaks. Explain the division of labor: what
+   does each route type accomplish, and why does flooding (BUM) need to be
+   set up *before* any unicast MAC is known?
+2. The FRR/cEOS lab needs `nolearning` on the kernel VXLAN interface;
+   SR-Linux doesn't. Explain what data-plane MAC learning would do *wrong*
+   in an EVPN fabric, and how "prefer control-plane-learned MACs" prevents
+   it.
+3. This lab uses OSPF as the underlay; `vxlan-evpn` (cEOS) uses eBGP.
+   Compare the two underlay choices for a VXLAN fabric — what does each
+   give the overlay, and why do many DC designs still prefer eBGP?
+4. **Break it:** change vtep2's VNI from 100 to 200 (leaving vtep1 at 100)
+   and predict, then verify, what happens to host1↔host2 — does EVPN still
+   exchange routes, and where exactly does forwarding fail?
 
 ## Cleanup
 

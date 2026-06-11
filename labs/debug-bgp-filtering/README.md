@@ -15,6 +15,13 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 
 ---
 
+## How to use this lab
+
+This is a **practice troubleshooting lab**. A working network was broken by
+a small change; you diagnose it from symptoms, not from the config files.
+Work the staged hints only when stuck, and reveal the solution last —
+the skill being trained is *generating* the diagnosis, not reading it.
+
 ## Topology
 
 ```mermaid
@@ -254,3 +261,18 @@ Router identifier 10.0.0.3, local AS number 65003
 
 172.16.2.0/24 is gone from r3 and r4. r2 still has it locally (it was filtered outbound,
 not inbound), so r2's own table still shows 172.16.2.0/24 as received from r1.
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The fault here produced a **silent** failure (no error logged) with a
+   misleading symptom. Explain *why* this class of misconfig fails silently,
+   and the one show command that would have pinpointed it fastest.
+2. What single piece of monitoring or assurance (a check, an alert, a
+   pre-change validation) would have caught this fault before users did?
+3. Generalize: list two *other* one-line changes to this topology that would
+   produce a similar "looks healthy locally, broken downstream" symptom, and
+   how you'd tell them apart.
+4. Write the rollback/change-control habit that would have prevented this
+   overnight break in the first place.

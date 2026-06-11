@@ -62,8 +62,14 @@ services:
       - LDAP_DOMAIN=lab.corp
       - LDAP_BASE_DN=DC=lab,DC=corp
       - LDAP_SERVER=ldap://dc1.lab.corp
+      - LDAP_TLS=yes
       - LAM_LANG=en_US
       - LAM_PASSWORD=lam
+    volumes:
+      # LAM's PHP LDAP extension (libldap) must skip cert verification until Lab 03
+      # provisions a CA and issues a trusted DC certificate. Without this, StartTLS
+      # fails because the DC presents a self-signed cert with no trusted issuer.
+      - ./configs/lam-ldap.conf:/etc/ldap/ldap.conf:ro
     depends_on:
       - dc1
 

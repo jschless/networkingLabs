@@ -1,13 +1,11 @@
-# DMVPN Phase 1 — VyOS Practice Lab
+# DMVPN Phase 1 — Practice Lab (VyOS)
 
-Configure DMVPN Phase 1 on VyOS using mGRE, NHRP, and OSPF. The hub is already configured; each spoke has only its WAN IP, loopback LAN, and base GRE tunnel. Your job is to finish the NHRP and OSPF configuration on the spokes.
-
-This refactor keeps the original learning goal intact, but the operator model is now VyOS-native:
-
-- `configure`
-- `set ...`
-- `commit`
-- `save`
+DMVPN scales hub-and-spoke VPNs by replacing N static tunnels with one
+mGRE interface plus NHRP — a registration protocol that maps overlay
+tunnel IPs to underlay WAN (NBMA) addresses. In Phase 1, spokes register
+with the hub and all spoke-to-spoke traffic routes *through* it. The hub
+is pre-built; you finish each spoke's NHRP and OSPF and prove the Phase 1
+forwarding behavior.
 
 ## Topology
 
@@ -25,10 +23,6 @@ flowchart TB
     spoke3 --- brwan
 ```
 
-`br-wan` is a shared NBMA segment. DMVPN uses NHRP to map overlay tunnel addresses to underlay WAN addresses.
-
-## Addressing
-
 | Node   | WAN (`eth1`) | Tunnel (`tun0`) | LAN / loopback |
 |--------|---------------|-----------------|----------------|
 | hub    | 10.0.0.1/24   | 172.16.0.1/32   | none           |
@@ -36,314 +30,219 @@ flowchart TB
 | spoke2 | 10.0.0.12/24  | 172.16.0.12/32  | 192.168.2.1/24 |
 | spoke3 | 10.0.0.13/24  | 172.16.0.13/32  | 192.168.3.1/24 |
 
-## Deploy And Access
+**Pre-built:** hub WAN/mGRE, hub NHRP server, hub OSPF
+point-to-multipoint, spoke WAN IPs, spoke loopback LANs, spoke GRE
+interfaces. **You configure:** each spoke's NHRP cloud membership, NHS
+mapping to the hub, OSPF over the tunnel, and LAN advertisement.
+
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure**, **open hints before the solution**,
+  and **verify** with `show ip nhrp` and `show ip ospf neighbor`.
+
+## Deploy
 
 ```bash
 sudo containerlab deploy -t labs/dmvpn-phase1/topology.clab.yml
-
-./scripts/lab.sh cli dmvpn-phase1 hub
-./scripts/lab.sh cli dmvpn-phase1 spoke1
+./scripts/lab.sh cli dmvpn-phase1 hub      # `configure` to enter config; `run` for show
 ```
 
-`lab.sh cli` drops you into the VyOS admin shell. Use `configure` to enter config mode. Use `run <op-command>` from config mode for show commands.
+---
 
-## What Is Pre-Configured
+## Task 1 — Read the hub, predict what the spokes need
 
-- Hub WAN IP and mGRE tunnel
-- Hub NHRP server role
-- Hub OSPF point-to-multipoint over `tun0`
-- Spoke WAN IPs
-- Spoke loopback LANs
-- Spoke GRE tunnel interfaces with source set to `eth1`
+**Objective:** On the hub, inspect its NHRP and OSPF state before
+configuring any spoke.
 
-## Your Task
-
-Configure on each spoke:
-
-1. NHRP cloud membership
-2. NHS mapping toward the hub
-3. OSPF over the tunnel
-4. OSPF advertisement of the local LAN
-
-## Step 1 — Verify The Hub
-
-On `hub`:
+**Predict first:** `show ip nhrp` on the hub is empty right now. NHRP is a
+*registration* protocol. Which side initiates registration — does the hub
+reach out to spokes, or do spokes register to the hub? What does that
+imply about which device's config you must complete?
 
 ```vyos
 show ip nhrp
 show ip ospf neighbor
 show ip ospf interface brief
-show configuration commands | match nhrp
 ```
 
-Expected before spoke work:
+<details>
+<summary>Check your work</summary>
 
-- `show ip nhrp` is empty or nearly empty
-- `tun0` is present on the hub
-- OSPF is configured on `tun0` as point-to-multipoint
+NHRP is empty and OSPF has no neighbors — the hub is a *server* waiting to
+be contacted. Spokes initiate: each registers its tunnel-IP↔NBMA mapping
+to the hub (the NHS), which is why the hub's table fills only as you
+configure spokes. The hub can't bootstrap the relationship; it doesn't
+know spokes exist until they call in. That's the whole asymmetry of
+NHRP and why your work is entirely on the spokes.
 
-## Step 2 — Configure `spoke1`
+</details>
 
-On `spoke1`:
+---
+
+## Task 2 — Configure spoke1 (NHRP + OSPF)
+
+**Objective:** Make spoke1 register to the hub via NHRP and form an OSPF
+adjacency over `tun0`, advertising its LAN.
+
+**Predict first:** the NHS line points at the hub by *tunnel* IP
+(172.16.0.1) with an *NBMA* (10.0.0.1) mapping. Why does NHRP need
+*both* addresses for the hub — what does each one resolve?
 
 <details>
-<summary>Configuration — reveal if stuck</summary>
+<summary>Hints</summary>
 
+- NHRP: `protocols nhrp tunnel tun0` with `network-id 1`, `nhs tunnel-ip
+  172.16.0.1 nbma 10.0.0.1`, a matching static `map`, `multicast
+  10.0.0.1`, and `registration-no-unique`.
+- OSPF: router-id 10.0.0.11, advertise the tunnel /32 and the LAN,
+  `tun0` network type `point-to-multipoint`, `eth1` passive.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **spoke1**:
 ```vyos
 configure
-
 set protocols nhrp tunnel tun0 network-id '1'
 set protocols nhrp tunnel tun0 holdtime '300'
 set protocols nhrp tunnel tun0 nhs tunnel-ip '172.16.0.1' nbma '10.0.0.1'
 set protocols nhrp tunnel tun0 map tunnel-ip '172.16.0.1' nbma '10.0.0.1'
 set protocols nhrp tunnel tun0 multicast '10.0.0.1'
 set protocols nhrp tunnel tun0 registration-no-unique
-
 set protocols ospf parameters router-id '10.0.0.11'
 set protocols ospf area 0 network '172.16.0.11/32'
 set protocols ospf area 0 network '192.168.1.0/24'
 set protocols ospf interface eth1 passive
 set protocols ospf interface tun0 network 'point-to-multipoint'
-
 commit
 save
-exit
 ```
 
 </details>
 
-Key values:
+<details>
+<summary>Check your work</summary>
 
-- Hub tunnel IP: `172.16.0.1`
-- Hub WAN NBMA IP: `10.0.0.1`
-- Spoke1 tunnel IP: `172.16.0.11`
+The hub's `show ip nhrp` now lists 172.16.0.11 via NBMA 10.0.0.11, and
+spoke1 forms a Full OSPF adjacency. Prediction answer: the **tunnel IP**
+is the overlay identity (what OSPF and your LAN routes resolve to), while
+the **NBMA IP** is where on the real WAN to actually send the
+encapsulated packet. NHRP's entire job is maintaining that overlay→
+underlay mapping dynamically — it's "ARP for the tunnel." `multicast
+10.0.0.1` is what lets OSPF hellos (multicast) reach the hub at all over
+a non-broadcast medium.
 
-## Step 3 — Verify `spoke1`
+</details>
 
-On `spoke1`:
+---
 
-```vyos
-show ip nhrp
-show ip ospf neighbor
-show ip route ospf
-ping 172.16.0.1 count 3
-```
+## Task 3 — Configure spoke2 and spoke3
 
-On `hub`:
-
-```vyos
-show ip nhrp
-show ip ospf neighbor
-```
-
-Expected:
-
-- Hub learns `172.16.0.11` via NBMA `10.0.0.11`
-- `spoke1` forms a Full OSPF adjacency with the hub
-- `spoke1` learns remote LANs through OSPF once other spokes are configured
-
-## Step 4 — Repeat For `spoke2` And `spoke3`
-
-Use the same pattern with these values:
+**Objective:** Repeat the pattern with each spoke's own router-id, tunnel
+/32, and LAN — the NHS values stay the same (the hub doesn't change).
 
 | Node   | Router ID  | Tunnel /32     | LAN subnet        |
 |--------|------------|----------------|-------------------|
 | spoke2 | 10.0.0.12  | 172.16.0.12/32 | 192.168.2.0/24    |
 | spoke3 | 10.0.0.13  | 172.16.0.13/32 | 192.168.3.0/24    |
 
-The hub NHS values remain the same for every spoke:
-
-- tunnel IP `172.16.0.1`
-- NBMA IP `10.0.0.1`
-
 <details>
-<summary>Configuration — reveal if stuck</summary>
+<summary>Solution</summary>
 
-```vyos
-# spoke2
-configure
-
-set protocols nhrp tunnel tun0 network-id '1'
-set protocols nhrp tunnel tun0 holdtime '300'
-set protocols nhrp tunnel tun0 nhs tunnel-ip '172.16.0.1' nbma '10.0.0.1'
-set protocols nhrp tunnel tun0 map tunnel-ip '172.16.0.1' nbma '10.0.0.1'
-set protocols nhrp tunnel tun0 multicast '10.0.0.1'
-set protocols nhrp tunnel tun0 registration-no-unique
-
-set protocols ospf parameters router-id '10.0.0.12'
-set protocols ospf area 0 network '172.16.0.12/32'
-set protocols ospf area 0 network '192.168.2.0/24'
-set protocols ospf interface eth1 passive
-set protocols ospf interface tun0 network 'point-to-multipoint'
-
-commit
-save
-exit
-```
-
-```vyos
-# spoke3
-configure
-
-set protocols nhrp tunnel tun0 network-id '1'
-set protocols nhrp tunnel tun0 holdtime '300'
-set protocols nhrp tunnel tun0 nhs tunnel-ip '172.16.0.1' nbma '10.0.0.1'
-set protocols nhrp tunnel tun0 map tunnel-ip '172.16.0.1' nbma '10.0.0.1'
-set protocols nhrp tunnel tun0 multicast '10.0.0.1'
-set protocols nhrp tunnel tun0 registration-no-unique
-
-set protocols ospf parameters router-id '10.0.0.13'
-set protocols ospf area 0 network '172.16.0.13/32'
-set protocols ospf area 0 network '192.168.3.0/24'
-set protocols ospf interface eth1 passive
-set protocols ospf interface tun0 network 'point-to-multipoint'
-
-commit
-save
-exit
-```
+Same as Task 2 with the per-node values above; NHS remains tunnel-ip
+172.16.0.1 / nbma 10.0.0.1 on every spoke.
 
 </details>
 
-## Step 5 — End-To-End Verification
+<details>
+<summary>Check your work</summary>
 
-On `hub`:
+The hub's NHRP table now has all three spokes; every spoke is Full with
+the hub. Note that spokes do **not** peer with each other — there's one
+adjacency per spoke, all to the hub. That single-hub control plane is
+what makes DMVPN scale: adding spoke #500 is one more registration, not
+499 new tunnels.
+
+</details>
+
+---
+
+## Task 4 — Prove Phase 1 forwarding (and its limit)
+
+**Objective:** From spoke1, reach spoke2's LAN and traceroute the path.
+
+**Predict first:** spoke1 and spoke2 are both on the same NBMA WAN — they
+*could* in principle talk directly. In **Phase 1**, will spoke1→spoke2
+traffic go direct, or through the hub? How many hops in the traceroute?
 
 ```vyos
-show ip nhrp
-show ip ospf neighbor
-show ip route ospf
-ping 192.168.1.1 count 3
 ping 192.168.2.1 count 3
-ping 192.168.3.1 count 3
-```
-
-On `spoke1`:
-
-```vyos
-show ip route ospf
-ping 192.168.2.1 count 3
-ping 192.168.3.1 count 3
 traceroute 192.168.2.1
 ```
 
-Phase 1 behavior:
+<details>
+<summary>Check your work</summary>
 
-- spokes do not form direct data-plane shortcuts
-- spoke-to-spoke traffic goes through the hub
-- OSPF next hop for remote spoke LANs should resolve through the hub side of the tunnel
+Reachability works, but the traceroute shows the path going **through the
+hub** (172.16.0.1) — spoke-to-spoke is *not* direct in Phase 1. The hub
+advertises remote spoke LANs with itself as the next hop, so every
+spoke's only route to another spoke points at the hub. This is Phase 1's
+defining limitation and exactly what Phase 2/3 (the next labs) solve by
+letting NHRP build dynamic spoke-to-spoke shortcuts. The hub being a
+forwarding chokepoint *and* a single point of failure is the motivation
+for the whole DMVPN evolution.
 
-## Why These NHRP Commands Matter
+</details>
+
+---
+
+## Reference — why each NHRP knob matters
 
 | VyOS command | Purpose |
 |--------------|---------|
-| `network-id 1` | Defines the DMVPN cloud ID |
-| `nhs tunnel-ip 172.16.0.1 nbma 10.0.0.1` | Tells the spoke which overlay and underlay identity belongs to the hub |
-| `map tunnel-ip 172.16.0.1 nbma 10.0.0.1` | Creates the static resolution entry for the hub |
-| `multicast 10.0.0.1` | Sends multicast traffic such as OSPF hellos toward the hub NBMA address |
-| `registration-no-unique` | Allows registration updates without enforcing unique NBMA ownership |
+| `network-id 1` | DMVPN cloud ID (must match on all members) |
+| `nhs tunnel-ip 172.16.0.1 nbma 10.0.0.1` | Identifies the hub by overlay + underlay |
+| `map tunnel-ip ... nbma ...` | Static resolution entry for the hub |
+| `multicast 10.0.0.1` | Sends OSPF hellos (multicast) toward the hub |
+| `registration-no-unique` | Allows re-registration without unique-NBMA enforcement |
 
-## Operational Commands
-
-Useful op-mode commands during the lab:
+## Verification
 
 ```vyos
 show ip nhrp
 show ip ospf neighbor
-show ip ospf route
 show ip route ospf
 show interfaces tunnel tun0
-show configuration commands | match ospf
-show configuration commands | match nhrp
 ```
-
-If you are already in config mode, prefix them with `run`.
-
-## Extensions
-
-These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
-
-- Add GRE-protecting IPsec between the hub and each spoke, then compare underlay packet captures before and after encryption.
-- Summarize spoke LAN routes at the hub and study how that changes routing visibility on the spokes.
-- Capture NHRP, OSPF, and user traffic on `tun0` and `eth1` to compare overlay control-plane traffic to underlay forwarding.
-- Sketch how you would convert this topology to dual-hub Phase 1 and identify what new failure-handling questions appear.
-
-## Extension Challenge — Protect Phase 1 With IPsec
-
-You now have a working Phase 1 DMVPN underlay. Extend it by protecting the WAN-facing GRE traffic with IPsec while preserving the original Phase 1 behavior:
-
-- keep the same underlay addresses on `eth1`
-- keep the same mGRE tunnel addresses on `tun0`
-- keep hub-and-spoke forwarding through the hub
-- keep NHRP and OSPF working across the encrypted underlay
-
-What to implement:
-
-1. Create a reusable IKE group and ESP group on the hub and spokes.
-2. Add site-to-site IPsec peers between the hub and every spoke.
-3. Match GRE traffic between the WAN /32 addresses so the DMVPN tunnel rides inside IPsec.
-4. Re-test NHRP registration, OSPF adjacency, and spoke-to-spoke reachability.
-
-Verification targets:
-
-```vyos
-show vpn ike sa
-show vpn ipsec sa
-show ip nhrp
-show ip ospf neighbor
-```
-
-Traffic proof:
-
-```bash
-sudo tcpdump -ni any 'udp port 500 or udp port 4500 or esp'
-```
-
-Expected outcome:
-
-- the hub still forwards spoke-to-spoke traffic in classic Phase 1 style
-- `show vpn ike sa` and `show vpn ipsec sa` show live hub-to-spoke security associations
-- the WAN now carries IKE/ESP, while the overlay behavior stays unchanged
-
-## Automation Note
-
-For this lab, `config.boot` is the cleanest source of truth and `vbash` op commands are the simplest way to validate state. If you later automate spoke bring-up, VyOS's HTTP API maps naturally to the same workflow:
-
-- open a config session
-- load or send `set` commands
-- `commit`
-- `save`
-
-That is closer to a Junos-style candidate configuration flow than an IOS line-by-line CLI scraper.
-
-## Troubleshooting
-
-If the hub never learns a spoke:
-
-- Confirm `show ip nhrp` on the spoke contains the hub mapping
-- Confirm the spoke `nhs` uses hub tunnel IP `172.16.0.1`, not WAN IP `10.0.0.1`
-- Confirm `multicast` points at `10.0.0.1`
-- Confirm all nodes use `network-id 1`
-
-If OSPF does not come up:
-
-- Check `show ip ospf neighbor`
-- Check `show ip ospf interface brief`
-- Confirm `tun0` uses `point-to-multipoint`
-- Confirm `eth1` is passive
-
-If routes are missing:
-
-- Check `show ip route ospf`
-- Check each spoke advertises its LAN subnet, not just the tunnel /32
-
-## Automated Check
-
-After configuring all spokes:
 
 ```bash
 ./scripts/lab.sh check dmvpn-phase1
 ```
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Phase 1 routes spoke-to-spoke through the hub. Quantify the cost for
+   two spokes exchanging a large file via a distant hub (latency,
+   bandwidth, hub load), and explain precisely what Phase 2 changes in
+   NHRP to allow a direct shortcut.
+2. The hub is a single point of failure. Sketch a dual-hub Phase 1
+   design — what changes on the spokes (NHS entries, OSPF), and how do
+   you make one hub primary without splitting traffic?
+3. `multicast 10.0.0.1` was required for OSPF to work. Explain why a
+   non-broadcast medium breaks OSPF's default hello behavior, and what
+   the `point-to-multipoint` network type does to compensate.
+4. You want to encrypt this DMVPN. Given the gre-ipsec lab, describe
+   exactly what you'd add (mode, selector) and why per-spoke IPsec peers
+   to the hub preserve Phase 1 behavior while protecting the WAN.
 
 ## Cleanup
 

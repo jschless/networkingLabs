@@ -4,6 +4,14 @@ Practice lab: configure a 2-tier collapsed-core campus network. IPs and interfac
 
 See `labs/enterprise-collapsed-core/` for the fully-working reference solution.
 
+## How to use this lab
+
+This is a **capstone practice lab**. The foundation is pre-built; the
+"Your Tasks" section gives you objectives (not full configs) to implement,
+then verify. Build it from the objectives and your knowledge of the
+component labs — reach for those labs' solutions only when stuck. Predict
+each verification's result before you run it.
+
 ## Topology
 
 ```mermaid
@@ -115,6 +123,21 @@ sudo containerlab deploy -t labs/enterprise-collapsed-core-capstone/topology.cla
 # or
 ./scripts/lab.sh deploy enterprise-collapsed-core-capstone
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. In a collapsed core the same pair does L2 root, L3 gateway, and routing
+   to the edge. List everything that must reconverge when one core switch
+   dies, and rank them by recovery time.
+2. Why align VRRP master and STP root per VLAN on the same core switch, and
+   what asymmetry appears across the core interlink if you don't?
+3. The edge injects a default with `default-information originate always`.
+   Describe the outage this prevents and the worse one it can mask.
+4. Size the design: at what user count or building count does this 2-tier
+   collapsed core stop being appropriate, and what specifically breaks
+   first?
 
 ## Extensions
 

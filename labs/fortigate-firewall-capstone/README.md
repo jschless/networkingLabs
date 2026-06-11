@@ -10,6 +10,13 @@ FortiGate `7.4.11` does not behave cleanly under the normal vrnetlab bootstrap f
 - QEMU/KVM runs the FortiGate VM directly from the FortiGate `qcow2`
 - helper scripts attach the FortiGate data interfaces to the containerlab bridges
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+you produce the configuration from the objectives. **Predict each result
+before you verify**, use the success criteria to grade yourself, and treat
+the break-it steps and challenge questions as the real test.
+
 ## Topology
 
 ```mermaid
@@ -128,6 +135,8 @@ By the end of the lab, your FortiGate should enforce all of the following:
 - `internet-client -> corp-client` and `internet-client -> db-server`: denied and logged
 
 ## Task 1: Bring Up The FortiGate Interfaces
+
+**Predict first:** FortiGate denies all traffic by default until a policy permits it. Before writing any policy, predict what passes through a freshly-addressed firewall with zero policies, and what `diagnose`/log evidence will show you why a test flow is dropped.
 
 Configure the data interfaces and the default route:
 
@@ -488,6 +497,21 @@ sudo labs/fortigate-firewall-capstone/stop-fgt.sh
 ./scripts/lab.sh destroy fortigate-firewall-capstone
 sudo labs/fortigate-firewall-capstone/cleanup-bridges.sh
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. FortiGate policy is matched top-down by interface pair, source, dest,
+   service. Construct the rule-ordering mistake that silently allows traffic
+   a later, stricter rule meant to block.
+2. NAT (central vs. policy NAT) and security policy are separate decisions
+   here. Give a flow that is allowed by policy but fails for lack of NAT,
+   and one NATed but denied.
+3. Zones group interfaces. Argue when zone-based policy simplifies the
+   ruleset and when it dangerously over-permits.
+4. You publish a DMZ service with a VIP. Enumerate every object (VIP,
+   policy, route) and how you'd verify you exposed only the intended port.
 
 ## Extensions
 

@@ -17,6 +17,15 @@ docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-t
 sudo containerlab deploy -t labs/enterprise-services-infra/topology.clab.yml
 ```
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. The foundation is pre-built;
+the "What You Configure" section gives you objectives, not commands — you
+produce the configuration. Work the suggested steps, **predict each
+result before you verify**, and use the success criteria to grade
+yourself. The break-it steps and challenge questions are where the
+learning sticks.
+
 ## Topology
 
 ```mermaid
@@ -109,6 +118,25 @@ show logging last 20
 - a network with working routing but broken services is still operationally broken
 - device administration, logging, time, and inventory are management-plane design problems
 - DHCP relay and centralized services are core enterprise skills, not side topics
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The network routes fine but a user gets no IP until you add `ip
+   helper-address`. Explain why DHCP needs a relay across a routed boundary
+   at all — what does the relay rewrite, and how does the server know which
+   subnet to offer from?
+2. You point device admin at TACACS+ but must keep a local fallback. Walk
+   through exactly what happens to admin login when TACACS is reachable,
+   unreachable, and *reachable-but-rejecting* — and why the third case is
+   the dangerous one.
+3. Argue why time (NTP) is a *security* dependency, not just an operational
+   nicety — what breaks in TACACS accounting, certs (Lab 03 analogue), and
+   log correlation when clocks drift?
+4. Moving management into a dedicated VRF changes how every service is
+   sourced. Pick syslog and TACACS and explain what `source-interface` and
+   routing each needs once management is VRF-separated.
 
 ## Extensions
 

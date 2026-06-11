@@ -5,6 +5,14 @@ the traditional 3-tier hierarchy: **Core / Distribution / Access**.
 
 ---
 
+## How to use this lab
+
+This is a **practice lab** on a fully pre-configured reference design — you
+observe, predict, and explain rather than build. The payoff is the **demo
+tasks**: at each one, predict what will happen (what reconverges, how long,
+what the client sees) *before* you trigger it, then verify. The design
+rationale sections are reference material for the challenge questions.
+
 ## Topology Diagram
 
 ```mermaid
@@ -262,6 +270,8 @@ ping 1.1.1.1        # ISP loopback
 ## Demo Tasks
 
 ### Task 1: Verify OSPF Multi-Area
+
+**Predict first:** the distribution switches are the ABRs. Before looking, predict which LSA types an access-area router will and won't have in its database, and how it reaches another area's subnet.
 Confirm that VLAN subnets (10.10.10.0/24, 10.20.20.0/24, 10.30.30.0/24) appear as
 inter-area routes (OI) on edge and core routers, but are NOT in area 0's OSPF database
 directly — they are summarized by the ABRs (dist1/dist2).
@@ -416,3 +426,21 @@ sudo containerlab destroy -t labs/enterprise-campus/topology.clab.yml --cleanup
 # or:
 ./scripts/lab.sh destroy enterprise-campus
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. This 3-tier design separates core (fast forwarding), distribution (L3
+   boundary + policy), and access (L2). Give one specific failure or scaling
+   problem that a collapsed-core (2-tier) design would hit here that 3-tier
+   avoids.
+2. The distribution layer is the OSPF area boundary. Why terminate areas
+   there rather than at the core, and what does that placement do to the
+   size of each router's link-state database?
+3. STP root and the L3 first-hop should align per VLAN. Trace the
+   suboptimal traffic path that results from a misalignment, and which link
+   carries the wasted traffic.
+4. Pick any single device and reason about its blast radius: how many users
+   lose service, for how long, and which redundancy mechanism (if any)
+   covers it.

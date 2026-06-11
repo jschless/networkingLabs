@@ -2,6 +2,14 @@
 
 Run a contained adversary simulation against DMZ services and record coverage. The lab maps local traffic patterns to ATT&CK-style techniques without using live targets.
 
+
+## How to use this lab
+
+This is a **practice analysis lab**. The environment and evidence are
+pre-built; your job is to *investigate*, not to follow a script. For each
+task, **form a hypothesis about what the logs/PCAP will show before you
+query them**, then run the filter and compare. The challenge questions push
+you from "find the indicator" to "explain and respond."
 ## Build And Deploy
 
 ```bash
@@ -31,3 +39,15 @@ docker exec clab-soc-adversary-simulation-sensor jq . /var/log/soc/detection-mat
 ## Outcome
 
 You produce a coverage matrix that ties adversary behavior to concrete detection sources.
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. You're emulating an adversary to test detection. Map your simulated steps to a kill-chain/ATT&CK stage and identify which step *should* have alerted but didn't — that gap is the finding.
+2. Distinguish a true positive from a false positive in this lab's data, and
+   state the *one* corroborating source you'd pull to raise confidence.
+3. From detection to response: given a confirmed finding here, what's the
+   minimal containment action, and what evidence must you preserve first?
+4. What single additional log source or visibility gap, if added, would have
+   made this investigation faster — and why isn't it free?

@@ -4,6 +4,17 @@ Configure a BGP CLOS spine-leaf fabric using Arista EOS. Interface IP addressing
 
 Arista is the dominant platform for data center spine-leaf fabrics. This lab uses the same `router bgp`, `maximum-paths ecmp`, and `bgp bestpath` commands used on production Arista switches.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Steps give you an objective and
+hide the configuration behind solution toggles.
+
+- **Predict before you configure**, **open the solution to check or when
+  stuck**, and **verify** ECMP with `show ip route` after each step.
+- The two non-obvious knobs (`maximum-paths ecmp` and
+  `bestpath as-path multipath-relax`) are *the* lesson of this lab — make
+  sure you can explain why a CLOS fabric is broken without each one.
+
 ---
 
 ## Topology
@@ -56,6 +67,11 @@ docker exec -it clab-spine-leaf-ceos-leaf1  Cli
 ---
 
 ## Step 1 — Configure spine1 (AS65100)
+
+**Predict first:** each leaf is in its *own* AS (eBGP everywhere — eBGP
+CLOS). When spine1 receives leaf2's loopback (AS-path `65002`) and leaf1's
+(AS-path `65001`), will standard BGP install *both* as a multipath, or
+just one? What's the default behavior, and which command changes it?
 
 <details>
 <summary>Show configuration</summary>
@@ -507,6 +523,54 @@ Failure test examples:
 1. Disable one leaf uplink and observe ECMP to single-path transition.
 2. Disable one spine and validate control-plane/data-plane survival.
 3. Introduce a bad prefix and verify policy blocks propagation.
+
+---
+
+## Break it — remove multipath-relax
+
+**Objective:** With ECMP working leaf-to-leaf, run `no bgp bestpath as-path
+multipath-relax` on a spine and re-check a leaf's route to a remote
+loopback.
+
+**Predict first:** the link count and BGP sessions don't change. Does
+reachability break, or does something subtler happen to the *number* of
+forwarding paths?
+
+<details>
+<summary>What you should observe</summary>
+
+Reachability survives, but the leaf collapses from two equal-cost spine
+paths to **one** — because without multipath-relax, BGP refuses to treat
+two paths with *different AS-paths* (via AS65100 vs AS65200) as a
+multipath, even though they're equal cost. You've silently halved the
+fabric's bisection bandwidth and removed a redundant path, with zero
+"errors" anywhere. This is the defining gotcha of eBGP CLOS: every
+spine is a different AS, so every leaf-to-leaf path has a distinct
+AS-path, and ECMP is *off by default*. Restore the command and confirm
+two paths return in `show ip route`.
+
+</details>
+
+---
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Why does an eBGP CLOS fabric put every leaf and every spine in its own
+   AS, rather than one big iBGP AS? Contrast the two designs for
+   convergence, configuration, and the multipath behavior you just
+   exercised.
+2. `maximum-paths` and `multipath-relax` are independent knobs. Construct
+   the two distinct broken states: one where you set ECMP but not relax,
+   and one where you set relax but not ECMP — and the exact `show ip
+   route` symptom of each.
+3. The fabric uses /31 link subnets. Why /31 and not /30 in a data center
+   with thousands of links, and what RFC made /31 point-to-point links
+   standard?
+4. A leaf advertises a /24 server subnet. Trace how it reaches every other
+   leaf, how many ECMP paths exist at each hop, and what happens to that
+   traffic the instant one spine reboots.
 
 ---
 

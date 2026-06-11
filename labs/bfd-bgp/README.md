@@ -5,6 +5,16 @@ Learn BFD (Bidirectional Forwarding Detection) integrated with BGP. Understand h
 enables near-instant BGP session teardown on link failure, replacing the slow 90-second
 hold timer mechanism.
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Steps give you an objective and
+hide config behind solution toggles. The heart of this lab is a *measured*
+before/after: time BGP convergence without BFD, then with it, and feel the
+difference rather than trusting the numbers.
+
+- **Predict before you measure**, **open the solution to check or when
+  stuck.**
+
 ## Topology
 
 ```mermaid
@@ -101,6 +111,11 @@ show bgp ipv4 unicast summary
 </details>
 
 ### Step 2: Time BGP convergence WITHOUT BFD
+
+**Predict first:** the link drops but the TCP session to the peer isn't
+actively probed. What keeps the BGP session "Established" long after the
+link is dead, and roughly how many seconds of black-holed traffic does
+that default timer cost you? Commit to a number before you measure.
 
 <details>
 <summary>Show configuration</summary>
@@ -279,19 +294,24 @@ cEOS 8.x requires explicit policy (route-maps) on eBGP sessions by default.
 Adding `no bgp ebgp-requires-policy` disables this requirement for the lab,
 allowing routes to be accepted and advertised without explicit route-maps.
 
-## Challenge Exercises
+## Challenge questions
 
-1. Measure convergence time precisely using `date` before and after bringing the link down.
-   What is the actual convergence time with BFD enabled?
+No answers provided — reason them through. (1, 3, and 5 are the required
+hands-on measurement / break-it; the rest are reasoning.)
 
-2. Configure custom BFD timers with 100ms intervals. Does this further reduce convergence?
-   How stable are the BFD sessions at 100ms in a virtual environment?
-
-3. What happens if you configure BFD on r1 but NOT on r2 for the same session?
-   Does BFD still work? (Hint: check `show bfd peers` on r2.)
-
-4. Try adding a BFD profile with `bfd` stanza and custom timers, then apply it to
-   the BGP neighbor with `neighbor X.X.X.X bfd profile PROFILENAME`.
-
-5. Observe what happens to BFD when you do `docker pause clab-bfd-bgp-r2` (pauses
-   the container — simulates a frozen/busy router). Does BFD or hold timer trigger first?
+1. Time convergence precisely (use `date` either side of the link drop)
+   with BFD on. Compare to the Step 2 number and explain the ratio.
+2. BFD on a *directly connected* eBGP link is straightforward; over a
+   *multihop* eBGP session (loopback-peered, several hops away) it's
+   trickier. Explain what multihop BFD has to verify that single-hop
+   doesn't, and why it's more failure-prone.
+3. Configure BFD on r1 but **not** r2 for the same session. Does BFD come
+   up? Check `show bfd peers` on both and explain what BFD negotiation
+   requires of *both* ends.
+4. BFD tears the session down fast — but fast teardown means fast *churn*
+   if the link flaps. Contrast aggressive BFD with BGP graceful restart
+   (see the graceful-restart lab): when do you want the session to drop
+   instantly vs. survive a brief control-plane blip?
+5. `docker pause clab-bfd-bgp-r2` freezes the router (busy/wedged but link
+   up). Predict whether BFD or the hold timer fires first, then test —
+   and explain what this says about what BFD actually detects.

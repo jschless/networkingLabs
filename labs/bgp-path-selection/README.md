@@ -1,6 +1,10 @@
 # BGP Path Selection — Practice Lab
 
-A dual-homed topology with two ISP routers lets you manipulate every major BGP path selection attribute in order. Start with a working base config, then apply each attribute and observe which path becomes preferred.
+A dual-homed topology with two ISP routers gives every prefix two paths —
+which means *something* has to choose. You build the base network, then
+steer traffic with each major selection attribute in turn (weight,
+local-preference, AS-path prepending, MED), predicting the winner before
+every change and proving it in the BGP table.
 
 ---
 
@@ -25,7 +29,8 @@ flowchart TB
     class isp1,isp2 isp
 ```
 
-Two paths between ce1 and ce2: via isp1 or via isp2. Both ISPs are in the same AS (AS65100), peered with iBGP.
+Two paths between ce1 and ce2: via isp1 or via isp2. Both ISPs are in the
+same AS (AS65100), peered with iBGP.
 
 ### Link addressing
 
@@ -48,6 +53,34 @@ Two paths between ce1 and ce2: via isp1 or via isp2. Both ISPs are in the same A
 
 ---
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure.** Every steering task asks you to call
+  the winning path *before* you check. Commit, then verify.
+- **Open the hints before the solution.** The solution toggle is the
+  answer key — use it to check your work, not as step one.
+- **Verify like an operator.** `show bgp ipv4 unicast <prefix>` after
+  every change; know *which rule* made the decision, not just which path
+  won.
+
+## The selection order you're about to exercise
+
+BGP walks this list top-to-bottom and stops at the first difference:
+
+1. **Weight** — highest wins (proprietary, local to the router)
+2. **Local-Preference** — highest wins (AS-wide via iBGP, default 100)
+3. **Locally originated** — prefer own routes
+4. **AS-path length** — shortest wins
+5. **Origin** — IGP (i) < EGP (e) < incomplete (?)
+6. **MED** — lowest wins (compared only between paths from the same AS)
+7. **eBGP over iBGP**
+8. **IGP metric to next-hop** — lowest wins
+9. **Oldest eBGP path**
+10. **Router-ID** — lowest wins (final tiebreaker)
+
 ## Deploy and access
 
 ```bash
@@ -57,15 +90,33 @@ docker exec -it clab-bgp-path-selection-ce1 Cli
 
 ---
 
-## Step 1 — Base configuration (all routers)
+## Task 1 — Base configuration
 
-Configure BGP sessions and advertise loopbacks. After this step, both paths should work and traffic should flow.
+**Objective:** Build all sessions per the topology: ce1 and ce2 each
+dual-homed to both ISPs via eBGP, isp1 ↔ isp2 via iBGP with the next-hop
+handled. Every router advertises its loopback. Success: ce1 sees **two
+paths** for 10.0.0.4/32, one marked `>`.
 
-### ce1 (AS 65001)
+**Predict first:** with no policy anywhere — identical weight,
+local-pref, AS-path length, origin — which of the ten rules will end up
+breaking the tie on ce1, and which path will it pick?
+
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-```
+- Same pattern as the bgp-basics lab: `router bgp`, neighbors, `activate`
+  + `network` under `address-family ipv4`.
+- The ISPs need `next-hop-self` toward each other on the iBGP session.
+- ce1: two eBGP neighbors. isp1/isp2: three neighbors each (one eBGP per
+  CE + one iBGP). ce2 mirrors ce1.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+ce1 (AS 65001):
+```text
 router bgp 65001
    bgp router-id 10.0.0.1
    neighbor 10.1.11.2 remote-as 65100
@@ -77,13 +128,9 @@ router bgp 65001
       network 10.0.0.1/32
    !
 ```
-</details>
 
-### isp1 (AS 65100)
-<details>
-<summary>Show configuration</summary>
-
-```
+isp1 (AS 65100):
+```text
 router bgp 65100
    bgp router-id 10.0.0.2
    neighbor 10.1.11.1 remote-as 65001
@@ -98,13 +145,9 @@ router bgp 65100
       network 10.0.0.2/32
    !
 ```
-</details>
 
-### isp2 (AS 65100)
-<details>
-<summary>Show configuration</summary>
-
-```
+isp2 (AS 65100):
+```text
 router bgp 65100
    bgp router-id 10.0.0.3
    neighbor 10.1.12.1 remote-as 65001
@@ -119,13 +162,9 @@ router bgp 65100
       network 10.0.0.3/32
    !
 ```
-</details>
 
-### ce2 (AS 65002)
-<details>
-<summary>Show configuration</summary>
-
-```
+ce2 (AS 65002):
+```text
 router bgp 65002
    bgp router-id 10.0.0.4
    neighbor 10.1.21.1 remote-as 65100
@@ -137,59 +176,100 @@ router bgp 65002
       network 10.0.0.4/32
    !
 ```
+
 </details>
 
-Verify base: `show bgp ipv4 unicast 10.0.0.4/32` on ce1 — should show two paths, one marked `>` as best.
+<details>
+<summary>Check your work</summary>
+
+`show bgp ipv4 unicast 10.0.0.4/32` on ce1 shows two paths, both
+`65100 65002`, identical in rules 1–8. The decision falls all the way
+down to the tiebreakers — typically **oldest eBGP path** (whichever
+session established first), and if even that ties, lowest **router-id**
+(isp1, 10.0.0.2). The takeaway: an unpolicied dual-homed setup picks its
+path *arbitrarily and unstably* — a session flap can silently move all
+your traffic. That's why the rest of this lab exists.
+
+</details>
 
 ---
 
-## BGP path selection order
+## Task 2 — Weight: this router's private opinion
 
-BGP picks the best path by walking this list top-to-bottom, stopping when one path wins:
+**Objective:** On ce1 only, force all outbound traffic toward ce2 through
+isp1 using weight.
 
-1. **Weight** — highest wins (Cisco/Arista proprietary, local to router, not advertised)
-2. **Local-Preference** — highest wins (AS-wide via iBGP, default 100)
-3. **Locally originated** — prefer routes originated by this router
-4. **AS-path length** — shortest wins
-5. **Origin** — IGP (i) < EGP (e) < incomplete (?)
-6. **MED** — lowest wins (advisory, compared only between paths from same AS)
-7. **eBGP over iBGP** — prefer eBGP-learned paths
-8. **IGP metric to next-hop** — lowest wins
-9. **Oldest eBGP path** (tiebreaker)
-10. **Router-ID** — lowest wins (final tiebreaker)
+**Predict first:** weight is rule #1 — but it is not advertised to
+anyone. After you set it on ce1, will isp2's choice of path toward ce2
+change? Will *inbound* traffic to ce1 change?
 
----
+<details>
+<summary>Hints</summary>
 
-## Experiment 1 — Weight (outbound preference on ce1)
+- In EOS, `neighbor <ip> weight <n>` lives directly under `router bgp`,
+  **not** in the address-family.
+- Highest weight wins.
+- Re-evaluate without bouncing sessions: `clear bgp * soft`.
 
-Weight is Arista-proprietary and local to the router. Highest weight wins. Not advertised.
+</details>
 
-In EOS, `weight` is configured directly under `router bgp`, not inside `address-family`.
+<details>
+<summary>Solution</summary>
 
-On **ce1** — prefer isp1 for outbound:
-```
+On **ce1**:
+```text
 router bgp 65001
    neighbor 10.1.11.2 weight 200
    neighbor 10.1.12.2 weight 100
 ```
 
-After `clear bgp * soft`, check:
-```
-show bgp ipv4 unicast 10.0.0.4/32
-```
-The path via isp1 (10.1.11.2) should now show `weight 200` and be selected (`>`).
+Then `clear bgp * soft`.
+
+</details>
+
+<details>
+<summary>Check your work</summary>
+
+`show bgp ipv4 unicast 10.0.0.4/32` on ce1: the path via 10.1.11.2 shows
+`weight 200` and carries the `>`. Nothing changed anywhere else — weight
+never leaves the box, so isp2's routing and ce1's *inbound* traffic are
+untouched. Weight is a sledgehammer for one router's outbound choice;
+it doesn't coordinate anything. (That's also its operational danger:
+invisible to every other router, it must be documented or it *will*
+surprise the next engineer.)
+
+Remove the weights before the next task so they don't mask
+local-preference (weight outranks it).
+
+</details>
 
 ---
 
-## Experiment 2 — Local-Preference (AS-wide outbound preference)
+## Task 3 — Local-preference: the AS speaks with one voice
 
-Local-pref is carried in iBGP updates and is visible to the entire AS. Highest wins (default 100).
+**Objective:** Inside AS 65100, make **both** ISP routers prefer isp1 as
+the exit toward ce1's prefix, by setting local-preference 200 on routes
+isp1 learns from ce1.
+
+**Predict first:** you configure this on isp1 only. By what mechanism
+does isp2 find out, and what will isp2's best path to 10.0.0.1/32 be
+afterwards — its own direct eBGP path, or the iBGP path through isp1?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On **isp1** — set high local-pref for prefixes received from ce1:
-```
+- A `route-map` with `set local-preference 200`, applied **inbound** on
+  isp1's neighbor toward ce1.
+- Local-pref is carried in iBGP UPDATEs — watch it arrive on isp2.
+- `show bgp ipv4 unicast 10.0.0.1/32` on isp2, before and after.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **isp1**:
+```text
 route-map LP-CE1-HIGH permit 10
    set local-preference 200
 !
@@ -199,38 +279,52 @@ router bgp 65100
       neighbor 10.1.11.1 route-map LP-CE1-HIGH in
    !
 ```
+
+Then `clear bgp * soft`.
+
 </details>
 
-This tells isp2 (via iBGP) to prefer isp1's path when exiting toward ce1's prefix. Check on isp2:
-```
-show bgp ipv4 unicast 10.0.0.1/32
-```
-The path received from isp1 should show `localpref 200` and be selected.
-
-After experimenting, remove the route-map:
 <details>
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-```
-router bgp 65100
-   !
-   address-family ipv4
-      no neighbor 10.1.11.1 route-map LP-CE1-HIGH in
-   !
-```
+On isp2, 10.0.0.1/32 now has two paths: its own eBGP path (localpref 100)
+and the iBGP path via isp1 (localpref 200). The **iBGP path wins** —
+rule 2 beats rule 7 (eBGP-over-iBGP), which only applies when local-prefs
+tie. isp2 now deliberately sends ce1-bound traffic across the 10.1.99.0
+link to exit via isp1: the AS made a coordinated exit decision, which is
+exactly what local-pref is for (and what weight can't do).
+
+Remove the route-map afterwards
+(`no neighbor 10.1.11.1 route-map LP-CE1-HIGH in`) and `clear bgp * soft`.
+
 </details>
 
 ---
 
-## Experiment 3 — AS-path prepending (influence inbound traffic)
+## Task 4 — AS-path prepending: asking strangers nicely
 
-AS-path prepending makes a path look longer, making it less preferred by other ASes. Used to influence which ISP receives inbound traffic.
+**Objective:** ce1 wants inbound traffic to arrive via isp1. Make the
+path ce1 advertises to **isp2** look three AS-hops long.
+
+**Predict first:** weight and local-pref controlled *outbound* decisions.
+Prepending is the first tool here that influences what *other* ASes do.
+Why must ce1 apply it **outbound toward isp2** rather than anything
+inbound — and can ce1 *guarantee* the result?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On **ce1** — make the path via isp2 look longer (so AS65100 prefers isp1 for inbound to ce1):
-```
+- `set as-path prepend 65001 65001` in a route-map, applied **out**
+  toward 10.1.12.2.
+- Verify on isp2: the AS-path column for 10.0.0.1/32.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **ce1**:
+```text
 route-map PREPEND-ISP2 permit 10
    set as-path prepend 65001 65001
 !
@@ -240,25 +334,54 @@ router bgp 65001
       neighbor 10.1.12.2 route-map PREPEND-ISP2 out
    !
 ```
+
+Then `clear bgp * soft`.
+
 </details>
 
-Check on isp2:
-```
-show bgp ipv4 unicast 10.0.0.1/32
-```
-The AS-path for ce1's prefix should now show `65001 65001 65001` (original + 2 prepends). isp2 will prefer to route toward isp1 for traffic destined to ce1.
+<details>
+<summary>Check your work</summary>
+
+isp2 now sees 10.0.0.1/32 with AS-path `65001 65001 65001` directly from
+ce1, versus `65001` via iBGP from isp1 — so isp2 routes ce1-bound traffic
+toward isp1 (shorter path, rule 4).
+
+Prediction answer: you can only edit attributes on routes *you send*;
+inbound preference at the remote AS is their decision, influenced by your
+advertisement. And no — no guarantee: the remote AS's local-pref (rule 2)
+is evaluated *before* AS-path length, so any explicit policy on their
+side silently overrides your prepending. Prepending is a request, not a
+command — the fundamental asymmetry of inter-domain traffic engineering.
+
+</details>
 
 ---
 
-## Experiment 4 — MED (advisory metric for inbound)
+## Task 5 — MED: the polite suggestion
 
-MED (Multi-Exit Discriminator) is sent to a neighbouring AS to suggest which entry point to use. It is only compared between paths that were learned from the **same neighbouring AS** — so it is a weaker influence than local-pref.
+**Objective:** Remove the prepend, then express the same "enter via
+isp1" preference with MED: advertise metric 10 to isp1 and metric 200 to
+isp2 from ce1.
+
+**Predict first:** both ISP routers receive ce1's prefix directly from
+AS 65001. For isp2 comparing its direct path (MED 200) against the iBGP
+path via isp1 (MED 10) — does the MED comparison even apply here? Why is
+MED weaker than everything you've used so far?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On **ce1** — advertise a low MED to isp1 and high MED to isp2:
-```
+- Two route-maps with `set metric`, applied `out` per neighbor on ce1.
+- MED is only compared between paths from the **same neighboring AS** —
+  check whether that condition holds in this topology.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **ce1**:
+```text
 route-map MED-LOW permit 10
    set metric 10
 !
@@ -272,19 +395,32 @@ router bgp 65001
       neighbor 10.1.12.2 route-map MED-HIGH out
    !
 ```
+
+Then `clear bgp * soft`.
+
 </details>
 
-Check on isp1 and isp2:
-```
-show bgp ipv4 unicast 10.0.0.1/32
-```
-Look at the `metric` column — but note: MED is only compared when both paths come from the same AS. isp1 and isp2 each receive the prefix directly from ce1 (AS65001), so the MED comparison would happen if they're comparing paths to the same prefix from the same AS.
+<details>
+<summary>Check your work</summary>
+
+Both paths on isp2 originate from AS 65001, so the MED comparison *does*
+apply: the MED-10 path via isp1 beats the direct MED-200 path, and
+AS 65100 enters via isp1 — same outcome as prepending, but achieved as a
+metric hint rather than path-length distortion.
+
+Why it's the weakest tool: five rules run before MED (weight, local-pref,
+origination, AS-path, origin), it's only valid between paths from the
+same AS, and the receiving AS is free to ignore or reset it. In practice
+MED is honored between organizations with an explicit agreement, and
+overridden by local-pref everywhere else.
+
+</details>
 
 ---
 
 ## Verification commands
 
-```
+```text
 ! All paths for a prefix with full attribute detail
 show bgp ipv4 unicast 10.0.0.1/32
 
@@ -300,6 +436,30 @@ clear bgp * soft
 
 ---
 
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Your company dual-homes to two *different* ISPs (separate ASes) and
+   prepending toward ISP-B isn't moving inbound traffic. List, in order
+   of likelihood, three reasons the prepend is being ignored, and what
+   evidence you could gather for each *without* access to the ISPs'
+   routers.
+2. Design the full policy set for "isp1 is primary in both directions,
+   isp2 is pure backup" — name the attribute, direction, and router for
+   each piece, and identify which half of the design you cannot
+   guarantee.
+3. After Task 3, traffic from ce2 to ce1 enters at isp2 but exits the AS
+   at isp1, crossing the 10.1.99.0 link. Generalize: why does local-pref
+   tend to create asymmetric paths through a transit AS, and when does an
+   operator care?
+4. Rule 9 prefers the *oldest* eBGP path. What operational problem is
+   that rule solving (hint: think about what happens after a flap), and
+   what surprising behavior does it cause when you're trying to verify a
+   policy change?
+
+---
+
 ## Troubleshooting
 
 **Two paths visible but neither wins decisively**
@@ -312,7 +472,9 @@ clear bgp * soft
 
 **MED not being compared**
 - MED is only compared between paths from the same neighbouring AS
-- If the two paths come from different ASes, MED is skipped (use `bgp always-compare-med` to override — but this is rarely used in production)
+- If the two paths come from different ASes, MED is skipped (`bgp
+  always-compare-med` overrides — rarely used in production)
 
 **iBGP session between isp1 and isp2 not working**
-- Check `next-hop-self` is configured — without it, iBGP-advertised routes have external next-hops that may be unreachable
+- Check `next-hop-self` is configured — without it, iBGP-advertised routes
+  have external next-hops that may be unreachable

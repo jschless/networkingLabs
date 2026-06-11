@@ -4,6 +4,14 @@ A fully-configured dual-homed BGP WAN edge lab using Arista cEOS and a Linux ser
 Models a realistic enterprise internet edge with primary/backup ISP links, BGP outbound
 path selection via local-preference, and inbound traffic engineering via AS-path prepend.
 
+## How to use this lab
+
+This is a **practice lab** on a fully pre-configured reference design — you
+observe, predict, and explain rather than build. The payoff is the **demo
+tasks**: at each one, predict what will happen (what reconverges, how long,
+what the client sees) *before* you trigger it, then verify. The design
+rationale sections are reference material for the challenge questions.
+
 ## Topology
 
 ```mermaid
@@ -222,6 +230,8 @@ ping -c 3 2.2.2.2
 
 ### Task 1 — Observe ISP Failover (Primary Link Failure)
 
+**Predict first:** when the primary ISP link drops, what tears the session down first (BGP hold timer vs. link state), how long until outbound traffic shifts to the backup, and will *inbound* traffic shift at the same speed? Commit before triggering.
+
 Simulate isp1 going down and watch traffic fail over to isp2.
 
 <details>
@@ -381,3 +391,20 @@ and you want internal routers to always have a default gateway pointing toward e
 tables if you have a full BGP feed. This is almost never desirable; it bloats OSPF and
 can cause instability. Use summarization or filtering if you truly need specific BGP
 prefixes in OSPF.
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Design "ISP-A primary, ISP-B backup" in both directions: name the BGP
+   attribute, the direction it's applied, and the router — and identify
+   which direction you cannot fully control from your side.
+2. The edge advertises only the enterprise aggregate to both ISPs. What
+   does the outbound prefix-list prevent, and what's the blast radius of a
+   more-specific leaking out?
+3. Fail the primary ISP and trace, step by step, how outbound *and* inbound
+   traffic each shift — and why the two directions may recover at different
+   speeds.
+4. Default-route-only vs. full tables from both ISPs: compare memory,
+   convergence, and path quality, and state which this lab uses and the
+   tradeoff it accepts.

@@ -1,6 +1,9 @@
 # BGP Basics — Practice Lab
 
-Build a four-router BGP network spanning three autonomous systems. IP addressing is pre-configured. You implement all BGP sessions, advertise prefixes, and work through the classic iBGP next-hop problem.
+Build a four-router BGP network spanning three autonomous systems. IP
+addressing is pre-configured. You implement all BGP sessions, advertise
+prefixes, and run head-first into the classic iBGP next-hop problem —
+then fix it like an operator would.
 
 ---
 
@@ -42,6 +45,19 @@ flowchart LR
 
 ---
 
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure.** When a task asks for a prediction,
+  commit to an answer before touching the CLI. Being wrong and finding out
+  why is the point.
+- **Open the hints before the solution.** The solution toggle is the answer
+  key — use it to check your work or when genuinely stuck, not as step one.
+- **Verify like an operator.** After each task, prove the state is what you
+  think it is with `show` commands before moving on.
+
 ## Deploy and access
 
 ```bash
@@ -52,17 +68,39 @@ docker exec -it clab-bgp-basics-r1 Cli
 docker exec -it clab-bgp-basics-r2 Cli
 ```
 
-> Note: EOS does not require any explicit policy configuration for eBGP sessions to exchange routes (unlike FRR). Sessions come up and exchange prefixes as soon as they are configured.
+> Note: EOS does not require any explicit policy configuration for eBGP
+> sessions to exchange routes (unlike FRR). Sessions come up and exchange
+> prefixes as soon as they are configured.
 
 ---
 
-## Step 1 — Configure eBGP between r1 and r2
+## Task 1 — eBGP between r1 and r2
+
+**Objective:** Establish the eBGP session between r1 (AS 65001) and r2
+(AS 65002) over the link addresses, and have each side advertise its own
+loopback. Success: session `Established`, and each router sees the other's
+/32 in `show bgp ipv4 unicast`.
+
+**Predict first:** when r1 receives 10.0.0.2/32 from r2, what next-hop
+will the route carry — and will r1 be able to use it immediately?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
+
+- `router bgp <ASN>`, `bgp router-id <loopback>`, `neighbor <ip>
+  remote-as <asn>`.
+- On EOS, neighbors must be `activate`d under `address-family ipv4`, and
+  prefixes enter BGP via `network <prefix>` there too.
+- Watch the session come up: `show bgp ipv4 unicast summary` — states
+  walk Idle → Connect/Active → OpenSent → OpenConfirm → Established.
+
+</details>
+
+<details>
+<summary>Solution</summary>
 
 On **r1**:
-```
+```text
 router bgp 65001
    bgp router-id 10.0.0.1
    neighbor 10.1.12.2 remote-as 65002
@@ -73,8 +111,8 @@ router bgp 65001
    !
 ```
 
-On **r2** (eBGP side only for now):
-```
+On **r2**:
+```text
 router bgp 65002
    bgp router-id 10.0.0.2
    neighbor 10.1.12.1 remote-as 65001
@@ -85,21 +123,50 @@ router bgp 65002
    !
 ```
 
-Check: `show bgp ipv4 unicast summary` on r1 — the state should reach `Established`.
+</details>
 
----
+<details>
+<summary>Check your work</summary>
+
+`show bgp ipv4 unicast summary` on r1 shows the neighbor `Established`
+with 1 prefix received. In `show bgp ipv4 unicast`, 10.0.0.2/32 carries
+next-hop **10.1.12.2** — the eBGP peer's address, directly connected, so
+the route is immediately usable (`>` best-path marker). eBGP rewrites the
+next-hop to the peering address at every hop; remember that, because the
+next task shows you iBGP does *not*.
 
 </details>
 
-## Step 2 — Configure iBGP between r2 and r3
+---
+
+## Task 2 — iBGP between r2 and r3, and the next-hop problem
+
+**Objective:** Bring up the iBGP session r2 ↔ r3 (both AS 65002) and have
+r3 advertise its loopback. Then examine what r3 learned about r1's
+loopback — and fix what you find.
+
+**Predict first:** after the session establishes, r3 will have
+10.0.0.1/32 in its BGP table. Commit to two answers: what next-hop will
+it carry, and will r3 install it in the routing table?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-**Before adding next-hop-self**, add the iBGP peer on both routers and observe the problem:
+- Same configuration shape as Task 1 — only the `remote-as` makes it
+  iBGP.
+- After it's up, look closely: `show bgp ipv4 unicast` on r3 — find
+  10.0.0.1/32 and check for the `>` marker; `show bgp ipv4 unicast
+  10.0.0.1/32` shows why.
+- The fix is a single per-neighbor, per-AF command on **r2** — think
+  about *whose* job it is to make the next-hop reachable.
 
-On **r2** (add to existing config):
-```
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **r2** (add):
+```text
 router bgp 65002
    neighbor 10.1.23.2 remote-as 65002
    !
@@ -109,7 +176,7 @@ router bgp 65002
 ```
 
 On **r3**:
-```
+```text
 router bgp 65002
    bgp router-id 10.0.0.3
    neighbor 10.1.23.1 remote-as 65002
@@ -120,15 +187,8 @@ router bgp 65002
    !
 ```
 
-Now check r3's BGP table:
-```
-show bgp ipv4 unicast
-```
-
-You will see r1's prefix (10.0.0.1/32) listed but marked as **inaccessible** (no `>` best-path marker). The next-hop is 10.1.12.1 (r1's IP), which r3 cannot reach.
-
-**Fix — add next-hop-self on r2:**
-```
+The fix, on **r2**:
+```text
 router bgp 65002
    !
    address-family ipv4
@@ -136,30 +196,62 @@ router bgp 65002
    !
 ```
 
-Now r3 sees r2 (10.1.23.1) as the next-hop for r1's prefix — reachable!
+</details>
 
----
+<details>
+<summary>Check your work</summary>
+
+Before the fix: r3's table lists 10.0.0.1/32 with next-hop **10.1.12.1**
+(r1's address on a subnet r3 knows nothing about) and no `>` marker —
+the path is *inaccessible*, so nothing is installed in the routing table.
+iBGP forwards routes with the next-hop untouched; without an IGP carrying
+the edge subnets, interior routers can't resolve it.
+
+After `next-hop-self` on r2: the next-hop becomes 10.1.23.1, directly
+reachable, the `>` appears and the route installs. The alternative
+production fix is running an IGP that covers the eBGP link subnets —
+`next-hop-self` at the border is simply the more common, more contained
+choice.
 
 </details>
 
-## Step 3 — Configure eBGP between r3 and r4
+---
+
+## Task 3 — eBGP between r3 and r4, full reachability
+
+**Objective:** Complete the chain: eBGP r3 ↔ r4, r4 advertises its
+loopback, and both Goal pings succeed end to end.
+
+**Predict first:** r3 will pass r4's loopback to r2 over iBGP. Does r3
+also need `next-hop-self` toward r2, or did Task 2's fix on r2 cover it?
+Decide before configuring.
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On **r3** (add to existing config):
-```
+- Mirror Task 1's shape for the new eBGP session.
+- Then check on r2: `show bgp ipv4 unicast 10.0.0.4/32` — is it usable?
+- Trace the full data path in your head before pinging: which routers
+  know about 10.0.0.1 *and* 10.0.0.4?
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **r3** (add):
+```text
 router bgp 65002
    neighbor 10.1.34.2 remote-as 65003
    !
    address-family ipv4
       neighbor 10.1.34.2 activate
-      neighbor 10.1.34.2 next-hop-self
+      neighbor 10.1.23.1 next-hop-self
    !
 ```
 
 On **r4**:
-```
+```text
 router bgp 65003
    bgp router-id 10.0.0.4
    neighbor 10.1.34.1 remote-as 65002
@@ -170,17 +262,72 @@ router bgp 65003
    !
 ```
 
----
+</details>
+
+<details>
+<summary>Check your work</summary>
+
+Prediction answer: yes, r3 needs its own `next-hop-self` toward r2 —
+next-hop rewriting is per-advertising-router, not per-AS. Without it, r2
+would see 10.0.0.4/32 with next-hop 10.1.34.2 (unreachable from r2) —
+the same disease as Task 2, on the other border.
+
+With everything in: `show bgp ipv4 unicast` on any router shows all four
+loopbacks with `>`, and both pings in the Goal succeed. Each ping
+traverses two eBGP boundaries and one iBGP hop — and the TTL story
+differs at each (eBGP defaults to TTL 1, iBGP to 255).
 
 </details>
 
+---
+
+## Task 4 — Break it: the silent session killer
+
+**Objective:** On r4, change the neighbor statement to a wrong remote AS
+(`neighbor 10.1.34.1 remote-as 65001`), and diagnose from **r3** without
+looking at r4's config. Then repair.
+
+**Predict first:** will r3's session show `Idle`, `Active`, or flap
+continuously? Will r3 log anything that names the actual cause?
+
+<details>
+<summary>Diagnosis hints (try before revealing)</summary>
+
+- `show bgp ipv4 unicast summary` on r3 — watch the state column for a
+  minute.
+- `show logging | grep -i bgp` on r3 — look for a NOTIFICATION message.
+- The TCP connection succeeds here — so which BGP message exchange is
+  failing, and what does that narrow it to?
+
+</details>
+
+<details>
+<summary>What you should observe</summary>
+
+The session flaps: TCP connects fine, OPEN messages are exchanged, then
+r3 receives (or sends) a **NOTIFICATION: OPEN Message Error / Bad Peer
+AS** and the session resets — over and over. The log on r3 names the AS
+mismatch explicitly; the summary line alone just looks like an unstable
+session cycling through Active/OpenSent.
+
+Contrast with the other classic: if TCP itself can't connect (wrong IP,
+ACL), the session sits in `Active` *silently* with no notification at
+all. "Flapping with notifications = config disagreement; parked in
+Active = can't even reach the peer" is a triage rule worth keeping.
+
+Repair: restore `remote-as 65002` on r4 and confirm `Established`.
+
+</details>
+
+---
+
 ## Verification
 
-```
+```text
 ! Check all BGP sessions — should show 'Established' and non-zero prefixes
 show bgp ipv4 unicast summary
 
-! Full BGP table — look for 4 loopback prefixes
+! Full BGP table — look for 4 loopback prefixes, all with '>'
 show bgp ipv4 unicast
 
 ! Routing table — BGP routes marked with 'B'
@@ -193,49 +340,26 @@ ping 10.0.0.1 source 10.0.0.4    ! on r4
 
 ---
 
-## Experiments
+## Challenge questions
 
-### Try loopback-based iBGP peering (update-source)
+No answers provided — reason them through.
 
-In production, iBGP sessions use loopback addresses for resilience (session stays up if one path goes down). This requires:
-1. r2 and r3 to have routes to each other's loopbacks (via a static route or IGP)
-2. `update-source Loopback0` on both peers
-3. `ebgp-multihop` is NOT needed for iBGP (TTL=255 by default)
-
-Add static routes on r2 and r3 to reach each other's loopbacks:
-<details>
-<summary>Show configuration</summary>
-
-```
-! On r2:
-r2(config)# ip route 10.0.0.3/32 10.1.23.2
-! On r3:
-r3(config)# ip route 10.0.0.2/32 10.1.23.1
-```
-</details>
-
-<details>
-<summary>Show configuration</summary>
-
-Then change iBGP peering to use loopbacks:
-```
-! On r2:
-router bgp 65002
-   neighbor 10.0.0.3 remote-as 65002
-   !
-   address-family ipv4
-      neighbor 10.0.0.3 activate
-      neighbor 10.0.0.3 update-source Loopback0
-      neighbor 10.0.0.3 next-hop-self
-   !
-```
-</details>
-
-### Observe iBGP split-horizon
-
-r3 learns r1's prefix (10.0.0.1/32) from r2 via iBGP. If r3 had a third iBGP peer (r5), it would NOT re-advertise this route to r5. This is iBGP split-horizon — it prevents loops in a full-mesh iBGP network.
-
-To see this: add a 5th container node and peer it iBGP with r3 only. r5 will not receive r1's prefix. The solution is either full-mesh iBGP (peer r5 with both r2 and r3) or a Route Reflector (see the bgp-rr lab).
+1. AS 65002 grows to five routers. iBGP split-horizon means r3 will not
+   re-advertise iBGP-learned routes to another iBGP peer — so what
+   peering topology does that force, how many sessions is that, and
+   which two technologies exist to escape it?
+2. In production, the r2–r3 iBGP session would be built between
+   *loopbacks* with `update-source Loopback0`, not link addresses. What
+   two extra things must be true for that session to establish, and what
+   failure mode does loopback peering protect against?
+3. r1's loopback is advertised with `network 10.0.0.1/32`. If the
+   loopback interface goes down, does the advertisement stop? Compare
+   with what happens to r2's *session-learned* routes when the r1–r2
+   link drops — which failure propagates faster, and why?
+4. Trace the actual packet path of `ping 10.0.0.4 source 10.0.0.1`. r2
+   forwards traffic for 10.0.0.4 — but r2 only knows that prefix via
+   iBGP from r3. What would go wrong if r2 and r3 were connected through
+   a non-BGP router in the middle, and what's that problem called?
 
 ---
 
@@ -245,19 +369,30 @@ To see this: add a 5th container node and peer it iBGP with r3 only. r5 will not
 - Confirm IP addresses and `remote-as` values are correct on both ends
 - `ping 10.1.12.2` from r1 — if this fails, check interface IPs
 
+**Session flapping with notifications in the log**
+- The peers disagree about something in OPEN — usually remote-as vs. the
+  peer's actual AS
+
 **Prefix visible in BGP table but not in routing table**
-- The next-hop is unreachable — add `next-hop-self` on the advertising iBGP peer
-- `show bgp ipv4 unicast 10.0.0.1/32` — look at the Nexthop field and the 'inaccessible' note
+- The next-hop is unreachable — add `next-hop-self` on the advertising
+  iBGP peer
+- `show bgp ipv4 unicast 10.0.0.1/32` — look at the Nexthop field and the
+  'inaccessible' note
 
 **BGP routes not showing up on r1 from r4**
 - Walk the path: does r4 have the prefix? Does r3? Does r2?
 - `show bgp ipv4 unicast` on each hop and look for the missing handoff
 
+---
+
 ## Extensions
 
-These are optional follow-on ideas to deepen the lab. They are not part of the validated base workflow.
+These are optional follow-on ideas to deepen the lab. They are not part of
+the validated base workflow.
 
-- Add a fifth router and prove the iBGP split-horizon limitation before introducing a route reflector.
-- Change one peering from eBGP to iBGP and compare how next-hop handling and advertisement rules change.
-- Capture TCP/179 traffic during session establishment and map each BGP FSM step to the packets you see.
-- Inject a bad `remote-as` or update-source on one side and troubleshoot the failure from `Idle` or `Active` back to the root cause.
+- Rebuild the iBGP session between loopbacks with `update-source
+  Loopback0` (you'll need static routes for the loopbacks first).
+- Add a fifth router and prove the iBGP split-horizon limitation before
+  introducing a route reflector.
+- Capture TCP/179 traffic during session establishment and map each BGP
+  FSM step to the packets you see.

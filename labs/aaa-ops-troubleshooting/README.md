@@ -7,6 +7,13 @@ This lab strips AAA down to the operational failure modes that lock people out:
 - local fallback
 - break-glass admin access
 
+## How to use this lab
+
+This is a **practice troubleshooting lab**. Something is broken (or about to
+be); your job is to find and fix it from the symptom, not a script. **Form
+a hypothesis before each command**, predict what a healthy vs. broken output
+looks like, and only then run it. The challenge questions test transfer.
+
 ## Topology
 
 ```mermaid
@@ -70,3 +77,19 @@ docker exec clab-aaa-ops-troubleshooting-tacacs1 tac_plus -G -d 16 -l /dev/stdou
 - AAA design is incomplete without fallback behavior
 - bad TACACS reachability and bad TACACS secrets look similar to the operator
 - break-glass local access should be intentional, not accidental
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. An admin can't log in via TACACS+. Distinguish the three failure modes —
+   server unreachable, server reachable but rejecting, and shared-key
+   mismatch — and the one command/log that pins each.
+2. Local fallback exists for a reason. Walk through what *should* happen when
+   the AAA server is down, and the misconfiguration that locks everyone out
+   instead.
+3. Authentication, authorization, and accounting are separate. Give a case
+   where a user authenticates fine but is denied a command, and where
+   everything works but no audit trail is produced.
+4. Why is clock sync a hidden dependency of AAA accounting and token-based
+   auth? What breaks when device clocks drift?

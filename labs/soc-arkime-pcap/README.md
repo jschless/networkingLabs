@@ -2,6 +2,14 @@
 
 Practice full-packet workflow concepts: session search, PCAP export, and packet evidence tied back to Zeek and Suricata records.
 
+
+## How to use this lab
+
+This is a **practice analysis lab**. The environment and evidence are
+pre-built; your job is to *investigate*, not to follow a script. For each
+task, **form a hypothesis about what the logs/PCAP will show before you
+query them**, then run the filter and compare. The challenge questions push
+you from "find the indicator" to "explain and respond."
 ## Build And Deploy
 
 ```bash
@@ -31,3 +39,15 @@ docker exec clab-soc-arkime-pcap-sensor tcpdump -ni eth1 -c 20
 ## Outcome
 
 You can pivot from a session or alert record to packet evidence and reason about packet-retention tradeoffs.
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. Full-packet capture is expensive to store. Explain the retention/sampling tradeoff and what investigation becomes impossible once a flow ages out of the PCAP store.
+2. Distinguish a true positive from a false positive in this lab's data, and
+   state the *one* corroborating source you'd pull to raise confidence.
+3. From detection to response: given a confirmed finding here, what's the
+   minimal containment action, and what evidence must you preserve first?
+4. What single additional log source or visibility gap, if added, would have
+   made this investigation faster — and why isn't it free?

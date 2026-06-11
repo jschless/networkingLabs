@@ -1,4 +1,11 @@
-# Lab: EIGRP Stub Routers
+# EIGRP Stub Routers — Practice Lab
+
+In a hub-and-spoke network, EIGRP's query mechanism is a liability: lose a
+route at the hub and it queries *every* spoke, any slow reply can leave a
+route Stuck-In-Active, and SIA cascades into neighbor resets. The stub
+feature tells the hub "I'm a dead end — don't query me." You'll build the
+hub-and-spoke, make spokes stub, prove the query scope shrinks, and use a
+leak-map to keep a legitimately-downstream prefix reachable.
 
 ## Topology
 
@@ -21,218 +28,234 @@ flowchart TB
     class ce ce
 ```
 
-| Link | Subnet | hub/spoke side | spoke/ce side |
-|------|--------|---------------|--------------|
-| hub:eth1 - spoke1:eth1 | 10.1.11.0/30 | hub=.1 | spoke1=.2 |
-| hub:eth2 - spoke2:eth1 | 10.1.12.0/30 | hub=.1 | spoke2=.2 |
-| hub:eth3 - spoke3:eth1 | 10.1.13.0/30 | hub=.1 | spoke3=.2 |
-| spoke3:eth2 - ce:eth1  | 10.1.30.0/30 | spoke3=.1 | ce=.2 |
+Loopbacks: hub=10.0.0.1, spoke1=10.0.0.2, spoke2=10.0.0.3,
+spoke3=10.0.0.4, ce=10.0.0.5 (all /32). spoke3 has a downstream CE.
 
-Loopbacks: hub=10.0.0.1/32, spoke1=10.0.0.2/32, spoke2=10.0.0.3/32,
-           spoke3=10.0.0.4/32, ce=10.0.0.5/32
+## How to use this lab
 
-## Concepts
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
 
-### Why EIGRP Queries Cause Problems
+- **Predict before you configure**, **open hints before the solution**,
+  and **verify** with `show ip eigrp neighbors detail` and query debugs.
 
-When EIGRP loses a route and has no Feasible Successor, it sends a **Query**
-to every neighbor asking "do you have a path to this destination?"
+## Background
 
-In a hub-and-spoke network:
-1. Hub loses a route (e.g., a link goes down)
-2. Hub sends queries to ALL neighbors — including all spokes
-3. Spokes don't have alternate paths and must reply "No"
-4. If a spoke is slow to reply (congestion, overloaded), the hub keeps
-   the route in **Active** state, waiting
-5. If the reply doesn't arrive within the active timer (3 min default),
-   the route goes **Stuck In Active (SIA)** — EIGRP resets the neighbor
+Stub modes:
 
-SIA causes neighbor resets, which cause reconvergence, which causes more
-queries. In large networks this cascades.
-
-### Stub Router: The Solution
-
-A stub router tells its neighbors: "I am a dead end — don't send me queries."
-
-When the hub knows spoke1 is a stub:
-- The hub will **not** send queries to spoke1 when a route goes active
-- The hub marks spoke1's routes as "not usable as transit"
-- The query scope is limited to non-stub peers only
-
-This dramatically reduces query propagation depth and eliminates SIA
-on spoke routers that have no alternate paths anyway.
-
-### Stub Modes
-
-```
-eigrp stub                          # connected routes only
-eigrp stub connected                # connected routes only (explicit)
-eigrp stub connected summary        # connected + summary routes
-eigrp stub receive-only             # no routes advertised at all
-eigrp stub leak-map MAPNAME         # connected + what leak-map permits
+```text
+eigrp stub                       # connected routes only
+eigrp stub connected summary     # connected + summary (most common)
+eigrp stub receive-only          # advertise nothing
+eigrp stub ... leak-map MAP      # connected + whatever the map permits
 ```
 
-The most common production mode is `eigrp stub connected summary`.
-
-### Leak-Map
-
-A stub router by default only advertises connected and/or summary routes.
-If a stub has downstream networks that non-stub routers need to know about,
-use a **leak-map** to selectively allow those prefixes through.
-
-<details>
-<summary>Show configuration</summary>
-
-```
-ip prefix-list LEAK-CE permit 10.1.30.0/30
-ip prefix-list LEAK-CE permit 10.0.0.5/32
-
-route-map LEAK-MAP permit 10
- match ip address prefix-list LEAK-CE
-
-router eigrp 100
- eigrp stub connected summary leak-map LEAK-MAP
-```
-</details>
-
-spoke3 will still be treated as stub (hub won't query it), but it will
-advertise ce's networks to the hub.
+A stub still *learns* all routes; it's barred from being a *transit* path
+and exempted from queries. A leak-map lets a stub advertise specific
+downstream prefixes (like spoke3's CE) without losing stub status.
 
 ## Deployment
 
 ```bash
 sudo containerlab deploy -t topology.clab.yml
+docker exec -it clab-eigrp-stub-hub vtysh
 ```
 
-## Tasks
+---
 
-### Step 1: Configure EIGRP on all nodes (no stub yet)
+## Task 1 — Converge the hub-and-spoke (no stub)
+
+**Objective:** EIGRP AS 100 everywhere, full reachability including ce's
+loopback from the hub.
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
+
+- `router eigrp 100`, `network` for each loopback and connected subnet,
+  `no auto-summary`.
+- Verify: `show ip route eigrp` on hub, `ping 10.0.0.5 source 10.0.0.1`.
+
+</details>
+
+<details>
+<summary>Solution</summary>
 
 On each node:
-```
+```text
 router eigrp 100
  network <loopback>/32
  network <link-subnet>/30
  no auto-summary
 ```
+
 </details>
 
-Verify full convergence from hub:
-```
-show ip eigrp neighbors
-show ip route eigrp
-ping 10.0.0.5 source 10.0.0.1
-```
+<details>
+<summary>Check your work</summary>
 
-### Step 2: Configure spoke1 and spoke2 as stub
+Hub reaches 10.0.0.5 via spoke3. Right now *every* spoke is a normal
+EIGRP peer — meaning the hub would query all of them on any route loss,
+including spokes that obviously have nowhere else to send a query. That
+needless query fan-out is the problem the stub feature removes.
 
-On spoke1:
-```
-router eigrp 100
- eigrp stub connected summary
-```
+</details>
 
-On spoke2:
-```
-router eigrp 100
- eigrp stub connected summary
-```
+---
 
-Verify on hub:
-```
-show ip eigrp neighbors detail
-```
+## Task 2 — Make spoke1 and spoke2 stubs
 
-Look for:
-```
-EIGRP-IPv4 Neighbors for AS(100)
-...
-Peer-type is Stub
-```
+**Objective:** Configure spoke1 and spoke2 as `eigrp stub connected
+summary` and confirm on the hub that it recognizes them as stubs.
 
-### Step 3: Configure spoke3 as stub with leak-map
+**Predict first:** after this, do spoke1 and spoke2 still have full
+routing tables (can they ping ce)? Stub changes what the hub *does with*
+them — does it change what *they* learn?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-On spoke3:
+- One line under `router eigrp 100` on each spoke.
+- Confirm from the hub side: `show ip eigrp neighbors detail` — look for
+  `Peer-type is Stub`.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **spoke1** and **spoke2**:
+```text
+router eigrp 100
+ eigrp stub connected summary
 ```
+
+</details>
+
+<details>
+<summary>Check your work</summary>
+
+`show ip eigrp neighbors detail` on the hub shows `Peer-type is Stub` for
+those neighbors. And yes — the spokes still have full routing tables and
+can still ping ce: stub does **not** restrict what a stub *learns*, only
+(a) what it advertises and (b) the hub's willingness to query it or use
+it as transit. The common misconception is that stub "cuts off" the
+spoke; it actually just stops the spoke from being dragged into the
+query process it can't help with anyway.
+
+</details>
+
+---
+
+## Task 3 — Stub with a leak-map for the real downstream
+
+**Objective:** Make spoke3 a stub *too*, but ensure ce's prefixes
+(10.1.30.0/30, 10.0.0.5/32) still reach the hub.
+
+**Predict first:** if you configure plain `eigrp stub connected summary`
+on spoke3, what happens to the hub's route to ce? Why does spoke3 need
+special handling that spoke1/spoke2 didn't?
+
+<details>
+<summary>Hints</summary>
+
+- A `prefix-list` matching ce's two prefixes, a `route-map` referencing
+  it, and `eigrp stub connected summary leak-map <MAP>`.
+- Check `show ip route 10.0.0.5` on the hub before and after.
+
+</details>
+
+<details>
+<summary>Solution</summary>
+
+On **spoke3**:
+```text
 ip prefix-list LEAK-CE seq 5 permit 10.1.30.0/30
 ip prefix-list LEAK-CE seq 10 permit 10.0.0.5/32
-
+!
 route-map LEAK-MAP permit 10
  match ip address prefix-list LEAK-CE
-
+!
 router eigrp 100
  eigrp stub connected summary leak-map LEAK-MAP
 ```
+
 </details>
 
-Verify ce's prefix is still reachable from hub:
-```
-show ip route 10.0.0.5
-ping 10.0.0.5 source 10.0.0.1
-```
+<details>
+<summary>Check your work</summary>
 
-### Step 4: Observe query behaviour
+With plain stub, the hub would *lose* ce — a stub advertises only
+connected/summary, and ce's loopback is neither (it's a learned EIGRP
+route on spoke3). spoke3 is different from spoke1/spoke2 precisely
+because it has a legitimate downstream. The leak-map carves an exception:
+spoke3 stays stub (hub still won't query it) yet re-advertises ce's
+prefixes. `ping 10.0.0.5 source 10.0.0.1` works again. This is the real
+production pattern — branch routers are stubs, but their downstream LANs
+must still be reachable.
 
-Enable debug on hub:
-```
-debug eigrp packets query
-```
+</details>
 
-Simulate a link failure:
-```bash
-# From the hub Linux shell (outside vtysh):
-ip link set eth3 down
-```
+---
 
-Watch the debug output. The hub should NOT send queries to spoke1 or
-spoke2 (they are stub). It will only query stub-exempt neighbors.
+## Task 4 — Break it: prove the query scope shrank
 
-Restore the link:
-```bash
-ip link set eth3 up
-```
+**Objective:** Watch the hub's query behavior when a route is lost, and
+confirm stubs are skipped.
+
+Enable on the hub: `debug eigrp packets query`. Then fail a link from the
+hub's Linux shell: `ip link set eth3 down` (the spoke3 link). Observe,
+then restore with `up`.
+
+**Predict first:** when the hub loses the route and goes active, which
+neighbors will it send queries to — all spokes, or only some? Which ones,
+and why?
+
+<details>
+<summary>What you should observe</summary>
+
+The hub does **not** query spoke1 or spoke2 (flagged stub) — it limits
+queries to non-stub peers only. In a real hub with hundreds of branch
+spokes, that's the difference between one query going to a couple of
+core neighbors versus a query storm fanning out to every branch and the
+SIA risk that comes with it. You've turned an O(spokes) query problem
+into an O(core) one — which is the entire reason stub exists. (If you
+hadn't leaked ce, you'd also see that losing spoke3 simply removes ce
+cleanly, with no query amplification.)
+
+</details>
+
+---
 
 ## Verification Commands
 
 | Command | Where | What to look for |
 |---------|-------|-----------------|
-| `show ip eigrp neighbors` | all | All neighbors up |
-| `show ip eigrp neighbors detail` | hub | Stub flag on spokes |
-| `show ip eigrp topology` | hub | Routes via each spoke |
-| `show ip route eigrp` | hub | ce's prefixes via spoke3 |
-| `ping 10.0.0.5 source 10.0.0.1` | hub | ce reachable after stub |
+| `show ip eigrp neighbors detail` | hub | `Peer-type is Stub` on spokes |
+| `show ip route eigrp` | hub | ce's prefixes via spoke3 (with leak-map) |
+| `ping 10.0.0.5 source 10.0.0.1` | hub | ce reachable |
 | `debug eigrp packets query` | hub | No queries to stub peers |
 
-## Stub Flags in Neighbor Detail
+---
 
-```
-show ip eigrp neighbors detail
+## Challenge questions
 
-EIGRP-IPv4 VR(eigrp-lab) Address-Family Neighbors for AS(100)
-H   Address   Interface   Hold  Uptime  SRTT   RTO  Q  Seq
-                          (sec)         (ms)       Cnt Num
-0   10.1.11.2 eth1          12  00:02:14   8   200  0   14
-   Version 3.0/2.0, Retrans: 1, Retries: 0
-   Topology-ids from peer - 0
-   Peer-type is Stub, is not Transit, is Connected
-```
+No answers provided — reason them through.
 
-The key line is **"Peer-type is Stub"** — this confirms the hub has
-received the stub flag from the spoke.
-
-## Key Takeaways
-
-- Stub routers reduce query scope and prevent SIA in hub-and-spoke designs
-- Stub does NOT prevent the stub router from learning routes
-- Stub DOES prevent the hub from using the stub as a transit path
-- Use leak-map when a stub has downstream prefixes to share
-- Always verify stub flags with `show ip eigrp neighbors detail`
+1. A stub spoke is accidentally cabled to a *second* spoke, creating a
+   spoke-to-spoke link. Explain why "stub = not transit" prevents this
+   from being used as a backup transit path even though the link is up —
+   and when that safety would be exactly the wrong behavior.
+2. Compare `eigrp stub receive-only` with `eigrp stub connected summary`.
+   Give a device role where receive-only is correct, and describe what
+   breaks if you misapply it to spoke3.
+3. SIA (stuck-in-active) is the failure stub prevents. Walk through the
+   full SIA timeline on a non-stub hub with one slow spoke, and identify
+   every point where summarization, stub, or query bounding could have
+   broken the chain.
+4. EIGRP needs an explicit stub feature to bound queries; OSPF bounds
+   flooding with areas instead. Compare the two as scaling tools for a
+   1000-branch hub-and-spoke — what does each cost the operator in design
+   complexity?
 
 ## Teardown
 

@@ -4,6 +4,13 @@
 
 A colleague deployed a VXLAN/BGP EVPN fabric. host1 and host2 should be on the same Layer 2 segment (VNI 100) and able to ping each other. After deployment, host1 can't reach host2. BGP EVPN routes appear in the table, but frames destined for host2 are never delivered correctly.
 
+## How to use this lab
+
+This is a **practice troubleshooting lab**. A working network was broken by
+a small change; you diagnose it from symptoms, not from the config files.
+Work the staged hints only when stuck, and reveal the solution last —
+the skill being trained is *generating* the diagnosis, not reading it.
+
 ## Topology
 
 ```mermaid
@@ -157,3 +164,18 @@ show bgp l2vpn evpn
 ping 172.16.0.2
 # 64 bytes from 172.16.0.2: icmp_seq=1 ttl=64 time=1.1 ms
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The fault here produced a **silent** failure (no error logged) with a
+   misleading symptom. Explain *why* this class of misconfig fails silently,
+   and the one show command that would have pinpointed it fastest.
+2. What single piece of monitoring or assurance (a check, an alert, a
+   pre-change validation) would have caught this fault before users did?
+3. Generalize: list two *other* one-line changes to this topology that would
+   produce a similar "looks healthy locally, broken downstream" symptom, and
+   how you'd tell them apart.
+4. Write the rollback/change-control habit that would have prevented this
+   overnight break in the first place.

@@ -1,9 +1,10 @@
-# Lab: bgp-labeled-unicast
+# BGP Labeled Unicast (BGP-LU) — Practice Lab
 
-## Purpose
-Learn BGP Labeled Unicast (BGP-LU, RFC 3107) — the mechanism that signals MPLS labels via BGP
-instead of LDP. Understand how inter-AS MPLS forwarding works (Option C style) where two ASes
-exchange labeled prefixes at their border routers, enabling end-to-end MPLS label-switched paths.
+Inside one AS, LDP or SR distributes MPLS labels — but across an AS
+boundary, LDP stops. BGP-LU (RFC 3107) fills the gap: it attaches an MPLS
+label to each BGP-advertised prefix, so BGP itself signals an end-to-end
+label-switched path. You build the four-router, two-AS Inter-AS Option C
+design and watch the LSP stitch together label-by-label at the ASBRs.
 
 ## Topology
 
@@ -22,11 +23,11 @@ flowchart LR
     class r1,r2,r3,r4 router
 ```
 
-| Link | Subnet | r-left | r-right | Session type |
-|------|--------|--------|---------|--------------|
-| r1:Ethernet1 -- r2:Ethernet1 | 10.1.12.0/30 | .1 | .2 | iBGP-LU (AS65001) |
-| r2:Ethernet2 -- r3:Ethernet1 | 10.1.23.0/30 | .1 | .2 | eBGP-LU (inter-AS) |
-| r3:Ethernet2 -- r4:Ethernet1 | 10.1.34.0/30 | .1 | .2 | iBGP-LU (AS65002) |
+| Link | Subnet | Session type |
+|------|--------|--------------|
+| r1 -- r2 | 10.1.12.0/30 | iBGP-LU (AS65001) |
+| r2 -- r3 | 10.1.23.0/30 | eBGP-LU (inter-AS) |
+| r3 -- r4 | 10.1.34.0/30 | iBGP-LU (AS65002) |
 
 | Node | Loopback    | AS    | Role |
 |------|-------------|-------|------|
@@ -35,234 +36,245 @@ flowchart LR
 | r3   | 10.0.0.3/32 | 65002 | ASBR |
 | r4   | 10.0.0.4/32 | 65002 | Edge PE |
 
-OSPF runs within each AS (r1+r2 in AS65001, r3+r4 in AS65002) to provide loopback reachability.
-MPLS is pre-enabled on all transit interfaces.
+OSPF runs within each AS for loopback reachability; MPLS is pre-enabled on
+all transit interfaces. IP addressing, OSPF, and `mpls ip` are pre-built —
+**you configure the BGP-LU sessions.**
+
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure**, **open hints before the solution**,
+  and **verify** the label stack with `show mpls lfib route` after each
+  step.
 
 ## Deploy / Destroy
 
 ```bash
 sudo containerlab deploy -t topology.clab.yml
 sudo containerlab destroy -t topology.clab.yml
-```
-
-Access a node:
-```bash
 docker exec -it clab-bgp-labeled-unicast-r1 Cli
 ```
 
-## What You Configure
+## Background — what BGP-LU does
 
-The startup-config files have IP addressing, OSPF, and `mpls ip` pre-configured on all interfaces.
-Your task is to configure BGP Labeled Unicast sessions on all four nodes.
+A BGP-LU update binds a label to each prefix: "to reach X, use label Y."
+Each router independently allocates its *own* local label and swaps on
+transit. When r4 advertises 10.0.0.4/32 with label 17, r3 receives 17,
+allocates (say) 18, and advertises 18 to r2; r2 then programs "incoming
+18 → swap to 17 → next-hop r3." The ASBRs (r2, r3) re-originate labeled
+routes across the AS boundary — that stitching *is* Inter-AS Option C
+(RFC 4364). The address family is `ipv4 labeled-unicast`, distinct from
+`ipv4 unicast`; neighbors must be activated in it explicitly.
 
-### Step 1: Configure iBGP-LU within AS65001 (r1 and r2)
+---
+
+## Task 1 — iBGP-LU inside AS65001
+
+**Objective:** Bring up a loopback-based iBGP-LU session between r1 and r2,
+each advertising its loopback in the labeled-unicast AF.
+
+**Predict first:** the session peers on loopbacks (`update-source
+Loopback0`). What has to already be true for that TCP session to even
+establish — and which pre-built protocol provides it here?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Hints</summary>
 
-For iBGP-LU in EOS, peers use loopback addresses (reachable via OSPF). The loopback-based iBGP
-peer with `update-source Loopback0` is the correct approach.
+- `neighbor 10.0.0.2 remote-as 65001` + `update-source Loopback0`.
+- The labeled-unicast AF: `address-family ipv4 labeled-unicast`, then
+  `neighbor ... activate` and `network 10.0.0.X/32`.
+- r2 also pre-needs its eBGP neighbor toward r3 (Task 2), so configure
+  r2's full neighbor set now.
+
+</details>
+
+<details>
+<summary>Solution</summary>
 
 On **r1**:
-```
-r1# configure
-r1(config)# router bgp 65001
-r1(config-router-bgp)# bgp router-id 10.0.0.1
-r1(config-router-bgp)# neighbor 10.0.0.2 remote-as 65001
-r1(config-router-bgp)# neighbor 10.0.0.2 update-source Loopback0
-r1(config-router-bgp)# address-family ipv4 labeled-unicast
-r1(config-router-bgp-af)# neighbor 10.0.0.2 activate
-r1(config-router-bgp-af)# network 10.0.0.1/32
-r1(config-router-bgp-af)# end
-r1# write memory
+```text
+router bgp 65001
+   bgp router-id 10.0.0.1
+   neighbor 10.0.0.2 remote-as 65001
+   neighbor 10.0.0.2 update-source Loopback0
+   address-family ipv4 labeled-unicast
+      neighbor 10.0.0.2 activate
+      network 10.0.0.1/32
 ```
 
 On **r2**:
-```
-r2# configure
-r2(config)# router bgp 65001
-r2(config-router-bgp)# bgp router-id 10.0.0.2
-r2(config-router-bgp)# neighbor 10.0.0.1 remote-as 65001
-r2(config-router-bgp)# neighbor 10.0.0.1 update-source Loopback0
-r2(config-router-bgp)# neighbor 10.1.23.2 remote-as 65002
-r2(config-router-bgp)# address-family ipv4 labeled-unicast
-r2(config-router-bgp-af)# neighbor 10.0.0.1 activate
-r2(config-router-bgp-af)# neighbor 10.1.23.2 activate
-r2(config-router-bgp-af)# network 10.0.0.2/32
-r2(config-router-bgp-af)# end
-r2# write memory
+```text
+router bgp 65001
+   bgp router-id 10.0.0.2
+   neighbor 10.0.0.1 remote-as 65001
+   neighbor 10.0.0.1 update-source Loopback0
+   neighbor 10.1.23.2 remote-as 65002
+   address-family ipv4 labeled-unicast
+      neighbor 10.0.0.1 activate
+      neighbor 10.1.23.2 activate
+      network 10.0.0.2/32
 ```
 
 </details>
 
-### Step 2: Configure eBGP-LU at the AS boundary (r2 and r3)
-
 <details>
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-The eBGP-LU session between r2 (AS65001) and r3 (AS65002) is already partially configured above
-on r2. On **r3**:
-
-```
-r3# configure
-r3(config)# router bgp 65002
-r3(config-router-bgp)# bgp router-id 10.0.0.3
-r3(config-router-bgp)# neighbor 10.1.23.1 remote-as 65001
-r3(config-router-bgp)# neighbor 10.0.0.4 remote-as 65002
-r3(config-router-bgp)# neighbor 10.0.0.4 update-source Loopback0
-r3(config-router-bgp)# address-family ipv4 labeled-unicast
-r3(config-router-bgp-af)# neighbor 10.1.23.1 activate
-r3(config-router-bgp-af)# neighbor 10.0.0.4 activate
-r3(config-router-bgp-af)# network 10.0.0.3/32
-r3(config-router-bgp-af)# end
-r3# write memory
-```
+`show bgp ipv4 labeled-unicast summary` shows the r1↔r2 session up.
+Prediction answer: the loopbacks must be mutually reachable *before* BGP
+can connect to them — that's why **OSPF** runs inside each AS as the
+underlay. A loopback-peered BGP session is only as alive as the IGP
+beneath it; pull OSPF and BGP-LU never even gets to TCP. (eBGP-LU between
+ASBRs, by contrast, peers on the directly connected link — no IGP needed
+across the boundary.)
 
 </details>
 
-### Step 3: Configure iBGP-LU within AS65002 (r3 and r4)
+---
+
+## Task 2 — eBGP-LU across the AS boundary, and iBGP-LU in AS65002
+
+**Objective:** Complete r3 (eBGP-LU to r2 on the link, iBGP-LU to r4 on
+loopbacks) and r4 (iBGP-LU to r3), so the full chain is labeled end to
+end.
+
+**Predict first:** the eBGP-LU session r2↔r3 uses *link* addresses, not
+loopbacks — why is `update-source Loopback0` wrong here, and what would
+break if you used it?
 
 <details>
-<summary>Show configuration</summary>
+<summary>Solution</summary>
+
+On **r3**:
+```text
+router bgp 65002
+   bgp router-id 10.0.0.3
+   neighbor 10.1.23.1 remote-as 65001
+   neighbor 10.0.0.4 remote-as 65002
+   neighbor 10.0.0.4 update-source Loopback0
+   address-family ipv4 labeled-unicast
+      neighbor 10.1.23.1 activate
+      neighbor 10.0.0.4 activate
+      network 10.0.0.3/32
+```
 
 On **r4**:
-```
-r4# configure
-r4(config)# router bgp 65002
-r4(config-router-bgp)# bgp router-id 10.0.0.4
-r4(config-router-bgp)# neighbor 10.0.0.3 remote-as 65002
-r4(config-router-bgp)# neighbor 10.0.0.3 update-source Loopback0
-r4(config-router-bgp)# address-family ipv4 labeled-unicast
-r4(config-router-bgp-af)# neighbor 10.0.0.3 activate
-r4(config-router-bgp-af)# network 10.0.0.4/32
-r4(config-router-bgp-af)# end
-r4# write memory
+```text
+router bgp 65002
+   bgp router-id 10.0.0.4
+   neighbor 10.0.0.3 remote-as 65002
+   neighbor 10.0.0.3 update-source Loopback0
+   address-family ipv4 labeled-unicast
+      neighbor 10.0.0.3 activate
+      network 10.0.0.4/32
 ```
 
 </details>
 
-### Step 4: Verify
+<details>
+<summary>Check your work</summary>
 
-Check BGP sessions are up:
-```
-show bgp ipv4 labeled-unicast summary
-```
+All sessions up; `show bgp ipv4 labeled-unicast` on r1 shows
+10.0.0.4/32 with a label; `ping 10.0.0.4 source 10.0.0.1` works.
 
-Check labeled routes are being exchanged:
-```
-show bgp ipv4 labeled-unicast
-```
+Prediction answer: eBGP-LU peers across a single hop on the link
+addresses — there's no IGP between the two ASes to make loopbacks
+reachable, so `update-source Loopback0` would point the session at an
+unreachable address and it would never establish. iBGP uses loopbacks
+for resilience *within* an AS where the IGP guarantees reachability;
+eBGP uses the link because that's the only thing both sides can resolve.
 
-Check MPLS forwarding table:
-```
-show mpls lfib route
-```
+</details>
 
-Test end-to-end connectivity:
-```
-ping 10.0.0.4 source 10.0.0.1
-```
+---
+
+## Task 3 — Read the label stack end to end
+
+**Objective:** Trace the label binding for 10.0.0.4/32 hop by hop and
+confirm the swap operations in the LFIB.
+
+<details>
+<summary>Hints</summary>
+
+- `show bgp ipv4 labeled-unicast 10.0.0.4/32` on r4, r3, r2, r1 — read
+  the label each advertised.
+- `show mpls lfib route` on r2 and r3 — find the incoming-label →
+  out-label → next-hop entries.
+
+</details>
+
+<details>
+<summary>Check your work</summary>
+
+You should be able to narrate: r4 originates a label for its loopback →
+r3 receives it, allocates its own, advertises that to r2 across the
+eBGP-LU boundary → r2 allocates again, advertises to r1. Each ASBR's
+LFIB shows a *swap* (incoming label → different out-label → next-hop).
+The labels are locally significant — each router picks its own — which is
+exactly why a label must be re-signaled at every hop, and why pulling any
+one advertisement (next task) snaps the chain.
+
+</details>
+
+---
+
+## Task 4 — Break it: drop a stitch at the ASBR
+
+**Objective:** On r2, remove `network 10.0.0.2/32` from the BGP-LU config
+and determine whether end-to-end r1↔r4 connectivity survives — and why.
+
+**Predict first:** r2's loopback is the *transit* ASBR's own prefix, not
+r1's or r4's. Will removing it break the r1→r4 LSP, or only reachability
+*to r2 itself*?
+
+<details>
+<summary>What you should observe</summary>
+
+Think carefully and test: removing r2's own loopback advertisement
+removes the path *to 10.0.0.2*, but the r1↔r4 LSP rides labels for
+r1's and r4's prefixes, which r2 still swaps in transit. The lesson is
+about what an ASBR contributes — it must keep *re-advertising and
+label-swapping the prefixes that transit it*, even ones it doesn't
+originate. Try instead removing r2's activation of the r1 neighbor in the
+labeled-unicast AF and watch the end-to-end LSP genuinely collapse:
+that's the stitch that matters.
+
+Restore the config and re-verify `ping 10.0.0.4 source 10.0.0.1`.
+
+</details>
+
+---
 
 ## Verification Commands
 
-```
-# BGP-LU session state
-show bgp ipv4 labeled-unicast summary
-
-# Full BGP-LU table (routes with assigned labels)
-show bgp ipv4 labeled-unicast
-
-# Specific prefix
-show bgp ipv4 labeled-unicast 10.0.0.4/32
-
-# MPLS forwarding entries (local label -> out-label, next-hop)
-show mpls lfib route
-
-# Full label details
+```text
+show bgp ipv4 labeled-unicast summary       # session state
+show bgp ipv4 labeled-unicast               # labeled routes
+show bgp ipv4 labeled-unicast 10.0.0.4/32   # one prefix's label
+show mpls lfib route                        # in-label → out-label → next-hop
 show mpls lfib route detail
-
-# Interface MPLS status
 show mpls interface
-
-# OSPF (underlay, within each AS)
-show ip ospf neighbor
-show ip route ospf
+show ip ospf neighbor                        # underlay, per AS
 ```
 
-## Concepts
+---
 
-### What is BGP-LU?
+## Challenge questions
 
-BGP Labeled Unicast (RFC 3107) extends standard BGP to attach MPLS labels to advertised
-prefixes. When a router sends a BGP-LU update, each prefix carries a label binding:
-"to reach prefix X, use label Y."
+No answers provided — reason them through.
 
-This allows building MPLS label-switched paths (LSPs) using BGP as the signaling protocol,
-without needing LDP or RSVP-TE.
-
-### Why BGP-LU for Inter-AS MPLS?
-
-In a single AS, LDP or SR-MPLS can distribute labels. But across AS boundaries, LDP is not
-used. BGP-LU fills this gap:
-
-```
-AS65001                    AS65002
-  r1 ---MPLS-LU--- r2 === r3 ---MPLS-LU--- r4
-         iBGP-LU     eBGP-LU    iBGP-LU
-```
-
-Each ASBR (r2, r3) redistributes labeled routes between the two ASes, stitching together
-the end-to-end LSP. This is called **Inter-AS Option C** (RFC 4364).
-
-### Label Allocation
-
-Each router independently allocates a label for each advertised prefix. When r4 advertises
-its loopback 10.0.0.4/32 with label 17:
-- r3 receives it with label 17 and assigns its own local label (e.g., 18)
-- r3 advertises 10.0.0.4/32 with label 18 to r2
-- r2 programs its MPLS table: incoming label 18 -> swap to 17 -> next-hop r3
-
-### address-family ipv4 labeled-unicast
-
-This is the EOS address family for BGP-LU. It is distinct from `address-family ipv4 unicast`.
-You must explicitly activate neighbors in this AF:
-
-<details>
-<summary>Show configuration</summary>
-
-```
-address-family ipv4 labeled-unicast
- neighbor X.X.X.X activate
- network 10.0.0.1/32
-```
-</details>
-
-### MPLS Interface Enablement
-
-<details>
-<summary>Show configuration</summary>
-
-For labeled packets to be forwarded, each interface must have MPLS enabled:
-```
-interface Ethernet1
-   mpls ip
-```
-</details>
-This is pre-configured in the startup-config files.
-
-## Challenge Exercises
-
-1. After configuring BGP-LU, run `traceroute 10.0.0.4 source 10.0.0.1` from r1.
-   Do you see MPLS labels in the path? Why or why not?
-
-2. Use `show bgp ipv4 labeled-unicast 10.0.0.1/32` on each router. Trace the label stack
-   from r4's perspective back to r1 — what labels does each hop use?
-
-3. Add a new loopback prefix (e.g., 192.168.99.1/32) on r1 and advertise it via BGP-LU.
-   Verify it appears in r4's MPLS table with a proper label.
-
-4. Compare `show mpls lfib route` on r2 (transit ASBR) before and after configuring BGP-LU.
-   What entries appear and how do they relate to the label bindings you see in BGP?
-
-5. Try removing the `network 10.0.0.2/32` statement from r2's BGP-LU config.
-   Does the end-to-end LSP break? What does this teach about label stitching at the ASBR?
+1. Run `traceroute 10.0.0.4 source 10.0.0.1` from r1. Predict whether
+   you'll see MPLS labels in the output, then explain what you actually
+   see in terms of penultimate-hop popping and how each router builds the
+   ICMP TTL-exceeded reply.
+2. BGP-LU is one of three classic Inter-AS MPLS options (A, B, C).
+   Describe what Option C pushes onto the ASBRs vs. Option A, and why
+   Option C scales better but demands more trust between the two ASes.
+3. Add a second prefix 192.168.99.1/32 on r1 and advertise it via BGP-LU.
+   Before checking, predict every router whose LFIB must change and what
+   entry appears — then verify on r4.
+4. Compare BGP-LU against running LDP end-to-end within a single AS:
+   what does BGP-LU buy you, what does it cost in label/BGP table size,
+   and when would you reach for SR-MPLS instead of either?

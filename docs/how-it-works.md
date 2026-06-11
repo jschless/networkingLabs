@@ -22,10 +22,13 @@ labs/<name>/
 
 **Reference labs** — Fully working out of the box. Deploy and observe or explore.
 
-Practice lab README convention:
+Practice lab README convention (the full contract is `labs/AUTHORING.md`):
 
-- explanations and verification stay visible
-- actual configuration input is hidden in `<details>`
+- every task states an **objective** the student attempts first; **hints**,
+  the **solution**, and a **check your work** explanation are each hidden in
+  their own `<details>` toggle
+- prediction prompts and verification stay visible; raw configuration is
+  never shown in the open
 - debug labs hide the exact fix in a solution block rather than exposing it inline
 
 ## Startup Sequence

@@ -4,6 +4,13 @@
 
 A colleague was reviewing area configurations and changed a setting on r1, the ASBR inside the NSSA area. Now r1 and r2 won't form an OSPF adjacency. The external subnet (192.168.100.0/30) behind r1 is unreachable from the rest of the OSPF domain.
 
+## How to use this lab
+
+This is a **practice troubleshooting lab**. A working network was broken by
+a small change; you diagnose it from symptoms, not from the config files.
+Work the staged hints only when stuck, and reveal the solution last —
+the skill being trained is *generating* the diagnosis, not reading it.
+
 ## Topology
 
 ```mermaid
@@ -141,3 +148,18 @@ Link ID         ADV Router      Age  Seq#       CkSum  Route
 r3# show ip route ospf
 O E2   192.168.100.0/30 [110/20] via 10.1.23.1, Ethernet1
 ```
+
+## Challenge questions
+
+No answers provided — reason them through.
+
+1. The fault here produced a **silent** failure (no error logged) with a
+   misleading symptom. Explain *why* this class of misconfig fails silently,
+   and the one show command that would have pinpointed it fastest.
+2. What single piece of monitoring or assurance (a check, an alert, a
+   pre-change validation) would have caught this fault before users did?
+3. Generalize: list two *other* one-line changes to this topology that would
+   produce a similar "looks healthy locally, broken downstream" symptom, and
+   how you'd tell them apart.
+4. Write the rollback/change-control habit that would have prevented this
+   overnight break in the first place.

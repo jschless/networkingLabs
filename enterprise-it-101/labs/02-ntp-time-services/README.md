@@ -204,6 +204,7 @@ This is the heart of the lab. Don't just run the commands — read what passes a
     - `faketime '<offset>' <command>` runs one command with a shifted clock, e.g. `faketime '+10 minutes' kvno host/dc1.lab.corp@LAB.CORP`.
     - `kvno <service>/<host>@REALM` forces the client to request a *service ticket* (a TGS exchange) — that builds a fresh authenticator stamped with the current (faked) time.
     - A GSSAPI bind exercises the same path: `faketime '+10 minutes' ldapsearch -Y GSSAPI -H ldap://dc1.lab.corp -b "DC=lab,DC=corp" "(sAMAccountName=alice)" dn`.
+    - **Always `kdestroy; kinit` before each `faketime kvno` test.** If a service ticket for `host/dc1.lab.corp` is already cached, `kvno` returns it from cache without contacting the KDC — the skew check never runs and you'll falsely conclude the time is fine. A fresh `kinit` clears the TGS cache so `kvno` is forced to request a new ticket.
 
 ??? note "Solution"
     ```bash
@@ -212,6 +213,10 @@ This is the heart of the lab. Don't just run the commands — read what passes a
     # Baseline: correct time — everything works.
     kdestroy; kinit alice@LAB.CORP                     # P@ssw0rd1
     kvno host/dc1.lab.corp@LAB.CORP                    # -> kvno = N (success)
+
+    # Always destroy and re-init before a faketime test — a cached service
+    # ticket will be returned without a KDC round-trip, masking the skew failure.
+    kdestroy; kinit alice@LAB.CORP
 
     # Now skew only the service request by 10 minutes.
     faketime '+10 minutes' kvno host/dc1.lab.corp@LAB.CORP
@@ -335,6 +340,23 @@ No solutions provided — reason it through.
 - **Stratum** counts hops from a reference clock: stratum 0 = a real clock, stratum 1 = directly attached, each layer adds one. Lower = more trustworthy.
 - A server **only serves time it trusts** — an unsynchronised server (no reachable source, no `local`) refuses clients outright.
 - `local stratum N` is "island mode": stay authoritative for an isolated network at a deliberately-bad stratum so a real upstream wins if it returns.
+
+**Slewing vs. stepping:**
+
+NTP clients correct clock drift in two ways:
+
+- **Slew** — gradually speed up or slow down the clock (typically ≤500 ppm, ~1.8 s/hour) until it converges on the correct time. This is the default for small corrections and is safe because time never jumps backward.
+- **Step** — instantly set the clock to the correct value. Fast, but dangerous: a backward step can break anything that depends on monotonic time (log timestamps, certificate validity, Kerberos tickets). Most NTP clients (including chrony) only allow stepping at startup (`makestep 1.0 3` = "step if offset > 1 s, but only for the first 3 updates"), then switch to slew-only.
+
+Why this matters: a 1-hour clock jump on an NTP server cannot be corrected by slewing before Kerberos tickets expire (~10 hours). Slewing 1 hour at 500 ppm takes ~80 hours. This is why sudden large jumps — from a misbehaving upstream, a VM restored from a stale snapshot, or a manual `date -s` typo — cause domain-wide outages that don't self-heal.
+
+**NTP redundancy — peer vs. client vs. independent:**
+
+When adding a second NTP server (`ntp2`) for redundancy, the topology matters:
+
+- **Independent servers at the same stratum** (recommended) — both point at the same upstream (or different upstreams for more resilience). If one fails, clients fail over to the other. Each has an independent reference, so they can detect each other drifting.
+- **Peer mode** — two servers treat each other as equals and can sync from each other if their upstream disappears. The danger: if *both* lose their upstream simultaneously, they agree with each other and drift together confidently, with no external reference to detect the error. Consensus ≠ correctness.
+- **`ntp2` as a client of `ntp1`** — `ntp2` just relays `ntp1`'s time. If `ntp1` goes down, `ntp2` loses its source too. Adds a hop but no resilience.
 
 **The two commands that matter:**
 
