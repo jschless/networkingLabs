@@ -12,7 +12,9 @@ EIT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$EIT_DIR"
 
 # Custom images built from images/<name>/ and tagged <name>:local.
-IMAGES=(samba-ad workstation bind9 kea ansible freeradius-ad squid-ad)
+# Order matters: samba-ad-wazuh and workstation-wazuh derive FROM the
+# samba-ad/workstation images built earlier in the list.
+IMAGES=(samba-ad workstation bind9 kea ansible freeradius-ad squid-ad samba-ad-wazuh workstation-wazuh)
 
 usage() {
     cat <<'EOF'

@@ -42,4 +42,11 @@ if [ "${AUTO_PROVISION}" = "true" ] && [ ! -f /var/lib/samba/private/sam.ldb ]; 
     echo "==> [entrypoint] Provision + seed complete."
 fi
 
+# Optional hook for derived images (e.g. samba-ad-wazuh enables audit
+# logging in smb.conf). Runs every boot, after any provisioning, before
+# samba starts — hook scripts must be idempotent.
+if [ -x /usr/local/bin/post-provision-hook.sh ]; then
+    /usr/local/bin/post-provision-hook.sh
+fi
+
 exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf

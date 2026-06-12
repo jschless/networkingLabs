@@ -1,0 +1,133 @@
+# Lab 14 — SIEM & Security Logging (Wazuh)
+#
+# Layered on top of the foundation network in base/docker-compose.yml.
+# Run from the enterprise-it-101/ directory:
+#
+#   docker compose -f base/docker-compose.yml \
+#                  -f labs/14-siem-logging/docker-compose.override.yml up -d --build
+#
+# Compose uses the FIRST -f file's directory (base/) as the project directory,
+# so every relative path below is written relative to base/.
+#
+# dc1 auto-provisions + seeds the Lab 01 foundation and (new in this lab)
+# writes a structured JSON security audit log. The Wazuh MANAGER comes up
+# ready; the AGENTS on dc1 and admin-ws are installed but unconfigured —
+# pointing them at the manager, enrolling them, shipping the AD audit log,
+# and writing detection rules is the lab. intruder is an ordinary corp
+# workstation that you will misuse to attack admin-ws.
+#
+# NOTE: no Wazuh indexer/dashboard here — they need ~2.5 GB on top of this
+# stack, which blows the typical Docker Desktop memory ceiling. Everything
+# the lab teaches is manager-side (alerts.json + the REST API). See the
+# README's "Optional experiment" appendix.
+
+name: eit101-lab14
+
+services:
+  dc1:
+    build:
+      context: ../images/samba-ad-wazuh
+    image: samba-ad-wazuh:local
+    container_name: dc1
+    hostname: dc1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      AUTO_PROVISION: "true"
+      SAMBA_AUTOSTART: "true"
+    extra_hosts:
+      - "wazuh-manager.lab.corp:10.100.3.30"
+    volumes:
+      - dc1-data:/var/lib/samba
+    privileged: true
+    tty: true
+    stdin_open: true
+
+  admin-ws:
+    build:
+      context: ../images/workstation-wazuh
+    image: workstation-wazuh:local
+    container_name: admin-ws
+    hostname: admin-ws
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "wazuh-manager.lab.corp:10.100.3.30"
+    # iptables — the firewall-drop active response rewrites this host's
+    # firewall when the brute-force rule fires.
+    cap_add:
+      - NET_ADMIN
+    # Runs sshd logging to /var/log/auth.log (a default Wazuh log source)
+    # and creates the weak local account the intruder will go after.
+    command: ["bash", "/lab/admin-ws-setup.sh"]
+    volumes:
+      - admin-ws-home:/home
+      - ../labs/14-siem-logging/configs:/lab:ro
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  # An ordinary workstation in the corp subnet — no Wazuh agent enrolled.
+  # You will use it to brute-force admin-ws and watch the SIEM catch it.
+  intruder:
+    image: workstation-wazuh:local
+    container_name: intruder
+    hostname: intruder
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.66
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  # ---- SIEM (ops subnet 10.100.3.x) ---------------------------------------
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.14.5
+    container_name: wazuh-manager
+    hostname: wazuh-manager
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.30
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    ulimits:
+      nofile:
+        soft: 655360
+        hard: 655360
+    # Persist enrollment keys, custom rules/decoders, and alert history
+    # across `down`/`up` (wiped by `down -v`, like every other lab volume).
+    volumes:
+      - wazuh-etc:/var/ossec/etc
+      - wazuh-logs:/var/ossec/logs
+      - wazuh-queue:/var/ossec/queue
+      - wazuh-api-config:/var/ossec/api/configuration
+    tty: true
+    stdin_open: true
+
+volumes:
+  dc1-data:
+  admin-ws-home:
+  wazuh-etc:
+  wazuh-logs:
+  wazuh-queue:
+  wazuh-api-config:
