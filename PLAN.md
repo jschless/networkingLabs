@@ -24,7 +24,7 @@
 
 ## Phase 1 — Honesty docs and coverage map (no infrastructure)
 
-- [ ] **1.1 `docs/coverage-map.md`** — matrix of ENCOR 350-401 + ENARSI 300-410 exam
+- [x] **1.1 `docs/coverage-map.md`** — matrix of ENCOR 350-401 + ENARSI 300-410 exam
       topics → labs. Statuses per row: covered / covered conceptually (syntax differs) /
       not covered (see study notes). Fetch the real Cisco blueprints; don't work from
       memory. This map is the acceptance test for Phases 2–4.
@@ -94,3 +94,4 @@ independent of everything.
 | Date | Item | Status / notes |
 |------|------|----------------|
 | 2026-06-11 | Plan created | Review delivered; no phases started. |
+| 2026-06-11 | 1.1 coverage map | Merged (PR #10). Built against ENCOR 350-401 **v1.2** (2025) + ENARSI 300-410 v1.1. **Finding: ENCOR v1.2 dropped the wireless domain entirely** — review finding #2's "wireless RF ~20% hole" is stale; SD-WAN/SD-Access + automation gaps remain. |
