@@ -58,7 +58,7 @@ the skill predates the authoring contract).
 
 Follow `enterprise-it-101/AUTHORING.md` + `DESIGN.md`; keep base+override compose layering.
 
-- [ ] **3.1 Lab 13 — Monitoring** (Prometheus/Grafana or Zabbix per DESIGN.md against
+- [x] **3.1 Lab 13 — Monitoring** (Prometheus/Grafana or Zabbix per DESIGN.md against
       the existing stack).
 - [ ] **3.2 Lab 14 — SIEM/logging.** Decide deliberately: reuse `labs/soc-elk-ingest`
       images vs keep ecosystems separate (CLAUDE.md separation rule). Record decision here.
@@ -99,4 +99,5 @@ independent of everything.
 | 2026-06-11 | 1.3 pre-CCNA on-ramp | Merged (PR #12). **Phase 1 complete.** Next: Phase 2 (2.1–2.3 are independent/parallelizable). |
 | 2026-06-12 | 2.1 automation-fundamentals | Merged (PR #14). **⚠ live cEOS walk-through still owed**: no `ceos:4.35.2F` image on the Mac and the lab host (192.168.0.26) rejects key auth, so solutions were validated against a stateful mock eAPI only — exact EOS JSON key paths (`interfaceAddress.ipAddr`, `peerState`, `routes`) unverified on real cEOS. Run the README end to end on the lab host and fix any drift. Coverage map rows 4.6/5.3/6.1/6.2/6.5 updated. |
 | 2026-06-12 | 2.2 load-balancer-basics | Merged (PR #15). Fully validated live (containerlab-in-docker on the Mac works — see memory): all solutions executed, asymmetric-return break-it confirmed by capture, check.sh 12/12, clean redeploy. No licensed images. |
+| 2026-06-12 | 3.1 Lab 13 monitoring | Merged (PR #18). Prometheus/Grafana/Alertmanager/blackbox + node-exporter sidecars over the real AD+mail services; fully validated live (two down-v/up cycles, alert pipeline to webhook, both break-it drills). `workstation:local` gained jq+python3. Next: 3.2 Lab 14 SIEM — decide soc-elk reuse vs separate stack and record here. |
 | 2026-06-12 | 2.3 sdwan-concepts + RF reading list | Merged (PR #16). Fully validated live; brownout demo (netem 150ms, monitor silent) is the SLA lesson. Found during validation: kernel flushes static underlay routes on link flap — pathmon re-pins each cycle. **Phase 2 complete** (modulo the 2.1 cEOS pass above). Next: Phase 3 (serial, EIT101) or Phase 4 prototype 4.0. |
