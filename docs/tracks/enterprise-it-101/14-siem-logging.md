@@ -1,12 +1,13 @@
 ---
-title: "14 — SIEM & Security Logging"
+title: "14 SIEM & Security Logging"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Stand up a Wazuh SIEM manager and turn the hosts you built earlier into sensors: enroll agents, onboard the SSH and Active Directory audit logs, write your own correlation rules for failed logins and new-account creation, fire an automatic firewall block at a brute-forcer, and watch a file change in real time — then find the SIEM's blind spots.
 
-Deploy Wazuh, install agents across the enterprise, forward AD audit logs, and write custom correlation rules.
+!!! note "Platform"
+    Docker Compose — `wazuh/wazuh-manager:4.14.5` + custom `samba-ad-wazuh:local` / `workstation-wazuh:local`
 
-**Duration:** 2–3 hours  
-**Directory:** `enterprise-it-101/labs/14-siem-logging/`  
-**Requires:** Foundation + Labs 05–13
+{%
+  include-markdown "../../../enterprise-it-101/labs/14-siem-logging/README.md"
+%}

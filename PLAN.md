@@ -60,8 +60,9 @@ Follow `enterprise-it-101/AUTHORING.md` + `DESIGN.md`; keep base+override compos
 
 - [ ] **3.1 Lab 13 — Monitoring** (Prometheus/Grafana or Zabbix per DESIGN.md against
       the existing stack).
-- [ ] **3.2 Lab 14 — SIEM/logging.** Decide deliberately: reuse `labs/soc-elk-ingest`
-      images vs keep ecosystems separate (CLAUDE.md separation rule). Record decision here.
+- [x] **3.2 Lab 14 — SIEM/logging.** Decided: keep ecosystems separate (soc-elk
+      ships only a mock store; nothing real to reuse). Built `labs/14-siem-logging`
+      with a real Wazuh manager + agents. Done.
 - [ ] **3.3 Lab 15 — Backup & recovery.**
 - [ ] **3.4 Lab 16 — Capstone.**
 - [ ] **3.5 EIT101 reality notes** — "Samba vs Windows AD in the real world" table in
@@ -100,3 +101,5 @@ independent of everything.
 | 2026-06-12 | 2.1 automation-fundamentals | Merged (PR #14). **⚠ live cEOS walk-through still owed**: no `ceos:4.35.2F` image on the Mac and the lab host (192.168.0.26) rejects key auth, so solutions were validated against a stateful mock eAPI only — exact EOS JSON key paths (`interfaceAddress.ipAddr`, `peerState`, `routes`) unverified on real cEOS. Run the README end to end on the lab host and fix any drift. Coverage map rows 4.6/5.3/6.1/6.2/6.5 updated. |
 | 2026-06-12 | 2.2 load-balancer-basics | Merged (PR #15). Fully validated live (containerlab-in-docker on the Mac works — see memory): all solutions executed, asymmetric-return break-it confirmed by capture, check.sh 12/12, clean redeploy. No licensed images. |
 | 2026-06-12 | 2.3 sdwan-concepts + RF reading list | Merged (PR #16). Fully validated live; brownout demo (netem 150ms, monitor silent) is the SLA lesson. Found during validation: kernel flushes static underlay routes on link flap — pathmon re-pins each cycle. **Phase 2 complete** (modulo the 2.1 cEOS pass above). Next: Phase 3 (serial, EIT101) or Phase 4 prototype 4.0. |
+| 2026-06-12 | 3.1 Lab 13 monitoring | Merged (PR #18). Prometheus/Grafana/Alertmanager/blackbox; see memory for techniques. |
+| 2026-06-12 | 3.2 Lab 14 SIEM | Built `labs/14-siem-logging` (branch `lab/eit101-siem`). Real Wazuh manager 4.14.5 + agents (no indexer/dashboard — memory ceiling; dashboard is an optional appendix). Two derived images (`samba-ad-wazuh`, `workstation-wazuh`). **Fully validated on a clean down-v/up walk**: enroll (wazuh-control, not systemctl), SSH brute-force 5763 (after onboarding auth.log), Samba JSON audit custom rules 100201/100202/100210, new-user audit only on NETWORK create (break-it), firewall-drop active response → iptables DROP, realtime FIM. PR pending. Next: 3.3 Lab 15 backup. |
