@@ -73,7 +73,7 @@ commands (`build` / `up` / `down` / `exec` / …), and deploy steps; **`AUTHORIN
 
 Agent-relevant specifics that aren't obvious from the compose files:
 - **Layering**: Lab 01 is a standalone `docker-compose.yml` (defines the `lab-corp` network);
-  Labs 02–12 are `docker-compose.override.yml` files layered on `base/docker-compose.yml`.
+  Labs 02–13 are `docker-compose.override.yml` files layered on `base/docker-compose.yml`.
 - **Cumulative state via auto-provision**: each lab re-declares the foundation services it
   needs (dc1, admin-ws) with `AUTO_PROVISION: "true"`, so the Lab 01 foundation (OUs, users,
   groups) is seeded automatically.
@@ -81,5 +81,5 @@ Agent-relevant specifics that aren't obvious from the compose files:
   (`dc1-data`, `admin-ws-home`) survive teardown unless you pass `-v`.
 - **Container naming**: fixed role names (`dc1`, `admin-ws`, `dns1`, `mail1`, …), not the
   `clab-<lab>-<node>` scheme — reach them with `docker exec -it <name>`.
-- Custom images are built by `enterprise-it-101/eit.sh build`. Labs 13–16 (monitoring, SIEM,
+- Custom images are built by `enterprise-it-101/eit.sh build`. Labs 14–16 (SIEM,
   backup, capstone) are planned, not yet built.

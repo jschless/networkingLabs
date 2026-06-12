@@ -1,0 +1,53 @@
+# Blackbox exporter probe modules — pre-built for Lab 13.
+#
+# A "module" describes HOW to probe (TCP connect? TLS? a DNS query?).
+# WHICH service to probe is decided per-target by Prometheus, which passes
+# it as ?target=<host:port> when it scrapes /probe. You wire that up in
+# Task 5 — the modules below are scaffolding, not the lesson.
+
+modules:
+  # Plain TCP connect — "is something accepting connections on this port?"
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+
+  # TCP + TLS handshake — also records certificate metrics
+  # (probe_ssl_earliest_cert_expiry). The lab CA chain isn't in the exporter's
+  # trust store, so verification is skipped; expiry is still measured.
+  tcp_tls:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      tls: true
+      tls_config:
+        insecure_skip_verify: true
+
+  # SMTP banner — connect AND confirm the service speaks SMTP (RFC 5321
+  # greeting starts with "220"). One step better than tcp_connect: the port
+  # being open doesn't prove the daemon behind it is healthy.
+  smtp_banner:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      query_response:
+        - expect: "^220 "
+
+  # Real DNS query for the lab.corp SOA — exercises the full resolver path,
+  # not just the socket.
+  dns_lab_corp:
+    prober: dns
+    timeout: 5s
+    dns:
+      query_name: "lab.corp"
+      query_type: "SOA"
+      transport_protocol: "udp"
+
+  # ICMP echo — basic reachability (used in the experiments section).
+  icmp:
+    prober: icmp
+    timeout: 5s
+
+  # HTTP GET expecting a 2xx (used in the experiments section).
+  http_2xx:
+    prober: http
+    timeout: 5s
