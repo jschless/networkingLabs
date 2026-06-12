@@ -1,0 +1,12 @@
+# Alertmanager configuration — Lab 13 starting point.
+#
+# As shipped, every alert is routed to a receiver that does nothing.
+# In Task 8 you replace this with a route to the hook1 webhook receiver.
+#
+# Apply changes with:  docker kill -s HUP alertmanager
+
+route:
+  receiver: blackhole
+
+receivers:
+  - name: blackhole

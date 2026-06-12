@@ -1,0 +1,247 @@
+# Lab 13 — Monitoring & Alerting
+#
+# Layered on top of the foundation network in base/docker-compose.yml.
+# Run from the enterprise-it-101/ directory:
+#
+#   docker compose -f base/docker-compose.yml \
+#                  -f labs/13-monitoring/docker-compose.override.yml up -d --build
+#
+# Compose uses the FIRST -f file's directory (base/) as the project directory,
+# so every relative path below is written relative to base/.
+#
+# dc1 auto-provisions + seeds the Lab 01 foundation; mail1 reuses Lab 09's
+# config so there is a real SMTP service to monitor. The monitoring stack
+# (prometheus, grafana, alertmanager, blackbox) starts with EMPTY configs —
+# wiring it up is the lab. node-dc1 / node-mail1 / node-ws are node-exporter
+# sidecars that share their host container's network namespace, the same way
+# an agent installed on a real server would listen on that server's IP.
+
+name: eit101-lab13
+
+services:
+  dc1:
+    build:
+      context: ../images/samba-ad
+    image: samba-ad:local
+    container_name: dc1
+    hostname: dc1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      AUTO_PROVISION: "true"
+      SAMBA_AUTOSTART: "true"
+    volumes:
+      - dc1-data:/var/lib/samba
+    privileged: true
+    tty: true
+    stdin_open: true
+
+  mail1:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: mail1
+    hostname: mail1.lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.20
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    env_file:
+      - ../labs/09-email-gateway/configs/mailserver.env
+    volumes:
+      - mail-data:/var/mail
+      - mail-state:/var/mail-state
+      - mail-log:/var/log/mail
+      - mail-config:/tmp/docker-mailserver
+      - ../labs/09-email-gateway/configs/user-patches.sh:/tmp/docker-mailserver/user-patches.sh:ro
+      - ../labs/09-email-gateway/configs/ssl:/tmp/dms/custom-certs:ro
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  admin-ws:
+    build:
+      context: ../images/workstation
+    image: workstation:local
+    container_name: admin-ws
+    hostname: admin-ws
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    # The monitoring hosts and mail1 are not registered in AD DNS (nothing
+    # joins the domain in this lab), so pin their names here.
+    extra_hosts:
+      - "prometheus.lab.corp:10.100.3.20"
+      - "grafana.lab.corp:10.100.3.21"
+      - "alertmanager.lab.corp:10.100.3.22"
+      - "blackbox.lab.corp:10.100.3.23"
+      - "hook1.lab.corp:10.100.3.24"
+      - "mail1.lab.corp:10.100.2.20"
+    volumes:
+      - admin-ws-home:/home
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  # ---- monitoring stack (ops subnet 10.100.3.x) --------------------------
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.20
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "mail1.lab.corp:10.100.2.20"
+      - "admin-ws.lab.corp:10.100.10.10"
+      - "blackbox.lab.corp:10.100.3.23"
+      - "alertmanager.lab.corp:10.100.3.22"
+    volumes:
+      - ../labs/13-monitoring/configs/prometheus:/etc/prometheus
+      - prom-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    depends_on:
+      - dc1
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.21
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    extra_hosts:
+      - "prometheus.lab.corp:10.100.3.20"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    hostname: alertmanager
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.22
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "hook1.lab.corp:10.100.3.24"
+    volumes:
+      - ../labs/13-monitoring/configs/alertmanager:/etc/alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
+
+  blackbox:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox
+    hostname: blackbox
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.23
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "mail1.lab.corp:10.100.2.20"
+    volumes:
+      - ../labs/13-monitoring/configs/blackbox:/etc/blackbox_exporter
+    cap_add:
+      - NET_RAW
+
+  # Tiny webhook receiver — Alertmanager POSTs alerts here; read them with
+  # `docker logs hook1`. Stands in for PagerDuty/Opsgenie/Slack.
+  hook1:
+    image: workstation:local
+    container_name: hook1
+    hostname: hook1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.24
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    volumes:
+      - ../labs/13-monitoring/configs/webhook/webhook.py:/usr/local/bin/webhook.py:ro
+    command: ["python3", "/usr/local/bin/webhook.py"]
+
+  # ---- node-exporter sidecars --------------------------------------------
+  # network_mode: service:<name> puts the exporter inside that container's
+  # network namespace, so it answers on the host container's IP at :9100 —
+  # exactly like an agent package installed on the server itself.
+
+  node-dc1:
+    image: prom/node-exporter:latest
+    container_name: node-dc1
+    network_mode: "service:dc1"
+    pid: "service:dc1"
+    depends_on:
+      - dc1
+
+  node-mail1:
+    image: prom/node-exporter:latest
+    container_name: node-mail1
+    network_mode: "service:mail1"
+    pid: "service:mail1"
+    depends_on:
+      - mail1
+
+  node-ws:
+    image: prom/node-exporter:latest
+    container_name: node-ws
+    network_mode: "service:admin-ws"
+    pid: "service:admin-ws"
+    depends_on:
+      - admin-ws
+
+volumes:
+  dc1-data:
+  admin-ws-home:
+  mail-data:
+  mail-state:
+  mail-log:
+  mail-config:
+  prom-data:
+  grafana-data:
