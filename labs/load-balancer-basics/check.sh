@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Automated end-state assertions for the load-balancer-basics lab.
 # Run via: ./scripts/lab.sh check load-balancer-basics
-set -uo pipefail
+# (no pipefail: grep -q exiting early would SIGPIPE the producer and
+# turn passing checks into flaky failures)
+set -u
 
 CLIENT=clab-load-balancer-basics-client
 PASS=0
