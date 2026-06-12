@@ -38,14 +38,14 @@
 
 ## Phase 2 — Cheap blueprint fills (one lab each; independent, parallelizable)
 
-- [ ] **2.1 `labs/automation-fundamentals`** — cEOS pair + automation container. Student
+- [x] **2.1 `labs/automation-fundamentals`** — cEOS pair + automation container. Student
       writes Python against eAPI (optionally gNMI via pygnmi): GET structured state,
       parse JSON, idempotent change, verify. Challenge questions compare REST vs
       NETCONF/RESTCONF semantics. Reuse `network-automation-netbox` image patterns.
-- [ ] **2.2 `labs/load-balancer-basics`** — HAProxy or nginx + two backends behind the
+- [x] **2.2 `labs/load-balancer-basics`** — HAProxy or nginx + two backends behind the
       `enterprise-dmz` pattern: L4 vs L7, health checks, X-Forwarded-For, asymmetric
       return-path break-it exercise.
-- [ ] **2.3 `labs/sdwan-concepts`** (reference-style) — two branches, two transports
+- [x] **2.3 `labs/sdwan-concepts`** (reference-style) — two branches, two transports
       (simulated MPLS + internet), policy path selection with IP SLA tracking; README
       maps each manual step to what vManage/vSmart automates. Also: append a curated
       RF/wireless theory reading list to `labs/enterprise-wireless-architecture/README.md`.
@@ -97,3 +97,6 @@ independent of everything.
 | 2026-06-11 | 1.1 coverage map | Merged (PR #10). Built against ENCOR 350-401 **v1.2** (2025) + ENARSI 300-410 v1.1. **Finding: ENCOR v1.2 dropped the wireless domain entirely** — review finding #2's "wireless RF ~20% hole" is stale; SD-WAN/SD-Access + automation gaps remain. |
 | 2026-06-11 | 1.2 fidelity doc | Merged (PR #11). "Platform fidelity" section in docs/study-paths.md; anchor is linked from coverage-map.md. |
 | 2026-06-11 | 1.3 pre-CCNA on-ramp | Merged (PR #12). **Phase 1 complete.** Next: Phase 2 (2.1–2.3 are independent/parallelizable). |
+| 2026-06-12 | 2.1 automation-fundamentals | Merged (PR #14). **⚠ live cEOS walk-through still owed**: no `ceos:4.35.2F` image on the Mac and the lab host (192.168.0.26) rejects key auth, so solutions were validated against a stateful mock eAPI only — exact EOS JSON key paths (`interfaceAddress.ipAddr`, `peerState`, `routes`) unverified on real cEOS. Run the README end to end on the lab host and fix any drift. Coverage map rows 4.6/5.3/6.1/6.2/6.5 updated. |
+| 2026-06-12 | 2.2 load-balancer-basics | Merged (PR #15). Fully validated live (containerlab-in-docker on the Mac works — see memory): all solutions executed, asymmetric-return break-it confirmed by capture, check.sh 12/12, clean redeploy. No licensed images. |
+| 2026-06-12 | 2.3 sdwan-concepts + RF reading list | Merged (PR #16). Fully validated live; brownout demo (netem 150ms, monitor silent) is the SLA lesson. Found during validation: kernel flushes static underlay routes on link flap — pathmon re-pins each cycle. **Phase 2 complete** (modulo the 2.1 cEOS pass above). Next: Phase 3 (serial, EIT101) or Phase 4 prototype 4.0. |
