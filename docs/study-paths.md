@@ -2,6 +2,10 @@
 
 ## CCNP Enterprise (ENCOR + ENARSI)
 
+Preparing for the exams? The [CCNP coverage map](coverage-map.md) shows exactly which
+blueprint topics these labs cover, which they cover on non-Cisco syntax, and which
+they don't.
+
 ```
 OSPF:     two-routers → ospf-multiarea → ospf-auth → ospf-summarization
           → ospf-default-route → ospf-nssa → ospf-virtual-link
