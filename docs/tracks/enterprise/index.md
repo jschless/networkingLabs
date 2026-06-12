@@ -1,6 +1,6 @@
 # Enterprise Design Track
 
-Sixteen labs covering campus design patterns, WAN edge, DMZ architecture, load balancing, access security, multicast, services, and wireless architecture — primarily on Arista cEOS with Linux service nodes where needed.
+Seventeen labs covering campus design patterns, WAN edge, SD-WAN concepts, DMZ architecture, load balancing, access security, multicast, services, and wireless architecture — primarily on Arista cEOS with Linux service nodes where needed.
 
 ## Reference Designs
 
@@ -10,6 +10,7 @@ Sixteen labs covering campus design patterns, WAN edge, DMZ architecture, load b
 | [enterprise-campus](enterprise-campus.md) | **Reference** | 3-tier campus: core/distribution/access, eBGP upstream |
 | [enterprise-routed-access](enterprise-routed-access.md) | **Reference** | L3-everywhere: routed access, no STP, OSPF+BFD |
 | [enterprise-dmz](enterprise-dmz.md) | **Reference** | Screened-subnet DMZ, dual-firewall, nftables policy |
+| [sdwan-concepts](sdwan-concepts.md) | **Reference** | Two transports, GRE overlay, DSCP path policy, probe-driven failover — each piece mapped to vManage/vSmart/OMP/BFD |
 
 ## Practice Labs
 
@@ -40,3 +41,4 @@ Build an entire design from scratch with only IPs and interfaces pre-configured.
 - **Arista cEOS**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 - **DMZ Linux services/firewalls**: `docker build -t dmz-lab:local labs/enterprise-dmz-capstone/`
 - **load-balancer-basics** (no cEOS needed): `docker build -t lb-lab:local labs/load-balancer-basics/`
+- **sdwan-concepts** (no cEOS needed): `docker build -t sdwan-lab:local labs/sdwan-concepts/`

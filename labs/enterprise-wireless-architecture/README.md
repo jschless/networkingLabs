@@ -137,3 +137,37 @@ No answers provided — reason them through.
 4. RF is a shared medium with no STP. What wireless mechanisms play the
    role wired networks give to spanning tree and switching capacity, and
    where do they break down under load?
+
+## RF and wireless theory — curated reading list
+
+This lab covers wireless *architecture* (what can be containerized); actual
+RF behavior cannot. The list below fills that gap with theory worth reading
+in this order. Note that **ENCOR 350-401 v1.2 (2025) removed the wireless
+domain from the exam** — study this for engineering competence (and CCNA,
+which still tests wireless basics), not exam points.
+
+1. **RF fundamentals** — signal strength (RSSI/dBm), noise floor, SNR, and
+   why -67 dBm is the canonical voice/data cell-edge target:
+   *CWNA Certified Wireless Network Administrator Study Guide* (Coleman &
+   Westcott), ch. 3–4 — the single best grounding text, vendor-neutral.
+2. **Channels and spectrum** — 2.4 GHz's three usable channels vs 5/6 GHz,
+   channel width trade-offs (20/40/80/160 MHz), DFS:
+   CWNA ch. 5, plus the MetaGeek "Why Channels 1, 6, 11?" explainer for the
+   overlap intuition.
+3. **802.11 PHY/MAC evolution** — what actually changed through 802.11
+   n/ac/ax/be: MIMO and spatial streams, MU-MIMO, OFDMA, BSS coloring, TWT:
+   the "Wi-Fi 6/6E/7" white papers from Cisco or Aruba are concise; CWNA
+   ch. 6–10 for depth.
+4. **CSMA/CA and airtime** — why Wi-Fi degrades under load in a way wired
+   never does: half-duplex medium, contention, management overhead, the
+   rate-vs-range relationship, and why low data rates poison a cell.
+   Search: "airtime fairness" + "minimum basic rate design".
+5. **Site survey and cell design** — coverage vs capacity design, AP
+   placement, co-channel interference, roaming thresholds (802.11k/v/r):
+   Ekahau's blog/Designing Wi-Fi guides are the practical standard.
+6. **Wireless security ties back to this lab** — WPA2/WPA3-Enterprise is
+   802.1X/EAP over the air; the RADIUS/PSK trade-offs you built in
+   `dot1x-nac` and EIT101 Lab 12 apply unchanged. OWE for guest networks.
+7. **CCNA-level consolidation** — *Official Cert Guide* (Odom) wireless
+   chapters: WLC/AP modes, CAPWAP split-MAC, FlexConnect — maps directly to
+   the controller-mode sections of this lab.

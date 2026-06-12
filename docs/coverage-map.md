@@ -33,7 +33,7 @@ labs into an order.
 |-------|--------|------|
 | 1.1.a Enterprise design: 2-tier, 3-tier, fabric, cloud | ✅ | `enterprise-collapsed-core` (2-tier), `enterprise-campus` (3-tier), `enterprise-routed-access` (L3 access), `spine-leaf` (fabric) + their capstones |
 | 1.1.b HA techniques: redundancy, FHRP, SSO | 🟡 | `vrrp`, `ha-network-design-ceos`, `graceful-restart`, `bfd-ospf`, `bfd-bgp` — VRRP hands-on; HSRP/GLBP and SSO are Cisco-only (theory) |
-| 1.2 Catalyst SD-WAN principles | ❌ | Planned: `sdwan-concepts` (PLAN.md Phase 2.3) |
+| 1.2 Catalyst SD-WAN principles | 🟡 | `sdwan-concepts` — TLOC/color/OMP/BFD/app-route mechanisms built by hand and mapped one-to-one; vManage/vSmart product workflows remain theory |
 | 1.3 SD-Access principles | ❌ | Underlying data plane (VXLAN) is covered below; LISP control plane and DNA/Catalyst Center are not |
 | 1.4 Interpret QoS configurations | 🟡 | `qos-enterprise` — classification/scheduling with Linux `tc`, not MQC syntax |
 
@@ -161,7 +161,8 @@ What the matrix says, condensed. ❌ rows cluster into four buckets:
 2. **Automation hands-on** (ENCOR 6.1, 6.5, 4.6, 5.3): closed by
    `labs/automation-fundamentals` (PLAN.md Phase 2.1) — 4.6 remains 🟡 because
    NETCONF/RESTCONF themselves aren't run live, only their semantics compared.
-3. **SD-WAN concepts** (ENCOR 1.2): planned as `labs/sdwan-concepts` — PLAN.md Phase 2.3.
+3. **SD-WAN concepts** (ENCOR 1.2): closed (to 🟡) by `labs/sdwan-concepts` — the
+   mechanisms hands-on, the Cisco product workflows still theory.
 4. **Pure theory** (hypervisor types, PTP, agent-vs-agentless comparison): small enough
    to study from notes; no lab planned.
 
@@ -172,5 +173,5 @@ proportional to the 🟡 density in each domain (highest: ENCOR 3.3 IP Services 
 
 **Wireless:** absent from this repo *and* from the current ENCOR v1.2 blueprint. The
 `enterprise-wireless-architecture` lab covers design/architecture thinking; RF theory
-is no longer an exam gap, just a knowledge gap — a curated RF reading list for that
-lab's README is planned (PLAN.md Phase 2.3).
+is no longer an exam gap, just a knowledge gap — see the curated RF reading list at
+the end of that lab's README.

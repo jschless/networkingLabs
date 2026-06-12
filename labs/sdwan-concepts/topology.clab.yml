@@ -1,0 +1,70 @@
+name: sdwan-concepts
+
+# SD-WAN Concepts — two branches, two transports, policy path selection
+#
+#   h1 ── branch1 ══╦══ [mpls-core]  ══╦══ branch2 ── h2
+#                   ╚══ [inet-core]  ══╝
+#
+#   LAN1 10.1.0.0/24                       LAN2 10.2.0.0/24
+#   MPLS transport: 172.16.1.0/30 (b1) / 172.16.2.0/30 (b2)
+#   INET transport: 198.51.100.0/30 (b1) / 198.51.100.4/30 (b2)
+#   Overlay: tun-mpls 10.255.1.0/30, tun-inet 10.255.2.0/30
+#
+# Reference-style lab: everything is pre-configured by the setup scripts.
+# Each manual mechanism here is the hand-built analog of an SD-WAN
+# component — the README maps them one-to-one to vManage/vSmart/vEdge.
+
+topology:
+  defaults:
+    kind: linux
+    image: sdwan-lab:local
+
+  nodes:
+    branch1:
+      binds:
+        - configs/branch1/setup.sh:/setup.sh
+        - configs/branch1/pathmon.sh:/pathmon.sh
+      exec:
+        - sh /setup.sh
+
+    branch2:
+      binds:
+        - configs/branch2/setup.sh:/setup.sh
+        - configs/branch2/pathmon.sh:/pathmon.sh
+      exec:
+        - sh /setup.sh
+
+    mpls-core:
+      binds:
+        - configs/mpls-core/setup.sh:/setup.sh
+      exec:
+        - sh /setup.sh
+
+    inet-core:
+      binds:
+        - configs/inet-core/setup.sh:/setup.sh
+      exec:
+        - sh /setup.sh
+
+    h1:
+      binds:
+        - configs/h1/setup.sh:/setup.sh
+      exec:
+        - sh /setup.sh
+
+    h2:
+      binds:
+        - configs/h2/setup.sh:/setup.sh
+      exec:
+        - sh /setup.sh
+
+  links:
+    # LANs
+    - endpoints: ["h1:eth1",      "branch1:eth1"]    # 10.1.0.0/24
+    - endpoints: ["h2:eth1",      "branch2:eth1"]    # 10.2.0.0/24
+    # MPLS transport
+    - endpoints: ["branch1:eth2", "mpls-core:eth1"]  # 172.16.1.0/30
+    - endpoints: ["branch2:eth2", "mpls-core:eth2"]  # 172.16.2.0/30
+    # Internet transport
+    - endpoints: ["branch1:eth3", "inet-core:eth1"]  # 198.51.100.0/30
+    - endpoints: ["branch2:eth3", "inet-core:eth2"]  # 198.51.100.4/30
