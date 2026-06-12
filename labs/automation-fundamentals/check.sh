@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Automated end-state assertions for the automation-fundamentals lab.
 # Run via: ./scripts/lab.sh check automation-fundamentals
-set -uo pipefail
+# (no pipefail: grep -q exiting early would SIGPIPE the producer and
+# turn passing checks into flaky failures)
+set -u
 
 AUTOMATION=clab-automation-fundamentals-automation
 PASS=0
