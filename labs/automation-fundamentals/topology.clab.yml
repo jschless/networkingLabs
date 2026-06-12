@@ -1,0 +1,30 @@
+name: automation-fundamentals
+
+mgmt:
+  network: autofund-lab-mgmt
+  ipv4-subnet: 172.31.41.0/24
+
+topology:
+  nodes:
+    r1:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.41.11
+      startup-config: configs/r1/startup-config
+
+    r2:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.41.12
+      startup-config: configs/r2/startup-config
+
+    automation:
+      kind: linux
+      image: automation-fundamentals:local
+      mgmt-ipv4: 172.31.41.21
+      binds:
+        - automation:/workspace
+      cmd: sleep infinity
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]   # 10.1.12.0/30

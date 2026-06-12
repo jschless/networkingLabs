@@ -151,6 +151,7 @@ nav:
       - enterprise-wan-edge: tracks/enterprise/enterprise-wan-edge.md
       - enterprise-access-security: tracks/enterprise/enterprise-access-security.md
       - enterprise-edge-nat-firewall: tracks/enterprise/enterprise-edge-nat-firewall.md
+      - load-balancer-basics: tracks/enterprise/load-balancer-basics.md
       - enterprise-multicast: tracks/enterprise/enterprise-multicast.md
       - enterprise-services-infra: tracks/enterprise/enterprise-services-infra.md
       - sdwan-concepts: tracks/enterprise/sdwan-concepts.md
@@ -186,6 +187,7 @@ nav:
       - mtu-pmtud-troubleshooting: tracks/operations/mtu-pmtud-troubleshooting.md
       - network-assurance: tracks/operations/network-assurance.md
       - qos-enterprise: tracks/operations/qos-enterprise.md
+      - automation-fundamentals: tracks/operations/automation-fundamentals.md
       - network-automation-netbox: tracks/operations/network-automation-netbox.md
       - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
     - Debug Labs:

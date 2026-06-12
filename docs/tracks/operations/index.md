@@ -1,6 +1,6 @@
 # Network Operations Track
 
-Ten labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, network automation with NetBox, and streaming telemetry.
+Eleven labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, API-driven automation fundamentals, network automation with NetBox, and streaming telemetry.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
@@ -12,6 +12,7 @@ Ten labs covering management access, DHCP/DNS, AAA operations, packet capture wo
 | [mtu-pmtud-troubleshooting](mtu-pmtud-troubleshooting.md) | Practice | GRE overhead, exact-size probes, PMTUD, tunnel MTU correction |
 | [network-assurance](network-assurance.md) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |
 | [qos-enterprise](qos-enterprise.md) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
+| [automation-fundamentals](automation-fundamentals.md) | Practice | eAPI from curl up to Python: structured state, idempotent change, verify-from-the-other-end, drift report |
 | [network-automation-netbox](network-automation-netbox.md) | Practice | NetBox capstone: DCIM, IPAM, native config templates, discovery sync, and drift validation |
 | [telemetry-monitoring-hybrid](telemetry-monitoring-hybrid.md) | Practice | gNMI telemetry, Prometheus, Grafana, classic NMS |
 
@@ -23,5 +24,6 @@ Ten labs covering management access, DHCP/DNS, AAA operations, packet capture wo
 - **ipv6-access-services**: `docker build -t ops-lab:local images/ops-lab/`
 - **network-assurance**: `docker build -t assurance-lab:local labs/network-assurance/`
 - **qos-enterprise**: `docker build -t qos-lab:local labs/qos-enterprise/`
+- **automation-fundamentals**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t automation-fundamentals:local labs/automation-fundamentals/`
 - **network-automation-netbox**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t netbox-automation:local labs/network-automation-netbox/`
 - **telemetry-monitoring-hybrid**: `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/`
