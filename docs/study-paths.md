@@ -4,7 +4,48 @@
 
 Preparing for the exams? The [CCNP coverage map](coverage-map.md) shows exactly which
 blueprint topics these labs cover, which they cover on non-Cisco syntax, and which
-they don't.
+they don't. Read the fidelity section below first so you know what you're signing
+up for.
+
+### Platform fidelity: what these labs do and don't teach
+
+These labs run **FRR, Arista cEOS, VyOS, Nokia SR-Linux, and plain Linux** — not
+IOS-XE. The CCNP exams test IOS-XE. That trade-off is deliberate, and you should
+understand it before building a study plan around this repo.
+
+**What transfers directly (the hard 80%):** protocol behavior and troubleshooting
+method. OSPF LSA types, BGP best-path selection, EIGRP feasibility conditions,
+spanning-tree convergence, NHRP resolution, RPF checks, redistribution loops — these
+are protocol facts, not vendor facts. A student who can debug a stuck-in-INIT OSPF
+adjacency on FRR can debug it on IOS-XE; the *reasoning* is the skill. cEOS syntax in
+particular is close enough to IOS that most `show` commands and config stanzas map
+one-to-one.
+
+**What does not transfer (the visible 20%):** IOS-XE-specific syntax and
+Cisco-proprietary features. Concretely, the exams will test things no lab here can
+show you:
+
+| Exam expects | What this repo has instead |
+|--------------|---------------------------|
+| **Named-mode EIGRP** (`router eigrp NAME` + address families) | FRR EIGRP is classic-mode, IPv4-only, no auth |
+| **MQC QoS** (`class-map`/`policy-map`/`service-policy`) | Linux `tc` classification and scheduling (`qos-enterprise`) |
+| **HSRP and GLBP** | VRRP (`vrrp`, `ha-network-design-ceos`) — same FHRP concept, different protocol and CLI |
+| **Cisco NHRP/DMVPN syntax** (`ip nhrp map`, `tunnel mode gre multipoint`) | VyOS DMVPN (`dmvpn-phase1/2/3`) — identical NHRP behavior, different config grammar |
+| **IOS NAT** (`ip nat inside/outside`) | nftables and FortiGate NAT |
+| **LDP label distribution** | Segment Routing label distribution (`mpls-sr-*`) |
+| **Catalyst Center (DNA Center), SD-WAN Manager (vManage), ISE, EEM, LISP, TrustSec** | Nothing — these are products, not protocols, and can't be containerized here |
+
+**The recommended bridge:** do the labs here first — they build the protocol
+understanding that makes exam study fast — then close the syntax gap with a focused
+IOS-XE pass before the exam:
+
+1. **Cisco Modeling Labs (CML)** or the free **DevNet sandboxes** to re-type the
+   configs you already understand in IOS-XE syntax (named EIGRP, MQC, HSRP, DMVPN).
+2. A **Boson ExSim** (or equivalent) practice-exam pass to catch product/feature
+   trivia (Catalyst Center workflows, SD-WAN components, licensing) that no lab —
+   here or in CML — teaches efficiently.
+3. The [coverage map](coverage-map.md) tells you where to spend that bridge time:
+   every 🟡 row is a syntax-drill item, every ❌ row is a reading item.
 
 ```
 OSPF:     two-routers → ospf-multiarea → ospf-auth → ospf-summarization
