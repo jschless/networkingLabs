@@ -185,6 +185,7 @@ nav:
       - mtu-pmtud-troubleshooting: tracks/operations/mtu-pmtud-troubleshooting.md
       - network-assurance: tracks/operations/network-assurance.md
       - qos-enterprise: tracks/operations/qos-enterprise.md
+      - automation-fundamentals: tracks/operations/automation-fundamentals.md
       - network-automation-netbox: tracks/operations/network-automation-netbox.md
       - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
     - Debug Labs:

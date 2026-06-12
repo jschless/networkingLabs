@@ -72,7 +72,7 @@ labs into an order.
 | 4.3 SPAN/RSPAN/ERSPAN | 🟡 | `packet-analysis-basics`, `soc-dmz-foundation` (mirror feed) — port mirroring concepts, not Catalyst SPAN syntax |
 | 4.4 IP SLA | 🟡 | `ip-sla-tracking` — probe + tracked-object failover behavior; syntax differs |
 | 4.5 Cisco Catalyst Center (DNA Center) workflows | ❌ | Product-specific; study notes / sandbox |
-| 4.6 NETCONF and RESTCONF | ❌ | `telemetry-monitoring-hybrid` touches gNMI; NETCONF/RESTCONF planned in `automation-fundamentals` (PLAN.md Phase 2.1) |
+| 4.6 NETCONF and RESTCONF | 🟡 | `automation-fundamentals` — hands-on with a JSON-over-HTTP API (eAPI) + gNMI extension; NETCONF/RESTCONF semantics covered comparatively (challenge questions), not as live protocols |
 
 ### 5.0 Security (20%)
 
@@ -81,7 +81,7 @@ labs into an order.
 | 5.1 Device access control (lines, local users, AAA) | ✅ | `management-access-control`, `aaa-ops-troubleshooting` (TACACS+ and RADIUS), `dot1x-ceos-practice` |
 | 5.2.a ACLs | ✅ | `acl-basics` |
 | 5.2.b CoPP | ✅ | `copp-basics` |
-| 5.3 REST API security | ❌ | Planned alongside `automation-fundamentals` (PLAN.md Phase 2.1) |
+| 5.3 REST API security | 🟡 | `automation-fundamentals` — basic auth, 401 vs JSON-RPC errors, HTTP→HTTPS hardening (break-it + extension); token auth/OAuth is theory |
 | 5.4.a–c Threat defense, endpoint security, NGFW | 🟡 | `fortigate-firewall-capstone`, `enterprise-edge-nat-firewall`, the SOC track (`soc-*`) — deeper than the exam needs, but not Cisco Firepower/ISE |
 | 5.4.d TrustSec and MACsec | 🟡 | `macsec-basics` hands-on; TrustSec/SGT is Cisco-only (theory) |
 
@@ -89,11 +89,11 @@ labs into an order.
 
 | Topic | Status | Labs |
 |-------|--------|------|
-| 6.1 Interpret basic Python | ❌ | Planned: `automation-fundamentals` (PLAN.md Phase 2.1) |
-| 6.2 Construct valid JSON | 🟡 | JSON appears throughout (`soc-*` EVE/Zeek logs, gNMI output); no dedicated exercise |
+| 6.1 Interpret basic Python | ✅ | `automation-fundamentals` — student writes `requests`-based state/config/drift scripts |
+| 6.2 Construct valid JSON | ✅ | `automation-fundamentals` (hand-built JSON-RPC payloads in curl and Python); also appears throughout `soc-*` EVE/Zeek logs, gNMI output |
 | 6.3 Data modeling languages (YANG) | 🟡 | `telemetry-monitoring-hybrid` (gNMI paths are YANG-derived); no YANG-reading exercise |
 | 6.4 APIs for Catalyst Center and SD-WAN Manager | ❌ | Product-specific; study notes |
-| 6.5 Interpret REST API response codes/payloads | ❌ | Planned: `automation-fundamentals` (PLAN.md Phase 2.1) |
+| 6.5 Interpret REST API response codes/payloads | ✅ | `automation-fundamentals` — 200/401, transport vs auth vs application errors, JSON-RPC error objects |
 | 6.6 EEM applets | ❌ | IOS-only feature; study notes |
 | 6.7 Agent vs agentless orchestration | 🟡 | `network-automation-netbox` (source of truth + automation), `enterprise-it-101` Lab 09 area uses Ansible — comparison itself is theory |
 
@@ -158,8 +158,9 @@ What the matrix says, condensed. ❌ rows cluster into four buckets:
    control plane, TrustSec): cannot be containerized here. Close these with reading +
    a CML/DevNet-sandbox/Boson pass — see
    [Platform fidelity](study-paths.md#platform-fidelity-what-these-labs-do-and-dont-teach).
-2. **Automation hands-on** (ENCOR 6.1, 6.5, 4.6, 5.3): planned as
-   `labs/automation-fundamentals` — PLAN.md Phase 2.1.
+2. **Automation hands-on** (ENCOR 6.1, 6.5, 4.6, 5.3): closed by
+   `labs/automation-fundamentals` (PLAN.md Phase 2.1) — 4.6 remains 🟡 because
+   NETCONF/RESTCONF themselves aren't run live, only their semantics compared.
 3. **SD-WAN concepts** (ENCOR 1.2): planned as `labs/sdwan-concepts` — PLAN.md Phase 2.3.
 4. **Pure theory** (hypervisor types, PTP, agent-vs-agentless comparison): small enough
    to study from notes; no lab planned.
