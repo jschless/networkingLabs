@@ -28,7 +28,7 @@
       topics → labs. Statuses per row: covered / covered conceptually (syntax differs) /
       not covered (see study notes). Fetch the real Cisco blueprints; don't work from
       memory. This map is the acceptance test for Phases 2–4.
-- [ ] **1.2 Scope & fidelity doc** — section in `docs/study-paths.md` (or standalone page
+- [x] **1.2 Scope & fidelity doc** — section in `docs/study-paths.md` (or standalone page
       linked from the CCNP path): what FRR/cEOS teaches vs what IOS-XE exams test
       (named EIGRP, MQC QoS, HSRP/GLBP, Cisco NHRP syntax, DNA Center/vManage);
       recommended exam-prep bridge (CML/Boson pass after the labs).
@@ -95,3 +95,4 @@ independent of everything.
 |------|------|----------------|
 | 2026-06-11 | Plan created | Review delivered; no phases started. |
 | 2026-06-11 | 1.1 coverage map | Merged (PR #10). Built against ENCOR 350-401 **v1.2** (2025) + ENARSI 300-410 v1.1. **Finding: ENCOR v1.2 dropped the wireless domain entirely** — review finding #2's "wireless RF ~20% hole" is stale; SD-WAN/SD-Access + automation gaps remain. |
+| 2026-06-11 | 1.2 fidelity doc | Merged (PR #11). "Platform fidelity" section in docs/study-paths.md; anchor is linked from coverage-map.md. |
