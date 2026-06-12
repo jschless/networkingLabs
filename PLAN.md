@@ -32,7 +32,7 @@
       linked from the CCNP path): what FRR/cEOS teaches vs what IOS-XE exams test
       (named EIGRP, MQC QoS, HSRP/GLBP, Cisco NHRP syntax, DNA Center/vManage);
       recommended exam-prep bridge (CML/Boson pass after the labs).
-- [ ] **1.3 Pre-CCNA on-ramp** — named sequence in `docs/study-paths.md`:
+- [x] **1.3 Pre-CCNA on-ramp** — named sequence in `docs/study-paths.md`:
       `vlan-trunks-switchport-basics → two-routers → packet-analysis-basics → …`
       with a "start here if subnetting/ARP are shaky" pointer.
 
@@ -96,3 +96,4 @@ independent of everything.
 | 2026-06-11 | Plan created | Review delivered; no phases started. |
 | 2026-06-11 | 1.1 coverage map | Merged (PR #10). Built against ENCOR 350-401 **v1.2** (2025) + ENARSI 300-410 v1.1. **Finding: ENCOR v1.2 dropped the wireless domain entirely** — review finding #2's "wireless RF ~20% hole" is stale; SD-WAN/SD-Access + automation gaps remain. |
 | 2026-06-11 | 1.2 fidelity doc | Merged (PR #11). "Platform fidelity" section in docs/study-paths.md; anchor is linked from coverage-map.md. |
+| 2026-06-11 | 1.3 pre-CCNA on-ramp | Merged (PR #12). **Phase 1 complete.** Next: Phase 2 (2.1–2.3 are independent/parallelizable). |
