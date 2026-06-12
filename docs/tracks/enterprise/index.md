@@ -1,6 +1,6 @@
 # Enterprise Design Track
 
-Fifteen labs covering campus design patterns, WAN edge, DMZ architecture, access security, multicast, services, and wireless architecture — primarily on Arista cEOS with Linux service nodes where needed.
+Sixteen labs covering campus design patterns, WAN edge, DMZ architecture, load balancing, access security, multicast, services, and wireless architecture — primarily on Arista cEOS with Linux service nodes where needed.
 
 ## Reference Designs
 
@@ -18,6 +18,7 @@ Fifteen labs covering campus design patterns, WAN edge, DMZ architecture, access
 | [enterprise-wan-edge](enterprise-wan-edge.md) | Practice | Dual-ISP BGP edge, LP inbound policy, AS-path prepend outbound |
 | [enterprise-access-security](enterprise-access-security.md) | Practice | DHCP snooping, dynamic ARP inspection, port security |
 | [enterprise-edge-nat-firewall](enterprise-edge-nat-firewall.md) | Practice | PAT, nftables firewall policy, internet edge |
+| [load-balancer-basics](load-balancer-basics.md) | Practice | HAProxy L4 vs L7, health checks, X-Forwarded-For, NAT-mode balancing, asymmetric-return break-it |
 | [enterprise-multicast](enterprise-multicast.md) | Practice | IGMP, PIM-SM, multicast routing, RP configuration |
 | [enterprise-services-infra](enterprise-services-infra.md) | Practice | DHCP relay, NTP, DNS, syslog, SNMP — supporting services |
 | [enterprise-wireless-architecture](enterprise-wireless-architecture.md) | Practice | Enterprise WLAN design, controller modes, WLC architectures |
@@ -38,3 +39,4 @@ Build an entire design from scratch with only IPs and interfaces pre-configured.
 
 - **Arista cEOS**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 - **DMZ Linux services/firewalls**: `docker build -t dmz-lab:local labs/enterprise-dmz-capstone/`
+- **load-balancer-basics** (no cEOS needed): `docker build -t lb-lab:local labs/load-balancer-basics/`

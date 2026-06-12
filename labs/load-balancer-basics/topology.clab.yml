@@ -1,0 +1,83 @@
+name: load-balancer-basics
+
+# Load Balancer Basics — HAProxy + two backends in a DMZ segment
+#
+#                      OUTSIDE  203.0.113.0/29
+#        client(.2) ──────┬──────────┬─────────
+#                         │ (outsw)  │
+#                     edge(.1)   edge2(.3)        ← two routers into the DMZ
+#                         │ (dmzsw)  │
+#        ─────────────────┴──────────┴─────────
+#                      DMZ  172.16.0.0/24
+#              edge=.1  edge2=.2  lb=.10  web1=.11  web2=.12
+#
+# outsw / dmzsw are plain Linux-bridge containers (shared L2 segments).
+# edge2 exists for the asymmetric-return-path exercise — traffic normally
+# flows through edge only.
+
+topology:
+  defaults:
+    kind: linux
+    image: lb-lab:local
+
+  nodes:
+    outsw:
+      binds:
+        - configs/outsw/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    dmzsw:
+      binds:
+        - configs/dmzsw/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    client:
+      binds:
+        - configs/client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    edge:
+      binds:
+        - configs/edge/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    edge2:
+      binds:
+        - configs/edge2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    lb:
+      binds:
+        - configs/lb/setup.sh:/setup.sh
+        - haproxy:/etc/haproxy
+      exec:
+        - bash /setup.sh
+
+    web1:
+      binds:
+        - configs/web1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    web2:
+      binds:
+        - configs/web2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    # OUTSIDE segment — 203.0.113.0/29 via outsw
+    - endpoints: ["client:eth1", "outsw:eth1"]   # client 203.0.113.2
+    - endpoints: ["edge:eth1",   "outsw:eth2"]   # edge   203.0.113.1
+    - endpoints: ["edge2:eth1",  "outsw:eth3"]   # edge2  203.0.113.3
+    # DMZ segment — 172.16.0.0/24 via dmzsw
+    - endpoints: ["edge:eth2",   "dmzsw:eth1"]   # edge   172.16.0.1
+    - endpoints: ["edge2:eth2",  "dmzsw:eth2"]   # edge2  172.16.0.2
+    - endpoints: ["lb:eth1",     "dmzsw:eth3"]   # lb     172.16.0.10
+    - endpoints: ["web1:eth1",   "dmzsw:eth4"]   # web1   172.16.0.11
+    - endpoints: ["web2:eth1",   "dmzsw:eth5"]   # web2   172.16.0.12
