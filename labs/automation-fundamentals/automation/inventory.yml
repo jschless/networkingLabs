@@ -1,0 +1,12 @@
+# Device inventory for the automation tasks.
+# The automation container reaches the routers over the containerlab
+# management network — these are the mgmt-ipv4 addresses from topology.clab.yml.
+devices:
+  r1:
+    host: 172.31.41.11
+    username: admin
+    password: admin
+  r2:
+    host: 172.31.41.12
+    username: admin
+    password: admin
