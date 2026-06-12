@@ -1,5 +1,33 @@
 # Study Paths
 
+## Pre-CCNA On-Ramp (start here)
+
+If you're new to networking — or if subnetting, ARP, or "what actually happens when I
+ping" feel shaky — run this short sequence before any track below. Every later lab
+assumes these mechanics.
+
+```
+On-ramp:  vlan-trunks-switchport-basics → two-routers → packet-analysis-basics
+          → dhcp-dns-troubleshooting → acl-basics
+```
+
+What each step gives you:
+
+1. **vlan-trunks-switchport-basics** — access ports, trunks, and 802.1q tags: how
+   frames actually move through a switch.
+2. **two-routers** — the smallest possible routed network: interfaces, subnets,
+   static routes, and why a router needs a route *back*.
+3. **packet-analysis-basics** — tcpdump/Wireshark as a habit. Watch ARP, DHCP, and
+   ICMP on the wire; after this, "shaky on ARP" stops being a thing.
+4. **dhcp-dns-troubleshooting** — the two services every user-visible outage blames
+   first.
+5. **acl-basics** — your first taste of policy: match, permit, deny, and the
+   order-matters rule.
+
+After the on-ramp you're ready for the CCNP path below — start with its OSPF line.
+If you want more Layer 2 reps first, `stp-operations` and `lacp-etherchannel` slot
+in naturally after step 1.
+
 ## CCNP Enterprise (ENCOR + ENARSI)
 
 Preparing for the exams? The [CCNP coverage map](coverage-map.md) shows exactly which
