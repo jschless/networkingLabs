@@ -1,0 +1,16 @@
+# Desired state for Task 8 (drift report).
+# Your drift_check.py should compare LIVE state from the API against this
+# file and print PASS/DRIFT per assertion — without changing anything.
+devices:
+  r1:
+    hostname: r1
+    loopback0: 10.0.0.1/32
+    bgp_peers:
+      - peer: 10.1.12.2
+        state: Established
+  r2:
+    hostname: r2
+    loopback0: 10.0.0.2/32
+    bgp_peers:
+      - peer: 10.1.12.1
+        state: Established

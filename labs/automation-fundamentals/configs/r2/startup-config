@@ -1,0 +1,42 @@
+hostname r2
+!
+! -------------------------------------------------------
+! Node: r2  (eBGP peer, AS 65002)
+!
+! Addressing, BGP, and the admin user are pre-configured —
+! this lab is about driving the box through its API, not
+! about building the routing.
+!
+! What you need to configure here (Task 2):
+!   - Enable the eAPI HTTP server (management api http-commands)
+! Hint:
+!   management api http-commands
+!      no shutdown
+!      protocol http
+! -------------------------------------------------------
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret admin
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to r1 Ethernet1
+   no switchport
+   ip address 10.1.12.2/30
+   no shutdown
+!
+router bgp 65002
+   router-id 10.0.0.2
+   neighbor 10.1.12.1 remote-as 65001
+   !
+   address-family ipv4
+      neighbor 10.1.12.1 activate
+      network 10.0.0.2/32
+   !
+!
+end
