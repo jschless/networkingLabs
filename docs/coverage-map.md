@@ -43,9 +43,9 @@ labs into an order.
 |-------|--------|------|
 | 2.1 Device virtualization (hypervisors, VMs, vSwitch) | ❌ | Theory only — though running these container labs *is* applied device virtualization |
 | 2.2.a VRF | ✅ | `vrf-lite`, `debug-vrf-lite` |
-| 2.2.b GRE and IPsec tunneling | ✅ | `gre-basics`, `gre-ceos`, `ipsec-basics`, `gre-ipsec` |
+| 2.2.b GRE and IPsec tunneling | ✅ | `gre-basics`, `ipsec-basics`, `gre-ipsec` |
 | 2.3.a LISP | ❌ | No FRR/cEOS-container support; study notes |
-| 2.3.b VXLAN | ✅ | `vxlan-evpn`, `evpn-vxlan-ceos`, `evpn-border-ceos`, `vxlan-evpn-srlinux`, `debug-vxlan-evpn` |
+| 2.3.b VXLAN | ✅ | `vxlan-evpn`, `evpn-border-ceos`, `vxlan-evpn-srlinux`, `debug-vxlan-evpn` |
 
 ### 3.0 Infrastructure (30%)
 

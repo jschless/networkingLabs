@@ -161,6 +161,7 @@ nav:
       - enterprise-dmz-capstone: tracks/enterprise/enterprise-dmz-capstone.md
       - enterprise-routed-access-capstone: tracks/enterprise/enterprise-routed-access-capstone.md
       - enterprise-wan-edge-capstone: tracks/enterprise/enterprise-wan-edge-capstone.md
+      - enterprise-grand-capstone: tracks/enterprise/enterprise-grand-capstone.md
     - Layer 2:
       - tracks/layer2/index.md
       - vlan-trunks-switchport-basics: tracks/layer2/vlan-trunks-switchport-basics.md

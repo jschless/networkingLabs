@@ -272,4 +272,4 @@ docker exec clab-enterprise-grand-capstone-guest-pc ping -c1 1.1.1.1           #
   the DHCP-relay and VRRP stories.
 
 > Design rationale, the cEOS dataplane gotchas (SVI ACLs, NAT), and the full validation
-> record are in [`DESIGN.md`](DESIGN.md).
+> record are in [`DESIGN.md`](https://github.com/jschless/networkingLabs/blob/main/labs/enterprise-grand-capstone/DESIGN.md).
