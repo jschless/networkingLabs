@@ -81,5 +81,5 @@ Agent-relevant specifics that aren't obvious from the compose files:
   (`dc1-data`, `admin-ws-home`) survive teardown unless you pass `-v`.
 - **Container naming**: fixed role names (`dc1`, `admin-ws`, `dns1`, `mail1`, …), not the
   `clab-<lab>-<node>` scheme — reach them with `docker exec -it <name>`.
-- Custom images are built by `enterprise-it-101/eit.sh build`. Labs 14–16 (SIEM,
-  backup, capstone) are planned, not yet built.
+- Custom images are built by `enterprise-it-101/eit.sh build`. Lab 16 (capstone)
+  is planned, not yet built.
