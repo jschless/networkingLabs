@@ -1,0 +1,58 @@
+! edge — AS65100  (Arista EOS)
+!
+! Enterprise edge / Internet gateway:
+!   - eBGP to ISP (AS65500): receives default + 1.1.1.1/32
+!   - OSPF area 0 to cc1/cc2: injects the default into the campus
+!   - Internet reachability for the campus is via plain routing: the ISP carries
+!     a static route back to our address space (10.0.0.0/8). NOTE: cEOS's virtual
+!     dataplane does not perform source NAT (an `ip nat source ... overload` on
+!     Ethernet1 is silently a no-op AND breaks transit on that port), so this lab
+!     models the upstream as routing our PI space rather than PAT-ing behind one
+!     address. Service segmentation lives on the core seam — see cc1/cc2.
+!
+hostname edge
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description to-isp  203.0.113.0/30  (Internet uplink)
+   no switchport
+   ip address 203.0.113.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-cc1  10.0.12.0/30
+   no switchport
+   ip address 10.0.12.1/30
+   no shutdown
+!
+interface Ethernet3
+   description to-cc2  10.0.22.0/30
+   no switchport
+   ip address 10.0.22.1/30
+   no shutdown
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.2
+   passive-interface default
+   no passive-interface Ethernet2
+   no passive-interface Ethernet3
+   default-information originate always
+   network 10.0.0.2/32 area 0.0.0.0
+   network 10.0.12.0/30 area 0.0.0.0
+   network 10.0.22.0/30 area 0.0.0.0
+!
+router bgp 65100
+   router-id 10.0.0.2
+   !
+   neighbor 203.0.113.1 remote-as 65500
+   neighbor 203.0.113.1 description isp
+   !
+   address-family ipv4
+      neighbor 203.0.113.1 activate
+      network 10.0.0.2/32
+!
+end

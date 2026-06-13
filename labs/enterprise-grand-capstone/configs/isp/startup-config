@@ -1,0 +1,36 @@
+! isp — AS65500  (Arista EOS)
+!
+! Upstream ISP. Advertises a default route + its loopback to the enterprise edge
+! over eBGP (203.0.113.0/30). Unchanged from the enterprise-collapsed-core base.
+!
+hostname isp
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Ethernet1
+   description to-edge  203.0.113.0/30
+   no switchport
+   ip address 203.0.113.1/30
+   no shutdown
+!
+ip routing
+!
+ip route 0.0.0.0/0 Null0
+! Route our enterprise PI space back through the edge (no NAT in this lab — see
+! edge notes; cEOS does not do source NAT). A real ISP would carry the customer's
+! advertised prefixes; here a static aggregate to the edge suffices.
+ip route 10.0.0.0/8 203.0.113.2
+!
+router bgp 65500
+   router-id 1.1.1.1
+   !
+   neighbor 203.0.113.2 remote-as 65100
+   neighbor 203.0.113.2 description edge
+   !
+   address-family ipv4
+      neighbor 203.0.113.2 activate
+      network 1.1.1.1/32
+      network 0.0.0.0/0
+!
+end

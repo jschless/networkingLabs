@@ -31,7 +31,7 @@ labs into an order.
 
 | Topic | Status | Labs |
 |-------|--------|------|
-| 1.1.a Enterprise design: 2-tier, 3-tier, fabric, cloud | ✅ | `enterprise-collapsed-core` (2-tier), `enterprise-campus` (3-tier), `enterprise-routed-access` (L3 access), `spine-leaf` (fabric) + their capstones |
+| 1.1.a Enterprise design: 2-tier, 3-tier, fabric, cloud | ✅ | `enterprise-collapsed-core` (2-tier), `enterprise-campus` (3-tier), `enterprise-routed-access` (L3 access), `spine-leaf` (fabric) + their capstones; `enterprise-grand-capstone` ties a 2-tier campus to real AD/RADIUS/DHCP services end-to-end |
 | 1.1.b HA techniques: redundancy, FHRP, SSO | 🟡 | `vrrp`, `ha-network-design-ceos`, `graceful-restart`, `bfd-ospf`, `bfd-bgp` — VRRP hands-on; HSRP/GLBP and SSO are Cisco-only (theory) |
 | 1.2 Catalyst SD-WAN principles | 🟡 | `sdwan-concepts` — TLOC/color/OMP/BFD/app-route mechanisms built by hand and mapped one-to-one; vManage/vSmart product workflows remain theory |
 | 1.3 SD-Access principles | ❌ | Underlying data plane (VXLAN) is covered below; LISP control plane and DNA/Catalyst Center are not |
@@ -78,7 +78,7 @@ labs into an order.
 
 | Topic | Status | Labs |
 |-------|--------|------|
-| 5.1 Device access control (lines, local users, AAA) | ✅ | `management-access-control`, `aaa-ops-troubleshooting` (TACACS+ and RADIUS), `dot1x-ceos-practice` |
+| 5.1 Device access control (lines, local users, AAA) | ✅ | `management-access-control`, `aaa-ops-troubleshooting` (TACACS+ and RADIUS), `dot1x-ceos-practice`; `enterprise-grand-capstone` runs 802.1X→FreeRADIUS→AD with dynamic-VLAN assignment end-to-end |
 | 5.2.a ACLs | ✅ | `acl-basics` |
 | 5.2.b CoPP | ✅ | `copp-basics` |
 | 5.3 REST API security | 🟡 | `automation-fundamentals` — basic auth, 401 vs JSON-RPC errors, HTTP→HTTPS hardening (break-it + extension); token auth/OAuth is theory |

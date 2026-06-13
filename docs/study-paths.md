@@ -180,4 +180,23 @@ Operations:  13-monitoring → 14-siem-logging          (planned)
              → 15-backup-recovery → 16-capstone        (planned)
 ```
 
-Labs 01–12 are built; 13–16 are planned.
+Labs 01–16 are all built (13 monitoring, 14 SIEM, 15 backup, 16 capstone).
+
+---
+
+## Cross-track grand capstone
+
+The summit of the whole repo — the one lab that runs the **networking** and **enterprise-IT**
+tracks together. A Cisco-style campus (cEOS collapsed core + Linux/hostapd access) whose
+users authenticate and get services from the *real* EIT-101 stack (AD, RADIUS, Kea, DNS):
+802.1X → RADIUS → AD → dynamic VLAN → DHCP → DDNS → Kerberos, plus guest segmentation,
+finished by a four-fault cross-layer troubleshooting drill.
+
+```
+(networking track: collapsed-core, vrrp, dot1x-nac)  ╲
+                                                       ──→  enterprise-grand-capstone
+(EIT-101 track: 01-AD, 06-DHCP/DDNS, 12-RADIUS)       ╱
+```
+
+Runs ContainerLab **and** Docker Compose together — drive it with
+`labs/enterprise-grand-capstone/gcap.sh`. Do it last; it assumes the pieces from both tracks.

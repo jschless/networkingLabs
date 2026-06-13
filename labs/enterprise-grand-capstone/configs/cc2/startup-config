@@ -1,0 +1,119 @@
+! cc2 — collapsed core switch #2  (Arista EOS)
+!
+! Peer of cc1. VRRP active for VLAN 20 (voice); standby for 10/30/99.
+! STP root for VLAN 20. Same lab-corp seam (Ethernet5) and DHCP-relay glue as cc1,
+! one IP lower / one VRRP priority step down so cc1 is the default master.
+!
+hostname cc2
+!
+spanning-tree mode rstp
+spanning-tree vlan-id 20 priority 4096
+spanning-tree vlan-id 10 priority 32768
+spanning-tree vlan-id 30 priority 32768
+spanning-tree vlan-id 99 priority 32768
+!
+vlan 10
+   name corporate
+!
+vlan 20
+   name voice
+!
+vlan 30
+   name guest
+!
+vlan 99
+   name management
+!
+ip routing
+!
+! Guest service-segmentation — egress ACL on the physical seam (see cc1 notes).
+ip access-list SEAM-OUT
+   10 deny ip 10.30.30.0/24 any
+   20 permit ip any any
+!
+interface Loopback0
+   ip address 10.0.0.4/32
+!
+interface Ethernet1
+   description to-edge  10.0.22.0/30
+   no switchport
+   ip address 10.0.22.2/30
+   no shutdown
+!
+interface Ethernet2
+   description to-cc1-interlink  10.0.99.0/30
+   no switchport
+   ip address 10.0.99.2/30
+   no shutdown
+!
+interface Ethernet3
+   description to-access-sw2-trunk
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet4
+   description cc-peer-link-trunk  (L2 path for VRRP adverts + inter-core client reachability)
+   switchport trunk allowed vlan 10,20,30,99
+   switchport mode trunk
+   no shutdown
+!
+interface Ethernet5
+   description to-lab-corp-services-seam
+   no switchport
+   ip address 10.100.254.3/16
+   ip access-group SEAM-OUT out
+   vrrp 254 ipv4 10.100.254.1
+   vrrp 254 priority-level 100
+   vrrp 254 preempt
+   no shutdown
+!
+interface Vlan10
+   description corporate-gw
+   ip address 10.10.10.3/24
+   ip helper-address 10.100.30.10
+   vrrp 10 ipv4 10.10.10.1
+   vrrp 10 priority-level 100
+   vrrp 10 preempt
+   no shutdown
+!
+interface Vlan20
+   description voice-gw
+   ip address 10.20.20.3/24
+   ip helper-address 10.100.30.10
+   vrrp 20 ipv4 10.20.20.1
+   vrrp 20 priority-level 120
+   vrrp 20 preempt
+   no shutdown
+!
+interface Vlan30
+   description guest-gw
+   ip address 10.30.30.3/24
+   ip helper-address 10.100.30.10
+   vrrp 30 ipv4 10.30.30.1
+   vrrp 30 priority-level 100
+   vrrp 30 preempt
+   no shutdown
+!
+interface Vlan99
+   description management-gw
+   ip address 192.168.99.3/24
+   vrrp 99 ipv4 192.168.99.1
+   vrrp 99 priority-level 100
+   vrrp 99 preempt
+   no shutdown
+!
+router ospf 1
+   router-id 10.0.0.4
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   network 10.0.0.4/32 area 0.0.0.0
+   network 10.0.22.0/30 area 0.0.0.0
+   network 10.0.99.0/30 area 0.0.0.0
+   network 10.10.10.0/24 area 0.0.0.0
+   network 10.20.20.0/24 area 0.0.0.0
+   network 10.30.30.0/24 area 0.0.0.0
+   network 192.168.99.0/24 area 0.0.0.0
+!
+end

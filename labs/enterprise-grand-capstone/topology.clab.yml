@@ -1,0 +1,115 @@
+name: enterprise-grand-capstone
+
+# Enterprise Grand Capstone — cross-track crown jewel (PLAN.md Phase 4.1/4.2)
+#
+# A Cisco-style campus (Arista cEOS collapsed core + Linux/hostapd access) whose
+# users authenticate and get services from the REAL Enterprise-IT-101 stack
+# (Samba AD, FreeRADIUS, Kea DHCP+DDNS, mail, web proxy) running as Docker Compose
+# containers on the `lab-corp` network, bridged in via the `br-eitcorp` node.
+#
+# DO NOT deploy this topology directly — use ./gcap.sh deploy, which brings the
+# services stack up FIRST (it creates the pinned br-eitcorp bridge), then deploys
+# this topology, then installs the host return-routes. See DESIGN.md.
+#
+#         [isp] -- [edge] -- (cc1 == cc2) -- access-sw1/2 (hostapd) -- endpoints
+#                               |
+#                          br-eitcorp ==== lab-corp services (compose)
+#
+# VLANs: 10 corp (10.10.10.0/24) | 20 voice (10.20.20.0/24) | 30 guest (10.30.30.0/24) | 99 mgmt
+# Services seam: 10.100.0.0/16, core VRRP VIP 10.100.254.1
+
+topology:
+  defaults:
+    env:
+      CLAB_MGMT_VRF: ""
+
+  nodes:
+    # ---------- cEOS campus (collapsed core) ----------
+    isp:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/isp/startup-config
+
+    edge:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/edge/startup-config
+
+    cc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/cc1/startup-config
+
+    cc2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/cc2/startup-config
+
+    # ---------- lab-corp seam (Docker bridge created by services compose) ----------
+    br-eitcorp:
+      kind: bridge
+
+    # ---------- Linux access switches (hostapd 802.1X authenticators) ----------
+    access-sw1:
+      kind: linux
+      image: gcap-node:local
+      binds:
+        - configs/access-sw1/setup.sh:/setup.sh
+        - configs/hostapd/hostapd-corp.conf:/etc/hostapd/hostapd-corp.conf
+        - configs/hostapd/vlan-action.sh:/etc/hostapd/vlan-action.sh
+      exec:
+        - bash /setup.sh
+
+    access-sw2:
+      kind: linux
+      image: gcap-node:local
+      binds:
+        - configs/access-sw2/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    # ---------- Endpoints ----------
+    corp-pc:
+      kind: linux
+      image: gcap-node:local
+      binds:
+        - configs/corp-pc/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    voip-phone:
+      kind: linux
+      image: gcap-node:local
+      binds:
+        - configs/voip-phone/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    guest-pc:
+      kind: linux
+      image: gcap-node:local
+      binds:
+        - configs/guest-pc/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    # WAN
+    - endpoints: ["isp:eth1", "edge:eth1"]      # 203.0.113.0/30
+    # Edge to collapsed core
+    - endpoints: ["edge:eth2", "cc1:eth1"]      # 10.0.12.0/30
+    - endpoints: ["edge:eth3", "cc2:eth1"]      # 10.0.22.0/30
+    # Core routed interlink (OSPF)
+    - endpoints: ["cc1:eth2", "cc2:eth2"]       # 10.0.99.0/30
+    # Core L2 peer-link trunk (VRRP adverts + inter-core client reachability)
+    - endpoints: ["cc1:eth4", "cc2:eth4"]       # trunk VLAN 10,20,30,99
+    # Core -> services seam (lab-corp)
+    - endpoints: ["cc1:eth5", "br-eitcorp:cc1"] # cc1 = 10.100.254.2/16
+    - endpoints: ["cc2:eth5", "br-eitcorp:cc2"] # cc2 = 10.100.254.3/16
+    # Core -> access switches (802.1q trunks: VLAN 10,20,30,99)
+    - endpoints: ["cc1:eth3", "access-sw1:eth1"]
+    - endpoints: ["cc2:eth3", "access-sw2:eth1"]
+    # Access switches -> endpoints
+    - endpoints: ["access-sw1:eth2", "corp-pc:eth1"]    # 802.1X -> VLAN 10
+    - endpoints: ["access-sw1:eth3", "voip-phone:eth1"] # VLAN 20 (voice)
+    - endpoints: ["access-sw2:eth2", "guest-pc:eth1"]   # VLAN 30 (guest)
