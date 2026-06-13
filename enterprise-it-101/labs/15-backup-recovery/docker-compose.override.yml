@@ -1,0 +1,121 @@
+# Lab 15 — Backup & Disaster Recovery (BorgBackup)
+#
+# Layered on top of the foundation network in base/docker-compose.yml.
+# Run from the enterprise-it-101/ directory:
+#
+#   docker compose -f base/docker-compose.yml \
+#                  -f labs/15-backup-recovery/docker-compose.override.yml up -d --build
+#
+# Compose uses the FIRST -f file's directory (base/) as the project directory,
+# so every relative path below is written relative to base/.
+#
+# dc1 auto-provisions + seeds the Lab 01 foundation and carries Borg client
+# tooling (push-mode backups over SSH). ca1 is the Lab 03 step-ca, untouched —
+# it has no shell tooling, so backup1 mounts its data volume and backs it up
+# volume-style. backup1 is the Borg repository host. NOTHING is wired up:
+# the SSH trust, the repos, the backup scripts, the cron schedule, and both
+# disaster recoveries are the lab.
+
+name: eit101-lab15
+
+services:
+  dc1:
+    build:
+      context: ../images/samba-ad-backup
+    image: samba-ad-backup:local
+    container_name: dc1
+    hostname: dc1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      AUTO_PROVISION: "true"
+      SAMBA_AUTOSTART: "true"
+    extra_hosts:
+      - "backup1.lab.corp:10.100.3.40"
+    volumes:
+      - dc1-data:/var/lib/samba
+    privileged: true
+    tty: true
+    stdin_open: true
+
+  ca1:
+    image: smallstep/step-ca:latest
+    container_name: ca1
+    hostname: ca1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.30
+    environment:
+      # Same one-time auto-init as Lab 03 — only runs if the volume is empty.
+      DOCKER_STEPCA_INIT_NAME: "Lab Corp CA"
+      DOCKER_STEPCA_INIT_DNS_NAMES: "ca1.lab.corp,ca1,localhost,127.0.0.1"
+      DOCKER_STEPCA_INIT_PROVISIONER_NAME: "admin"
+      DOCKER_STEPCA_INIT_PASSWORD: "P@ssw0rd1"
+      DOCKER_STEPCA_INIT_ADDRESS: ":9000"
+    volumes:
+      - ca1-data:/home/step
+    tty: true
+    stdin_open: true
+
+  # ---- Backup server (ops subnet 10.100.3.x) ------------------------------
+
+  backup1:
+    build:
+      context: ../images/backup-server
+    image: backup-server:local
+    container_name: backup1
+    hostname: backup1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.40
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    volumes:
+      # Borg repositories — survive `down`/`up` like all lab volumes.
+      - backup1-data:/srv/backups
+      # ca1's data volume, mounted in so the agent-less CA container can be
+      # backed up (and restored) volume-style. Read-write because the CA
+      # restore task extracts back into it.
+      - ca1-data:/mnt/ca1
+    tty: true
+    stdin_open: true
+
+  admin-ws:
+    build:
+      context: ../images/workstation
+    image: workstation:local
+    container_name: admin-ws
+    hostname: admin-ws
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    # Name pinning: ca1/backup1 records were Lab 03/05 student work and the
+    # Samba DNS is rebuilt by auto-provision, so pin them here — DNS is not
+    # this lab's topic.
+    extra_hosts:
+      - "ca1.lab.corp:10.100.1.30"
+      - "backup1.lab.corp:10.100.3.40"
+    volumes:
+      - admin-ws-home:/home
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+volumes:
+  dc1-data:
+  admin-ws-home:
+  ca1-data:
+  backup1-data:

@@ -1,12 +1,13 @@
 ---
-title: "15 — Backup & Disaster Recovery"
+title: "15 Backup & Disaster Recovery"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Stand up a BorgBackup server, design encrypted deduplicated backups for the two most unforgivable things to lose — the AD database and the CA's private key — then destroy both on purpose and bring them back, verifying each restore against known data. Includes a recovery trap, scheduled backups with retention pruning, and a lost-passphrase drill.
 
-Set up encrypted BorgBackup repositories and run real disaster-recovery scenarios — AD restore, CA restore.
+!!! note "Platform"
+    Docker Compose — custom `samba-ad-backup:local` / `backup-server:local` + `smallstep/step-ca`
 
-**Duration:** 2–3 hours  
-**Directory:** `enterprise-it-101/labs/15-backup-recovery/`  
-**Requires:** Foundation + Labs 05–14
+{%
+  include-markdown "../../../enterprise-it-101/labs/15-backup-recovery/README.md"
+%}
