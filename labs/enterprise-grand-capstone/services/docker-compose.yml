@@ -1,0 +1,120 @@
+# Enterprise Grand Capstone — services stack (Docker Compose half of the lab).
+#
+# These are the REAL Enterprise-IT-101 service containers. They run on the
+# `lab-corp` network, whose Linux bridge name is PINNED to `br-eitcorp` so the
+# ContainerLab topology can hard-code a bridge node of that name (the 4.0
+# finding). Bring this up FIRST, via ../gcap.sh deploy.
+#
+#   dc1     10.100.1.10   Samba AD DC + DNS         (identity / Kerberos)
+#   dns1    10.100.1.40   bind9 resolver + DDNS     (campus.lab.corp dynamic zone)
+#   radius1 10.100.20.10  FreeRADIUS -> AD          (802.1X PEAP/MSCHAPv2)
+#   dhcp1   10.100.30.10  Kea DHCP4 + DDNS          (relayed campus subnets)
+
+name: eit-grand-capstone
+
+networks:
+  lab-corp:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-eitcorp
+    ipam:
+      config:
+        - subnet: 10.100.0.0/16
+
+services:
+  dc1:
+    image: samba-ad:local
+    container_name: dc1
+    hostname: dc1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.10
+    dns: [10.100.1.10]
+    dns_search: [lab.corp]
+    environment:
+      AUTO_PROVISION: "true"
+      SAMBA_AUTOSTART: "true"
+    volumes:
+      - dc1-data:/var/lib/samba
+    privileged: true
+    tty: true
+    stdin_open: true
+
+  dns1:
+    image: bind9:local
+    container_name: dns1
+    hostname: dns1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.40
+    dns: [10.100.1.10]
+    dns_search: [lab.corp]
+    # Zone files must be writable by bind for dynamic updates, so they are seeded
+    # into /var/lib/bind at start (can't be read-only bind-mounts).
+    command:
+      - bash
+      - -c
+      - |
+        cp /lab/named.conf /etc/bind/named.conf
+        mkdir -p /var/lib/bind
+        cp /lab/db.* /var/lib/bind/
+        chown -R bind:bind /var/lib/bind
+        named-checkconf || true
+        exec /usr/sbin/named -g -c /etc/bind/named.conf -u bind
+    volumes:
+      - ./configs/dns1:/lab:ro
+    cap_add: [NET_ADMIN]   # add the campus return-routes via the core seam VIP
+    depends_on: [dc1]
+    tty: true
+    stdin_open: true
+
+  radius1:
+    image: freeradius-ad:local
+    container_name: radius1
+    hostname: radius1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.20.10
+    dns: [10.100.1.10]
+    dns_search: [lab.corp]
+    environment:
+      RADIUS_DEBUG: "${RADIUS_DEBUG:-0}"
+    volumes:
+      - ./configs/radius1/radius-join.sh:/usr/local/bin/radius-join.sh:ro
+      - ./configs/radius1/clients.conf:/etc/freeradius/3.0/clients.conf
+      - ./configs/radius1/mods-available/ldap:/etc/freeradius/3.0/mods-available/ldap
+      - ./configs/radius1/mods-available/eap:/etc/freeradius/3.0/mods-available/eap
+      - ./configs/radius1/mods-available/mschap:/etc/freeradius/3.0/mods-available/mschap
+      - ./configs/radius1/sites-available/default:/etc/freeradius/3.0/sites-available/default
+      - ./configs/radius1/sites-available/inner-tunnel:/etc/freeradius/3.0/sites-available/inner-tunnel
+      - radius-certs:/shared-certs
+    command: ["bash", "/usr/local/bin/radius-join.sh"]
+    cap_add: [NET_ADMIN]   # add the campus return-routes via the core seam VIP
+    depends_on: [dc1]
+    tty: true
+    stdin_open: true
+
+  dhcp1:
+    image: kea:local
+    container_name: dhcp1
+    hostname: dhcp1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.30.10
+    dns: [10.100.1.40]
+    dns_search: [lab.corp]
+    volumes:
+      - ./configs/dhcp1/kea-dhcp4.conf:/etc/kea/kea-dhcp4.conf:ro
+      - ./configs/dhcp1/kea-dhcp-ddns.conf:/etc/kea/kea-dhcp-ddns.conf:ro
+      - ./configs/dhcp1/ddns.key:/etc/kea/ddns.key:ro
+    command: ["bash", "-c", "kea-start; exec tail -F /var/log/kea/dhcp4.log"]
+    cap_add: [NET_ADMIN]   # add the campus return-routes via the core seam VIP
+    depends_on: [dns1]
+    tty: true
+    stdin_open: true
+
+volumes:
+  dc1-data:
+  radius-certs:

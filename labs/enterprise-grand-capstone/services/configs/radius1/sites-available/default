@@ -1,0 +1,79 @@
+# Default virtual server — the OUTER request handling.
+#   * radtest PAP         -> LDAP bind against AD          (given)
+#   * radtest mschap/PEAP -> mschap -> ntlm_auth -> AD     (given)
+#   * eapol_test EAP-TLS  -> certificate                   (given)
+#   * post-auth           -> dynamic VLAN by AD group      (YOU write — Task 5)
+server default {
+    listen {
+        type = auth
+        ipaddr = *
+        port = 0
+    }
+    listen {
+        type = acct
+        ipaddr = *
+        port = 0
+    }
+
+    authorize {
+        preprocess
+        chap
+        mschap
+        eap {
+            ok = return
+        }
+        ldap
+        # PAP with no local password -> authenticate by binding to AD as the user.
+        if ((ok || updated) && User-Password && !control:Auth-Type) {
+            update {
+                control:Auth-Type := ldap
+            }
+        }
+        pap
+    }
+
+    authenticate {
+        Auth-Type PAP {
+            pap
+        }
+        Auth-Type CHAP {
+            chap
+        }
+        Auth-Type MS-CHAP {
+            mschap
+        }
+        Auth-Type LDAP {
+            ldap
+        }
+        eap
+    }
+
+    preacct {
+        preprocess
+        acct_unique
+    }
+    accounting {
+    }
+
+    post-auth {
+        # ---- Dynamic VLAN assignment (grand capstone) ----
+        # Every successfully-authenticated 802.1X user lands in the corporate
+        # VLAN (10). hostapd reads these Tunnel-* attributes from the
+        # Access-Accept and moves the port into that VLAN (see vlan-action.sh).
+        update reply {
+            Tunnel-Type := VLAN
+            Tunnel-Medium-Type := IEEE-802
+            Tunnel-Private-Group-Id := "10"
+        }
+
+        # Group-based differentiation hook (the ldap module populates LDAP-Group
+        # from the user's memberOf). Uncomment + name a real AD group to peel a
+        # class of users into a different VLAN:
+        #   if (LDAP-Group == "contractors") {
+        #       update reply { Tunnel-Private-Group-Id := "20" }
+        #   }
+
+        Post-Auth-Type REJECT {
+        }
+    }
+}

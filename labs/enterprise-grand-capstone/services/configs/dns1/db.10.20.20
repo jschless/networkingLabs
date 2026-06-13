@@ -1,0 +1,8 @@
+$TTL 300
+@   IN  SOA dns1.lab.corp. hostmaster.lab.corp. (
+        1       ; serial
+        3600    ; refresh
+        600     ; retry
+        86400   ; expire
+        300 )   ; minimum
+@   IN  NS  dns1.lab.corp.
