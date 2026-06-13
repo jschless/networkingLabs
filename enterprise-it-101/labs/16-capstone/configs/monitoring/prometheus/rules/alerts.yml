@@ -1,0 +1,51 @@
+# Alert rules (CAPSTONE: the completed Lab 13 rules).
+groups:
+  - name: lab-corp
+    rules:
+      - alert: HostDown
+        expr: up{job="node"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host {{ $labels.instance }} is down"
+
+      - alert: ServiceProbeFailed
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Probe failing for {{ $labels.instance }} ({{ $labels.job }})"
+
+      - alert: DiskUsageHigh
+        expr: 100 * (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk >80% on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+
+      - alert: CertExpirySoon
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 7
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "TLS cert for {{ $labels.instance }} expires in <7 days"
+
+      - alert: DnsLatencyHigh
+        expr: probe_duration_seconds{job="blackbox-dns"} > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DNS probe latency high for {{ $labels.instance }}"
+
+      - alert: MonitoringBlindSpot
+        expr: up{job=~"blackbox-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Blackbox scrape down — monitoring blind spot ({{ $labels.job }})"

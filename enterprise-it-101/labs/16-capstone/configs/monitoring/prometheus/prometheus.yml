@@ -1,0 +1,88 @@
+# Prometheus configuration (CAPSTONE: the completed Lab 13 config).
+#
+# Already monitoring the live enterprise: node exporters on dc1/mail1/admin-ws,
+# blackbox service probes (DNS, LDAP, LDAPS, SMTP), alert rules, and the
+# Alertmanager hookup. Reload after edits:
+#   curl -s -X POST http://prometheus.lab.corp:9090/-/reload
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager.lab.corp:9093"]
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Host metrics via node-exporter sidecars (answer on each host's IP:9100).
+  - job_name: node
+    static_configs:
+      - targets:
+          - dc1.lab.corp:9100
+          - mail1.lab.corp:9100
+          - admin-ws.lab.corp:9100
+
+  # Blackbox service probes — Prometheus tells blackbox what to test via ?target=.
+  - job_name: blackbox-dns
+    metrics_path: /probe
+    params:
+      module: [dns_lab_corp]
+    static_configs:
+      - targets: ["dc1.lab.corp:53"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox.lab.corp:9115
+
+  - job_name: blackbox-ldap
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets: ["dc1.lab.corp:389"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox.lab.corp:9115
+
+  - job_name: blackbox-ldaps
+    metrics_path: /probe
+    params:
+      module: [tcp_tls]
+    static_configs:
+      - targets: ["dc1.lab.corp:636"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox.lab.corp:9115
+
+  - job_name: blackbox-smtp
+    metrics_path: /probe
+    params:
+      module: [smtp_banner]
+    static_configs:
+      - targets: ["mail1.lab.corp:25"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox.lab.corp:9115

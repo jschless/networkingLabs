@@ -1,12 +1,13 @@
 ---
-title: "16 — Capstone: The Mini Enterprise"
+title: "16 Capstone — The Mini Enterprise"
 ---
 
-!!! note "Coming Soon"
-    This lab is under construction.
+!!! tip "Practice Lab"
+    Run every service from Labs 01–15 at once as one live `lab.corp` enterprise. Onboard a new employee end to end across AD, time, files, mail, SSO, RADIUS, proxy, monitoring, and SIEM; diagnose three planted cross-layer outages (DNS, time/Kerberos, mail LDAP) from their misleading symptoms; then document the whole system from memory.
 
-All services running simultaneously: onboard a new employee end-to-end, fix three broken services, and document the architecture.
+!!! note "Platform"
+    Docker Compose — the full custom-image stack (needs ~7 GB RAM)
 
-**Duration:** 3–4 hours  
-**Directory:** `enterprise-it-101/labs/16-capstone/`  
-**Requires:** All previous labs
+{%
+  include-markdown "../../../enterprise-it-101/labs/16-capstone/README.md"
+%}

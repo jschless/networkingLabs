@@ -1,0 +1,732 @@
+# ============================================================
+# Lab 16 — Capstone: The Mini Enterprise
+#
+# A SINGLE unified compose file that brings up the entire lab.corp
+# infrastructure — every service from Labs 01–15 — already configured and
+# running. Unlike the per-lab override files, nothing here is left half-built:
+# the enterprise is LIVE on boot so you can onboard a new employee end-to-end
+# (Part A) and diagnose planted cross-layer faults (Part B).
+#
+# This is a STANDALONE compose file (it defines its own lab-corp network), so
+# it is driven directly, not layered on base/:
+#
+#   ./eit.sh up 16          # or: docker compose -f labs/16-capstone/docker-compose.yml up -d
+#
+# MEMORY: the full stack needs ~7 GB. On a constrained machine bring up tiers
+# with Compose profiles — the core (AD/DNS/NTP/CA + workstations) has no
+# profile and always starts; add `--profile apps --profile ops` for the rest.
+# ============================================================
+
+name: eit101-capstone
+
+networks:
+  lab-corp:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.100.0.0/16
+
+services:
+  # ---- Core: identity, name, time, trust (10.100.1.x) ---------------------
+
+  dc1:
+    build:
+      context: ../../images/samba-ad-wazuh
+    image: samba-ad-wazuh:local
+    container_name: dc1
+    hostname: dc1
+    domainname: lab.corp
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      AUTO_PROVISION: "true"
+      SAMBA_AUTOSTART: "true"
+    extra_hosts:
+      - "wazuh-manager.lab.corp:10.100.3.30"
+    volumes:
+      - dc1-data:/var/lib/samba
+      - ./configs/chrony-client.conf:/etc/chrony/chrony.conf:ro
+      # Capstone hook: audit logging (Lab 14) + mail-enable foundation users.
+      - ./configs/dc1-post-provision-hook.sh:/usr/local/bin/post-provision-hook.sh:ro
+      - ./configs/break:/break:ro
+    privileged: true
+    tty: true
+    stdin_open: true
+
+  ntp1:
+    build:
+      context: ../../images/workstation
+    image: workstation:local
+    container_name: ntp1
+    hostname: ntp1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.20
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    # Authoritative lab time source (stratum-10 local clock), serving the
+    # whole network. Runs chronyd in the foreground; -x because every
+    # container shares the host kernel clock (chrony reports/serves, it does
+    # not step the shared clock).
+    command:
+      - bash
+      - -c
+      - cp /etc/chrony/ntp1.conf /etc/chrony/chrony.conf && exec chronyd -d -x
+    volumes:
+      - ./configs/chrony-ntp1.conf:/etc/chrony/ntp1.conf:ro
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  dns1:
+    build:
+      context: ../../images/bind9
+    image: bind9:local
+    container_name: dns1
+    hostname: dns1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.40
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    # Full enterprise resolver, already built (recursion for internal clients,
+    # conditional-forward of lab.corp -> dc1, the dhcp.lab.corp dynamic zone).
+    # The conditional forwarder here is Part B, Break #1. named.conf is copied
+    # from a :ro staging file to a writable path at boot so a break script can
+    # edit the live config (and `down`/`up` restores it) without dirtying the
+    # repo file.
+    volumes:
+      - ./configs/dns1/named.conf:/etc/bind/named.conf.lab:ro
+      - ./configs/dns1/db.dhcp.lab.corp:/var/lib/bind/db.dhcp.lab.corp
+      - ./configs/break:/break:ro
+    command:
+      - bash
+      - -c
+      - cp /etc/bind/named.conf.lab /etc/bind/named.conf && exec /usr/local/bin/entrypoint.sh
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  ca1:
+    image: smallstep/step-ca:latest
+    container_name: ca1
+    hostname: ca1
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.1.30
+    environment:
+      DOCKER_STEPCA_INIT_NAME: "Lab Corp CA"
+      DOCKER_STEPCA_INIT_DNS_NAMES: "ca1.lab.corp,ca1,localhost,127.0.0.1"
+      DOCKER_STEPCA_INIT_PROVISIONER_NAME: "admin"
+      DOCKER_STEPCA_INIT_PASSWORD: "P@ssw0rd1"
+      DOCKER_STEPCA_INIT_ADDRESS: ":9000"
+    volumes:
+      - ca1-data:/home/step
+    tty: true
+    stdin_open: true
+
+  # ---- Apps: file server (10.100.2.x) -------------------------------------
+
+  fs1:
+    build:
+      context: ../../images/samba-ad
+    image: samba-ad:local
+    container_name: fs1
+    hostname: fs1
+    domainname: lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    # Member-server join + the engineering/finance/public shares, already built.
+    command: ["bash", "/lab/fs1-setup.sh"]
+    volumes:
+      - ./configs:/lab:ro
+    privileged: true
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  # ---- Apps: mail gateway (10.100.2.x) ------------------------------------
+
+  mail1:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: mail1
+    hostname: mail1.lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.20
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    # AD-backed mailboxes over LDAPS (already wired). The LDAP_BIND_PW in this
+    # env file is Part B, Break #3 (a break script flips it to a wrong value).
+    env_file:
+      - ./configs/mail/mailserver.env
+    volumes:
+      - mail-data:/var/mail
+      - mail-state:/var/mail-state
+      - mail-log:/var/log/mail
+      - mail-config:/tmp/docker-mailserver
+      - ./configs/mail/user-patches.sh:/tmp/docker-mailserver/user-patches.sh:ro
+      - ./configs/mail/ssl:/tmp/dms/custom-certs:ro
+      - ./configs/break:/break:ro
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  # ---- Apps: SSO (Keycloak federating AD) ---------------------------------
+
+  # One-shot: capture dc1's self-signed LDAPS cert into the Keycloak truststore.
+  certfetch:
+    build:
+      context: ../../images/workstation
+    image: workstation:local
+    container_name: certfetch
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.33
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    depends_on:
+      - dc1
+    volumes:
+      - kc-trust:/trust
+    command:
+      - bash
+      - -c
+      - |
+        echo "==> [certfetch] waiting for dc1 LDAPS (636)..."
+        until echo | openssl s_client -connect dc1.lab.corp:636 2>/dev/null \
+                   | openssl x509 -out /trust/dc1.pem 2>/dev/null && [ -s /trust/dc1.pem ]; do
+          sleep 3
+        done
+        echo "==> [certfetch] captured dc1 LDAPS cert."
+
+  postgres-kc:
+    image: postgres:15
+    container_name: postgres-kc
+    hostname: postgres-kc
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.32
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - kc-db:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak
+    hostname: keycloak.lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.30
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    depends_on:
+      postgres-kc:
+        condition: service_started
+      certfetch:
+        condition: service_completed_successfully
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-kc:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: "8088"
+      KC_HOSTNAME: http://keycloak.lab.corp:8088
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_TRUSTSTORE_PATHS: /trust
+    volumes:
+      - kc-trust:/trust:ro
+      # The pre-built lab-corp realm (AD federation + group mapper + OIDC
+      # client + groups claim) is imported on boot — the enterprise SSO is live.
+      - ./configs/keycloak/import:/opt/keycloak/data/import:ro
+    ports:
+      - "8088:8088"
+    command: ["start-dev", "--import-realm"]
+    tty: true
+    stdin_open: true
+
+  sample-app:
+    build:
+      context: ../10-sso-federation/configs/sample-app
+    image: sample-app:local
+    container_name: sample-app
+    hostname: sample-app.lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.31
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      OIDC_DISCOVERY_URL: http://keycloak.lab.corp:8088/realms/lab-corp/.well-known/openid-configuration
+      OIDC_CLIENT_ID: sample-app
+      OIDC_CLIENT_SECRET: "capstone-sample-app-secret"
+      FLASK_SECRET: lab-corp-dev-secret
+      APP_PORT: "8089"
+    depends_on:
+      - keycloak
+    ports:
+      - "8089:8089"
+    tty: true
+    stdin_open: true
+
+  # ---- Apps: web proxy (Kerberos-authenticated Squid) ---------------------
+
+  proxy1:
+    build:
+      context: ../../images/squid-ad
+    image: squid-ad:local
+    container_name: proxy1
+    hostname: proxy1
+    domainname: lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.40
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "webserver1.lab.corp:10.100.2.41"
+      - "webserver2.lab.corp:10.100.2.42"
+    # Already joined + serving the completed Kerberos/group-ACL policy.
+    volumes:
+      - ./configs/proxy/squid.conf:/etc/squid/squid.conf
+      - ./configs/proxy/squid-join.sh:/usr/local/bin/squid-join.sh:ro
+    command: ["bash", "/usr/local/bin/squid-join.sh"]
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  webserver1:
+    image: nginx:alpine
+    container_name: webserver1
+    hostname: webserver1.lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.41
+    volumes:
+      - ./configs/proxy/sites/webserver1:/usr/share/nginx/html:ro
+
+  webserver2:
+    image: nginx:alpine
+    container_name: webserver2
+    hostname: webserver2.lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.2.42
+    volumes:
+      - ./configs/proxy/sites/webserver2:/usr/share/nginx/html:ro
+
+  # ---- Apps: network access control (802.1X / RADIUS) ---------------------
+
+  radius1:
+    build:
+      context: ../../images/freeradius-ad
+    image: freeradius-ad:local
+    container_name: radius1
+    hostname: radius1
+    domainname: lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.20.10
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      RADIUS_DEBUG: "${RADIUS_DEBUG:-0}"
+    # Joined + AD-backed; the dynamic-VLAN-by-group policy is already complete
+    # (engineering -> VLAN 10, finance -> VLAN 20).
+    volumes:
+      - ./configs/radius/radius-join.sh:/usr/local/bin/radius-join.sh:ro
+      - ./configs/radius/clients.conf:/etc/freeradius/3.0/clients.conf
+      - ./configs/radius/mods-available/ldap:/etc/freeradius/3.0/mods-available/ldap
+      - ./configs/radius/mods-available/eap:/etc/freeradius/3.0/mods-available/eap
+      - ./configs/radius/mods-available/mschap:/etc/freeradius/3.0/mods-available/mschap
+      - ./configs/radius/sites-available/default:/etc/freeradius/3.0/sites-available/default
+      - ./configs/radius/sites-available/inner-tunnel:/etc/freeradius/3.0/sites-available/inner-tunnel
+      - radius-certs:/shared-certs
+    command: ["bash", "/usr/local/bin/radius-join.sh"]
+    depends_on:
+      - dc1
+    tty: true
+    stdin_open: true
+
+  # nas1 — switch/AP simulator: runs eapol_test against radius1.
+  nas1:
+    image: freeradius-ad:local
+    container_name: nas1
+    hostname: nas1
+    domainname: lab.corp
+    profiles: [apps]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.20.11
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "radius1.lab.corp:10.100.20.10"
+    volumes:
+      - radius-certs:/eap-certs:ro
+      - ./configs/radius/eapol:/eapol:ro
+    command: ["sleep", "infinity"]
+    depends_on:
+      - radius1
+    tty: true
+    stdin_open: true
+
+  # ---- Workstations (10.100.10.x) -----------------------------------------
+
+  # admin-ws — an existing corp machine: domain-joined, sssd, chrony, Wazuh.
+  admin-ws:
+    build:
+      context: ../../images/workstation-wazuh
+    image: workstation-wazuh:local
+    container_name: admin-ws
+    hostname: admin-ws
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.10
+    # Workstations resolve via dns1 so Part B's broken conditional forwarder
+    # actually breaks their domain logins.
+    dns:
+      - 10.100.1.40
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "wazuh-manager.lab.corp:10.100.3.30"
+    environment:
+      MODE: "full"
+    cap_add:
+      - NET_ADMIN
+    command: ["bash", "/lab/workstation-setup.sh"]
+    volumes:
+      - admin-ws-home:/home
+      - ./configs:/lab:ro
+    depends_on:
+      - dc1
+      - dns1
+    tty: true
+    stdin_open: true
+
+  # ws-dave — the NEW employee's bare machine. Only chrony runs; joining the
+  # domain and enrolling the Wazuh agent are Part A student tasks.
+  ws-dave:
+    build:
+      context: ../../images/workstation-wazuh
+    image: workstation-wazuh:local
+    container_name: ws-dave
+    hostname: ws-dave
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.10.20
+    dns:
+      - 10.100.1.40
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "wazuh-manager.lab.corp:10.100.3.30"
+    environment:
+      MODE: "client"
+    cap_add:
+      - NET_ADMIN
+    command: ["bash", "/lab/workstation-setup.sh"]
+    volumes:
+      - ./configs:/lab:ro
+    depends_on:
+      - dc1
+      - dns1
+    tty: true
+    stdin_open: true
+
+  # ---- Ops: monitoring (10.100.3.x) ---------------------------------------
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus
+    profiles: [ops]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.20
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "mail1.lab.corp:10.100.2.20"
+      - "admin-ws.lab.corp:10.100.10.10"
+      - "blackbox.lab.corp:10.100.3.23"
+      - "alertmanager.lab.corp:10.100.3.22"
+    volumes:
+      - ./configs/monitoring/prometheus:/etc/prometheus
+      - prom-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    depends_on:
+      - dc1
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana
+    profiles: [ops]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.21
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    extra_hosts:
+      - "prometheus.lab.corp:10.100.3.20"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    hostname: alertmanager
+    profiles: [ops]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.22
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "hook1.lab.corp:10.100.3.24"
+    volumes:
+      - ./configs/monitoring/alertmanager:/etc/alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
+
+  blackbox:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox
+    hostname: blackbox
+    profiles: [ops]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.23
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    extra_hosts:
+      - "mail1.lab.corp:10.100.2.20"
+    volumes:
+      - ./configs/monitoring/blackbox:/etc/blackbox_exporter
+    cap_add:
+      - NET_RAW
+
+  hook1:
+    build:
+      context: ../../images/workstation
+    image: workstation:local
+    container_name: hook1
+    hostname: hook1
+    profiles: [ops]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.24
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    volumes:
+      - ./configs/monitoring/webhook/webhook.py:/usr/local/bin/webhook.py:ro
+    command: ["python3", "/usr/local/bin/webhook.py"]
+
+  # node-exporter sidecars — share each host's network+pid namespace so they
+  # report that host's metrics on its IP:9100, like an agent on the server.
+  node-dc1:
+    image: prom/node-exporter:latest
+    container_name: node-dc1
+    profiles: [ops]
+    network_mode: "service:dc1"
+    pid: "service:dc1"
+    depends_on:
+      - dc1
+
+  node-mail1:
+    image: prom/node-exporter:latest
+    container_name: node-mail1
+    profiles: [ops]
+    network_mode: "service:mail1"
+    pid: "service:mail1"
+    depends_on:
+      - mail1
+
+  node-ws:
+    image: prom/node-exporter:latest
+    container_name: node-ws
+    profiles: [ops]
+    network_mode: "service:admin-ws"
+    pid: "service:admin-ws"
+    depends_on:
+      - admin-ws
+
+  # Dave's workstation exporter — present but NOT yet scraped; Part A has the
+  # student add the scrape target so ws-dave shows up in monitoring.
+  node-ws-dave:
+    image: prom/node-exporter:latest
+    container_name: node-ws-dave
+    profiles: [ops]
+    network_mode: "service:ws-dave"
+    pid: "service:ws-dave"
+    depends_on:
+      - ws-dave
+
+  # ---- Ops: SIEM (Wazuh) --------------------------------------------------
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.14.5
+    container_name: wazuh-manager
+    hostname: wazuh-manager
+    profiles: [ops]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.30
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    ulimits:
+      nofile:
+        soft: 655360
+        hard: 655360
+    volumes:
+      - wazuh-etc:/var/ossec/etc
+      - wazuh-logs:/var/ossec/logs
+      - wazuh-queue:/var/ossec/queue
+      - wazuh-api-config:/var/ossec/api/configuration
+    tty: true
+    stdin_open: true
+
+  # ---- Ops: backup (diagram completeness; no Part A/B task) ---------------
+
+  backup1:
+    build:
+      context: ../../images/backup-server
+    image: backup-server:local
+    container_name: backup1
+    hostname: backup1
+    profiles: [ops]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.40
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    volumes:
+      - backup1-data:/srv/backups
+    tty: true
+    stdin_open: true
+
+  # ---- Ops: LAM (AD web UI) -----------------------------------------------
+
+  lam:
+    image: ghcr.io/ldapaccountmanager/lam:stable
+    container_name: lam
+    hostname: lam
+    profiles: [ops]
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.50
+    dns:
+      - 10.100.1.10
+    dns_search:
+      - lab.corp
+    environment:
+      LAM_PASSWORD: lam
+      LAM_LANG: en_US
+      LDAP_SERVER: ldap://dc1.lab.corp:389
+      LDAP_DOMAIN: lab.corp
+      LDAP_BASE_DN: dc=lab,dc=corp
+    ports:
+      - "8080:80"
+    depends_on:
+      - dc1
+
+volumes:
+  dc1-data:
+  admin-ws-home:
+  ca1-data:
+  prom-data:
+  grafana-data:
+  backup1-data:
+  wazuh-etc:
+  wazuh-logs:
+  wazuh-queue:
+  wazuh-api-config:
+  mail-data:
+  mail-state:
+  mail-log:
+  mail-config:
+  kc-trust:
+  kc-db:
+  radius-certs:

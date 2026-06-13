@@ -1,0 +1,15 @@
+# Alertmanager configuration (CAPSTONE: the completed Lab 13 config).
+# Routes every alert to the hook1 webhook receiver (stands in for
+# PagerDuty/Opsgenie/Slack). Read fired alerts with `docker logs hook1`.
+route:
+  receiver: oncall-webhook
+  group_by: [alertname]
+  group_wait: 15s
+  group_interval: 1m
+  repeat_interval: 30m
+
+receivers:
+  - name: oncall-webhook
+    webhook_configs:
+      - url: http://hook1.lab.corp:8080/
+        send_resolved: true
