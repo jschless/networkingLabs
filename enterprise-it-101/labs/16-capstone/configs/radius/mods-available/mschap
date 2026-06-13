@@ -1,0 +1,10 @@
+# MS-CHAP / MSCHAPv2 — validated against AD via winbind's ntlm_auth.
+# (GIVEN scaffolding: wiring mschap to ntlm_auth is the fiddly part; the lab is
+#  about authenticating *against AD*, which this enables for PEAP-MSCHAPv2.)
+mschap {
+    with_ntdomain_hack = yes
+    ntlm_auth = "/usr/bin/ntlm_auth --request-nt-key --allow-mschapv2 --username=%{%{Stripped-User-Name}:-%{%{User-Name}:-None}} --domain=LAB --challenge=%{%{mschap:Challenge}:-00} --nt-response=%{%{mschap:NT-Response}:-00}"
+    passchange {
+    }
+    winbind_retry_with_normalised_username = yes
+}

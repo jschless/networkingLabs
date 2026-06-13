@@ -1,0 +1,80 @@
+# Default virtual server — the OUTER request handling.
+#   * radtest PAP         -> LDAP bind against AD          (given)
+#   * radtest mschap/PEAP -> mschap -> ntlm_auth -> AD     (given)
+#   * eapol_test EAP-TLS  -> certificate                   (given)
+#   * post-auth           -> dynamic VLAN by AD group      (YOU write — Task 5)
+server default {
+    listen {
+        type = auth
+        ipaddr = *
+        port = 0
+    }
+    listen {
+        type = acct
+        ipaddr = *
+        port = 0
+    }
+
+    authorize {
+        preprocess
+        chap
+        mschap
+        eap {
+            ok = return
+        }
+        ldap
+        # PAP with no local password -> authenticate by binding to AD as the user.
+        if ((ok || updated) && User-Password && !control:Auth-Type) {
+            update {
+                control:Auth-Type := ldap
+            }
+        }
+        pap
+    }
+
+    authenticate {
+        Auth-Type PAP {
+            pap
+        }
+        Auth-Type CHAP {
+            chap
+        }
+        Auth-Type MS-CHAP {
+            mschap
+        }
+        Auth-Type LDAP {
+            ldap
+        }
+        eap
+    }
+
+    preacct {
+        preprocess
+        acct_unique
+    }
+    accounting {
+    }
+
+    post-auth {
+        # ---- Dynamic VLAN by AD group membership (CAPSTONE: completed) ----
+        # engineering -> VLAN 10, finance -> VLAN 20. A switch reads these three
+        # Tunnel-* attributes off the Access-Accept and places the port's VLAN.
+        if (&User-Name && (LDAP-Group == "engineering")) {
+            update reply {
+                Tunnel-Type             := VLAN
+                Tunnel-Medium-Type      := IEEE-802
+                Tunnel-Private-Group-Id := "10"
+            }
+        }
+        elsif (&User-Name && (LDAP-Group == "finance")) {
+            update reply {
+                Tunnel-Type             := VLAN
+                Tunnel-Medium-Type      := IEEE-802
+                Tunnel-Private-Group-Id := "20"
+            }
+        }
+
+        Post-Auth-Type REJECT {
+        }
+    }
+}
