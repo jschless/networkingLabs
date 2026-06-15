@@ -657,6 +657,8 @@ different layer.
 | Internal name → `NXDOMAIN` after a change | Conditional forward missing; query leaked to public internet | Restore the `lab.corp` forward zone; `rndc flush` |
 | "But it worked a second ago" | Cached answer surviving a config change | `rndc flush` and retest |
 | External view "leaks" internet | External view has `recursion yes` or forwarders | Set `recursion no;` and no forwarders in it |
+| New zone added but `rndc zonestatus` says "not found" / query still goes to root | `rndc reconfig` sometimes doesn't pick up new zones or views reliably | `docker restart dns1` — since `named` is PID 1, this does a clean restart and forces a full re-read of all config |
+| `dc1` samba exits immediately (status 1), port 53 closed, `docker logs dc1` shows crash loop | `dc1-data` volume persists the AD database across a container recreation, but `/etc/samba/smb.conf` and `/etc/krb5.conf` live in the container layer and get reset — Samba sees `server role = standalone server` and bails | Redeploy with `-v` to wipe the volume and let auto-provision regenerate everything: `docker compose … down -v && docker compose … up -d` |
 
 ---
 

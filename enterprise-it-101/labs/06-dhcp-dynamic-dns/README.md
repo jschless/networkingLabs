@@ -359,10 +359,13 @@ reserving it to `client1`'s MAC, so it always gets the same IP without being
 statically configured.
 
 ??? question "Predict first"
-    A reservation lives *outside* the dynamic pool (`.100–.200`). Why would you
-    reserve `.150` rather than just statically configuring `10.100.10.150` on
-    `client1` itself? What do you keep (and what do you give up) by doing it at
-    the DHCP server instead of on the host?
+    `.150` sits *inside* the dynamic pool (`.100–.200`). When you reserve it to
+    `client1`'s MAC, what does Kea do with that address for *every other*
+    client — and why doesn't that cause a duplicate-address conflict? And the
+    bigger question: why reserve `.150` at the DHCP server at all, rather than
+    just statically configuring `10.100.10.150` on `client1` itself? What do you
+    keep (and what do you give up) by doing it at the server instead of on the
+    host?
 
 ??? note "Hints"
     - Look up `client1`'s real MAC first — reservations match on it:
@@ -454,7 +457,7 @@ different valid-looking base64 string, then restart and clear the ddns log:
 ```bash
 docker exec dhcp1 sed -i 's/"secret": "[^"]*"/"secret": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/' \
     /etc/kea/kea-dhcp-ddns.conf
-docker exec dhcp1 bash -c ': > /var/log/kea/ddns.log'
+docker exec dhcp1 bash -c ': > /var/log/kea-ddns.log'
 docker exec dhcp1 kea-start
 ```
 
@@ -463,7 +466,7 @@ docker exec dhcp1 kea-start
 docker exec client2 bash -c 'echo "send host-name = gethostname();" > /etc/dhcp/dhclient.conf'
 docker exec client2 bash -c 'dhclient -r eth0; dhclient -v eth0' 2>&1 | grep DHCPACK   # lease OK?
 docker exec client2 dig @10.100.1.40 client2.dhcp.lab.corp A +short                    # resolves?
-docker exec dhcp1 tail -5 /var/log/kea/ddns.log                                        # the only clue
+docker exec dhcp1 tail -5 /var/log/kea-ddns.log                                        # the only clue
 ```
 
 ??? note "Diagnosis hints (try before revealing)"
