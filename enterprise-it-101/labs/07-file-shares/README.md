@@ -13,7 +13,7 @@ bytes") — and you'll make them agree, then watch what happens when they don't.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     lab-corp  10.100.0.0/16                          │
+│                     lab-corp  10.100.0.0/16                         │
 │                                                                     │
 │   ┌──────────────┐   Kerberos    ┌──────────────┐                   │
 │   │     dc1      │◀──auth/groups─│     fs1      │                   │

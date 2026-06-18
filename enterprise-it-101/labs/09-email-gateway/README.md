@@ -12,7 +12,7 @@ prove TLS matters by reading a password off the wire, sign outbound mail with
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                     lab-corp  10.100.0.0/16                           │
+│                     lab-corp  10.100.0.0/16                          │
 │                                                                      │
 │   ┌──────────────┐   LDAPS (auth + lookup)   ┌──────────────┐        │
 │   │     dc1      │◀──────────────────────────│    mail1     │        │

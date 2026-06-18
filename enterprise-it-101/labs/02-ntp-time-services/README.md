@@ -8,17 +8,17 @@ Kerberos — the authentication half of Active Directory you built in Lab 01 —
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│                      lab-corp  10.100.0.0/16                        │
+│                      lab-corp  10.100.0.0/16                       │
 │                                                                    │
 │   ┌──────────────┐      ┌──────────────┐      ┌──────────────┐     │
 │   │     ntp1     │◀─────│     dc1      │      │   admin-ws   │     │
 │   │ chrony NTP   │      │  Samba AD DC │      │ Workstation  │     │
-│   │ 10.100.1.20  │◀──────────────────────────│ 10.100.10.10 │     │
+│   │ 10.100.1.20  │◀──────────────────────────│ 10.100.10.10 │      │
 │   │ stratum 10   │      │ 10.100.1.10  │      │              │     │
 │   │  (serves     │      │ chrony client│      │ chrony client│     │
 │   │   the lab)   │      │  stratum 11  │      │  stratum 11  │     │
 │   └──────────────┘      └──────────────┘      └──────────────┘     │
-│         ▲  serves time (NTP/123) to the lab; clients sync to it     │
+│         ▲  serves time (NTP/123) to the lab; clients sync to it    │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
