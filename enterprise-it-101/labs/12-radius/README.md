@@ -15,18 +15,18 @@ work. The NAS (network access server) never sees AD; it only talks RADIUS to
 ## Topology
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                        lab-corp  10.100.0.0/16                           │
-│                                                                          │
-│  ┌────────────┐          ┌──────────────┐          ┌──────────────────┐  │
-│  │    dc1     │  ldaps/  │   radius1    │  RADIUS   │      nas1        │  │
-│  │ Samba AD   │◄─winbind─►│ FreeRADIUS   │◄─1812/udp─►│ NAS + supplicant │  │
-│  │ 10.100.1.10│  ntlm_auth│ 10.100.20.10 │  shared   │  10.100.20.11    │  │
-│  └────────────┘          │  (joined)    │  secret   │ radtest/eapol_test│  │
-│                          └──────────────┘           └──────────────────┘  │
+┌────────────────────────────────────────────────────────────────────────────┐
+│                          lab-corp  10.100.0.0/16                           │
+│                                                                            │
+│  ┌────────────┐           ┌──────────────┐            ┌──────────────────┐ │
+│  │    dc1     │  ldaps/   │   radius1    │   RADIUS   │       nas1       │ │
+│  │ Samba AD   │◄─winbind─►│ FreeRADIUS   │◄─1812/udp─►│ NAS + supplicant │ │
+│  │ 10.100.1.10│ ntlm_auth │ 10.100.20.10 │  shared    │   10.100.20.11   │ │
+│  └────────────┘           │  (joined)    │   secret   │radtest/eapol_test│ │
+│                           └──────────────┘            └──────────────────┘ │
 │   PAP   -> ldap bind to AD                                                 │
 │   PEAP  -> mschap -> ntlm_auth -> AD       EAP-TLS -> client certificate   │
-└──────────────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Container | Image | IP | Role |

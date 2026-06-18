@@ -8,7 +8,7 @@ In Labs 01–03 you built the domain and queried it as an outsider — `kinit` a
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│                       lab-corp  10.100.0.0/16                       │
+│                       lab-corp  10.100.0.0/16                      │
 │                                                                    │
 │   ┌──────────────┐        ┌──────────────┐     ┌──────────────┐    │
 │   │     dc1      │◀───────│     ws1      │     │     ws2      │    │
@@ -17,7 +17,7 @@ In Labs 01–03 you built the domain and queried it as an outsider — `kinit` a
 │   │              │  LDAP/ │  sssd → AD   │     │  sssd → AD   │    │
 │   │  KDC + LDAP  │  Krb5  │ (WS1$ acct)  │     │ (WS2$ acct)  │    │
 │   └──────────────┘        └──────────────┘     └──────────────┘    │
-│        AD users (alice/bob/charlie) log in on either workstation    │
+│        AD users (alice/bob/charlie) log in on either workstation   │
 └────────────────────────────────────────────────────────────────────┘
 ```
 

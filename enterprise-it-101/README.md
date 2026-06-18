@@ -40,6 +40,35 @@ cd enterprise-it-101
 Run `./eit.sh help` for the full command list, or `./eit.sh list` to see every lab.
 
 <details>
+<summary>What <code>./eit.sh build</code> builds (and what's pulled on demand)</summary>
+
+The helper builds these custom images once; you can also build them by hand from
+`enterprise-it-101/`:
+
+```bash
+docker build -t samba-ad:local     images/samba-ad/
+docker build -t workstation:local  images/workstation/
+docker build -t bind9:local        images/bind9/
+docker build -t kea:local          images/kea/
+docker build -t ansible:local      images/ansible/
+docker build -t freeradius-ad:local images/freeradius-ad/
+docker build -t squid-ad:local     images/squid-ad/
+```
+
+Some labs additionally use registry images, pulled automatically on `up` (no build):
+
+```bash
+# Lab 09 (email)
+docker pull ghcr.io/docker-mailserver/docker-mailserver:latest
+# Lab 10 (SSO)
+docker pull quay.io/keycloak/keycloak:26.0
+docker pull postgres:15
+# Lab 11 (web origins)
+docker pull nginx:alpine
+```
+</details>
+
+<details>
 <summary>Doing it by hand (without the helper)</summary>
 
 Lab 01 ships a standalone compose file; Labs 02–12 are override files layered on the
@@ -55,6 +84,8 @@ docker compose \
   -f labs/05-dns-deep-dive/docker-compose.override.yml up -d
 ```
 </details>
+
+<!-- site:curriculum -->
 
 ## Curriculum
 
@@ -95,6 +126,8 @@ These four labs create the base infrastructure that every subsequent lab depends
 | 14 | SIEM & Security Logging | 2-3 hrs | Wazuh SIEM, brute-force detection, active response |
 | 15 | Backup & Disaster Recovery | 2-3 hrs | BorgBackup, AD restore, CA key recovery |
 | 16 | Capstone | 3-4 hrs | Full stack: onboard a user, troubleshoot breaks, document architecture |
+
+<!-- site:curriculum-end -->
 
 ## Architecture
 
@@ -181,6 +214,8 @@ identity, Kerberos, or PKI concepts these labs teach — it's an addressing-plan
 layered on top. If you want to pursue it, start in **Lab 05 (DNS)** and **Lab 06 (DHCP)**,
 since those are where the addressing plane actually lives; the rest of the stack inherits
 whatever those two hand it.
+
+<!-- site:contributing -->
 
 ## Contributing a Lab
 

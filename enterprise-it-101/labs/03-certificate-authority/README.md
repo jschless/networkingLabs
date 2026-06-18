@@ -8,17 +8,17 @@ Back in Lab 01 the domain controller was already listening on port **636 (LDAPS)
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│                       lab-corp  10.100.0.0/16                       │
+│                       lab-corp  10.100.0.0/16                      │
 │                                                                    │
 │   ┌──────────────┐         ┌──────────────┐      ┌──────────────┐  │
-│   │     ca1      │  issues  │     dc1      │      │   admin-ws   │  │
-│   │   step-ca    │─────────▶│  Samba AD DC │◀─────│  Workstation │  │
-│   │ 10.100.1.30  │  certs   │ 10.100.1.10  │ LDAPS│ 10.100.10.10 │  │
-│   │ Root + Inter │          │  LDAPS :636  │ :636 │              │  │
-│   │ HTTPS :9000  │◀─────────│ (now usable) │      │ trusts root  │  │
-│   └──────────────┘ trust/   └──────────────┘      └──────────────┘  │
-│                    issue          ▲ bootstrap trust ──┘             │
-│        all three trust the CA's root certificate                    │
+│   │     ca1      │  issues  │     dc1      │      │   admin-ws   │ │
+│   │   step-ca    │─────────▶│  Samba AD DC │◀─────│  Workstation │ │
+│   │ 10.100.1.30  │  certs   │ 10.100.1.10  │ LDAPS│ 10.100.10.10 │ │
+│   │ Root + Inter │          │  LDAPS :636  │ :636 │              │ │
+│   │ HTTPS :9000  │◀─────────│ (now usable) │      │ trusts root  │ │
+│   └──────────────┘ trust/   └──────────────┘      └──────────────┘ │
+│                    issue          ▲ bootstrap trust ──┘            │
+│        all three trust the CA's root certificate                   │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
