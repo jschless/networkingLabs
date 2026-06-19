@@ -16,28 +16,20 @@ to point at it.
 
 ## Topology
 
-```
-┌────────────────────────────────────────────────────────────────────────────────┐
-│                            lab-corp  10.100.0.0/16                             │
-│                                                                                │
-│   monitored hosts (Wazuh agent installed — you enroll + configure them)        │
-│   ┌──────────────┐                      ┌──────────────┐                       │
-│   │     dc1      │  Samba AD authn       │   admin-ws   │  sshd + /var/log/    │
-│   │  Samba AD    │  audit (JSON) ───┐    │  your seat   │  auth.log ──┐        │
-│   │ 10.100.1.10  │                  │    │ 10.100.10.10 │             │        │
-│   └──────────────┘                  │    └──────▲───────┘             │        │
-│        agent ──────────────┐        │           │ ssh brute force     │        │
-│                            ▼        ▼           │                     ▼        │
-│                       ┌──────────────────┐      │            ┌──────────────┐  │
-│                       │  wazuh-manager   │◄─────agent────────┤   (agent)    │  │
-│                       │   10.100.3.30    │      │            └──────────────┘  │
-│                       │  rules · decoders│      │                              │
-│                       │alerts.json·:55000│      │   ┌──────────────┐           │
-│                       │  active response ───────┼──►│   intruder   │ DROP ◄─┐  │
-│                       └──────────────────┘      │   │ 10.100.10.66 │        │  │
-│                                                 └───┤  (no agent)  ├────────┘  │
-│                                                     └──────────────┘           │
-└────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    subgraph hosts["monitored hosts (Wazuh agent installed)"]
+      dc1["dc1\nSamba AD\n10.100.1.10"]
+      adminws["admin-ws\nyour seat\n10.100.10.10"]
+    end
+    wazuh["wazuh-manager\n10.100.3.30\nrules · decoders\nalerts.json · :55000\nactive response"]
+    intruder["intruder\n10.100.10.66\n(no agent)"]
+    dc1 -- "AD authn audit (JSON)\nagent" --> wazuh
+    adminws -- "sshd / auth.log\nagent" --> wazuh
+    intruder -- "ssh brute force" --> adminws
+    wazuh -- "active response: DROP" --> intruder
+  end
 ```
 
 | Container | Image | IP | Role |

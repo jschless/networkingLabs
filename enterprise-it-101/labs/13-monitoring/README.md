@@ -15,28 +15,27 @@ breaks and nobody pages at all.
 
 ## Topology
 
-```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                         lab-corp  10.100.0.0/16                            │
-│                                                                            │
-│  monitored hosts (each runs a node-exporter "agent" on :9100)              │
-│  ┌─────────────┐   ┌──────────────┐   ┌──────────────┐                     │
-│  │     dc1     │   │    mail1     │   │   admin-ws   │                     │
-│  │  Samba AD   │   │ SMTP gateway │   │  your seat   │                     │
-│  │ 10.100.1.10 │   │ 10.100.2.20  │   │ 10.100.10.10 │                     │
-│  └──────▲──────┘   └──────▲───────┘   └──────────────┘                     │
-│         │ probes: dns/ldap│ probe: smtp                                    │
-│         │ ldaps           │                                                │
-│  ┌──────┴────────┐  scrape /probe   ┌────────────┐    ┌──────────────┐     │
-│  │   blackbox    │◄─────────────────┤ prometheus │───►│ alertmanager │     │
-│  │ 10.100.3.23   │                  │ 10.100.3.20│    │ 10.100.3.22  │     │
-│  └───────────────┘   scrape :9100   └─────┬──────┘    └──────┬───────┘     │
-│                      (pull model)         │ datasource       │ webhook     │
-│                                     ┌─────▼──────┐    ┌──────▼───────┐     │
-│                                     │  grafana   │    │    hook1     │     │
-│                                     │ 10.100.3.21│    │ 10.100.3.24  │     │
-│                                     └────────────┘    └──────────────┘     │
-└────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    subgraph hosts["monitored hosts (node-exporter :9100)"]
+      dc1["dc1\nSamba AD\n10.100.1.10"]
+      mail1["mail1\nSMTP gateway\n10.100.2.20"]
+      adminws["admin-ws\n10.100.10.10"]
+    end
+    blackbox["blackbox\n10.100.3.23"]
+    prometheus["prometheus\n10.100.3.20"]
+    alertmanager["alertmanager\n10.100.3.22"]
+    grafana["grafana\n10.100.3.21"]
+    hook1["hook1\n10.100.3.24"]
+    blackbox -- "probe: dns / ldap / ldaps" --> dc1
+    blackbox -- "probe: smtp" --> mail1
+    prometheus -- "scrape /probe" --> blackbox
+    prometheus -- "scrape :9100 (pull)" --> hosts
+    prometheus -- "datasource" --> grafana
+    prometheus --> alertmanager
+    alertmanager -- "webhook" --> hook1
+  end
 ```
 
 | Container | Image | IP | Role |

@@ -14,26 +14,17 @@ hope**. The disasters in this lab are scripted; the next ones won't be.
 
 ## Topology
 
-```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                          lab-corp  10.100.0.0/16                           │
-│                                                                            │
-│   ┌──────────────┐  borg create (push, over SSH)   ┌───────────────────┐   │
-│   │     dc1      │ ───────────────────────────────►│      backup1      │   │
-│   │  Samba AD DC │      ssh://borg@backup1/...     │    10.100.3.40    │   │
-│   │ 10.100.1.10  │ ◄─────────────────────────────  │  Borg repos under │   │
-│   └──────────────┘     borg extract (restore)      │   /srv/backups    │   │
-│                                                    │                   │   │
-│   ┌──────────────┐    ca1-data volume mounted      │   /mnt/ca1 ◄──────┼─┐ │
-│   │     ca1      │    into backup1 (agent-less     └───────────────────┘ │ │
-│   │   step-ca    │    container → volume-style     ▲                     │ │
-│   │ 10.100.1.30  │────backup)──────────────────────┼─────────────────────┘ │
-│   └──────────────┘                                 │                       │
-│   ┌──────────────┐                                 │                       │
-│   │   admin-ws   │  your seat: kinit / step ca     │                       │
-│   │ 10.100.10.10 │  certificate — proves each      │                       │
-│   └──────────────┘  recovery actually worked       │                       │
-└────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD DC\n10.100.1.10"]
+    ca1["ca1\nstep-ca\n10.100.1.30"]
+    adminws["admin-ws\n10.100.10.10\nkinit / step ca certificate\n(proves recovery worked)"]
+    backup1["backup1\n10.100.3.40\nBorg repos under /srv/backups\n/mnt/ca1 (ca1-data volume)"]
+    dc1 -- "borg create (push over SSH)\nssh://borg@backup1/..." --> backup1
+    backup1 -- "borg extract (restore)" --> dc1
+    ca1 -- "ca1-data volume mounted\n(agent-less, volume-style)" --> backup1
+  end
 ```
 
 | Container | Image | IP | Role |

@@ -6,20 +6,15 @@ Kerberos — the authentication half of Active Directory you built in Lab 01 —
 
 ## Topology
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                      lab-corp  10.100.0.0/16                       │
-│                                                                    │
-│   ┌──────────────┐      ┌──────────────┐      ┌──────────────┐     │
-│   │     ntp1     │◀─────│     dc1      │      │   admin-ws   │     │
-│   │ chrony NTP   │      │  Samba AD DC │      │ Workstation  │     │
-│   │ 10.100.1.20  │◀──────────────────────────│ 10.100.10.10 │      │
-│   │ stratum 10   │      │ 10.100.1.10  │      │              │     │
-│   │  (serves     │      │ chrony client│      │ chrony client│     │
-│   │   the lab)   │      │  stratum 11  │      │  stratum 11  │     │
-│   └──────────────┘      └──────────────┘      └──────────────┘     │
-│         ▲  serves time (NTP/123) to the lab; clients sync to it    │
-└────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    ntp1["ntp1\nchrony NTP · stratum 10\n10.100.1.20\n(serves the lab)"]
+    dc1["dc1\nSamba AD DC · chrony client\n10.100.1.10 · stratum 11"]
+    adminws["admin-ws\nWorkstation · chrony client\n10.100.10.10 · stratum 11"]
+    dc1 -- "NTP / 123" --> ntp1
+    adminws -- "NTP / 123" --> ntp1
+  end
 ```
 
 | Container | Image | IP | Role |

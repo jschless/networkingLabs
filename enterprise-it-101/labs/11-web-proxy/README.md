@@ -13,22 +13,20 @@ with a misleading "auth required" symptom.
 
 ## Topology
 
-```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                         lab-corp  10.100.0.0/16                            │
-│                                                                            │
-│  ┌────────────┐         ┌──────────────┐        ┌────────────────────────┐ │
-│  │    dc1     │  krb/   │    proxy1    │  HTTP  │   webserver1 (allowed) │ │
-│  │ Samba AD   │◄──ldap─►│ Squid + krb5 │◄──────►│   10.100.2.41          │ │
-│  │ 10.100.1.10│         │ 10.100.2.40  │        ├────────────────────────┤ │
-│  └────────────┘         │   :3128      │  HTTP  │   webserver2 (blocked  │ │
-│        ▲                └──────┬───────┘◄──────►│   for finance)         │ │
-│        │ kinit (TGT)          │ proxy           │   10.100.2.42          │ │
-│  ┌─────┴───────┐              │ auth            └────────────────────────┘ │
-│  │     ws1     │──────────────┘  (Negotiate / SPNEGO)                      │
-│  │ 10.100.10.11│   curl --proxy-negotiate                                  │
-│  └─────────────┘                                                           │
-└────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD\n10.100.1.10"]
+    proxy1["proxy1\nSquid + krb5\n10.100.2.40 · :3128"]
+    web1["webserver1 (allowed)\n10.100.2.41"]
+    web2["webserver2 (blocked for finance)\n10.100.2.42"]
+    ws1["ws1\n10.100.10.11"]
+    dc1 <-- "krb / ldap" --> proxy1
+    proxy1 <-- "HTTP" --> web1
+    proxy1 <-- "HTTP" --> web2
+    ws1 -- "proxy auth (Negotiate / SPNEGO)\ncurl --proxy-negotiate" --> proxy1
+    ws1 -- "kinit (TGT)" --> dc1
+  end
 ```
 
 | Container | Image | IP | Role |

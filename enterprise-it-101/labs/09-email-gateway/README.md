@@ -10,23 +10,16 @@ prove TLS matters by reading a password off the wire, sign outbound mail with
 
 ## Topology
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                     lab-corp  10.100.0.0/16                          │
-│                                                                      │
-│   ┌──────────────┐   LDAPS (auth + lookup)   ┌──────────────┐        │
-│   │     dc1      │◀──────────────────────────│    mail1     │        │
-│   │  Samba AD    │   MX → mail1.lab.corp     │  Postfix +   │        │
-│   │  DNS + LDAP  │                           │  Dovecot     │        │
-│   │ 10.100.1.10  │                           │ 10.100.2.20  │        │
-│   └──────────────┘                           │ SMTP 25/587  │        │
-│          ▲                                   │ IMAP 143/993 │        │
-│          │ kinit / dig                       └──────┬───────┘        │
-│   ┌──────┴───────┐   swaks / curl imaps            │                 │
-│   │   admin-ws   │─────────────────────────────────┘                 │
-│   │ 10.100.10.10 │                                                   │
-│   └──────────────┘                                                   │
-└──────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD · DNS + LDAP\n10.100.1.10"]
+    mail1["mail1\nPostfix + Dovecot\n10.100.2.20\nSMTP 25/587 · IMAP 143/993"]
+    adminws["admin-ws\n10.100.10.10"]
+    mail1 -- "LDAPS (auth + lookup)\nMX → mail1.lab.corp" --> dc1
+    adminws -- "kinit / dig" --> dc1
+    adminws -- "swaks / curl imaps" --> mail1
+  end
 ```
 
 | Container | Image | IP | Role |

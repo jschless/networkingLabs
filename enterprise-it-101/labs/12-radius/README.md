@@ -14,20 +14,18 @@ work. The NAS (network access server) never sees AD; it only talks RADIUS to
 
 ## Topology
 
+```mermaid
+flowchart LR
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD\n10.100.1.10"]
+    radius1["radius1\nFreeRADIUS (joined)\n10.100.20.10"]
+    nas1["nas1\nNAS + supplicant\n10.100.20.11\nradtest / eapol_test"]
+    dc1 <-- "ldaps / winbind\nntlm_auth" --> radius1
+    radius1 <-- "RADIUS 1812/udp\nshared secret" --> nas1
+  end
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                          lab-corp  10.100.0.0/16                           │
-│                                                                            │
-│  ┌────────────┐           ┌──────────────┐            ┌──────────────────┐ │
-│  │    dc1     │  ldaps/   │   radius1    │   RADIUS   │       nas1       │ │
-│  │ Samba AD   │◄─winbind─►│ FreeRADIUS   │◄─1812/udp─►│ NAS + supplicant │ │
-│  │ 10.100.1.10│ ntlm_auth │ 10.100.20.10 │  shared    │   10.100.20.11   │ │
-│  └────────────┘           │  (joined)    │   secret   │radtest/eapol_test│ │
-│                           └──────────────┘            └──────────────────┘ │
-│   PAP   -> ldap bind to AD                                                 │
-│   PEAP  -> mschap -> ntlm_auth -> AD       EAP-TLS -> client certificate   │
-└────────────────────────────────────────────────────────────────────────────┘
-```
+
+*Auth methods:* PAP → LDAP bind · PEAP → MSCHAP → `ntlm_auth` → AD · EAP-TLS → client certificate.
 
 | Container | Image | IP | Role |
 |-----------|-------|----|------|

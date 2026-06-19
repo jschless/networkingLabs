@@ -14,24 +14,20 @@ with a misleading error.
 
 ## Topology
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                        lab-corp  10.100.0.0/16                           │
-│                                                                          │
-│  ┌────────────┐   LDAPS    ┌─────────────┐   OIDC    ┌────────────────┐  │
-│  │    dc1     │◄──────────►│  keycloak   │◄─────────►│   sample-app   │  │
-│  │ Samba AD   │  636 (bind │  IdP / OIDC │  discovery│  Flask + OIDC  │  │
-│  │ 10.100.1.10│   + sync)  │ 10.100.2.30 │   + token │  10.100.2.31   │  │
-│  │            │            │   :8088     │           │     :8089      │  │
-│  └────────────┘            └──────┬──────┘           └────────────────┘  │
-│                                   │ JDBC                                 │
-│                            ┌──────┴──────┐                               │
-│                            │ postgres-kc │   (certfetch: one-shot, grabs │
-│                            │ 10.100.2.32 │    dc1's LDAPS cert → trust)  │
-│                            └─────────────┘                               │
-└──────────────────────────────────────────────────────────────────────────┘
-        host browser ──► http://keycloak.lab.corp:8088  (admin console)
-        host browser ──► http://sample-app.lab.corp:8089 (the protected app)
+```mermaid
+flowchart LR
+  browser(["host browser"])
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD\n10.100.1.10"]
+    keycloak["keycloak\nIdP / OIDC\n10.100.2.30 · :8088"]
+    app["sample-app\nFlask + OIDC\n10.100.2.31 · :8089"]
+    pg["postgres-kc\n10.100.2.32"]
+    keycloak <-- "LDAPS 636\n(bind + sync)" --> dc1
+    keycloak <-- "OIDC discovery + token" --> app
+    keycloak -- "JDBC" --> pg
+  end
+  browser -- "keycloak.lab.corp:8088\n(admin console)" --> keycloak
+  browser -- "sample-app.lab.corp:8089\n(protected app)" --> app
 ```
 
 | Container | Image | IP | Role |

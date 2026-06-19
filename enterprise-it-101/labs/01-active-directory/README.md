@@ -4,21 +4,15 @@ Build the foundation of the `lab.corp` domain: a Samba AD Domain Controller prov
 
 ## Topology
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    lab-corp  10.100.0.0/16                  │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │     dc1      │  │   admin-ws   │  │     lam      │       │
-│  │  Samba AD DC │  │  Workstation │  │  LDAP Account│       │
-│  │ 10.100.1.10  │  │ 10.100.10.10 │  │   Manager   │        │
-│  │              │  │              │  │ 10.100.1.11  │       │
-│  │  LDAP :389   │  │              │  │  HTTP :80    │       │
-│  │  Kerberos:88 │  │  DNS→dc1     │  │              │       │
-│  │  DNS  :53    │  │              │  │  LDAP→dc1    │       │
-│  │  LDAPS:636   │  │              │  │              │       │
-│  └──────────────┘  └──────────────┘  └──────────────┘       │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD DC\n10.100.1.10\nLDAP :389 · Kerberos :88\nDNS :53 · LDAPS :636"]
+    adminws["admin-ws\nWorkstation\n10.100.10.10"]
+    lam["lam\nLDAP Account Manager\n10.100.1.11 · HTTP :80"]
+    adminws -- "DNS" --> dc1
+    lam -- "LDAP" --> dc1
+  end
 ```
 
 | Container | Image | IP | Role |
