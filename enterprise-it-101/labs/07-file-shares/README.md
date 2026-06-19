@@ -11,22 +11,16 @@ bytes") — and you'll make them agree, then watch what happens when they don't.
 
 ## Topology
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     lab-corp  10.100.0.0/16                         │
-│                                                                     │
-│   ┌──────────────┐   Kerberos    ┌──────────────┐                   │
-│   │     dc1      │◀──auth/groups─│     fs1      │                   │
-│   │  Samba AD DC │    (winbind)  │ Samba MEMBER │                   │
-│   │ 10.100.1.10  │               │  file server │                   │
-│   └──────────────┘               │ 10.100.2.10  │                   │
-│          ▲                       │ [engineering]│                   │
-│          │ kinit                 │ [finance]    │                   │
-│   ┌──────┴───────┐   smbclient   │ [public]     │                   │
-│   │   admin-ws   │──-k──────────▶└──────────────┘                   │
-│   │ 10.100.10.10 │   (Kerberos)                                     │
-│   └──────────────┘                                                  │
-└─────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD DC\n10.100.1.10"]
+    fs1["fs1\nSamba MEMBER file server\n10.100.2.10\nshares: engineering · finance · public"]
+    adminws["admin-ws\n10.100.10.10"]
+    fs1 -- "Kerberos auth / groups\n(winbind)" --> dc1
+    adminws -- "kinit" --> dc1
+    adminws -- "smbclient -k (Kerberos)" --> fs1
+  end
 ```
 
 | Container | Image | IP | Role |

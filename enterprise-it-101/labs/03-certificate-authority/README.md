@@ -6,20 +6,16 @@ Back in Lab 01 the domain controller was already listening on port **636 (LDAPS)
 
 ## Topology
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                       lab-corp  10.100.0.0/16                      │
-│                                                                    │
-│   ┌──────────────┐         ┌──────────────┐      ┌──────────────┐  │
-│   │     ca1      │  issues  │     dc1      │      │   admin-ws   │ │
-│   │   step-ca    │─────────▶│  Samba AD DC │◀─────│  Workstation │ │
-│   │ 10.100.1.30  │  certs   │ 10.100.1.10  │ LDAPS│ 10.100.10.10 │ │
-│   │ Root + Inter │          │  LDAPS :636  │ :636 │              │ │
-│   │ HTTPS :9000  │◀─────────│ (now usable) │      │ trusts root  │ │
-│   └──────────────┘ trust/   └──────────────┘      └──────────────┘ │
-│                    issue          ▲ bootstrap trust ──┘            │
-│        all three trust the CA's root certificate                   │
-└────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    ca1["ca1\nstep-ca · Root + Intermediate\n10.100.1.30 · HTTPS :9000"]
+    dc1["dc1\nSamba AD DC\n10.100.1.10 · LDAPS :636"]
+    adminws["admin-ws\nWorkstation\n10.100.10.10 · trusts root"]
+    ca1 -- "issues certs" --> dc1
+    adminws -- "LDAPS :636\n(bootstrap trust)" --> dc1
+  end
+  %% all three trust the CA's root certificate
 ```
 
 | Container | Image | IP | Role |

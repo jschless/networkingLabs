@@ -10,23 +10,16 @@ run from a control node to enforce NTP, an SSH banner, and SSH hardening across
 
 ## Topology
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                     lab-corp  10.100.0.0/16                          │
-│                                                                      │
-│  ┌──────────────┐                      ┌──────────────┐              │
-│  │     dc1      │  Part A: GPO          │   ansible1   │  Part B     │
-│  │  Samba AD DC │  create / link /      │ control node │  ansible-   │
-│  │ 10.100.1.10  │  SYSVOL              │ 10.100.3.10  │  playbook    │
-│  └──────────────┘                      └──────┬───────┘              │
-│                                  SSH (key) ┌───┴────┐                │
-│                                            ▼        ▼                │
-│                                     ┌──────────┐ ┌──────────┐        │
-│                                     │   ws1    │ │   ws2    │        │
-│                                     │10.100.10.│ │10.100.10.│        │
-│                                     │   11     │ │   12     │        │
-│                                     └──────────┘ └──────────┘        │
-└──────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD DC\n10.100.1.10\nPart A: GPO create / link / SYSVOL"]
+    ansible1["ansible1\ncontrol node\n10.100.3.10\nPart B: ansible-playbook"]
+    ws1["ws1\n10.100.10.11"]
+    ws2["ws2\n10.100.10.12"]
+    ansible1 -- "SSH (key)" --> ws1
+    ansible1 -- "SSH (key)" --> ws2
+  end
 ```
 
 | Container | Image | IP | Role |

@@ -9,22 +9,19 @@ it so a single server answers every kind of query.
 
 ## Topology
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                      lab-corp  10.100.0.0/16                           │
-│                                                                        │
-│   ┌──────────────┐     ┌──────────────┐     ┌──────────────┐           │
-│   │     dc1      │◀────│     dns1     │     │   admin-ws   │           │
-│   │  Samba AD    │ fwd │   BIND9      │◀────│  internal    │           │
-│   │  DNS (auth   │     │  resolver +  │     │  client      │           │
-│   │  for         │     │  forwarder + │     │ 10.100.10.10 │           │
-│   │  lab.corp)   │     │  split-horiz │     └──────────────┘           │
-│   │ 10.100.1.10  │     │ 10.100.1.40  │     ┌──────────────┐           │
-│   └──────────────┘     │      │       │◀────│  ext-client  │           │
-│                        │      ▼       │     │  "outside"   │           │
-│                   recursion to internet     │ 10.100.20.50 │           │
-│                        (forwarders)         └──────────────┘           │
-└────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  internet(["internet"])
+  subgraph corp["lab-corp · 10.100.0.0/16"]
+    dc1["dc1\nSamba AD\nDNS authoritative for lab.corp\n10.100.1.10"]
+    dns1["dns1\nBIND9 resolver + forwarder\nsplit-horizon\n10.100.1.40"]
+    adminws["admin-ws\ninternal client\n10.100.10.10"]
+    extclient["ext-client (outside)\n10.100.20.50"]
+    adminws -- "query" --> dns1
+    extclient -- "query" --> dns1
+    dns1 -- "forward lab.corp" --> dc1
+  end
+  dns1 -- "recursion (forwarders)" --> internet
 ```
 
 | Container | Image | IP | Role |
