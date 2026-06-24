@@ -1,0 +1,13 @@
+sources:
+  - name: fabric
+    hosts:
+      - url: ssh://admin:admin@172.31.42.11
+        devtype: eos
+      - url: ssh://admin:admin@172.31.42.12
+        devtype: eos
+      - url: ssh://admin:admin@172.31.42.13
+        devtype: eos
+
+namespaces:
+  - name: fabric
+    source: fabric
