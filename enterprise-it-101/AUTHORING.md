@@ -219,6 +219,13 @@ wrong command behind a Solution toggle is worse than no toggle at all.
 - Note any command that is environment-sensitive (host port conflicts, things
   that behave differently with a pinned config vs. discovery) and say so in the
   Check block — turn the caveat into a lesson.
+- **Host-run in-place edits must be portable to BSD/macOS sed.** GNU `sed -i 's/…'`
+  (no backup-suffix arg) silently fails on macOS, where `-i` requires an argument.
+  For a command the student runs **on their own machine** (e.g. editing a file
+  under `configs/` before `up`), use `perl -i -pe 's/…'` instead — it behaves
+  identically on Linux and macOS. This does **not** apply to `docker exec … sed -i`
+  commands: those run inside the Linux container images where GNU sed is correct
+  (and `perl` may be absent), so leave them as `sed`.
 
 A lab is not "done" until it has been deployed clean (`down -v` then `up`) and
 walked end to end.
