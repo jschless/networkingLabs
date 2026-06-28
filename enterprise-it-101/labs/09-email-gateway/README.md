@@ -373,7 +373,7 @@ repair. This is the single most common real-world mail-LDAP outage.
 
 **Break it:**
 ```bash
-sed -i 's/^LDAP_BIND_PW=.*/LDAP_BIND_PW=WrongPassword/' labs/09-email-gateway/configs/mailserver.env
+perl -i -pe 's/^LDAP_BIND_PW=.*/LDAP_BIND_PW=WrongPassword/' labs/09-email-gateway/configs/mailserver.env
 docker compose -f base/docker-compose.yml \
     -f labs/09-email-gateway/docker-compose.override.yml up -d --force-recreate mail1
 sleep 25
@@ -407,7 +407,7 @@ docker exec mail1 grep -iE "ldap.*bind|Invalid cred" /var/log/mail/mail.log | ta
 
 **Repair it:**
 ```bash
-sed -i 's/^LDAP_BIND_PW=.*/LDAP_BIND_PW=P@ssw0rd1/' labs/09-email-gateway/configs/mailserver.env
+perl -i -pe 's/^LDAP_BIND_PW=.*/LDAP_BIND_PW=P@ssw0rd1/' labs/09-email-gateway/configs/mailserver.env
 docker compose -f base/docker-compose.yml \
     -f labs/09-email-gateway/docker-compose.override.yml up -d --force-recreate mail1
 sleep 25
