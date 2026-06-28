@@ -14,6 +14,7 @@ Eleven labs covering management access, DHCP/DNS, AAA operations, packet capture
 | [qos-enterprise](qos-enterprise.md) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
 | [automation-fundamentals](automation-fundamentals.md) | Practice | eAPI from curl up to Python: structured state, idempotent change, verify-from-the-other-end, drift report |
 | [network-automation-netbox](network-automation-netbox.md) | Practice | NetBox capstone: DCIM, IPAM, native config templates, discovery sync, and drift validation |
+| [suzieq-network-observability](suzieq-network-observability.md) | Reference | SuzieQ: agentless polling, fleet-wide queries, LLDP topology mapping, path tracing, health assertions |
 | [telemetry-monitoring-hybrid](telemetry-monitoring-hybrid.md) | Practice | gNMI telemetry, Prometheus, Grafana, classic NMS |
 
 ## Platform Notes
@@ -26,4 +27,5 @@ Eleven labs covering management access, DHCP/DNS, AAA operations, packet capture
 - **qos-enterprise**: `docker build -t qos-lab:local labs/qos-enterprise/`
 - **automation-fundamentals**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t automation-fundamentals:local labs/automation-fundamentals/`
 - **network-automation-netbox**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t netbox-automation:local labs/network-automation-netbox/`
+- **suzieq-network-observability**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t suzieq-lab:local labs/suzieq-network-observability/`
 - **telemetry-monitoring-hybrid**: `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/`

@@ -1,0 +1,26 @@
+hostname r2
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret admin
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   no switchport
+   description to r1
+   ip address 10.1.12.2/30
+!
+interface Ethernet2
+   no switchport
+   description to r3
+   ip address 10.1.23.1/30
+!
+router ospf 1
+   router-id 10.0.0.2
+   passive-interface Loopback0
+   network 0.0.0.0/0 area 0.0.0.0
+!
