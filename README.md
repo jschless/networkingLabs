@@ -3,6 +3,10 @@
 A local, self-hosted lab environment for hands-on practice across **three tracks**, all on
 your own machine — no cloud account, no license fees. Deploy, break things, learn.
 
+> Two caveats to "no fees": the Arista cEOS image requires a free arista.com account to
+> download, and the optional `fortigate-firewall-capstone` lab needs a FortiGate eval
+> license. Everything else is fully open source.
+
 1. **Networking** — routing, switching, data center, tunnels/VPN, enterprise design
    (OSPF, BGP, IS-IS, EIGRP, MPLS/SR, VXLAN/EVPN, …) on
    [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/),
@@ -27,8 +31,10 @@ intentionally separate — don't expect `scripts/lab.sh` to drive the Enterprise
 
 ## Documentation
 
-**The full catalog, quick start, study paths, and reference live in the docs site.**
-Browse the [`docs/`](docs/) folder directly, or build it locally:
+**The full catalog, quick start, study paths, and reference live in the docs site:**
+**<https://jschless.github.io/networkingLabs/>**
+
+You can also browse the [`docs/`](docs/) folder directly, or build the site locally:
 
 ```bash
 pip install -r requirements-docs.txt

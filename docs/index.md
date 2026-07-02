@@ -50,7 +50,8 @@ No cloud account. No license fees. Deploy, break things, learn.
 
 === "VyOS Lab"
     ```bash
-    # Build the VyOS router image (one-time)
+    # Build the VyOS router image (one-time; extract rootfs.tar from a free
+    # VyOS ISO first — see Platforms → VyOS)
     docker build -t vyos:local -f Dockerfile.vyos .
 
     # Deploy
@@ -147,7 +148,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: HA track](tracks/high-availability/index.md)
 
-- :material-office-building: **Enterprise Design** (17 labs)
+- :material-office-building: **Enterprise Design** (18 labs)
 
     ---
     Campus tiers, WAN edge, SD-WAN concepts, load balancing, access security, multicast, services, capstones
@@ -168,10 +169,10 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-chart-line: **Network Operations** (11 labs)
+- :material-chart-line: **Network Operations** (12 labs)
 
     ---
-    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, API automation fundamentals, NetBox automation, gNMI telemetry
+    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, API automation fundamentals, NetBox automation, gNMI telemetry, SuzieQ observability
 
     [:octicons-arrow-right-24: Operations track](tracks/operations/index.md)
 
@@ -207,10 +208,10 @@ A separate domain — security tooling rather than routing, but the same Contain
 
 <div class="grid cards" markdown>
 
-- :material-domain: **Enterprise IT 101** (12 labs, 16 planned)
+- :material-domain: **Enterprise IT 101** (16 labs)
 
     ---
-    Build a complete mini enterprise domain from scratch: AD, PKI, DNS, DHCP, email, SSO, web proxy, RADIUS — using only open-source containers. (Monitoring, SIEM, backup, and capstone labs are planned.)
+    Build a complete mini enterprise domain from scratch: AD, PKI, DNS, DHCP, email, SSO, web proxy, RADIUS, monitoring, SIEM, backups, and a full-stack capstone — using only open-source containers.
 
     Uses **Docker Compose** (not ContainerLab). Each lab builds on the last.
 
