@@ -176,7 +176,7 @@ Use the lab in this order:
 Run:
 
 ```bash
-cd /home/joe/containerlab/labs/telemetry-monitoring-hybrid
+cd labs/telemetry-monitoring-hybrid
 ./scripts/scenario-status.sh
 ```
 

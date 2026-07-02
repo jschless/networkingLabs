@@ -87,11 +87,12 @@ mkdocs build --strict
 
 This fails on broken links, missing include files, or YAML errors in `mkdocs.yml`.
 
-CI also runs two linters on every push and PR — run them locally before pushing:
+CI also runs three linters on every push and PR — run them locally before pushing:
 
 ```bash
 ./scripts/check-docs-admonitions.sh   # malformed !!! admonitions
 python3 scripts/lint-labs.py          # topology parse, image docs, nav consistency
+shellcheck -S warning scripts/*.sh labs/*/check.sh enterprise-it-101/eit.sh
 ```
 
 `lint-labs.py` fails if a lab's topology doesn't parse, references an image missing

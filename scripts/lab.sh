@@ -374,6 +374,7 @@ cmd_pcap() {
     outfile="${outfile:-/tmp/${lab_name}-${node}-capture.pcap}"
 
     echo "Capturing on $container $iface (PID $pid) -> $outfile - Ctrl-C to stop"
+    # shellcheck disable=SC2024  # redirect as the invoking user is intended: the pcap stays user-owned
     sudo nsenter -t "$pid" -n -- tcpdump -U -i "$iface" -w - 2>/dev/null > "$outfile"
     echo "Saved to $outfile"
 }
