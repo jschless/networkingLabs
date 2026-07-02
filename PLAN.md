@@ -1,13 +1,21 @@
-# Gap-Closure Plan (CCNP + Broad Enterprise IT)
+# Gap-Closure Plan (CCNP + Broad Enterprise IT) — COMPLETE, ARCHIVED
+
+> **Status: all four phases finished (June 2026).** This file is kept as a historical
+> record of the gap-closure effort, not an active roadmap — don't resume work from it.
+> The working conventions it established still apply to new work: one branch + PR per
+> deliverable, **never stack branches** (a stacked-branch merge race previously lost a
+> lab from main), and the definition of done for any lab remains: clean-state deploy →
+> run every README verification command → run break-it steps → destroy → deploy again.
+>
+> **One known debt carried out of this plan:** item 2.1 (`automation-fundamentals`)
+> was validated against a stateful mock eAPI only — a live cEOS walk-through on the
+> lab host is still owed (see the 2026-06-12 status-log entry).
+>
+> Original preamble follows for context.
 
 > **Purpose of this file:** working roadmap and resume point for closing the gaps
 > identified in the June 2026 curriculum review ("can this repo train a CCNP-level,
-> broad enterprise engineer?"). If you (human or agent) are picking this up cold:
-> statuses below are the source of truth. Update a checkbox + the Status Log when a
-> deliverable merges to main, not before. One branch + PR per deliverable; **never
-> stack branches** (a stacked-branch merge race previously lost a lab from main).
-> Definition of done for any lab: clean-state deploy → run every README verification
-> command → run break-it steps → destroy → deploy again.
+> broad enterprise engineer?").
 
 ## Review findings being addressed (summary)
 
