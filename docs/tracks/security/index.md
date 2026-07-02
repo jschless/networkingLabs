@@ -15,8 +15,8 @@ Eight labs covering ACL fundamentals, black-core routing, FortiGate firewall pol
 
 ## Platform Notes
 
-- **macsec-basics**: `docker build -t vyos:local -f Dockerfile.vyos .`
-- **black-core-routing**: `docker build -t vyos:local -f Dockerfile.vyos .` and `docker build -t black-core-tools:local labs/black-core-routing/`
+- **macsec-basics**: `vyos:local` — one-time build from a VyOS ISO, see [VyOS platform notes](../../platforms/vyos.md)
+- **black-core-routing**: `vyos:local` (see [VyOS platform notes](../../platforms/vyos.md)) and `docker build -t black-core-tools:local labs/black-core-routing/`
 - **FortiGate capstone**: `docker image ls vrnetlab/vr-fortios:4.7.11` and `docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/`
 - **dot1x-nac**: `docker build -t nac-lab:local labs/dot1x-nac/`
 - **FRR labs**: `docker build -t frr-lab:local images/frr/`

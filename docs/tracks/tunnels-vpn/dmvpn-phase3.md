@@ -6,7 +6,7 @@ title: dmvpn-phase3
     DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp (VyOS)
 
 !!! note "Image"
-    VyOS — `docker build -t vyos:local -f Dockerfile.vyos .`
+    `vyos:local` — one-time build from a VyOS ISO — see [VyOS platform notes](../../platforms/vyos.md)
 
 {%
   include-markdown "../../../labs/dmvpn-phase3/README.md"
