@@ -20,7 +20,7 @@ topology:
   nodes:
     br-wan:
       kind: linux
-      image: frrouting/frr:latest
+      image: quay.io/frrouting/frr:8.4.2
       exec:
         - ip link add name br0 type bridge
         - ip link set br0 up
