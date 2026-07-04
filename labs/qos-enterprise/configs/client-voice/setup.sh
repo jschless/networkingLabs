@@ -7,7 +7,10 @@
 
 ip link set eth1 up
 ip addr add 10.1.1.1/30 dev eth1
-ip route add default via 10.1.1.2
+# "replace": the containerlab mgmt network already installed a default route,
+# and a plain "ip route add default" fails on it (leaving the node unable to
+# reach the far side).
+ip route replace default via 10.1.1.2
 
 echo "[client-voice] Networking up: 10.1.1.1/30 gw 10.1.1.2"
 echo "[client-voice] Waiting 8s for server to be ready..."

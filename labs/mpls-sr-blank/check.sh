@@ -8,8 +8,10 @@ lab_init "mpls-sr-blank"
 check_contains "pe1 IS-IS Up" "$(frr pe1 'show isis neighbor')" "Up"
 check_contains "pe2 IS-IS Up" "$(frr pe2 'show isis neighbor')" "Up"
 check_contains "pe1 SR label table" "$(frr pe1 'show mpls table')" "16001"
-check_contains "pe1 BGP Established" "$(frr pe1 'show bgp summary')" "Established"
-check_contains "pe2 BGP Established" "$(frr pe2 'show bgp summary')" "Established"
+# json form: FRR's plain summary shows a prefix COUNT (not the word
+# "Established") once a session is up, so grep the json state instead.
+check_contains "pe1 BGP Established" "$(frr pe1 'show bgp summary json')" '"state":"Established"'
+check_contains "pe2 BGP Established" "$(frr pe2 'show bgp summary json')" '"state":"Established"'
 check_contains "pe1 VRF route" "$(frr pe1 'show bgp vrf CUST-A ipv4 unicast')" "192\.168\."
 check_ping_linux "ce1→ce2" ce1 192.168.20.1
 check_ping_linux "ce2→ce1" ce2 192.168.10.1

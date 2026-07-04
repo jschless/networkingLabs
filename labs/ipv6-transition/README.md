@@ -53,7 +53,10 @@ backbone. Key points:
   PE) and an inner 6PE label (to identify the IPv6 prefix at egress).
 - **IPv4-mapped next-hops**: The iBGP next-hop for an IPv6 prefix is the
   originating PE's IPv4 loopback, encoded as an IPv4-mapped IPv6 address
-  (e.g., `10.0.0.1` becomes `::ffff:10.0.0.1`).
+  (e.g., `10.0.0.1` becomes `::ffff:10.0.0.1`). In FRR 8.4 the PE does not
+  rewrite the next-hop toward the RR on its own (`next-hop-self` is ignored
+  for this AF) — the PE configs do it with an outbound route-map
+  (`RR-6PE-OUT`).
 
 ### Topology
 
@@ -184,6 +187,16 @@ show ipv6 route fd00:1::/48
 show mpls table
 # Shows local label bindings including the 6PE label for ce1's prefixes
 ```
+
+> **Linux kernel caveat:** the BGP 6PE route you see here stays
+> control-plane only. The Linux kernel cannot install an IPv6 route whose
+> next-hop is an IPv4(-mapped) address, so zebra never programs
+> `fd00:1::/48 via ::ffff:10.0.0.1` into the FIB (the nexthops show `r`
+> for "recursive" but no `*` for "installed"). The deployed configs
+> include labeled **static** routes (`show running-config | include ipv6 route`)
+> that push the same SR label the BGP route resolves to — that is what
+> actually forwards in Step 6. On hardware routers (or VPP/Cisco/Juniper)
+> the BGP route itself would be installed.
 
 #### Step 6: End-to-end connectivity
 
