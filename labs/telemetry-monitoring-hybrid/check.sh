@@ -18,7 +18,13 @@ echo "=== Checking lab: $LAB (topology: $TOPO_NAME) ==="
 check_ping_linux "client→server across the routed core" client 10.20.20.11
 check_contains "campus1 gNMI management API configured" \
   "$(eos campus1 'show running-config section management api gnmi')" "gnmi"
-check_contains "core1 gNMI management API configured" \
-  "$(eos core1 'show running-config section management api gnmi')" "gnmi"
+# core1 is cEOS only in the full variant; in lite it is an FRR node.
+if [[ "$TOPO_NAME" == "telemetry-monitoring-full" ]]; then
+  check_contains "core1 gNMI management API configured" \
+    "$(eos core1 'show running-config section management api gnmi')" "gnmi"
+else
+  check_contains "core1 (FRR) BGP/IGP daemon up" \
+    "$(frr core1 'show version')" "FRRouting"
+fi
 
 summary

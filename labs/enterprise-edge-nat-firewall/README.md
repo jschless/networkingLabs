@@ -125,8 +125,8 @@ docker exec clab-enterprise-edge-nat-firewall-internet-client curl -I http://203
 From corp and guest:
 
 ```bash
-docker exec clab-enterprise-edge-nat-firewall-workstation ping -c 3 203.0.113.1
-docker exec clab-enterprise-edge-nat-firewall-guest-laptop ping -c 3 203.0.113.1
+docker exec clab-enterprise-edge-nat-firewall-workstation ping -c 3 203.0.113.2
+docker exec clab-enterprise-edge-nat-firewall-guest-laptop ping -c 3 203.0.113.2
 ```
 
 Then verify guest cannot reach corp/internal services.
