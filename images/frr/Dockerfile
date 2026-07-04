@@ -1,8 +1,7 @@
-# FRR 8.4 — pinned by digest. Upstream stopped pushing frrouting/frr:latest in
-# Nov 2022, so the tag is frozen at 8.4; the digest makes that explicit and
-# immune to a surprise future push. All lab configs and docs in this repo
-# assume FRR 8.4 syntax (see CLAUDE.md "FRR version and syntax") — do not bump
-# this without re-validating the labs.
-FROM frrouting/frr:latest@sha256:990e83490108b686fd6df3b1cafa6bdbb2714acb00eedb9a89693946f46f45ce
+# FRR 8.4 — all lab configs and docs in this repo assume FRR 8.4 syntax (see
+# CLAUDE.md "FRR version and syntax"); do not bump without re-validating labs.
+# quay.io publishes multi-arch (amd64+arm64) builds; Docker Hub frrouting/frr
+# stopped updating in Nov 2022 and is amd64-only.
+FROM quay.io/frrouting/frr:8.4.2
 
 RUN apk add --no-cache tcpdump tshark

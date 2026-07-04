@@ -29,6 +29,12 @@ rm -rf live/ rootfs.tar
 This mirrors the upstream
 [ContainerLab VyOS kind instructions](https://containerlab.dev/manual/kinds/vyosnetworks_vyos/).
 
+**Architecture:** `vyos:local` inherits the architecture of the VyOS ISO/rootfs you build it
+from, so build it from an ISO matching your host — amd64 on Intel/Linux, arm64 on Apple Silicon
+(VyOS publishes arm64 rolling-release ISOs). The tag stays `vyos:local` either way, so the
+topologies remain portable across both machines; `scripts/build-images.sh` deliberately skips
+VyOS because it can't supply the ISO for you.
+
 This repository uses `vyos:local` for:
 
 - `ipsec-basics`

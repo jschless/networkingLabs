@@ -4,7 +4,7 @@
 
 | Requirement | Minimum |
 |-------------|---------|
-| OS | Linux (Ubuntu 20.04+, Debian 11+) or macOS with Docker Desktop |
+| OS | Linux/amd64 (Ubuntu 20.04+, Debian 11+) or macOS/arm64 (Apple Silicon) with Docker Desktop — both run images natively; see [Provision everything for your architecture](#provision-everything-for-your-architecture) |
 | Docker | 20.10+ |
 | ContainerLab | 0.50+ |
 | RAM | 8 GB (16 GB recommended for larger cEOS/VyOS/enterprise labs) |
@@ -24,20 +24,77 @@ This page is the single authoritative reference. The lists below track what each
 `topology.clab.yml` actually references, so if a lab and this table ever disagree, the
 topology wins.
 
+### Provision everything for your architecture
+
+Both **Intel/Linux (amd64)** and **Apple Silicon (arm64)** are supported, and the same
+topology files run on either host. `scripts/build-images.sh` makes that work by filling each
+image tag with content native to the machine it runs on:
+
+```bash
+scripts/build-images.sh list   # preview what will run on THIS host, change nothing
+scripts/build-images.sh        # build every *:local image, pull multi-arch images,
+                               # and import the cEOS tarball for your arch
+```
+
+It handles three image classes automatically:
+
+- **`*:local` images** — `docker build` on the host emits native-arch images for free.
+- **Multi-arch registry images** — `docker pull` auto-selects your arch (nothing to configure).
+- **cEOS** — Arista ships it as a *per-arch* tarball (no multi-arch tag), so the script imports
+  the one matching your host and tags it as the canonical `ceos:4.35.2F` that every topology
+  references. On arm64 the underlying build is `4.36.1F`, tagged canonically so the labs stay
+  portable.
+
+The two things it can't fetch for you are the **cEOS tarball** (licensed — see below) and
+**`vyos:local`** (needs a VyOS ISO for your arch, see [vyos.md](platforms/vyos.md)).
+
+> **Tip:** if you've ever set `DOCKER_DEFAULT_PLATFORM=linux/amd64` (a common Mac workaround),
+> `unset` it first — it forces amd64 pulls and silently defeats native arch selection.
+
 ### Images you download
 
-| Image | Acquire it with |
-|-------|-----------------|
-| `ceos:4.35.2F` | `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` (needs a free Arista account) |
-| `ghcr.io/nokia/srlinux:latest` | `docker pull ghcr.io/nokia/srlinux:latest` |
+#### Freely available (no account)
+
+| Image | Acquire it with | Arch |
+|-------|-----------------|------|
+| `ghcr.io/nokia/srlinux:latest` | `docker pull ghcr.io/nokia/srlinux:latest` | multi-arch ✅ |
+| `quay.io/frrouting/frr:8.4.2` | pulled automatically as the base of `frr-lab:local` and the DMVPN/`sdwan` labs | multi-arch ✅ |
+
+All other registry images the labs use (`grafana`, `prometheus`/`prom/*`, `postgres`, `redis`,
+`nginx`, `netbox`, `keycloak`, `step-ca`, `wazuh`, `opennms`, …) are multi-arch and pulled on
+demand — nothing to do.
+
+> **Why quay for FRR:** Docker Hub's `frrouting/frr:latest` is **amd64-only**. The quay.io
+> mirror publishes a true multi-arch build (incl. arm64), and tag `8.4.2` keeps the FRR 8.4
+> syntax the labs are written against. This is what lets the FRR/DMVPN labs run native on Apple
+> Silicon instead of under emulation.
+
+#### Requires a free Arista account
+
+| Image | Acquire it with | Arch |
+|-------|-----------------|------|
+| `ceos:4.35.2F` | download the tarball (below), then `scripts/build-images.sh ceos` | per-arch tarball |
+
+**Getting the cEOS tarball:**
+
+1. Create a free account at [arista.com](https://www.arista.com/en/user-registration) and log in.
+2. Go to **Support → Software Download → cEOS-lab**.
+3. Download the tarball for **your host's architecture**:
+   - **Intel/Linux (amd64):** `cEOS-lab-4.35.2F.tar` (or `cEOS64-lab-*.tar`)
+   - **Apple Silicon (arm64):** `cEOSarm-lab-4.36.1F.tar`
+4. Leave it in `~/Downloads` (or set `CEOS_TARBALL_DIR=/path`) and run `scripts/build-images.sh ceos`.
+   To import by hand instead: `docker import <tarball> ceos:4.35.2F`.
 
 `ceos` powers most routing, switching, data-center, and enterprise labs. SR-Linux is used only by
 `mpls-sr-srlinux` and `vxlan-evpn-srlinux`. FortiGate uses a separate VM flow (see below).
 
 ### Images you build
 
-Build only what the lab you're running needs. Many labs combine images (e.g. a cEOS router with an
-`frr-lab:local` host), so check the lab README.
+`scripts/build-images.sh` (or `scripts/build-images.sh local`) builds all of these at once,
+natively for your architecture. The per-image commands below are for building just what a single
+lab needs — many labs combine images (e.g. a cEOS router with an `frr-lab:local` host), so check
+the lab README. Every `*:local` image builds from a multi-arch base, so `docker build` produces
+amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 
 | Image | Used by | Build command |
 |-------|---------|---------------|
@@ -74,6 +131,11 @@ Some labs also reference public registry images that `containerlab deploy` pulls
 first use — no build step needed: `frrouting/frr:latest` (helper/bridge nodes in the
 DMVPN labs), and `netboxcommunity/netbox:v4.1.11` + `postgres:15` + `redis:7-alpine`
 (`network-automation-netbox`).
+
+> **arm64 note:** `nac-practice-tacacs:local` and `enterprise-tacacs:local` build from
+> `smcline06/tacacs:latest`, the one **amd64-only** base in the repo. They build and run on
+> Apple Silicon under emulation — fine for a lightweight auth daemon, just slower. Everything
+> else builds native.
 
 ### FortiGate (separate VM flow)
 
