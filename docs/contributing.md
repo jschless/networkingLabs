@@ -4,10 +4,13 @@
 
 1. Create `labs/<name>/` with:
    - `topology.clab.yml` — ContainerLab topology
-   - `README.md` — lab guide with tasks, topology diagram, and verification commands
+   - `README.md` — lab guide written to the [authoring contract](https://github.com/jschless/networkingLabs/blob/main/labs/AUTHORING.md)
    - `configs/<node>/frr.conf` (or `startup-config`) per node
+   - `check.sh` — automated assertions runnable via `./scripts/lab.sh check <name>`
+     (source `scripts/check-lib.sh`; see any existing lab for the pattern)
 
-2. Add a row to the appropriate track table in the root `README.md`
+2. Add a row to the track's table in `docs/tracks/<track>/index.md`, and update the
+   track card count in `docs/index.md`
 
 3. Add a thin wrapper page in `docs/tracks/<track>/<name>.md`:
    ```markdown
@@ -30,24 +33,24 @@
 
 ## Lab README Requirements
 
-A good lab README includes:
+The authoring contract lives in
+[`labs/AUTHORING.md`](https://github.com/jschless/networkingLabs/blob/main/labs/AUTHORING.md)
+— it is the single source of truth for README structure, task anatomy
+(Objective → Predict → Hints → Solution → Check), difficulty-band ratios, and the
+accuracy promise (every solution validated against a live deploy). Read it before
+writing or converting a lab; don't work from an existing lab's README alone, since
+older labs may predate the contract.
 
-- **Background**: Why this protocol/feature matters
-- **Topology**: ASCII diagram or description of nodes and links
-- **Pre-configured**: What's already set up (IPs, interfaces)
-- **Tasks**: Numbered list of what the user needs to configure
-- **Verification**: `show` commands and expected output to confirm success
-- **Hints**: Commented config snippets (for practice labs)
+Two rules worth repeating here:
 
-README interaction rules:
+- Never expose a solution outside a collapsed `<details>` block, and never make the
+  solution toggle the *only* content of a task.
+- Optional follow-on ideas belong in an `## Extensions` section, clearly labeled as
+  unvalidated.
 
-- Practice labs keep explanations, addressing, and verification visible.
-- Practice labs hide all actual node configuration commands inside `<details>` blocks.
-- Use `<summary>Configuration — reveal if stuck</summary>` for practice config.
-- Debug labs keep symptoms and diagnostic commands visible, but hide the exact fix in a solution `<details>` block.
-- Do not expose the answer by default just because the platform changed.
-- Optional follow-on exercises belong in an `## Extensions` section near the end of the README.
-- Extensions must be clearly labeled as optional ideas, not validated or required lab steps.
+If the lab introduces a new image, add it to the table in
+[getting-started](getting-started.md) and reference the build command in the lab README
+and its wrapper page.
 
 ## Platform Validation Before Rebuild
 
@@ -83,3 +86,15 @@ mkdocs build --strict
 ```
 
 This fails on broken links, missing include files, or YAML errors in `mkdocs.yml`.
+
+CI also runs three linters on every push and PR — run them locally before pushing:
+
+```bash
+./scripts/check-docs-admonitions.sh   # malformed !!! admonitions
+python3 scripts/lint-labs.py          # topology parse, image docs, nav consistency
+shellcheck -S warning scripts/*.sh labs/*/check.sh enterprise-it-101/eit.sh
+```
+
+`lint-labs.py` fails if a lab's topology doesn't parse, references an image missing
+from [getting-started](getting-started.md), lacks a README, is absent from the
+`mkdocs.yml` nav, or if a track card count on the docs home page drifts from the nav.

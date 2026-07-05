@@ -17,15 +17,13 @@ Ten labs covering GRE, IPsec, DMVPN (Phase 1/2/3 plus a certificate-IPsec capsto
 
 ## Platform Notes
 
-- **VyOS labs**: `docker build -t vyos:local -f Dockerfile.vyos .`
+- **VyOS labs**: `vyos:local` — one-time build from a VyOS ISO, see [VyOS platform notes](../../platforms/vyos.md)
 - **FlexVPN Linux lab**: `docker build -t ipsec-lab:local labs/ipsec-basics/`
 - **WireGuard lab**: `docker build -t wireguard-lab:local labs/wireguard/`
 - **cEOS labs**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 
 ## cEOS Variants
 
-Arista cEOS reimplementations of two labs above are available in the repo but not yet
-documented here:
-[`labs/gre-ceos/`](https://github.com/jschless/networkingLabs/tree/main/labs/gre-ceos) and
-[`labs/dmvpn-ceos/`](https://github.com/jschless/networkingLabs/tree/main/labs/dmvpn-ceos).
-Each has its own README.
+DMVPN was previously maintained on Arista cEOS as well; that variant is **deprecated** and
+`labs/dmvpn-ceos/` remains only as a placeholder pointing at the VyOS labs above. DMVPN
+practice in this repo is VyOS-only.

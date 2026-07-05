@@ -1,0 +1,25 @@
+# Builds the vyos:local image used by the VyOS labs (dmvpn-*, ipsec-basics,
+# gre-ipsec, macsec-basics, black-core-routing, debug-dmvpn-phase1).
+#
+# VyOS ships no container image — you extract the root filesystem from an ISO
+# first (one time). Full procedure: docs/platforms/vyos.md. Short version:
+#
+#   1. Download a free VyOS ISO:
+#        Stream:  https://vyos.net/get/stream/     (1.5 Q1 stream or newer)
+#        Nightly: https://vyos.net/get/nightly-builds/
+#   2. Extract the rootfs into the repo root:
+#        sudo apt-get install -y squashfs-tools-ng libarchive-tools
+#        bsdtar -xf vyos-*.iso live/filesystem.squashfs
+#        sqfs2tar live/filesystem.squashfs > rootfs.tar
+#   3. Build:
+#        docker build -t vyos:local -f Dockerfile.vyos .
+#
+# rootfs.tar and the ISO are gitignored — they are artifacts, not sources.
+# This mirrors the upstream ContainerLab vyosnetworks_vyos kind instructions:
+# https://containerlab.dev/manual/kinds/vyosnetworks_vyos/
+
+FROM scratch
+ADD rootfs.tar /
+RUN for service in getty.target auditd.service; do systemctl mask $service; done
+HEALTHCHECK --start-period=10s CMD systemctl is-system-running
+CMD ["/sbin/init"]

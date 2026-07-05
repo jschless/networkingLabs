@@ -3,18 +3,21 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 source "$REPO_ROOT/scripts/check-lib.sh"
 lab_init "dmvpn-phase3-ipsec-capstone"
 
+# single-token match arguments only: vyos_op wraps its command in nested
+# single quotes, so a quoted multi-word match pattern breaks out of the
+# vbash -ic quoting and "match" runs as a host command.
 check_contains "hub imports DMVPN CA" \
-  "$(vyos_op hub \"show configuration commands | match 'pki ca DMVPN-CA'\")" \
-  "DMVPN-CA"
+  "$(vyos_op hub 'show configuration commands | match DMVPN-CA')" \
+  "pki ca DMVPN-CA"
 check_contains "spoke1 imports local cert" \
-  "$(vyos_op spoke1 \"show configuration commands | match 'pki certificate spoke1-cert'\")" \
-  "spoke1-cert"
+  "$(vyos_op spoke1 'show configuration commands | match spoke1-cert')" \
+  "pki certificate spoke1-cert"
 check_contains "hub uses x509 auth" \
-  "$(vyos_op hub \"show configuration commands | match 'authentication mode x509'\")" \
-  "x509"
+  "$(vyos_op hub 'show configuration commands | match x509')" \
+  "authentication mode .x509."
 check_contains "spoke1 uses x509 auth" \
-  "$(vyos_op spoke1 \"show configuration commands | match 'authentication mode x509'\")" \
-  "x509"
+  "$(vyos_op spoke1 'show configuration commands | match x509')" \
+  "authentication mode .x509."
 check_contains "hub has NHRP entries" \
   "$(vyos_frr hub 'show ip nhrp')" \
   "172\.16\.0\.(11|12|13)"
@@ -39,8 +42,10 @@ check_contains "spoke1 learns summary" \
 check_ping_vyos "hub→spoke1 LAN" hub 192.168.1.1
 check_ping_vyos "spoke1→spoke2 LAN" spoke1 192.168.2.1
 check_ping_vyos "spoke2→spoke3 LAN" spoke2 192.168.3.1
+# Phase 3 shortcuts install as NHRP host routes (/32), not the /24, so ask
+# the RIB for NHRP-sourced routes after the spoke1→spoke2 ping above.
 check_contains "spoke1 installs shortcut route" \
-  "$(vyos_op spoke1 'show ip route 192.168.2.0/24')" \
-  "172\.16\.0\.12|via tun0"
+  "$(vyos_frr spoke1 'show ip route nhrp')" \
+  "192\.168\.2\..+(172\.16\.0\.12|tun0)"
 
 summary

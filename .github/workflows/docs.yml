@@ -34,6 +34,12 @@ jobs:
       - name: Lint admonitions
         run: ./scripts/check-docs-admonitions.sh
 
+      - name: Lint labs (topology parse, image docs, nav consistency)
+        run: python3 scripts/lint-labs.py
+
+      - name: Shellcheck (helpers + lab check scripts)
+        run: shellcheck -S warning scripts/*.sh labs/*/check.sh enterprise-it-101/eit.sh
+
       - name: Build
         run: mkdocs build --strict
 

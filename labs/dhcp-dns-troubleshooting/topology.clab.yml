@@ -11,7 +11,10 @@ topology:
       image: ops-lab:local
       binds:
         - configs/services1/setup.sh:/setup.sh
-        - configs/services1/dnsmasq.conf:/etc/dnsmasq.conf
+        # template, not the live file: setup.sh copies it into place so the
+        # student's in-container edits work (sed -i can't replace a
+        # single-file bind mount) and never write back into the repo
+        - configs/services1/dnsmasq.conf:/etc/dnsmasq.conf.orig:ro
       exec:
         - bash /setup.sh
     client1:

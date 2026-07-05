@@ -201,19 +201,22 @@ set protocols ospf summary-address '192.168.0.0/16'
 set protocols static route 192.168.0.0/16 blackhole
 ```
 
-IPsec peer (spoke1; repeat for .12/.13):
+IPsec peer (spoke1; repeat for spoke2/spoke3 with their addresses and IDs).
+Current VyOS requires a *named* peer with an explicit `remote-address`
+(dotted-IP peer names were removed), and forbids local/remote prefix
+selectors with ESP transport mode — `tunnel 1 protocol gre` alone scopes
+the SA to GRE between `local-address` and `remote-address`:
 ```vyos
-set vpn ipsec site-to-site peer 10.0.0.11 authentication mode 'x509'
-set vpn ipsec site-to-site peer 10.0.0.11 authentication local-id 'hub.dmvpn.lab'
-set vpn ipsec site-to-site peer 10.0.0.11 authentication remote-id 'spoke1.dmvpn.lab'
-set vpn ipsec site-to-site peer 10.0.0.11 authentication x509 certificate 'hub-cert'
-set vpn ipsec site-to-site peer 10.0.0.11 authentication x509 ca-certificate 'DMVPN-CA'
-set vpn ipsec site-to-site peer 10.0.0.11 ike-group 'DMVPN-IKE'
-set vpn ipsec site-to-site peer 10.0.0.11 default-esp-group 'DMVPN-ESP'
-set vpn ipsec site-to-site peer 10.0.0.11 local-address '10.0.0.1'
-set vpn ipsec site-to-site peer 10.0.0.11 tunnel 1 protocol 'gre'
-set vpn ipsec site-to-site peer 10.0.0.11 tunnel 1 local prefix '10.0.0.1/32'
-set vpn ipsec site-to-site peer 10.0.0.11 tunnel 1 remote prefix '10.0.0.11/32'
+set vpn ipsec site-to-site peer spoke1 remote-address '10.0.0.11'
+set vpn ipsec site-to-site peer spoke1 authentication mode 'x509'
+set vpn ipsec site-to-site peer spoke1 authentication local-id 'hub.dmvpn.lab'
+set vpn ipsec site-to-site peer spoke1 authentication remote-id 'spoke1.dmvpn.lab'
+set vpn ipsec site-to-site peer spoke1 authentication x509 certificate 'hub-cert'
+set vpn ipsec site-to-site peer spoke1 authentication x509 ca-certificate 'DMVPN-CA'
+set vpn ipsec site-to-site peer spoke1 ike-group 'DMVPN-IKE'
+set vpn ipsec site-to-site peer spoke1 default-esp-group 'DMVPN-ESP'
+set vpn ipsec site-to-site peer spoke1 local-address '10.0.0.1'
+set vpn ipsec site-to-site peer spoke1 tunnel 1 protocol 'gre'
 ```
 
 </details>
@@ -278,19 +281,19 @@ set protocols ospf interface eth1 passive
 set protocols ospf interface tun0 network 'point-to-multipoint'
 ```
 
-IPsec peer (spoke1 → hub; repeat to .12 and .13 with their IDs):
+IPsec peer (spoke1 → hub; repeat to spoke2 and spoke3 with their IDs —
+same named-peer / transport-mode notes as Task 3):
 ```vyos
-set vpn ipsec site-to-site peer 10.0.0.1 authentication mode 'x509'
-set vpn ipsec site-to-site peer 10.0.0.1 authentication local-id 'spoke1.dmvpn.lab'
-set vpn ipsec site-to-site peer 10.0.0.1 authentication remote-id 'hub.dmvpn.lab'
-set vpn ipsec site-to-site peer 10.0.0.1 authentication x509 certificate 'spoke1-cert'
-set vpn ipsec site-to-site peer 10.0.0.1 authentication x509 ca-certificate 'DMVPN-CA'
-set vpn ipsec site-to-site peer 10.0.0.1 ike-group 'DMVPN-IKE'
-set vpn ipsec site-to-site peer 10.0.0.1 default-esp-group 'DMVPN-ESP'
-set vpn ipsec site-to-site peer 10.0.0.1 local-address '10.0.0.11'
-set vpn ipsec site-to-site peer 10.0.0.1 tunnel 1 protocol 'gre'
-set vpn ipsec site-to-site peer 10.0.0.1 tunnel 1 local prefix '10.0.0.11/32'
-set vpn ipsec site-to-site peer 10.0.0.1 tunnel 1 remote prefix '10.0.0.1/32'
+set vpn ipsec site-to-site peer hub remote-address '10.0.0.1'
+set vpn ipsec site-to-site peer hub authentication mode 'x509'
+set vpn ipsec site-to-site peer hub authentication local-id 'spoke1.dmvpn.lab'
+set vpn ipsec site-to-site peer hub authentication remote-id 'hub.dmvpn.lab'
+set vpn ipsec site-to-site peer hub authentication x509 certificate 'spoke1-cert'
+set vpn ipsec site-to-site peer hub authentication x509 ca-certificate 'DMVPN-CA'
+set vpn ipsec site-to-site peer hub ike-group 'DMVPN-IKE'
+set vpn ipsec site-to-site peer hub default-esp-group 'DMVPN-ESP'
+set vpn ipsec site-to-site peer hub local-address '10.0.0.11'
+set vpn ipsec site-to-site peer hub tunnel 1 protocol 'gre'
 ```
 
 </details>

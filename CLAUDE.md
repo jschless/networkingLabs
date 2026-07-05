@@ -48,7 +48,8 @@ The repo-specific gotchas that aren't obvious from the topology files:
 
 ### FRR version and syntax
 
-FRR 8.4 (`frrouting/frr:latest`). Notable syntax:
+FRR 8.4 (`frrouting/frr:latest`, which upstream froze at 8.4 in Nov 2022;
+`images/frr/Dockerfile` pins it by digest). Notable syntax:
 - IS-IS on interface: `ip router isis CORE` (not `isis enable`)
 - BGP VPNv4 AF: `address-family ipv4 vpn` (not `address-family vpnv4`)
 - eBGP requires policy by default — add `no bgp ebgp-requires-policy` to each BGP instance
@@ -72,8 +73,9 @@ commands (`build` / `up` / `down` / `exec` / …), and deploy steps; **`AUTHORIN
 **`DESIGN.md`** for authoring rules and per-lab scope.
 
 Agent-relevant specifics that aren't obvious from the compose files:
-- **Layering**: Lab 01 is a standalone `docker-compose.yml` (defines the `lab-corp` network);
-  Labs 02–13 are `docker-compose.override.yml` files layered on `base/docker-compose.yml`.
+- **Layering**: Labs 01 and 16 are standalone `docker-compose.yml` files (Lab 01 defines the
+  `lab-corp` network; Lab 16 pre-bakes the cumulative end-state); Labs 02–15 are
+  `docker-compose.override.yml` files layered on `base/docker-compose.yml`.
 - **Cumulative state via auto-provision**: each lab re-declares the foundation services it
   needs (dc1, admin-ws) with `AUTO_PROVISION: "true"`, so the Lab 01 foundation (OUs, users,
   groups) is seeded automatically.
@@ -81,5 +83,5 @@ Agent-relevant specifics that aren't obvious from the compose files:
   (`dc1-data`, `admin-ws-home`) survive teardown unless you pass `-v`.
 - **Container naming**: fixed role names (`dc1`, `admin-ws`, `dns1`, `mail1`, …), not the
   `clab-<lab>-<node>` scheme — reach them with `docker exec -it <name>`.
-- Custom images are built by `enterprise-it-101/eit.sh build`. Lab 16 (capstone)
-  is planned, not yet built.
+- Custom images are built by `enterprise-it-101/eit.sh build`. All 16 labs are built and
+  validated.

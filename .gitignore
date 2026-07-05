@@ -28,6 +28,11 @@ Thumbs.db
 # MkDocs generated site
 site/
 
+# VyOS image build artifacts (see Dockerfile.vyos / docs/platforms/vyos.md)
+*.iso
+rootfs.tar
+live/
+
 # NetBox automation lab runtime artifacts
 labs/network-automation-netbox/automation/__pycache__/
 labs/network-automation-netbox/automation/generated/

@@ -99,7 +99,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | Image | Used by | Build command |
 |-------|---------|---------------|
 | `frr-lab:local` | the FRR/Linux labs (most non-cEOS labs) | `docker build -t frr-lab:local images/frr/` |
-| `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | `docker build -t vyos:local -f Dockerfile.vyos .` |
+| `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | one-time build from a free VyOS ISO — see [VyOS platform notes](platforms/vyos.md) |
 | `ipsec-lab:local` | `ipsec-basics`, `flexvpn-basics` | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
 | `black-core-tools:local` | `black-core-routing` | `docker build -t black-core-tools:local labs/black-core-routing/` |
@@ -122,6 +122,15 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `enterprise-wireless-architecture:local` | `enterprise-wireless-architecture` | `docker build -t enterprise-wireless-architecture:local labs/enterprise-wireless-architecture/` |
 | `dmz-lab:local` | `enterprise-dmz`, `enterprise-dmz-capstone`, `enterprise-edge-nat-firewall` | `docker build -t dmz-lab:local labs/enterprise-edge-nat-firewall/` |
 | `soc-attacker:local`, `soc-endpoint:local`, `soc-sensor:local` | all `soc-*` labs | `docker build -t soc-attacker:local images/soc-attacker/` (repeat for `soc-endpoint`, `soc-sensor`) |
+| `suzieq-lab:local` | `suzieq-network-observability` | `docker build -t suzieq-lab:local labs/suzieq-network-observability/` |
+| `gcap-node:local` | `enterprise-grand-capstone` | `labs/enterprise-grand-capstone/gcap.sh build` (also ensures the EIT101 service images exist) |
+
+### Images pulled automatically
+
+Some labs also reference public registry images that `containerlab deploy` pulls on
+first use — no build step needed: `frrouting/frr:latest` (helper/bridge nodes in the
+DMVPN labs), and `netboxcommunity/netbox:v4.1.11` + `postgres:15` + `redis:7-alpine`
+(`network-automation-netbox`).
 
 > **arm64 note:** `nac-practice-tacacs:local` and `enterprise-tacacs:local` build from
 > `smcline06/tacacs:latest`, the one **amd64-only** base in the repo. They build and run on
