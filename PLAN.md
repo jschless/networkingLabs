@@ -120,11 +120,11 @@ independent of everything.
 Source: July 2026 pedagogical re-review, this time anchored to "standard enterprise
 system + containerlab-testable" rather than exam blueprints. Verified non-gaps first
 (NetFlow, MLAG, DAI/snooping, TACACS+, VRF leaking are all already hands-on). Scoped
-out by decision (2026-07-05): keepalived/conntrackd service-HA lab and Kea DHCP-HA
-lab. Unscheduled second-tier deepenings if appetite returns: live NAT64 via tayga in
-`ipv6-transition`, live NETCONF in `automation-fundamentals`, Oxidized config-backup lab.
+out by decision (2026-07-05): Kea DHCP-HA lab. Unscheduled second-tier deepenings if
+appetite returns: live NAT64 via tayga in `ipv6-transition`, live NETCONF in
+`automation-fundamentals`, Oxidized config-backup lab.
 
-All four are independent. Same rules as ever: `/new-lab` skill → audit against
+All five are independent. Same rules as ever: `/new-lab` skill → audit against
 `labs/AUTHORING.md`; one branch + PR each; never stack branches; definition of done =
 clean deploy → every README verification command → break-it steps → destroy → redeploy.
 
@@ -142,6 +142,11 @@ clean deploy → every README verification command → break-it steps → destro
       BGP-peering (Cilium or MetalLB) to a ToR (FRR or cEOS), LoadBalancer Service
       /32s advertised, ECMP across nodes. Lab-host-sized (RAM); prototype the
       k8s-in-container memory footprint before committing to a design.
+- [ ] **5.5 `labs/service-ha`** — stateful service HA the way enterprises actually run
+      firewall/LB pairs: two nftables (or HAProxy) nodes sharing a keepalived VIP; a
+      long-lived TCP flow dies on failover without conntrackd state-sync and survives
+      with it. Extends the challenge question at the end of `load-balancer-basics`.
+      (Added 2026-07-05 after initially being scoped out; Kea DHCP-HA stays declined.)
 
 ---
 
@@ -149,7 +154,7 @@ clean deploy → every README verification command → break-it steps → destro
 
 | Date | Item | Status / notes |
 |------|------|----------------|
-| 2026-07-05 | Phase 5 created | July re-review (enterprise-reality lens) added 5.1–5.4; keepalived-HA + Kea-HA labs explicitly declined. Started 5.1 `mpls-ldp` (branch `lab/mpls-ldp`). |
+| 2026-07-05 | Phase 5 created | July re-review (enterprise-reality lens) added 5.1–5.4; keepalived-HA + Kea-HA labs initially declined. Started 5.1 `mpls-ldp` (branch `lab/mpls-ldp`). Same day: Joe reinstated the keepalived/conntrackd service-HA lab as **5.5**; Kea DHCP-HA remains declined. |
 | 2026-06-11 | Plan created | Review delivered; no phases started. |
 | 2026-06-11 | 1.1 coverage map | Merged (PR #10). Built against ENCOR 350-401 **v1.2** (2025) + ENARSI 300-410 v1.1. **Finding: ENCOR v1.2 dropped the wireless domain entirely** — review finding #2's "wireless RF ~20% hole" is stale; SD-WAN/SD-Access + automation gaps remain. |
 | 2026-06-11 | 1.2 fidelity doc | Merged (PR #11). "Platform fidelity" section in docs/study-paths.md; anchor is linked from coverage-map.md. |
