@@ -1,0 +1,82 @@
+name: service-ha
+
+# Stateful firewall HA — keepalived VIP + conntrackd state sync
+#
+# Two firewalls in active/backup share a VIP on each side (keepalived/VRRP)
+# and forward a client's traffic to a backend with a *stateful* nftables
+# ruleset. A long-lived TCP flow crossing the pair dies on failover unless
+# conntrackd has replicated the connection-tracking state to the standby —
+# which is the whole reason enterprises run conntrackd alongside keepalived.
+#
+#     client 10.10.0.10
+#         │  OUTSIDE 10.10.0.0/24 (outsw)   VIP 10.10.0.1
+#     ┌───┴───┐
+#   [fw1]   [fw2]   fw1 .2 / fw2 .3 on each side; sync link 10.10.99.0/30
+#     │  eth3───eth3 (direct conntrackd sync link)
+#     └───┬───┘
+#         │  INSIDE 10.10.20.0/24 (insw)    VIP 10.10.20.1
+#     backend 10.10.20.10
+#
+# The VIPs, keepalived, the nftables ruleset, and conntrackd are all yours
+# to build — setup.sh only addresses interfaces and sets sysctls.
+
+topology:
+  defaults:
+    kind: linux
+
+  nodes:
+    outsw:
+      image: service-ha:local
+      binds:
+        - configs/outsw/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
+
+    insw:
+      image: service-ha:local
+      binds:
+        - configs/insw/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
+
+    fw1:
+      image: service-ha:local
+      binds:
+        - configs/fw1/setup.sh:/setup.sh:ro
+        - configs/notify.sh:/etc/conntrackd/notify.sh:ro
+      exec:
+        - bash /setup.sh
+
+    fw2:
+      image: service-ha:local
+      binds:
+        - configs/fw2/setup.sh:/setup.sh:ro
+        - configs/notify.sh:/etc/conntrackd/notify.sh:ro
+      exec:
+        - bash /setup.sh
+
+    client:
+      image: service-ha:local
+      binds:
+        - configs/client/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
+
+    backend:
+      image: service-ha:local
+      binds:
+        - configs/backend/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
+
+  links:
+    # OUTSIDE segment 10.10.0.0/24 via outsw
+    - endpoints: ["client:eth1", "outsw:eth1"]   # client 10.10.0.10
+    - endpoints: ["fw1:eth1",    "outsw:eth2"]   # fw1    10.10.0.2
+    - endpoints: ["fw2:eth1",    "outsw:eth3"]   # fw2    10.10.0.3
+    # INSIDE segment 10.10.20.0/24 via insw
+    - endpoints: ["backend:eth1", "insw:eth1"]   # backend 10.10.20.10
+    - endpoints: ["fw1:eth2",     "insw:eth2"]   # fw1     10.10.20.2
+    - endpoints: ["fw2:eth2",     "insw:eth3"]   # fw2     10.10.20.3
+    # conntrackd state-sync link 10.10.99.0/30 (fw1 <-> fw2 direct)
+    - endpoints: ["fw1:eth3", "fw2:eth3"]        # fw1 .1 / fw2 .2
