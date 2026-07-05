@@ -66,6 +66,7 @@ LOCAL_BUILDS=(
   "-t sdwan-lab:local labs/sdwan-concepts/"
   "-t automation-fundamentals:local labs/automation-fundamentals/"
   "-t lb-lab:local labs/load-balancer-basics/"
+  "-t anycast-dns:local labs/anycast-dns/"
   "-t netbox-automation:local labs/network-automation-netbox/"
   "-t enterprise-services-infra:local labs/enterprise-services-infra/"
   "-t enterprise-access-tools:local labs/enterprise-access-security/"

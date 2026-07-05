@@ -141,6 +141,7 @@ nav:
       - bfd-ospf: tracks/high-availability/bfd-ospf.md
       - bfd-bgp: tracks/high-availability/bfd-bgp.md
       - vrrp: tracks/high-availability/vrrp.md
+      - anycast-dns: tracks/high-availability/anycast-dns.md
       - ha-network-design-ceos: tracks/high-availability/ha-network-design-ceos.md
       - graceful-restart: tracks/high-availability/graceful-restart.md
     - Enterprise Design:

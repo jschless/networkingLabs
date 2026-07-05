@@ -1,0 +1,93 @@
+name: anycast-dns
+
+# Anycast DNS — routing-on-the-host practice lab
+#
+# Two resolvers advertise the SAME /32 service address (10.53.53.53) into
+# the network with FRR running on the server itself. BGP best-path picks
+# the closest instance per client; a health-check watchdog removes the VIP
+# from lo when dnsmasq stops answering, so the route withdraws with the
+# service. You build the eBGP fabric and the filtered redistribution.
+#
+#      c1                                    c2
+#       │ 172.16.1.0/24        172.16.2.0/24 │
+#      r1 ──────────────────────────────────r2
+#   AS 65001         10.0.12.0/30        AS 65002
+#       │ 10.0.101.0/30      10.0.102.0/30   │
+#     dns1                                 dns2
+#   AS 65101                             AS 65102
+#   lo 10.0.0.11/32                 lo 10.0.0.12/32
+#   VIP 10.53.53.53/32 (lo)     VIP 10.53.53.53/32 (lo)
+#
+# The VIP is NOT in any frr.conf — the watchdog (configs/dns/healthcheck.sh)
+# owns it: present while dnsmasq answers on 127.0.0.1, deleted when it dies.
+
+topology:
+  defaults:
+    kind: linux
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
+  nodes:
+    r1:
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/r1/frr.conf:/etc/frr/frr.conf
+      exec:
+        # Re-apply config after containerlab creates all veth pairs
+        - vtysh -b
+
+    r2:
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/r2/frr.conf:/etc/frr/frr.conf
+      exec:
+        - vtysh -b
+
+    dns1:
+      image: anycast-dns:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/dns1/frr.conf:/etc/frr/frr.conf
+        - configs/dns1/dnsmasq.conf:/etc/dnsmasq.conf:ro
+        - configs/dns/healthcheck.sh:/usr/local/bin/healthcheck.sh:ro
+        - configs/dns/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
+
+    dns2:
+      image: anycast-dns:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/dns2/frr.conf:/etc/frr/frr.conf
+        - configs/dns2/dnsmasq.conf:/etc/dnsmasq.conf:ro
+        - configs/dns/healthcheck.sh:/usr/local/bin/healthcheck.sh:ro
+        - configs/dns/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
+
+    c1:
+      image: ops-lab:local
+      binds:
+        - configs/c1/setup.sh:/setup.sh:ro
+      exec:
+        - sh /setup.sh
+
+    c2:
+      image: ops-lab:local
+      binds:
+        - configs/c2/setup.sh:/setup.sh:ro
+      exec:
+        - sh /setup.sh
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]     # 10.0.12.0/30
+    - endpoints: ["r1:eth2", "dns1:eth1"]   # 10.0.101.0/30
+    - endpoints: ["r2:eth2", "dns2:eth1"]   # 10.0.102.0/30
+    - endpoints: ["r1:eth3", "c1:eth1"]     # 172.16.1.0/24
+    - endpoints: ["r2:eth3", "c2:eth1"]     # 172.16.2.0/24
