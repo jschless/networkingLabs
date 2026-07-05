@@ -121,7 +121,7 @@ labs into an order.
 
 | Topic | Status | Labs |
 |-------|--------|------|
-| 2.1 MPLS operations (LSR, LDP, label switching, LSP) | 🟡 | `mpls-sr-blank`, `mpls-sr-isis-bgp`, `mpls-sr-srlinux` — label switching hands-on via **Segment Routing, not LDP**; LDP specifics are theory |
+| 2.1 MPLS operations (LSR, LDP, label switching, LSP) | ✅ | `mpls-ldp` (LDP sessions, bindings, PHP, LSP end to end), `mpls-sr-blank`, `mpls-sr-isis-bgp`, `mpls-sr-srlinux` (the SR alternative) — IOS `mpls ip` syntax differs, protocol behavior identical |
 | 2.2 MPLS Layer 3 VPN | ✅ | `mpls-sr-isis-bgp` (BGP VPNv4), `bgp-labeled-unicast`, `mpls-l2vpn` (beyond blueprint) |
 | 2.3 DMVPN single hub (mGRE, NHRP, IPsec, spoke-to-spoke) | 🟡 | `dmvpn-phase1`, `dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1` — full NHRP/mGRE/IPsec behavior on VyOS; Cisco `ip nhrp` syntax differs |
 

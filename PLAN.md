@@ -115,12 +115,41 @@ Follow `enterprise-it-101/AUTHORING.md` + `DESIGN.md`; keep base+override compos
 Dependencies: 4.1 needs 4.0 and benefits from Phase 3 complete. Phases 1 and 2 are
 independent of everything.
 
+## Phase 5 — Enterprise operations & services (July 2026 review)
+
+Source: July 2026 pedagogical re-review, this time anchored to "standard enterprise
+system + containerlab-testable" rather than exam blueprints. Verified non-gaps first
+(NetFlow, MLAG, DAI/snooping, TACACS+, VRF leaking are all already hands-on). Scoped
+out by decision (2026-07-05): keepalived/conntrackd service-HA lab and Kea DHCP-HA
+lab. Unscheduled second-tier deepenings if appetite returns: live NAT64 via tayga in
+`ipv6-transition`, live NETCONF in `automation-fundamentals`, Oxidized config-backup lab.
+
+All four are independent. Same rules as ever: `/new-lab` skill → audit against
+`labs/AUTHORING.md`; one branch + PR each; never stack branches; definition of done =
+clean deploy → every README verification command → break-it steps → destroy → redeploy.
+
+- [ ] **5.1 `labs/mpls-ldp`** — LDP-based MPLS on FRR (`ldpd`): OSPF underlay, LDP
+      sessions/label bindings, PHP, an LSP end to end; challenge questions contrast
+      per-hop LDP state with the `mpls-sr-blank` build. Closes the coverage-map row
+      that marks LDP "theory" (ENARSI 2.1 → upgrade to ✅ on merge).
+- [ ] **5.2 `labs/ztp-basics`** — day-0 provisioning: factory-default cEOS boots ZTP,
+      DHCP option 67 → HTTP config server; break-it: wrong bootfile/unreachable server.
+- [ ] **5.3 `labs/anycast-dns`** — routing-on-the-host anycast service: two DNS
+      resolvers each advertising the same /32 VIP from FRR-on-the-server into the
+      network, health-check withdraws the route on daemon death; closest-resolver +
+      failover verified by query + traceroute.
+- [ ] **5.4 `labs/k8s-fabric`** — Kubernetes ↔ fabric integration: k3s/kind node(s)
+      BGP-peering (Cilium or MetalLB) to a ToR (FRR or cEOS), LoadBalancer Service
+      /32s advertised, ECMP across nodes. Lab-host-sized (RAM); prototype the
+      k8s-in-container memory footprint before committing to a design.
+
 ---
 
 ## Status log
 
 | Date | Item | Status / notes |
 |------|------|----------------|
+| 2026-07-05 | Phase 5 created | July re-review (enterprise-reality lens) added 5.1–5.4; keepalived-HA + Kea-HA labs explicitly declined. Started 5.1 `mpls-ldp` (branch `lab/mpls-ldp`). |
 | 2026-06-11 | Plan created | Review delivered; no phases started. |
 | 2026-06-11 | 1.1 coverage map | Merged (PR #10). Built against ENCOR 350-401 **v1.2** (2025) + ENARSI 300-410 v1.1. **Finding: ENCOR v1.2 dropped the wireless domain entirely** — review finding #2's "wireless RF ~20% hole" is stale; SD-WAN/SD-Access + automation gaps remain. |
 | 2026-06-11 | 1.2 fidelity doc | Merged (PR #11). "Platform fidelity" section in docs/study-paths.md; anchor is linked from coverage-map.md. |

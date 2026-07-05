@@ -124,6 +124,7 @@ nav:
       - vrf-lite: tracks/tunnels-vpn/vrf-lite.md
     - MPLS & SP:
       - tracks/mpls-sp/index.md
+      - mpls-ldp: tracks/mpls-sp/mpls-ldp.md
       - mpls-sr-blank: tracks/mpls-sp/mpls-sr-blank.md
       - mpls-sr-isis-bgp: tracks/mpls-sp/mpls-sr-isis-bgp.md
       - mpls-sr-srlinux: tracks/mpls-sp/mpls-sr-srlinux.md

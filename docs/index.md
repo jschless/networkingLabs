@@ -127,10 +127,10 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Tunnels & VPN track](tracks/tunnels-vpn/index.md)
 
-- :material-cloud-tags: **MPLS & SP** (5 labs)
+- :material-cloud-tags: **MPLS & SP** (6 labs)
 
     ---
-    IS-IS + SR-MPLS + BGP VPNv4, L2VPN, 6PE
+    LDP, IS-IS + SR-MPLS + BGP VPNv4, L2VPN, 6PE
 
     [:octicons-arrow-right-24: MPLS & SP track](tracks/mpls-sp/index.md)
 
