@@ -91,6 +91,7 @@ TACACS_BUILDS=(
 # --- multi-arch registry images ----------------------------------------------
 PULLS=(
   "ghcr.io/nokia/srlinux:latest"
+  "rancher/k3s:v1.30.6-k3s1"
 )
 
 build_local() {

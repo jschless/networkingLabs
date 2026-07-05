@@ -136,6 +136,7 @@ nav:
       - vxlan-evpn: tracks/data-center/vxlan-evpn.md
       - vxlan-evpn-srlinux: tracks/data-center/vxlan-evpn-srlinux.md
       - evpn-border-ceos: tracks/data-center/evpn-border-ceos.md
+      - k8s-fabric: tracks/data-center/k8s-fabric.md
     - High Availability:
       - tracks/high-availability/index.md
       - bfd-ospf: tracks/high-availability/bfd-ospf.md
