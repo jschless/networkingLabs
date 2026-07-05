@@ -60,7 +60,7 @@ show you:
 | **HSRP and GLBP** | VRRP (`vrrp`, `ha-network-design-ceos`) — same FHRP concept, different protocol and CLI |
 | **Cisco NHRP/DMVPN syntax** (`ip nhrp map`, `tunnel mode gre multipoint`) | VyOS DMVPN (`dmvpn-phase1/2/3`) — identical NHRP behavior, different config grammar |
 | **IOS NAT** (`ip nat inside/outside`) | nftables and FortiGate NAT |
-| **LDP label distribution** | Segment Routing label distribution (`mpls-sr-*`) |
+| **LDP via IOS `mpls ip` syntax** | Real LDP on FRR (`mpls-ldp`) — identical protocol, FRR's `mpls ldp` config block instead; plus the SR alternative (`mpls-sr-*`) |
 | **Catalyst Center (DNA Center), SD-WAN Manager (vManage), ISE, EEM, LISP, TrustSec** | Nothing — these are products, not protocols, and can't be containerized here |
 
 **The recommended bridge:** do the labs here first — they build the protocol
