@@ -189,6 +189,7 @@ nav:
       - mtu-pmtud-troubleshooting: tracks/operations/mtu-pmtud-troubleshooting.md
       - network-assurance: tracks/operations/network-assurance.md
       - qos-enterprise: tracks/operations/qos-enterprise.md
+      - ztp-basics: tracks/operations/ztp-basics.md
       - automation-fundamentals: tracks/operations/automation-fundamentals.md
       - network-automation-netbox: tracks/operations/network-automation-netbox.md
       - suzieq-network-observability: tracks/operations/suzieq-network-observability.md

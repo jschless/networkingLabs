@@ -169,10 +169,10 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-chart-line: **Network Operations** (12 labs)
+- :material-chart-line: **Network Operations** (13 labs)
 
     ---
-    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, API automation fundamentals, NetBox automation, gNMI telemetry, SuzieQ observability
+    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, zero-touch provisioning, API automation fundamentals, NetBox automation, gNMI telemetry, SuzieQ observability
 
     [:octicons-arrow-right-24: Operations track](tracks/operations/index.md)
 

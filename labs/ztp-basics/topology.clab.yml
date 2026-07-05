@@ -1,0 +1,62 @@
+name: ztp-basics
+
+# Zero-Touch Provisioning practice lab
+#
+# sw1 deploys with a throwaway "field tech" config. You build the
+# provisioning service on ztp1 (DHCP option 67 + HTTP config server),
+# author the day-0 startup-config it serves, then factory-reset sw1 and
+# watch real EOS ZTP install your config — DHCP lease, bootfile fetch,
+# config apply — with no human on the switch.
+#
+# ZTP DHCPs on every connected interface; the DHCP server lives on the
+# containerlab MGMT network (mirrors real OOB-mgmt provisioning), so
+# Management0 wins. The served config then brings up production ports:
+#
+#   mgmt 172.20.20.0/24: ztp1 .111 (DHCP+HTTP) ── sw1 Ma0 (ZTP client)
+#
+#   [ztp1]────eth1────[sw1]────eth2────[h1]
+#   10.0.99.10     Et1: 10.0.99.1   10.0.2.100
+#                  Et2: 10.0.2.1  (Et1/Et2 installed BY ZTP)
+#
+# The ZTP trigger is labs/ztp-basics/reset-sw1.sh (wipes flash, reboots
+# the container into ZTP mode, re-plumbs the data links).
+
+mgmt:
+  network: clab
+  ipv4-subnet: 172.20.20.0/24
+
+topology:
+  nodes:
+    sw1:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.20.20.121
+      # The "temporarily configured by hand" state ZTP will replace.
+      startup-config: configs/sw1/pre-ztp-config
+
+    ztp1:
+      kind: linux
+      image: ops-lab:local
+      mgmt-ipv4: 172.20.20.111
+      binds:
+        - configs/ztp1/setup.sh:/setup.sh:ro
+        # Templates, not live files: setup.sh copies them into place
+        # (first run only) so your in-container edits work and never
+        # write back into the repo.
+        - configs/ztp1/dnsmasq.conf:/etc/dnsmasq.conf.orig:ro
+        - configs/ztp1/www:/var/www.orig:ro
+      exec:
+        - bash /setup.sh
+
+    h1:
+      kind: linux
+      image: ops-lab:local
+      mgmt-ipv4: 172.20.20.131
+      binds:
+        - configs/h1/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["ztp1:eth1", "sw1:eth1"]   # 10.0.99.0/24 server segment
+    - endpoints: ["h1:eth1",   "sw1:eth2"]   # 10.0.2.0/24 user segment

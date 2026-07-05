@@ -125,10 +125,13 @@ appetite returns: live NAT64 via tayga in `ipv6-transition`, live NETCONF in
 `automation-fundamentals`, Oxidized config-backup lab.
 
 All five are independent. Same rules as ever: `/new-lab` skill → audit against
-`labs/AUTHORING.md`; one branch + PR each; never stack branches; definition of done =
-clean deploy → every README verification command → break-it steps → destroy → redeploy.
+`labs/AUTHORING.md`; never stack branches; definition of done = clean deploy → every
+README verification command → break-it steps → destroy → redeploy.
+**Branching exception (Joe, 2026-07-05):** 5.1 merged solo (PR #31); **5.2–5.5 all
+ride one shared branch/PR** — `lab/ztp-basics` → PR #32. Commit each finished lab to
+that branch; merge once when 5.5 lands.
 
-- [ ] **5.1 `labs/mpls-ldp`** — LDP-based MPLS on FRR (`ldpd`): OSPF underlay, LDP
+- [x] **5.1 `labs/mpls-ldp`** — LDP-based MPLS on FRR (`ldpd`): OSPF underlay, LDP
       sessions/label bindings, PHP, an LSP end to end; challenge questions contrast
       per-hop LDP state with the `mpls-sr-blank` build. Closes the coverage-map row
       that marks LDP "theory" (ENARSI 2.1 → upgrade to ✅ on merge).
@@ -155,6 +158,8 @@ clean deploy → every README verification command → break-it steps → destro
 | Date | Item | Status / notes |
 |------|------|----------------|
 | 2026-07-05 | Phase 5 created | July re-review (enterprise-reality lens) added 5.1–5.4; keepalived-HA + Kea-HA labs initially declined. Started 5.1 `mpls-ldp` (branch `lab/mpls-ldp`). Same day: Joe reinstated the keepalived/conntrackd service-HA lab as **5.5**; Kea DHCP-HA remains declined. |
+| 2026-07-05 | 5.2 ztp-basics | Built + fully validated live on branch `lab/ztp-basics` (the shared 5.2–5.5 PR). Real cEOS ZTP over the clab mgmt network: option 67 → HTTP fetch → in-container reload; `reset-sw1.sh` wipes flash, re-plumbs the data veths docker-restart destroys, and babysits the Docker-Desktop punt quirk. check.sh 8/8; break-it (404 loop → live fix → self-heal) validated; clean redeploy → blank state. Key traps recorded in memory. Next: 5.3 anycast-dns on the same branch. |
+| 2026-07-05 | 5.1 mpls-ldp | Merged (PR #31). Fully validated live: check.sh 11/11, clean redeploy. Validation corrected the break-it lesson — FRR mid-path LDP session loss is a **hard blackhole** (ingress keeps retained stale label; transit LFIB entry deleted), not IP fallback; death takes the 180s hold timer, recovery ~3s. Coverage map ENARSI 2.1 → ✅. Next: 5.2 ztp-basics. |
 | 2026-06-11 | Plan created | Review delivered; no phases started. |
 | 2026-06-11 | 1.1 coverage map | Merged (PR #10). Built against ENCOR 350-401 **v1.2** (2025) + ENARSI 300-410 v1.1. **Finding: ENCOR v1.2 dropped the wireless domain entirely** — review finding #2's "wireless RF ~20% hole" is stale; SD-WAN/SD-Access + automation gaps remain. |
 | 2026-06-11 | 1.2 fidelity doc | Merged (PR #11). "Platform fidelity" section in docs/study-paths.md; anchor is linked from coverage-map.md. |

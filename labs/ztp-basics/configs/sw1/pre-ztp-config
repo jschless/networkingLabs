@@ -1,0 +1,20 @@
+no aaa root
+!
+hostname new-switch
+!
+! -------------------------------------------------------
+! This is the "day minus one" state: a field tech consoled
+! in, set a hostname, and left. No routing, no interface
+! config, no management story. Your ZTP service replaces
+! all of this — do not configure the switch by hand.
+! -------------------------------------------------------
+!
+spanning-tree mode mstp
+!
+interface Ethernet1
+   description to ztp1 (provisioning segment)
+!
+interface Ethernet2
+   description to h1 (user segment)
+!
+end
