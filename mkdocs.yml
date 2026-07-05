@@ -136,11 +136,14 @@ nav:
       - vxlan-evpn: tracks/data-center/vxlan-evpn.md
       - vxlan-evpn-srlinux: tracks/data-center/vxlan-evpn-srlinux.md
       - evpn-border-ceos: tracks/data-center/evpn-border-ceos.md
+      - k8s-fabric: tracks/data-center/k8s-fabric.md
     - High Availability:
       - tracks/high-availability/index.md
       - bfd-ospf: tracks/high-availability/bfd-ospf.md
       - bfd-bgp: tracks/high-availability/bfd-bgp.md
       - vrrp: tracks/high-availability/vrrp.md
+      - anycast-dns: tracks/high-availability/anycast-dns.md
+      - service-ha: tracks/high-availability/service-ha.md
       - ha-network-design-ceos: tracks/high-availability/ha-network-design-ceos.md
       - graceful-restart: tracks/high-availability/graceful-restart.md
     - Enterprise Design:
@@ -189,6 +192,7 @@ nav:
       - mtu-pmtud-troubleshooting: tracks/operations/mtu-pmtud-troubleshooting.md
       - network-assurance: tracks/operations/network-assurance.md
       - qos-enterprise: tracks/operations/qos-enterprise.md
+      - ztp-basics: tracks/operations/ztp-basics.md
       - automation-fundamentals: tracks/operations/automation-fundamentals.md
       - network-automation-netbox: tracks/operations/network-automation-netbox.md
       - suzieq-network-observability: tracks/operations/suzieq-network-observability.md

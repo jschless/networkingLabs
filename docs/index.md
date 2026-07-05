@@ -134,17 +134,17 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: MPLS & SP track](tracks/mpls-sp/index.md)
 
-- :material-server-network: **Data Center** (4 labs)
+- :material-server-network: **Data Center** (5 labs)
 
     ---
-    BGP CLOS, VXLAN, BGP EVPN, border leaf, symmetric IRB
+    BGP CLOS, VXLAN, BGP EVPN, border leaf, symmetric IRB, k8s LoadBalancer/BGP
 
     [:octicons-arrow-right-24: Data Center track](tracks/data-center/index.md)
 
-- :material-high-definition: **High Availability** (5 labs)
+- :material-high-definition: **High Availability** (7 labs)
 
     ---
-    BFD, VRRP, Graceful Restart, MLAG, multi-mechanism HA design
+    BFD, VRRP, anycast services, stateful firewall HA, Graceful Restart, MLAG, multi-mechanism HA design
 
     [:octicons-arrow-right-24: HA track](tracks/high-availability/index.md)
 
@@ -169,10 +169,10 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-chart-line: **Network Operations** (12 labs)
+- :material-chart-line: **Network Operations** (13 labs)
 
     ---
-    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, API automation fundamentals, NetBox automation, gNMI telemetry, SuzieQ observability
+    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, zero-touch provisioning, API automation fundamentals, NetBox automation, gNMI telemetry, SuzieQ observability
 
     [:octicons-arrow-right-24: Operations track](tracks/operations/index.md)
 

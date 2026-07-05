@@ -1,0 +1,19 @@
+! startup-config served by ZTP (skeleton) — this exact file lands on
+! sw1's flash and boots it. Your job (Task 3): make it a complete day-0
+! config. Requirements:
+!
+!   - hostname branch-sw1   (NOT "sw1" — that's the container's default
+!     hostname, so it can't prove your config applied)
+!   - local admin user (privilege 15, secret of your choice)
+!   - a motd banner containing the exact line: PROVISIONED-BY-ZTP
+!   - Management0: static 172.20.20.121/24 (replaces the ZTP lease)
+!   - Ethernet1: routed port, 10.0.99.1/24  (server segment)
+!   - Ethernet2: routed port, 10.0.2.1/24   (user segment)
+!   - IP routing enabled (h1 reaches ztp1 through this switch)
+!
+! Remember what the cEOS labs in this repo always need: 'no aaa root',
+! 'no switchport' on routed ports, 'ip routing'.
+!
+no aaa root
+!
+end

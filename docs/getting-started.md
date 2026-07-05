@@ -103,7 +103,9 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `ipsec-lab:local` | `ipsec-basics`, `flexvpn-basics` | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
 | `black-core-tools:local` | `black-core-routing` | `docker build -t black-core-tools:local labs/black-core-routing/` |
-| `ops-lab:local` | `aaa-ops-troubleshooting`, `dhcp-dns-troubleshooting`, `ipv6-access-services`, `management-access-control` | `docker build -t ops-lab:local images/ops-lab/` |
+| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` |
+| `rancher/k3s:v1.30.6-k3s1` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1` (multi-arch; MetalLB + nginx also pull at deploy — needs internet) |
+| `anycast-dns:local` | `anycast-dns` | `docker build -t anycast-dns:local labs/anycast-dns/` |
 | `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
 | `nac-practice:local` | `dot1x-ceos-practice` | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
 | `nac-practice-tacacs:local` | `dot1x-ceos-practice` | `docker build -f labs/dot1x-ceos-practice/Dockerfile.tacacs -t nac-practice-tacacs:local labs/dot1x-ceos-practice/` |
@@ -113,6 +115,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `sdwan-lab:local` | `sdwan-concepts` | `docker build -t sdwan-lab:local labs/sdwan-concepts/` |
 | `automation-fundamentals:local` | `automation-fundamentals` | `docker build -t automation-fundamentals:local labs/automation-fundamentals/` |
 | `lb-lab:local` | `load-balancer-basics` | `docker build -t lb-lab:local labs/load-balancer-basics/` |
+| `service-ha:local` | `service-ha` | `docker build -t service-ha:local labs/service-ha/` |
 | `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
 | `fortigate-tools:local` | `fortigate-firewall-capstone` | `docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/` |
 | `enterprise-services-infra:local` | `enterprise-services-infra` | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |

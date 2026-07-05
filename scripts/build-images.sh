@@ -66,6 +66,8 @@ LOCAL_BUILDS=(
   "-t sdwan-lab:local labs/sdwan-concepts/"
   "-t automation-fundamentals:local labs/automation-fundamentals/"
   "-t lb-lab:local labs/load-balancer-basics/"
+  "-t anycast-dns:local labs/anycast-dns/"
+  "-t service-ha:local labs/service-ha/"
   "-t netbox-automation:local labs/network-automation-netbox/"
   "-t enterprise-services-infra:local labs/enterprise-services-infra/"
   "-t enterprise-access-tools:local labs/enterprise-access-security/"
@@ -90,6 +92,7 @@ TACACS_BUILDS=(
 # --- multi-arch registry images ----------------------------------------------
 PULLS=(
   "ghcr.io/nokia/srlinux:latest"
+  "rancher/k3s:v1.30.6-k3s1"
 )
 
 build_local() {
