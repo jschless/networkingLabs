@@ -27,7 +27,8 @@ topology:
 
     ca:
       kind: linux
-      image: quay.io/frrouting/frr:8.4.2
+      # frr-lab (not the bare frr image): the CA workflow needs openssl
+      image: frr-lab:local
       binds:
         - configs/ca/setup.sh:/setup.sh
         - configs/ca/init-ca.sh:/lab/init-ca.sh

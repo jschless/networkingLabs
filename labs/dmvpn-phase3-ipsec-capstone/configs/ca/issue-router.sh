@@ -36,9 +36,17 @@ EOF
 openssl x509 -req -in "$ROUTER_CSR" -CA "$CA_CERT" -CAkey "$CA_KEY" \
   -CAcreateserial -out "$ROUTER_CERT" -days 825 -sha256 -extfile "$ROUTER_EXT"
 
-CA_B64="$(base64 "$CA_CERT" | tr -d '\n')"
-CERT_B64="$(base64 "$ROUTER_CERT" | tr -d '\n')"
-KEY_B64="$(base64 "$ROUTER_KEY" | tr -d '\n')"
+# VyOS `set pki` takes the base64 BODY of the PEM (the text between the
+# BEGIN/END armor lines), not a base64 of the whole file — stripping the
+# armor and joining the lines produces exactly that. Re-encoding the full
+# PEM makes commit fail with "Invalid certificate".
+pem_body() { sed '/^-----/d' "$1" | tr -d '\n'; }
+
+CA_B64="$(pem_body "$CA_CERT")"
+CERT_B64="$(pem_body "$ROUTER_CERT")"
+# The key must be PKCS#8 for VyOS; openssl genrsa emits PKCS#1 ("BEGIN RSA
+# PRIVATE KEY"), so convert before stripping the armor.
+KEY_B64="$(openssl pkcs8 -topk8 -nocrypt -in "$ROUTER_KEY" | sed '/^-----/d' | tr -d '\n')"
 
 cat > "$INSTALL_SNIPPET" <<EOF
 set pki ca DMVPN-CA certificate '${CA_B64}'

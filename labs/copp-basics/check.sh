@@ -5,7 +5,7 @@ source "$REPO_ROOT/scripts/check-lib.sh"
 lab_init "copp-basics"
 
 check_contains "r2 eBGP to r1 Established" "$(eos r2 'show bgp summary')" "Estab"
-check_contains "r2 OSPF to r3 FULL" "$(eos r2 'show ip ospf neighbor')" "FULL"
+check_contains "r2 OSPF to r3 Full" "$(eos r2 'show ip ospf neighbor')" "Full"
 check_contains "r2 CoPP class CLASS-BGP present" \
   "$(eos r2 'show policy-map type copp')" "CLASS-BGP"
 check_contains "r2 CoPP class CLASS-OSPF present" \

@@ -25,10 +25,12 @@ retry_contains() {
   return 1
 }
 
-retry_contains "spine1 BGP Established" "eos spine1 'show bgp summary'" "Established"
-retry_contains "spine2 BGP Established" "eos spine2 'show bgp summary'" "Established"
-retry_contains "leaf1 BGP Established" "eos leaf1 'show bgp summary'" "Established"
-retry_contains "leaf2 BGP Established" "eos leaf2 'show bgp summary'" "Established"
+# "Estab": Arista abbreviates the state column in `show bgp summary`; the
+# full word "Established" never appears there.
+retry_contains "spine1 BGP Established" "eos spine1 'show bgp summary'" "Estab"
+retry_contains "spine2 BGP Established" "eos spine2 'show bgp summary'" "Estab"
+retry_contains "leaf1 BGP Established" "eos leaf1 'show bgp summary'" "Estab"
+retry_contains "leaf2 BGP Established" "eos leaf2 'show bgp summary'" "Estab"
 check_ping_eos "spine1→leaf2 loopback" spine1 10.255.0.14
 check_ping_eos "leaf1→spine2 loopback" leaf1 10.255.0.12
 retry_contains \

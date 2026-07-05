@@ -72,6 +72,8 @@ LOCAL_BUILDS=(
   "-t enterprise-multicast:local labs/enterprise-multicast/"
   "-t enterprise-wireless-architecture:local labs/enterprise-wireless-architecture/"
   "-t dmz-lab:local labs/enterprise-edge-nat-firewall/"
+  "-t gcap-node:local labs/enterprise-grand-capstone/"
+  "-t suzieq-lab:local labs/suzieq-network-observability/"
   "-t soc-attacker:local images/soc-attacker/"
   "-t soc-endpoint:local images/soc-endpoint/"
   "-t soc-sensor:local images/soc-sensor/"

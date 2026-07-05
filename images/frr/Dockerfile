@@ -4,4 +4,5 @@
 # stopped updating in Nov 2022 and is amd64-only.
 FROM quay.io/frrouting/frr:8.4.2
 
-RUN apk add --no-cache tcpdump tshark
+# openssl: the dmvpn-phase3-ipsec-capstone CA node issues router certificates
+RUN apk add --no-cache tcpdump tshark openssl
