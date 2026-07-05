@@ -11,7 +11,7 @@ one: a long-lived TCP flow through the pair **dies** on failover without
 state sync and **survives** with it.
 
 It's the HA answer to the single LB you built in
-[`load-balancer-basics`](../load-balancer-basics/README.md) — that lab's LB
+`load-balancer-basics` — that lab's LB
 was one box; here the box is a pair, and the interesting failures are in the
 handoff between them.
 
@@ -474,8 +474,8 @@ No answers provided — argue them from what you built.
    conntrackd carry for an in-flight NATed flow to survive, and why is
    getting that wrong worse than the no-NAT case?
 5. Compare this pair's failover with the anycast approach in
-   [`anycast-dns`](../anycast-dns/README.md) and the ECMP approach in
-   [`k8s-fabric`](../k8s-fabric/README.md). For a *stateful* service, why
+   `anycast-dns` and the ECMP approach in
+   `k8s-fabric`. For a *stateful* service, why
    can't you just anycast/ECMP the VIP across both firewalls and skip VRRP
    entirely — what does active/backup give you that active/active can't,
    without a lot more machinery?
