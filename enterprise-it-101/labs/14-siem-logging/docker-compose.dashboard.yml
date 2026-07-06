@@ -1,0 +1,143 @@
+# Lab 14 — OPTIONAL indexer + dashboard overlay
+# ==============================================
+# Additive layer on top of base/docker-compose.yml + the graded lab-14 override.
+# It does NOT change the manager-only lab: `./eit.sh up 14` still deploys exactly
+# the same manager + agents. Add this third file only when you want the web UI:
+#
+#   # 1. HOST sysctl (once per boot — see README, requires root):
+#   sudo sysctl -w vm.max_map_count=262144
+#
+#   # 2. Generate the TLS PKI (once):
+#   docker compose -f labs/14-siem-logging/dashboard/generate-indexer-certs.yml \
+#                  run --rm generator
+#
+#   # 3. Bring the full stack up (base + graded override + this overlay):
+#   docker compose -f base/docker-compose.yml \
+#                  -f labs/14-siem-logging/docker-compose.override.yml \
+#                  -f labs/14-siem-logging/docker-compose.dashboard.yml up -d
+#
+# Compose uses the FIRST -f file's directory (base/) as the project directory, so
+# every relative path below is written relative to base/ — hence ../labs/... .
+#
+# What this file does, in three parts:
+#   1. wazuh-indexer   — single-node OpenSearch store (10.100.3.31).
+#   2. wazuh-dashboard — the analyst web UI (10.100.3.32), HTTPS published ONLY to
+#                        127.0.0.1:5601 so it is reachable via SSH tunnel, never 0.0.0.0.
+#   3. wazuh-manager   — re-opened to ADD the Filebeat wiring (env + certs) that
+#                        ships /var/ossec/logs/alerts/alerts.json into the indexer.
+#                        *** Without this the dashboard shows ZERO alerts. ***
+#
+# Certs must be generated first (step 2); their names/UIDs match the upstream
+# wazuh-docker single-node PKI. Versions are pinned to 4.14.5 to match the manager.
+
+name: eit101-lab14
+
+services:
+  # ---- 3. Filebeat wiring on the EXISTING manager ------------------------------
+  # Compose merges this into the manager defined in the override: the environment
+  # map and the volumes / extra_hosts / network-alias lists are ADDED, nothing is
+  # removed. These env vars are sed'd by the manager image into
+  # /etc/filebeat/filebeat.yml (whose `wazuh` module tails alerts.json), and
+  # API_USERNAME/PASSWORD provision the API user the dashboard authenticates as.
+  wazuh-manager:
+    environment:
+      INDEXER_URL: https://wazuh.indexer:9200
+      INDEXER_USERNAME: admin
+      INDEXER_PASSWORD: "SecretPassword"
+      FILEBEAT_SSL_VERIFICATION_MODE: full
+      SSL_CERTIFICATE_AUTHORITIES: /etc/ssl/root-ca.pem
+      SSL_CERTIFICATE: /etc/ssl/filebeat.pem
+      SSL_KEY: /etc/ssl/filebeat.key
+      API_USERNAME: wazuh-wui
+      API_PASSWORD: "MyS3cr37P450r.*-"
+    # full SSL verification checks the indexer cert SAN (wazuh.indexer); map that
+    # name to the indexer's static IP so it resolves without touching AD DNS.
+    extra_hosts:
+      - "wazuh.indexer:10.100.3.31"
+    networks:
+      lab-corp:
+        aliases:
+          - wazuh.manager
+    volumes:
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/root-ca-manager.pem:/etc/ssl/root-ca.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
+
+  # ---- 1. Indexer (single-node OpenSearch) ------------------------------------
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:4.14.5
+    container_name: wazuh-indexer
+    hostname: wazuh.indexer
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.31
+        aliases:
+          - wazuh.indexer
+    environment:
+      # Indexer heap. Bump both to -Xms2g -Xmx2g if you have the RAM to spare.
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    # NOTE: 9200 is deliberately NOT published to the host — only the dashboard is.
+    volumes:
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-indexer/config/certs/root-ca.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/wazuh.indexer-key.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.key
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/wazuh.indexer.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer/wazuh.indexer.yml:/usr/share/wazuh-indexer/config/opensearch.yml
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer/internal_users.yml:/usr/share/wazuh-indexer/config/opensearch-security/internal_users.yml
+    tty: true
+    stdin_open: true
+
+  # ---- 2. Dashboard (analyst web UI) ------------------------------------------
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.14.5
+    container_name: wazuh-dashboard
+    hostname: wazuh.dashboard
+    networks:
+      lab-corp:
+        ipv4_address: 10.100.3.32
+        aliases:
+          - wazuh.dashboard
+    # HTTPS bound to loopback ONLY — reach it with an SSH tunnel:
+    #   ssh -L 5601:127.0.0.1:5601 <this-host>   then browse https://localhost:5601
+    #   login: admin / SecretPassword
+    ports:
+      - "127.0.0.1:5601:5601"
+    environment:
+      INDEXER_USERNAME: admin
+      INDEXER_PASSWORD: "SecretPassword"
+      WAZUH_API_URL: https://wazuh.manager
+      DASHBOARD_USERNAME: kibanaserver
+      DASHBOARD_PASSWORD: "kibanaserver"
+      API_USERNAME: wazuh-wui
+      API_PASSWORD: "MyS3cr37P450r.*-"
+    # Resolve the indexer + manager names to their ops-subnet static IPs without
+    # routing through AD DNS (dc1 knows nothing about these hosts).
+    extra_hosts:
+      - "wazuh.indexer:10.100.3.31"
+      - "wazuh.manager:10.100.3.30"
+    volumes:
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem
+      - ../labs/14-siem-logging/dashboard/config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
+      - ../labs/14-siem-logging/dashboard/config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+      - wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
+      - wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
+    depends_on:
+      - wazuh-indexer
+    tty: true
+    stdin_open: true
+
+volumes:
+  wazuh-indexer-data:
+  wazuh-dashboard-config:
+  wazuh-dashboard-custom:

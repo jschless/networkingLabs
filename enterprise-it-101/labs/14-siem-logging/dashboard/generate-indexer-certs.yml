@@ -1,0 +1,19 @@
+# One-shot TLS certificate generator for the optional indexer + dashboard
+# overlay (Lab 14). Mirrors the upstream wazuh-docker single-node
+# `generate-indexer-certs.yml`. Run it ONCE before the first overlay `up`:
+#
+#   docker compose -f labs/14-siem-logging/dashboard/generate-indexer-certs.yml run --rm generator
+#
+# It reads config/certs.yml and writes the PKI (root CA + per-node certs) into
+# config/wazuh_indexer_ssl_certs/, which the overlay then bind-mounts into the
+# indexer, dashboard, and manager (Filebeat). The output dir is git-ignored —
+# these are self-signed lab certs, regenerate any time.
+services:
+  generator:
+    image: wazuh/wazuh-certs-generator:0.0.4
+    hostname: wazuh-certs-generator
+    environment:
+      - CERT_TOOL_VERSION=4.14
+    volumes:
+      - ./config/wazuh_indexer_ssl_certs/:/certificates/
+      - ./config/certs.yml:/config/certs.yml
