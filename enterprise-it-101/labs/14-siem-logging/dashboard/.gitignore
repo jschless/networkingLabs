@@ -1,0 +1,5 @@
+# Generated TLS PKI (self-signed lab certs + private keys). Regenerate with:
+#   docker compose -f generate-indexer-certs.yml run --rm generator
+# The certs tool locks these files to specific UIDs / 0400, so git can't read
+# them anyway — never commit them.
+config/wazuh_indexer_ssl_certs/

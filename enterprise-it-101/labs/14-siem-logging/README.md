@@ -45,7 +45,9 @@ stack, which overruns the memory ceiling of a typical Docker Desktop VM and
 makes the lab flaky. Everything this lab teaches lives **manager-side** — you
 read alerts straight from `/var/ossec/logs/alerts/alerts.json` and the REST API,
 which is exactly how you'd debug rules on a real deployment before trusting the
-pretty graphs. The optional dashboard is covered in an appendix at the end.
+pretty graphs. If you have RAM to spare and want the analyst web UI, an
+**optional, additive overlay** (`docker-compose.dashboard.yml`) adds the indexer
++ dashboard without changing anything above — see the appendix at the end.
 
 ## How to use this lab
 
@@ -702,29 +704,136 @@ before the troubleshooting begins.
 
 ---
 
-## Appendix — Optional experiment: add the indexer + dashboard
+## Appendix — Optional: add the indexer + dashboard (web UI)
 
 This lab runs manager-only on purpose (see the topology note). If your machine
-has headroom (comfortably more than 4 GB free for Docker), you can add the
-visualization layer and explore the same alerts in a browser. **This is an
-experiment, not part of the graded lab** — expect higher memory use and slower
-boots, and roll it back if the stack gets flaky.
+has RAM to spare (budget ~2.5 GB on top of this stack), you can add the
+visualization layer and browse the same alerts in a browser. **This is an
+optional add-on, not part of the graded lab** — every rule, alert, and active
+response above already works manager-side. What you gain is dashboards,
+full-text search over historical alerts, and the agent-management UI: the
+analyst's console, not the detection engine.
 
-The full multi-node Wazuh deployment (indexer + dashboard with TLS between every
-component) is involved enough that the upstream project ships it as its own
-`wazuh-docker` repository. The realistic path is to follow that repo's
-single-node compose rather than hand-extend this lab's file. Two things to know
-before you try:
+It ships as an **additive overlay** — a third compose file layered on top of the
+graded stack. It changes nothing about the manager-only path: `./eit.sh up 14`
+still deploys exactly the same manager + agents. The overlay follows the upstream
+`wazuh-docker` **single-node** deployment (version-matched to the manager at
+`4.14.5`), adds the indexer at `10.100.3.31` and the dashboard at `10.100.3.32`
+on the same `lab-corp` network, and — critically — wires **Filebeat on the
+manager** to ship `/var/ossec/logs/alerts/alerts.json` into the indexer.
 
-- **Memory.** `docker info | grep Total` — the single-node indexer alone wants
-  ~2 GB heap. Raise Docker Desktop's memory limit first or it will OOM-kill the
-  indexer mid-boot.
-- **What you gain.** Nothing about *detection* — every rule, alert, and active
-  response in this lab already works manager-side. You gain dashboards,
-  full-text search over historical alerts, and the agent-management UI. It's the
-  analyst's console, not the detection engine.
+Files (all under `labs/14-siem-logging/`):
 
-If you do stand it up, every alert you generated above will appear under
-**Security events**, and your custom rules (`100201`, `100202`, `100210`) will
-show up filtered by `rule.id` — a good way to see your work rendered the way a
-SOC analyst would actually consume it.
+| Path | Role |
+|------|------|
+| `docker-compose.dashboard.yml` | The overlay: `wazuh-indexer`, `wazuh-dashboard`, and the Filebeat wiring merged onto `wazuh-manager` |
+| `dashboard/generate-indexer-certs.yml` | One-shot TLS cert generator (`wazuh-certs-tool`) |
+| `dashboard/config/certs.yml` | Node list the certs are issued for |
+| `dashboard/config/wazuh_indexer/*.yml` | Indexer `opensearch.yml` + demo `internal_users.yml` |
+| `dashboard/config/wazuh_dashboard/*.yml` | Dashboard `opensearch_dashboards.yml` + API endpoint `wazuh.yml` |
+| `dashboard/config/wazuh_indexer_ssl_certs/` | Generated PKI (git-ignored) |
+
+### Step 0 — Host sysctl (required, needs root)
+
+The indexer is OpenSearch; it refuses to start without a raised mmap count. This
+is a **host kernel** setting, not a container one — set it on the Docker host
+(it is **not** assumed to be present):
+
+```bash
+sudo sysctl -w vm.max_map_count=262144
+# make it persist across reboots:
+echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-wazuh-indexer.conf
+```
+
+### Step 1 — Generate the TLS certificates (once)
+
+The indexer, dashboard, and the manager's Filebeat all authenticate to each
+other with certificates from a shared root CA:
+
+```bash
+docker compose -f labs/14-siem-logging/dashboard/generate-indexer-certs.yml \
+               run --rm generator
+```
+
+This writes the PKI into `dashboard/config/wazuh_indexer_ssl_certs/` (locked to
+the indexer/manager UIDs and git-ignored — regenerate any time). You only redo
+this if you delete the certs.
+
+### Step 2 — Bring up the full stack
+
+`./eit.sh` auto-detects only two files, so pass all three `-f` files by hand to
+add the overlay:
+
+```bash
+docker compose \
+  -f base/docker-compose.yml \
+  -f labs/14-siem-logging/docker-compose.override.yml \
+  -f labs/14-siem-logging/docker-compose.dashboard.yml \
+  up -d
+```
+
+The indexer needs a minute or two to initialise its security index on first
+boot. Tear it down the same way (add `-v` to wipe the indexer volume too):
+
+```bash
+docker compose -f base/docker-compose.yml \
+  -f labs/14-siem-logging/docker-compose.override.yml \
+  -f labs/14-siem-logging/docker-compose.dashboard.yml down
+```
+
+### Step 3 — Open the dashboard
+
+The dashboard's HTTPS port is published **only to `127.0.0.1:5601`** (never
+`0.0.0.0`), so reach it through an SSH tunnel from your laptop:
+
+```bash
+ssh -L 5601:127.0.0.1:5601 <this-host>
+# then browse to:  https://localhost:5601   (login: admin / SecretPassword)
+```
+
+Your alerts land under **Security events**; the custom rules you wrote
+(`100201`, `100202`, `100210`) filter cleanly by `rule.id` — your manager-side
+work rendered the way a SOC analyst actually consumes it.
+
+### The part everyone misses: Filebeat on the manager
+
+Detection is manager-side and already works; the indexer is just storage. The
+manager only *populates* the dashboard because the overlay turns on **Filebeat
+inside the manager container** and points it at the indexer. That wiring is the
+block merged onto `wazuh-manager` in the overlay:
+
+```yaml
+environment:
+  INDEXER_URL: https://wazuh.indexer:9200
+  INDEXER_USERNAME: admin
+  INDEXER_PASSWORD: SecretPassword
+  FILEBEAT_SSL_VERIFICATION_MODE: full
+  SSL_CERTIFICATE_AUTHORITIES: /etc/ssl/root-ca.pem
+  SSL_CERTIFICATE: /etc/ssl/filebeat.pem
+  SSL_KEY: /etc/ssl/filebeat.key
+volumes:
+  - .../wazuh_indexer_ssl_certs/root-ca-manager.pem:/etc/ssl/root-ca.pem
+  - .../wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
+  - .../wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
+```
+
+The manager image seds those env vars into `/etc/filebeat/filebeat.yml` (whose
+`wazuh` module tails `alerts.json`) and starts Filebeat. **Skip this and the
+dashboard comes up perfectly but shows ZERO alerts** — detection keeps working,
+nothing ships the alerts to storage. Verify the pipeline end to end:
+
+```bash
+# 1. Filebeat on the manager is happy (connection to the indexer OK):
+docker exec wazuh-manager filebeat test output
+#    -> expect "talk to server... OK"; a TLS/handshake error here means the
+#       certs or vm.max_map_count aren't right.
+
+# 2. The alerts index exists and has documents (run from the indexer):
+docker exec wazuh-indexer \
+  curl -sk -u admin:SecretPassword https://localhost:9200/_cat/indices/wazuh-alerts-*
+#    -> a wazuh-alerts-4.x-* line with a non-zero doc count == alerts are flowing.
+```
+
+Generate a fresh alert (e.g. re-run the brute-force from `intruder`) and watch
+the doc count climb, then confirm the same event appears under **Security
+events** in the UI.
