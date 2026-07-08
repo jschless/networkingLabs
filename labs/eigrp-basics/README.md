@@ -46,8 +46,8 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy --topo topology.clab.yml
-docker exec -it clab-eigrp-basics-r1 vtysh
+./scripts/lab.sh deploy eigrp-basics
+./scripts/lab.sh cli eigrp-basics r1
 ```
 
 ---
@@ -62,7 +62,7 @@ keep loopbacks passive, and reach a state where r1 has a route to
 same link types, same metrics. Will r1 install one path or both? What
 does EIGRP do with two truly equal-metric paths?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `router eigrp 100`, `eigrp router-id 10.0.0.X`, a catch-all
@@ -72,7 +72,7 @@ does EIGRP do with two truly equal-metric paths?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On each router (router-id per node):
@@ -85,7 +85,7 @@ router eigrp 100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip route eigrp` on r1 shows 10.0.0.4/32 with **two** next-hops
@@ -108,7 +108,7 @@ identify FD, RD, the successor, and any feasible successor.
 **feasible successor** (loop-free backup) in the topology table, or only
 as a second successor? (They are not the same thing.)
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show ip eigrp topology 10.0.0.4/32` — the metric pair is
@@ -119,7 +119,7 @@ as a second successor? (They are not the same thing.)
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both descriptor blocks show the same composite metric `(327680/163840)`
@@ -144,7 +144,7 @@ cumulative delay. If you *lower* the bandwidth on the r1–r2 link, does
 that raise or lower r2's metric — and will r2 then become the successor
 or the backup?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `bandwidth <kbps>` under the interface on **both** ends of r1–r2
@@ -154,7 +154,7 @@ or the backup?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1** and **r2**, the r1–r2 interface:
@@ -165,7 +165,7 @@ interface eth1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r3 is now the lone successor; r2's path shows a worse metric. Whether r2
@@ -191,7 +191,7 @@ successor, fail r2's path again, and watch EIGRP go active and query.
 second it requires queries. What exactly is different about r1's
 *knowledge* in the two cases that explains the speed gap?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Fail a path from a bash shell: `ip link set eth2 down` on r2 (toward
@@ -203,7 +203,7 @@ second it requires queries. What exactly is different about r1's
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 With a feasible successor present, r1 fails over in 1–2 seconds with

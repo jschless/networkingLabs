@@ -60,8 +60,8 @@ flowchart TB
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml   # wait 30–60s to converge
-docker exec clab-mpls-sr-isis-bgp-pe1 vtysh
+./scripts/lab.sh deploy mpls-sr-isis-bgp   # wait 30–60s to converge
+./scripts/lab.sh cli mpls-sr-isis-bgp pe1
 ```
 
 ---
@@ -76,11 +76,11 @@ label will *any* node push to forward toward pe2's loopback? Write it down,
 then check.
 
 ```bash
-docker exec clab-mpls-sr-isis-bgp-pe1 vtysh -c "show mpls table"
-docker exec clab-mpls-sr-isis-bgp-pe1 vtysh -c "show segment-routing local-block"
+./scripts/lab.sh cmd mpls-sr-isis-bgp pe1 -- vtysh -c "show mpls table"
+./scripts/lab.sh cmd mpls-sr-isis-bgp pe1 -- vtysh -c "show segment-routing local-block"
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Label = SRGB_start + SID = 16000 + 3 = **16003**. The whole elegance of
@@ -105,12 +105,12 @@ How many MPLS labels will pe1 push, what does each one do, and which router
 removes which label?
 
 ```bash
-docker exec clab-mpls-sr-isis-bgp-ce1 ping -c3 10.0.0.7
-docker exec clab-mpls-sr-isis-bgp-rr1 vtysh -c "show bgp ipv4 vpn"
-docker exec clab-mpls-sr-isis-bgp-pe1 vtysh -c "show ip route vrf CUST-A"
+./scripts/lab.sh cmd mpls-sr-isis-bgp ce1 -- ping -c3 10.0.0.7
+./scripts/lab.sh cmd mpls-sr-isis-bgp rr1 -- vtysh -c "show bgp ipv4 vpn"
+./scripts/lab.sh cmd mpls-sr-isis-bgp pe1 -- vtysh -c "show ip route vrf CUST-A"
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 pe1 pushes **two** labels: an outer **SR transport label (16003)** to get
@@ -144,10 +144,10 @@ If you raise the p1–p2 metric, does the *label* for pe2 change, does the
 
 ```bash
 # raise the metric on p1's link toward p2, then re-check the path
-docker exec clab-mpls-sr-isis-bgp-ce1 traceroute -n 10.0.0.7
+./scripts/lab.sh cmd mpls-sr-isis-bgp ce1 -- traceroute -n 10.0.0.7
 ```
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The label for pe2 stays **16003** (it's tied to pe2's SID, not the path),

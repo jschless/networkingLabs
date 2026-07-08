@@ -41,7 +41,7 @@ This is a **practice lab**, not a tutorial.
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/dmvpn-phase3/topology.clab.yml
+./scripts/lab.sh deploy dmvpn-phase3
 ./scripts/lab.sh cli dmvpn-phase3 spoke1
 ```
 
@@ -56,7 +56,7 @@ point-to-multipoint on `tun0`, advertise the tunnel /32 and the LAN.
 not the individual /24s. After configuring spoke1, what single route will
 it have for *all* remote spoke LANs, and through whom?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - NHRP as in Phase 2 (including `shortcut`).
@@ -65,7 +65,7 @@ it have for *all* remote spoke LANs, and through whom?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **spoke1** (spoke2/spoke3 mirror with their values):
@@ -89,7 +89,7 @@ save
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip route 192.168.0.0/16` on spoke1 shows **one** summary route via
@@ -120,7 +120,7 @@ show ip nhrp
 traceroute 192.168.2.1
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 First packet hits the hub (matching the /16 summary); the hub sends an
@@ -146,7 +146,7 @@ commit, and retest spoke1→spoke2.
 and will the path be direct or via the hub? Does losing the shortcut break
 connectivity or just optimality?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Reachability **survives** — spoke1 still has the /16 summary via the hub,
@@ -201,5 +201,5 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/dmvpn-phase3/topology.clab.yml --cleanup
+./scripts/lab.sh destroy dmvpn-phase3
 ```

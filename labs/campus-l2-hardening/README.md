@@ -38,7 +38,7 @@ flowchart LR
 ```bash
 docker build -t frr-lab:local images/frr/
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
-sudo containerlab deploy -t labs/campus-l2-hardening/topology.clab.yml
+./scripts/lab.sh deploy campus-l2-hardening
 ```
 
 ## What Is Prebuilt
@@ -53,7 +53,7 @@ sudo containerlab deploy -t labs/campus-l2-hardening/topology.clab.yml
 ### 1. Confirm the baseline
 
 ```bash
-docker exec clab-campus-l2-hardening-client-a ping -c 3 10.10.10.1
+./scripts/lab.sh cmd campus-l2-hardening client-a -- ping -c 3 10.10.10.1
 ```
 
 If the first ping fails immediately after deploy, wait a few seconds for plain RSTP convergence on the unprotected edge port and retry.

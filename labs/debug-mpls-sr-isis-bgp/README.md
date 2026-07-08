@@ -66,11 +66,11 @@ Labels: SRGB base 16000; node label = 16000 + index.
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy debug-mpls-sr-isis-bgp
 
-docker exec -it clab-debug-mpls-sr-isis-bgp-pe1 vtysh
-docker exec -it clab-debug-mpls-sr-isis-bgp-pe2 vtysh
-docker exec -it clab-debug-mpls-sr-isis-bgp-rr1 vtysh
+./scripts/lab.sh cli debug-mpls-sr-isis-bgp pe1
+./scripts/lab.sh cli debug-mpls-sr-isis-bgp pe2
+./scripts/lab.sh cli debug-mpls-sr-isis-bgp rr1
 ```
 
 ## Observed Symptoms
@@ -119,19 +119,19 @@ show bgp ipv4 vpn <prefix>
 
 ## Hints
 
-<details><summary>Hint 1 — Where to start</summary>
+<details markdown="1"><summary>Hint 1 — Where to start</summary>
 
 When L3VPN forwarding is broken but BGP sessions are up, suspect the MPLS data plane. Run `show isis segment-routing node-list` on rr1 to see all node-SIDs in the network. Each node must have a **unique** SID index. Check whether any two nodes share the same index.
 
 </details>
 
-<details><summary>Hint 2 — Narrowing it down</summary>
+<details markdown="1"><summary>Hint 2 — Narrowing it down</summary>
 
 Run `show isis database detail` to inspect LSPs from all nodes. Look for the "Segment Routing" section in each LSP, specifically the "Prefix-SID" sub-TLV. pe1's LSP should show prefix 10.0.0.2/32 with SID index 2. pe2's LSP should show prefix 10.0.0.3/32 with SID index 3. Do both nodes advertise a different index?
 
 </details>
 
-<details><summary>Hint 3 — The specific problem</summary>
+<details markdown="1"><summary>Hint 3 — The specific problem</summary>
 
 pe2 is advertising its prefix (10.0.0.3/32) with SID index **2** instead of **3**. This is the same index as pe1. Both nodes claim label 16002 (16000 + 2). Routers building their MPLS forwarding tables see conflicting entries — traffic to pe2's loopback gets forwarded to pe1, and the VPN service to CE2 breaks entirely.
 
@@ -139,7 +139,7 @@ pe2 is advertising its prefix (10.0.0.3/32) with SID index **2** instead of **3*
 
 ## Solution
 
-<details><summary>Show configuration</summary>
+<details markdown="1"><summary>Show configuration</summary>
 
 On **pe2** in vtysh:
 

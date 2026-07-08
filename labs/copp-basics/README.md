@@ -61,10 +61,10 @@ EOS applies CoPP via a `policy-map type copp` applied inbound on the `control-pl
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/copp-basics/topology.clab.yml
+./scripts/lab.sh deploy copp-basics
 
 # Open CLI on r2 (DUT)
-docker exec -it clab-copp-basics-r2 Cli
+./scripts/lab.sh cli copp-basics r2
 
 # Or use helper
 ./scripts/lab.sh Cli copp-basics r2
@@ -99,7 +99,7 @@ Create one ACL per traffic type. These ACLs match packets heading to r2's contro
 
 ### r2
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -134,7 +134,7 @@ A `class-map type copp` classifies packets using the ACLs above. Each class is e
 
 ### r2
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```

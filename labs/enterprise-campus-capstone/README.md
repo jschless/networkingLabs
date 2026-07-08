@@ -124,9 +124,9 @@ flowchart TB
 
 ```bash
 # Access nodes
-docker exec -it clab-enterprise-campus-capstone-edge Cli
-docker exec -it clab-enterprise-campus-capstone-core1 Cli
-docker exec -it clab-enterprise-campus-capstone-dist1 Cli
+./scripts/lab.sh cli enterprise-campus-capstone edge
+./scripts/lab.sh cli enterprise-campus-capstone core1
+./scripts/lab.sh cli enterprise-campus-capstone dist1
 
 # OSPF neighbors (expect Full on all p2p links)
 show ip ospf neighbor
@@ -141,16 +141,16 @@ show vrrp
 show spanning-tree vlan 10
 
 # End-to-end: ping from client-a to internet (via ISP loopback)
-docker exec -it clab-enterprise-campus-capstone-client-a ping 1.1.1.1
+./scripts/lab.sh cmd enterprise-campus-capstone client-a -- ping 1.1.1.1
 
 # Cross-VLAN: client-a (VLAN 10) → client-b (VLAN 20)
-docker exec -it clab-enterprise-campus-capstone-client-a ping 10.20.20.11
+./scripts/lab.sh cmd enterprise-campus-capstone client-a -- ping 10.20.20.11
 ```
 
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/enterprise-campus-capstone/topology.clab.yml
+./scripts/lab.sh deploy enterprise-campus-capstone
 # or
 ./scripts/lab.sh deploy enterprise-campus-capstone
 ```

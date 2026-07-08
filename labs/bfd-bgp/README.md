@@ -44,15 +44,15 @@ flowchart LR
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh deploy bfd-bgp
+./scripts/lab.sh destroy bfd-bgp
 ```
 
 ## What You Configure
 
 ### Step 1: Configure BGP on all nodes (without BFD first)
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Example for r1:
@@ -117,19 +117,19 @@ actively probed. What keeps the BGP session "Established" long after the
 link is dead, and roughly how many seconds of black-holed traffic does
 that default timer cost you? Commit to a number before you measure.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Open a watch window on r1:
 
 ```bash
-watch -n0.5 'docker exec clab-bfd-bgp-r1 Cli -c "show bgp ipv4 unicast summary"'
+watch -n0.5 './scripts/lab.sh cmd bfd-bgp r1 -- Cli -c "show bgp ipv4 unicast summary"'
 ```
 
 Kill the link between r1 and r2:
 
 ```bash
-docker exec clab-bfd-bgp-r2 ip link set eth1 down
+./scripts/lab.sh cmd bfd-bgp r2 -- ip link set eth1 down
 ```
 
 Observe: BGP session stays in Established state until the hold timer expires (90 seconds).
@@ -138,14 +138,14 @@ Record how long it takes.
 Restore the link:
 
 ```bash
-docker exec clab-bfd-bgp-r2 ip link set eth1 up
+./scripts/lab.sh cmd bfd-bgp r2 -- ip link set eth1 up
 ```
 
 </details>
 
 ### Step 3: Enable BFD per BGP neighbor
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -181,17 +181,17 @@ Each BGP neighbor should have a corresponding BFD session in UP state.
 
 ### Step 5: Time BGP convergence WITH BFD
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Repeat the link-down test. BGP session should tear down in under 1 second.
 
 ```bash
 # Watch BGP summary
-watch -n0.5 'docker exec clab-bfd-bgp-r1 Cli -c "show bgp ipv4 unicast summary"'
+watch -n0.5 './scripts/lab.sh cmd bfd-bgp r1 -- Cli -c "show bgp ipv4 unicast summary"'
 
 # Kill the link
-docker exec clab-bfd-bgp-r2 ip link set eth1 down
+./scripts/lab.sh cmd bfd-bgp r2 -- ip link set eth1 down
 ```
 
 </details>
@@ -249,7 +249,7 @@ Traffic blackhole window: <1 second vs up to 90 seconds
 
 BFD in BGP is configured per-neighbor (not per-interface):
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -261,7 +261,7 @@ router bgp 65001
 
 You can also set custom timers per-neighbor:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```

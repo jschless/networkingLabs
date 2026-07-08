@@ -32,13 +32,13 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-zeek-analysis-attacker /opt/soc-lab/run-attack-sequence.sh
+./scripts/lab.sh cmd soc-zeek-analysis attacker -- /opt/soc-lab/run-attack-sequence.sh
 
-docker exec clab-soc-zeek-analysis-sensor \
+./scripts/lab.sh cmd soc-zeek-analysis sensor -- \
   jq -r '"\(.["id.orig_h"]) -> \(.["id.resp_h"]):\(.["id.resp_p"]) \(.service)"' \
   /var/log/zeek/conn.log
 
-docker exec clab-soc-zeek-analysis-sensor \
+./scripts/lab.sh cmd soc-zeek-analysis sensor -- \
   jq -r '.uri' /var/log/zeek/http.log
 ```
 

@@ -32,10 +32,10 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-yara-file-pipeline-attacker \
+./scripts/lab.sh cmd soc-yara-file-pipeline attacker -- \
   curl -s http://172.16.10.10/downloads/readme.txt
 
-docker exec clab-soc-yara-file-pipeline-sensor \
+./scripts/lab.sh cmd soc-yara-file-pipeline sensor -- \
   jq . /var/log/yara/hits.json
 ```
 

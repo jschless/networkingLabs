@@ -91,8 +91,7 @@ and MetalLB/nginx images are pulled from the internet, so **this lab needs
 internet access at deploy time.**
 
 ```bash
-sudo containerlab deploy -t labs/k8s-fabric/topology.clab.yml
-# or: ./scripts/lab.sh deploy k8s-fabric
+./scripts/lab.sh deploy k8s-fabric
 ```
 
 First boot takes a few minutes: k3s starts, the agent joins, then a
@@ -100,21 +99,21 @@ background bootstrap installs MetalLB and the workload. Wait for it:
 
 ```bash
 # watch it finish (look for "bootstrap] done")
-docker exec clab-k8s-fabric-k3s1 tail -f /var/log/bootstrap.log
+./scripts/lab.sh cmd k8s-fabric k3s1 -- tail -f /var/log/bootstrap.log
 ```
 
 Work the cluster from the server node (kubectl is preconfigured there):
 
 ```bash
-docker exec -it clab-k8s-fabric-k3s1 kubectl get nodes
-docker exec -it clab-k8s-fabric-k3s1 kubectl get pods -A
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get nodes
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get pods -A
 ./scripts/lab.sh vtysh k8s-fabric tor       # the ToR's FRR CLI
 ```
 
 Destroy when done:
 
 ```bash
-sudo containerlab destroy -t labs/k8s-fabric/topology.clab.yml --cleanup
+./scripts/lab.sh destroy k8s-fabric
 ```
 
 > **k3s teardown note:** if you ever remove a node container by hand, use
@@ -130,10 +129,10 @@ sudo containerlab destroy -t labs/k8s-fabric/topology.clab.yml --cleanup
 workload, MetalLB running but doing nothing, and a ToR with no BGP.
 
 ```bash
-docker exec clab-k8s-fabric-k3s1 kubectl get nodes -o wide
-docker exec clab-k8s-fabric-k3s1 kubectl get pods -o wide -l app=web
-docker exec clab-k8s-fabric-k3s1 kubectl -n metallb-system get pods
-docker exec clab-k8s-fabric-k3s1 kubectl get svc
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get nodes -o wide
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get pods -o wide -l app=web
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl -n metallb-system get pods
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get svc
 ./scripts/lab.sh vtysh k8s-fabric tor
 ```
 
@@ -142,7 +141,7 @@ show ip route
 show bgp ipv4 unicast summary
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both nodes are `Ready` with **InternalIP 10.1.0.11 / 10.1.0.12** — the rack
@@ -169,7 +168,7 @@ this side originates nothing and just listens.
 other side. What state will the two neighbors sit in — `Established`,
 `Active`, or `Idle` — and why?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `router bgp 65000`, then a `neighbor <node-ip> remote-as 65001` for each
@@ -185,7 +184,7 @@ other side. What state will the two neighbors sit in — `Established`,
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On the ToR:
@@ -206,7 +205,7 @@ router bgp 65000
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast summary` lists both neighbors in **`Idle`** (or
@@ -229,7 +228,7 @@ sessions come up on their own.
 yet the ToR ends up with **two** sessions. Where does the second one come
 from?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `BGPPeer` (apiVersion `metallb.io/v1beta2`): `myASN: 65001`,
@@ -244,7 +243,7 @@ from?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```yaml
@@ -279,7 +278,7 @@ spec:
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Within a few seconds `show bgp ipv4 unicast summary` on the ToR shows
@@ -303,7 +302,7 @@ client, which only speaks IP.
 true in the ToR's *forwarding table* for the client's HTTP request to the
 VIP to be delivered?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `kubectl expose deploy web --type=LoadBalancer --port=80 --name=web-lb`,
@@ -315,7 +314,7 @@ VIP to be delivered?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `kubectl get svc web-lb` shows `EXTERNAL-IP 198.51.100.100` — MetalLB's
@@ -341,7 +340,7 @@ many next-hops are in the ToR's FIB for the VIP? If you removed
 `maximum-paths` (back to the default 1), how many — and would traffic still
 work?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show ip route 198.51.100.100/32` — count the `via` lines.
@@ -353,7 +352,7 @@ work?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The FIB has **two** next-hops, weight 1 each — the ToR hashes flows across
@@ -382,8 +381,8 @@ default):
 
 ```bash
 # fetch a few times from the client, then read the pods' access logs
-docker exec clab-k8s-fabric-client sh -c 'for i in 1 2 3; do wget -qO- http://198.51.100.100/ >/dev/null; done'
-docker exec clab-k8s-fabric-k3s1 sh -c 'for p in $(kubectl get pods -l app=web -o name); do kubectl logs "$p" --since=20s; done' | grep -oE '^[0-9.]+' | sort -u
+./scripts/lab.sh cmd k8s-fabric client -- sh -c 'for i in 1 2 3; do wget -qO- http://198.51.100.100/ >/dev/null; done'
+./scripts/lab.sh cmd k8s-fabric k3s1 -- sh -c 'for p in $(kubectl get pods -l app=web -o name); do kubectl logs "$p" --since=20s; done' | grep -oE '^[0-9.]+' | sort -u
 ```
 
 Now switch the service to `Local` and repeat that log check. Then, with the
@@ -399,7 +398,7 @@ kubectl rollout status deploy/web
 Work out, from the ToR's route table, what changed and why — before the
 hints.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - After the source-IP check: `Cluster` vs `Local` should give **different**
@@ -412,7 +411,7 @@ hints.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Under the default `Cluster`, pods log a source IP of **10.42.0.1** — the
@@ -503,7 +502,7 @@ No answers provided — argue them from what you built.
 | VIP route present but only **one** next-hop | `maximum-paths` still 1 on the ToR, or only one node advertises (see next row) | `maximum-paths 4` under the ToR's `address-family ipv4 unicast` |
 | Only one node advertises under `externalTrafficPolicy: Local` | That's the design — a node with no local endpoint doesn't advertise | Spread the workload (both nodes need a pod), or use `Cluster` |
 | `wget` to the VIP hangs from the client | Client lacks a route to the VIP pool, or the ToR has no FIB entry | Client `ip route` must cover `198.51.100.0/24` via the ToR; check `show ip route <VIP>/32` on the ToR |
-| A node won't `Ready`, or the agent won't join | Slow image pulls, or the rack interface never got its IP | `docker exec clab-k8s-fabric-k3s2 journalctl -u k3s-agent` is not available — read `docker logs clab-k8s-fabric-k3s2`; confirm eth1 has 10.1.0.12 |
+| A node won't `Ready`, or the agent won't join | Slow image pulls, or the rack interface never got its IP | `./scripts/lab.sh cmd k8s-fabric k3s2 -- journalctl -u k3s-agent` is not available — read `docker logs clab-k8s-fabric-k3s2`; confirm eth1 has 10.1.0.12 |
 
 ## Extensions
 

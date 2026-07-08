@@ -41,7 +41,7 @@ flowchart LR
 
 ```bash
 docker build -t frr-lab:local images/frr/
-sudo containerlab deploy -t labs/mtu-pmtud-troubleshooting/topology.clab.yml
+./scripts/lab.sh deploy mtu-pmtud-troubleshooting
 ```
 
 ## What Is Prebuilt
@@ -58,15 +58,15 @@ sudo containerlab deploy -t labs/mtu-pmtud-troubleshooting/topology.clab.yml
 Small packets work:
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-host-a ping -c 3 192.168.2.10
-docker exec clab-mtu-pmtud-troubleshooting-host-a \
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting host-a -- ping -c 3 192.168.2.10
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting host-a -- \
   python3 -c "import urllib.request; print(urllib.request.urlopen('http://192.168.2.10:8080').status)"
 ```
 
 Large `DF` traffic does not. The FRR image uses BusyBox `ping`, so use Python to send a UDP datagram with the Don't Fragment bit set:
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-host-a python3 -c "
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting host-a -- python3 -c "
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.setsockopt(socket.IPPROTO_IP, 10, 2)
@@ -81,16 +81,16 @@ Expected result: `OSError: [Errno 90] Message too large` even though normal reac
 ### 1. Confirm the tunnel is up
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-edge-a ip addr show gre1
-docker exec clab-mtu-pmtud-troubleshooting-edge-b ip addr show gre1
-docker exec clab-mtu-pmtud-troubleshooting-edge-a ip route
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- ip addr show gre1
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-b -- ip addr show gre1
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- ip route
 ```
 
 ### 2. Compare physical and tunnel MTU
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-edge-a ip link show eth2
-docker exec clab-mtu-pmtud-troubleshooting-edge-a ip link show gre1
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- ip link show eth2
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- ip link show gre1
 ```
 
 You should notice:
@@ -103,10 +103,10 @@ You should notice:
 Run a capture on `edge-a` while sending a large `DF` probe from `host-a`:
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-edge-a \
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- \
   tcpdump -ni eth2 -vv 'icmp or proto gre'
 
-docker exec clab-mtu-pmtud-troubleshooting-host-a python3 -c "
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting host-a -- python3 -c "
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.setsockopt(socket.IPPROTO_IP, 10, 2)
@@ -125,14 +125,14 @@ Look for:
 Set the GRE interface MTU to a safe value on both edges:
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-edge-a ip link set gre1 mtu 1376
-docker exec clab-mtu-pmtud-troubleshooting-edge-b ip link set gre1 mtu 1376
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- ip link set gre1 mtu 1376
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-b -- ip link set gre1 mtu 1376
 ```
 
 Re-test with a payload that fits:
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-host-a python3 -c "
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting host-a -- python3 -c "
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.settimeout(2)
@@ -147,18 +147,18 @@ print(s.recvfrom(4096))
 If you want to enforce a safe TCP MSS at the edges:
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-edge-a \
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- \
   iptables -t mangle -A FORWARD -o gre1 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1336
-docker exec clab-mtu-pmtud-troubleshooting-edge-b \
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-b -- \
   iptables -t mangle -A FORWARD -o gre1 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1336
 ```
 
 ## Verification Commands
 
 ```bash
-docker exec clab-mtu-pmtud-troubleshooting-edge-a ip -d link show gre1
-docker exec clab-mtu-pmtud-troubleshooting-edge-a iptables -t mangle -L -n -v
-docker exec clab-mtu-pmtud-troubleshooting-host-a python3 -c "
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- ip -d link show gre1
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting edge-a -- iptables -t mangle -L -n -v
+./scripts/lab.sh cmd mtu-pmtud-troubleshooting host-a -- python3 -c "
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.settimeout(2)

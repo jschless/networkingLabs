@@ -11,7 +11,7 @@ This lab teaches enterprise multicast in the smallest topology that still shows 
 
 ```bash
 docker build -t enterprise-multicast:local labs/enterprise-multicast/
-sudo containerlab deploy -t labs/enterprise-multicast/topology.clab.yml
+./scripts/lab.sh deploy enterprise-multicast
 ```
 
 ## How to use this lab
@@ -74,7 +74,7 @@ Confirm all hosts can ping their local gateway and routed reachability exists.
 On `recv-remote`:
 
 ```bash
-docker exec -it clab-enterprise-multicast-recv-remote sh -lc 'socat -u UDP4-RECVFROM:5000,ip-add-membership=239.1.1.1:10.20.30.20 -'
+./scripts/lab.sh cmd enterprise-multicast recv-remote -- sh -lc 'socat -u UDP4-RECVFROM:5000,ip-add-membership=239.1.1.1:10.20.30.20 -'
 ```
 
 ### 3. Start the Source
@@ -82,7 +82,7 @@ docker exec -it clab-enterprise-multicast-recv-remote sh -lc 'socat -u UDP4-RECV
 On `source1`:
 
 ```bash
-docker exec -it clab-enterprise-multicast-source1 sh -lc 'yes multicast | socat -u - UDP4-DATAGRAM:239.1.1.1:5000,ip-multicast-ttl=8'
+./scripts/lab.sh cmd enterprise-multicast source1 -- sh -lc 'yes multicast | socat -u - UDP4-DATAGRAM:239.1.1.1:5000,ip-multicast-ttl=8'
 ```
 
 ### 4. Validate the Tree

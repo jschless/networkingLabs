@@ -55,11 +55,11 @@ flowchart LR
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy debug-ospf-nssa
 
-docker exec -it clab-debug-ospf-nssa-r1 Cli
-docker exec -it clab-debug-ospf-nssa-r2 Cli
-docker exec -it clab-debug-ospf-nssa-r3 Cli
+./scripts/lab.sh cli debug-ospf-nssa r1
+./scripts/lab.sh cli debug-ospf-nssa r2
+./scripts/lab.sh cli debug-ospf-nssa r3
 ```
 
 ## Observed Symptoms
@@ -97,19 +97,19 @@ show ip ospf database nssa-external
 
 ## Hints
 
-<details><summary>Hint 1 — Where to start</summary>
+<details markdown="1"><summary>Hint 1 — Where to start</summary>
 
 The adjacency between r1 and r2 is completely absent. When OSPF neighbors fail to form, it is often due to: mismatched hello/dead timers, area ID mismatch, or **area type mismatch**. Verify area assignments first using `show ip ospf interface` on both r1 and r2.
 
 </details>
 
-<details><summary>Hint 2 — Narrowing it down</summary>
+<details markdown="1"><summary>Hint 2 — Narrowing it down</summary>
 
 Run `show ip ospf interface Ethernet2` on r1 and `show ip ospf interface Ethernet1` on r2. Both should report the same area type for Area 1. Look at the "Area Type" or "Area" field in the output — does one say "Stub Area" while the other says "NSSA"?
 
 </details>
 
-<details><summary>Hint 3 — The specific problem</summary>
+<details markdown="1"><summary>Hint 3 — The specific problem</summary>
 
 r1 has Area 1 configured as a **Stub** area; r2 has Area 1 configured as **NSSA**. OSPF encodes area type in Hello packets via the N-bit (NSSA) and E-bit (external). A stub area sets E=0, N=0. An NSSA area sets E=0, N=1. The N-bit mismatch prevents adjacency formation. Additionally, stub areas cannot redistribute external routes — so even if adjacency formed, r1's `redistribute connected` would silently have no effect.
 
@@ -117,7 +117,7 @@ r1 has Area 1 configured as a **Stub** area; r2 has Area 1 configured as **NSSA*
 
 ## Solution
 
-<details><summary>Show configuration</summary>
+<details markdown="1"><summary>Show configuration</summary>
 
 On **r1** in Cli:
 

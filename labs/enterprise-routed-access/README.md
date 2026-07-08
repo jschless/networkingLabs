@@ -120,7 +120,7 @@ flowchart TB
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/enterprise-routed-access/topology.clab.yml
+./scripts/lab.sh deploy enterprise-routed-access
 # or
 ./scripts/lab.sh deploy enterprise-routed-access
 ```
@@ -129,14 +129,14 @@ sudo containerlab deploy -t labs/enterprise-routed-access/topology.clab.yml
 
 ```bash
 # cEOS nodes (Arista CLI)
-docker exec -it clab-enterprise-routed-access-core1 Cli
-docker exec -it clab-enterprise-routed-access-core2 Cli
-docker exec -it clab-enterprise-routed-access-dist1 Cli
-docker exec -it clab-enterprise-routed-access-acc1  Cli
+./scripts/lab.sh cli enterprise-routed-access core1
+./scripts/lab.sh cli enterprise-routed-access core2
+./scripts/lab.sh cli enterprise-routed-access dist1
+./scripts/lab.sh cli enterprise-routed-access acc1
 
 # Linux hosts
-docker exec -it clab-enterprise-routed-access-h1 bash
-docker exec -it clab-enterprise-routed-access-h3 bash
+./scripts/lab.sh bash enterprise-routed-access h1
+./scripts/lab.sh bash enterprise-routed-access h3
 ```
 
 ---
@@ -194,7 +194,7 @@ This is because dist1 and dist2 both have equal-cost paths to acc1's host subnet
 ### 5. End-to-End Ping (host to host)
 
 ```bash
-docker exec -it clab-enterprise-routed-access-h1 bash
+./scripts/lab.sh bash enterprise-routed-access h1
 ping 10.10.2.2   # h1 -> h3
 ping 10.10.2.6   # h1 -> h4
 ping 10.10.1.6   # h1 -> h2
@@ -207,7 +207,7 @@ All should succeed within a few milliseconds.
 From h1, traceroute to h3:
 
 ```bash
-docker exec -it clab-enterprise-routed-access-h1 bash
+./scripts/lab.sh bash enterprise-routed-access h1
 traceroute -n 10.10.2.2
 ```
 
@@ -255,12 +255,12 @@ acc1# watch 1 show ip ospf neighbor
 
 **Terminal 3 — continuous ping from h1:**
 ```bash
-docker exec -it clab-enterprise-routed-access-h1 bash
+./scripts/lab.sh bash enterprise-routed-access h1
 ping -i 0.1 10.10.2.2
 ```
 
 **Shut down dist1's uplink to core1:**
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -282,12 +282,12 @@ Simulate complete loss of dist1:
 
 **Continuous ping from h1:**
 ```bash
-docker exec -it clab-enterprise-routed-access-h1 bash
+./scripts/lab.sh bash enterprise-routed-access h1
 ping -i 0.1 10.10.2.2
 ```
 
 **Shut both uplinks on dist1:**
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -312,11 +312,11 @@ In a traditional VLAN-based campus, moving h1 from acc1 to acc2 would require:
 
 In this L3-everywhere design, to "move" h1 to acc2, you only change the host:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```bash
-docker exec -it clab-enterprise-routed-access-h1 bash
+./scripts/lab.sh bash enterprise-routed-access h1
 # Remove old IP and route
 ip addr del 10.10.1.2/30 dev eth1
 ip route del default
@@ -351,7 +351,7 @@ Should show two equal-cost paths: via 10.2.0.0 (dist1) and via 10.2.0.2 (dist2).
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t labs/enterprise-routed-access/topology.clab.yml --cleanup
+./scripts/lab.sh destroy enterprise-routed-access
 # or
 ./scripts/lab.sh destroy enterprise-routed-access
 ```

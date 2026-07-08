@@ -81,7 +81,7 @@ tables on faith.
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy ipv6-ospf3
 ```
 
 ---
@@ -98,7 +98,7 @@ must set is `10.0.0.X` — a 32-bit dotted-decimal value. Why does an IPv6
 routing protocol still need one, and what happens on a router where you
 skip it and no IPv4 address exists?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - There are no `network` statements in OSPFv3 — area membership is
@@ -109,7 +109,7 @@ skip it and no IPv4 address exists?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On each router (Ethernet2 additionally on r2 and r3):
@@ -133,7 +133,7 @@ router ospf6
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ipv6 ospf6 neighbor` shows `FULL` (one neighbor on r1/r4, two on
@@ -161,7 +161,7 @@ see in the topology table.
 route to 2001:db8::4 show — r2's global address `2001:db8:12::2`, or
 something else?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show ipv6 ospf6 neighbor` — read the address column.
@@ -171,7 +171,7 @@ something else?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Next-hops and neighbor addresses are all `fe80::...` — and hellos on the
@@ -191,7 +191,7 @@ flexibility IPv6 renumbering was designed around. If you expected
 **Objective:** Show that in OSPFv3 the Router-LSA carries *no prefixes*,
 and find which LSA types actually carry the addressing.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show ipv6 ospf6 database router detail` — look for any 2001:db8
@@ -202,7 +202,7 @@ and find which LSA types actually carry the addressing.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Router-LSAs describe pure topology (who links to whom, at what cost);
@@ -226,7 +226,7 @@ r1). Diagnose from **r1**'s perspective, then repair.
 in a partial state, or gone after a timeout? And will r1 still have a
 route to 2001:db8:12::/64?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Passive means r2 stops sending hellos on that interface but keeps

@@ -84,8 +84,8 @@ BGP walks this list top-to-bottom and stops at the first difference:
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy --topo topology.clab.yml
-docker exec -it clab-bgp-path-selection-ce1 Cli
+./scripts/lab.sh deploy bgp-path-selection
+./scripts/lab.sh cli bgp-path-selection ce1
 ```
 
 ---
@@ -101,7 +101,7 @@ paths** for 10.0.0.4/32, one marked `>`.
 local-pref, AS-path length, origin — which of the ten rules will end up
 breaking the tie on ce1, and which path will it pick?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Same pattern as the bgp-basics lab: `router bgp`, neighbors, `activate`
@@ -112,7 +112,7 @@ breaking the tie on ce1, and which path will it pick?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ce1 (AS 65001):
@@ -179,7 +179,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast 10.0.0.4/32` on ce1 shows two paths, both
@@ -203,7 +203,7 @@ isp1 using weight.
 anyone. After you set it on ce1, will isp2's choice of path toward ce2
 change? Will *inbound* traffic to ce1 change?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - In EOS, `neighbor <ip> weight <n>` lives directly under `router bgp`,
@@ -213,7 +213,7 @@ change? Will *inbound* traffic to ce1 change?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **ce1**:
@@ -227,7 +227,7 @@ Then `clear bgp * soft`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast 10.0.0.4/32` on ce1: the path via 10.1.11.2 shows
@@ -255,7 +255,7 @@ isp1 learns from ce1.
 does isp2 find out, and what will isp2's best path to 10.0.0.1/32 be
 afterwards — its own direct eBGP path, or the iBGP path through isp1?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - A `route-map` with `set local-preference 200`, applied **inbound** on
@@ -265,7 +265,7 @@ afterwards — its own direct eBGP path, or the iBGP path through isp1?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **isp1**:
@@ -284,7 +284,7 @@ Then `clear bgp * soft`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 On isp2, 10.0.0.1/32 now has two paths: its own eBGP path (localpref 100)
@@ -311,7 +311,7 @@ Prepending is the first tool here that influences what *other* ASes do.
 Why must ce1 apply it **outbound toward isp2** rather than anything
 inbound — and can ce1 *guarantee* the result?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `set as-path prepend 65001 65001` in a route-map, applied **out**
@@ -320,7 +320,7 @@ inbound — and can ce1 *guarantee* the result?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **ce1**:
@@ -339,7 +339,7 @@ Then `clear bgp * soft`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 isp2 now sees 10.0.0.1/32 with AS-path `65001 65001 65001` directly from
@@ -368,7 +368,7 @@ AS 65001. For isp2 comparing its direct path (MED 200) against the iBGP
 path via isp1 (MED 10) — does the MED comparison even apply here? Why is
 MED weaker than everything you've used so far?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Two route-maps with `set metric`, applied `out` per neighbor on ce1.
@@ -377,7 +377,7 @@ MED weaker than everything you've used so far?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **ce1**:
@@ -400,7 +400,7 @@ Then `clear bgp * soft`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both paths on isp2 originate from AS 65001, so the MED comparison *does*

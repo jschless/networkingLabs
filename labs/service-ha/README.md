@@ -78,21 +78,20 @@ Build the image once (`docker build -t service-ha:local
 labs/service-ha/`), then:
 
 ```bash
-sudo containerlab deploy -t labs/service-ha/topology.clab.yml
-# or: ./scripts/lab.sh deploy service-ha
+./scripts/lab.sh deploy service-ha
 ```
 
-Work the nodes with `docker exec` (VRRP/keepalived need a real shell):
+Open a shell on the nodes (VRRP/keepalived need a real shell):
 
 ```bash
-docker exec -it clab-service-ha-fw1 bash
+./scripts/lab.sh bash service-ha fw1
 ./scripts/lab.sh bash service-ha client
 ```
 
 Destroy when done:
 
 ```bash
-sudo containerlab destroy -t labs/service-ha/topology.clab.yml --cleanup
+./scripts/lab.sh destroy service-ha
 ```
 
 ---
@@ -117,7 +116,7 @@ From client, try to reach the backend:
 ping -c2 10.10.20.10        # fails — no VIP, so no gateway
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 fw1 has 10.10.0.2, 10.10.20.2, 10.10.99.1 on eth1/eth2/eth3. `ip_forward`
@@ -140,7 +139,7 @@ the backend's gateway is a VIP on the INSIDE segment. Why must both VIPs
 live on the **same** firewall at all times — what breaks if the outside VIP
 is on fw1 and the inside VIP on fw2?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Two `vrrp_instance` blocks (one per interface: eth1 → 10.10.0.1,
@@ -157,7 +156,7 @@ is on fw1 and the inside VIP on fw2?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 `/etc/keepalived/keepalived.conf` on **fw1** (`state MASTER`,
@@ -203,7 +202,7 @@ Start on both: `keepalived -f /etc/keepalived/keepalived.conf -D`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 On fw1, `ip -4 addr show` lists `10.10.0.1/24` on eth1 and `10.10.20.1/24`
@@ -234,7 +233,7 @@ that ruleset in place, what happens to a TCP packet from the *middle* of a
 connection (an ACK, not a SYN) that arrives at a firewall which has **no
 conntrack entry** for it? Would your answer change if `tcp_loose` were 1?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One `table inet fw` with a `chain forward { type filter hook forward
@@ -246,7 +245,7 @@ conntrack entry** for it? Would your answer change if `tcp_loose` were 1?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 `/etc/nftables.conf` on both firewalls:
@@ -266,7 +265,7 @@ table inet fw {
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `ping` and a fresh TCP connection from client to backend still work — new
@@ -303,7 +302,7 @@ docker stop clab-service-ha-fw1        # or: ip link set eth1 down; eth2 down
 iperf flow (a) keep going, (b) pause ~2 s then resume, or (c) go to zero and
 stay there? Commit before you run it.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Watch the per-second `iperf3` bitrate around the failover moment.
@@ -314,7 +313,7 @@ stay there? Commit before you run it.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The flow runs at full rate until the failover, then drops to **0.00
@@ -351,7 +350,7 @@ Then repeat the failover — the flow should survive.
 those entries into fw2's *kernel* so its forwarding path accepts the
 in-flight packets. What runs that step, and when?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - conntrackd config (`/etc/conntrackd/conntrackd.conf`): a `Sync { Mode
@@ -369,7 +368,7 @@ in-flight packets. What runs that step, and when?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 `/etc/conntrackd/conntrackd.conf` — on fw1 use `IPv4_interface 10.10.99.1`,
@@ -409,7 +408,7 @@ master fires `notify_master` → `notify.sh primary` and primes the sync.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 With a fresh flow running (`iperf3 ... -t 20`), check the standby **before**

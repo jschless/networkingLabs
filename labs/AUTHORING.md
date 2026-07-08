@@ -87,7 +87,7 @@ commands in the open but keep an Objective and a check.
 **Predict first:** <a checkable question to answer before configuring —
 "will the session establish?", "how many routes will r4 have?">
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - <command shape, key keyword, where in the CLI tree it lives>
@@ -95,7 +95,7 @@ commands in the open but keep an Objective and a check.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```text
@@ -104,7 +104,7 @@ commands in the open but keep an Objective and a check.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 <what correct output looks like AND the mechanism it reveals; resolve the
@@ -127,8 +127,8 @@ Rules:
 - **Check your work** — the highest-value block: describe the expected
   output *and* explain why it proves the mechanism.
 
-Use HTML `<details>`/`<summary>` (not mkdocs `???` admonitions): lab READMEs
-are read on GitHub and included into the docs site, and `<details>` renders
+Use HTML `<details markdown="1">`/`<summary>` (not mkdocs `???` admonitions): lab READMEs
+are read on GitHub and included into the docs site, and `<details markdown="1">` renders
 in both. Keep a blank line after `<summary>` and around fences so GitHub
 renders the markdown inside.
 

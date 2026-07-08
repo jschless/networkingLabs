@@ -59,10 +59,10 @@ flowchart LR
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-ospf-auth/topology.clab.yml
+./scripts/lab.sh deploy debug-ospf-auth
 
-docker exec -it clab-debug-ospf-auth-r1 Cli
-docker exec -it clab-debug-ospf-auth-r2 Cli
+./scripts/lab.sh cli debug-ospf-auth r1
+./scripts/lab.sh cli debug-ospf-auth r2
 ```
 
 Wait ~15 seconds after deploy for OSPF to attempt adjacency formation.
@@ -128,7 +128,7 @@ show ip ospf interface Ethernet1
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 Run `show ip ospf interface Ethernet1` on both r1 and r2. Compare the output.
@@ -141,7 +141,7 @@ is the actual key *value*, which show commands don't reveal.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 Check the OSPF neighbor log on r2. You can look at the EOS logging output:
@@ -158,7 +158,7 @@ Since r2–r3 is fine, the mismatch is on r2's Ethernet1 key (not Ethernet2).
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 r2's Ethernet1 is configured with key `"SecretKey321"` (digits reversed) instead
@@ -171,7 +171,7 @@ script transposed the digits on r2's Ethernet1 only.
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **r2**:

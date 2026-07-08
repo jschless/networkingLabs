@@ -79,10 +79,10 @@ flowchart TB
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-spine-leaf/topology.clab.yml
+./scripts/lab.sh deploy debug-spine-leaf
 
-docker exec -it clab-debug-spine-leaf-leaf2  Cli
-docker exec -it clab-debug-spine-leaf-leaf1  Cli
+./scripts/lab.sh cli debug-spine-leaf leaf2
+./scripts/lab.sh cli debug-spine-leaf leaf1
 ```
 
 Wait ~25 seconds after deploy for BGP sessions to establish.
@@ -163,7 +163,7 @@ show running-config | include multipath
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 On leaf2, run:
@@ -179,7 +179,7 @@ For ECMP to work, BGP must be configured to install multiple equal-cost paths.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 BGP ECMP in a spine-leaf fabric requires two configuration statements:
@@ -197,7 +197,7 @@ Compare against leaf2.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 leaf2 is missing both `bgp bestpath as-path multipath-relax` and `maximum-paths 2`
@@ -215,7 +215,7 @@ during deployment.
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **leaf2**:

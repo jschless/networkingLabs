@@ -91,16 +91,16 @@ See `configs/bleaf1/startup-config` for detailed hints on each task.
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/evpn-border-ceos/topology.clab.yml
+./scripts/lab.sh deploy evpn-border-ceos
 ```
 
 ## Access nodes
 
 ```bash
-docker exec -it clab-evpn-border-ceos-bleaf1 Cli
-docker exec -it clab-evpn-border-ceos-ext-router Cli
-docker exec -it clab-evpn-border-ceos-leaf1 Cli
-docker exec -it clab-evpn-border-ceos-host-a1 Cli
+./scripts/lab.sh cli evpn-border-ceos bleaf1
+./scripts/lab.sh cli evpn-border-ceos ext-router
+./scripts/lab.sh cli evpn-border-ceos leaf1
+./scripts/lab.sh cli evpn-border-ceos host-a1
 ```
 
 ---

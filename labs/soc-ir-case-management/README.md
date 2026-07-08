@@ -32,9 +32,9 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-ir-case-management-attacker /opt/soc-lab/run-attack-sequence.sh
-docker exec clab-soc-ir-case-management-case-mgmt jq . /var/lib/thehive/case.json
-docker exec clab-soc-ir-case-management-sensor cat /var/log/soc/incident-timeline.md
+./scripts/lab.sh cmd soc-ir-case-management attacker -- /opt/soc-lab/run-attack-sequence.sh
+./scripts/lab.sh cmd soc-ir-case-management case-mgmt -- jq . /var/lib/thehive/case.json
+./scripts/lab.sh cmd soc-ir-case-management sensor -- cat /var/log/soc/incident-timeline.md
 ```
 
 ## Outcome

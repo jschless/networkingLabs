@@ -78,21 +78,20 @@ Prerequisites: the cEOS image (`ceos:4.35.2F`, imported per
 (`docker build -t ops-lab:local images/ops-lab/`).
 
 ```bash
-sudo containerlab deploy -t labs/ztp-basics/topology.clab.yml
-# or: ./scripts/lab.sh deploy ztp-basics
+./scripts/lab.sh deploy ztp-basics
 ```
 
 Access:
 
 ```bash
-docker exec -it clab-ztp-basics-sw1 Cli     # EOS CLI
+./scripts/lab.sh cli ztp-basics sw1     # EOS CLI
 ./scripts/lab.sh bash ztp-basics ztp1        # server shell
 ```
 
 Destroy when done:
 
 ```bash
-sudo containerlab destroy -t labs/ztp-basics/topology.clab.yml --cleanup
+./scripts/lab.sh destroy ztp-basics
 ```
 
 ---
@@ -103,14 +102,14 @@ sudo containerlab destroy -t labs/ztp-basics/topology.clab.yml --cleanup
 gating rule.
 
 ```bash
-docker exec clab-ztp-basics-sw1 Cli -c 'show hostname'
-docker exec clab-ztp-basics-sw1 ls /mnt/flash/
+./scripts/lab.sh cmd ztp-basics sw1 -- Cli -c 'show hostname'
+./scripts/lab.sh cmd ztp-basics sw1 -- ls /mnt/flash/
 ```
 
 **Predict first:** if everything that gates ZTP disappeared from flash
 and the switch rebooted, what would it do?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The hostname is `new-switch` — the throwaway config a field tech left
@@ -143,7 +142,7 @@ there.
 netboot/TFTP days. What tells the switch to treat it as an HTTP URL
 rather than a TFTP filename?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `port=0` disables dnsmasq's DNS engine (DHCP only).
@@ -159,7 +158,7 @@ rather than a TFTP filename?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 `/etc/dnsmasq.conf`:
@@ -181,7 +180,7 @@ dnsmasq --test && dnsmasq --log-facility=/var/log/dnsmasq.log
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `dnsmasq --test` prints `syntax check OK`; `pgrep -a dnsmasq` shows it
@@ -210,7 +209,7 @@ pool (10.0.99.100–150), but the config you're serving pins Ethernet1 to
 the static 10.0.99.1. What happens to the lease when your config
 applies?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - This file lands verbatim as sw1's startup-config: it's ordinary EOS
@@ -226,7 +225,7 @@ applies?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 `/var/www/startup-config`:
@@ -269,7 +268,7 @@ wget -qO- http://172.20.20.111:8000/startup-config | head -3
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The `wget` returns your config's first lines — if ztp1 can't fetch it,
@@ -294,21 +293,21 @@ From the repo root, in one terminal:
 In a second terminal, watch the service logs on ztp1:
 
 ```bash
-docker exec clab-ztp-basics-ztp1 tail -f /var/log/dnsmasq.log /var/log/http.log
+./scripts/lab.sh cmd ztp-basics ztp1 -- tail -f /var/log/dnsmasq.log /var/log/http.log
 ```
 
 While it boots (~2–3 min), watch the switch's own view of the process:
 
 ```bash
-docker exec clab-ztp-basics-sw1 Cli -c 'show zerotouch'
-docker exec clab-ztp-basics-sw1 bash -c "grep ZTP- /var/log/messages | tail -5"
+./scripts/lab.sh cmd ztp-basics sw1 -- Cli -c 'show zerotouch'
+./scripts/lab.sh cmd ztp-basics sw1 -- bash -c "grep ZTP- /var/log/messages | tail -5"
 ```
 
 **Predict first:** the switch has three candidate interfaces
 (Management0, Ethernet1, Ethernet2). Which will its DHCP request go
 out of — and which will get the answer?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show zerotouch` reports `ZeroTouch Mode: Active`, and the EOS log
@@ -336,7 +335,7 @@ minutes, zero commands typed on the switch.
 **Objective:** prove the switch is running *your* config and forwarding
 traffic.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Identity: `show hostname`, `show banner motd` (needs privileged mode:
@@ -347,7 +346,7 @@ traffic.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show hostname` → `branch-sw1`; the banner prints `PROVISIONED-BY-ZTP`;
@@ -375,7 +374,7 @@ finished; the switch CLI stays locked. Diagnose from ztp1's two logs,
 state the exact failure, then fix the service **live** — without
 another reset — and watch the switch recover on its own.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Compare this run's log sequence with the healthy Task 4 sequence —
@@ -387,7 +386,7 @@ another reset — and watch the switch recover on its own.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The DHCP handshake completes every cycle (DISCOVER/OFFER/ACK with your

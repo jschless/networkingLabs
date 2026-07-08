@@ -92,7 +92,7 @@ r2# show ip ospf neighbor
 ./scripts/lab.sh cmd suzieq-network-observability r1 "ping 10.0.0.3 source 10.0.0.1 repeat 3"
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf neighbor` on r2 shows two neighbors — r1 (10.0.0.1) and r3
@@ -128,7 +128,7 @@ Run the poller once to collect a snapshot:
 sq-poller -I /workspace/inventory.yml -o /workspace/parquet-out --run-once
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The poller logs one connection attempt per device, then exits. When it
@@ -162,7 +162,7 @@ sq --data-directory /workspace/parquet-out device show --namespace fabric
 **Predict first:** which fields come from your `inventory.yml`, and which are
 discovered by querying the device itself?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The `address` column comes from your inventory file. Everything else —
@@ -200,7 +200,7 @@ sq --data-directory /workspace/parquet-out interface show --namespace fabric \
 **Predict first:** how many interfaces will r2 show — and list them before
 running the command.
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r2 has at minimum: `Loopback0`, `Ethernet1`, `Ethernet2`, and `Management0`.
@@ -225,7 +225,7 @@ sq --data-directory /workspace/parquet-out lldp show --namespace fabric
 **Predict first:** how many rows appear, and why is that number different from
 the number of physical links?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Two physical links → four LLDP rows. LLDP is bidirectional: both ends
@@ -257,7 +257,7 @@ sq --data-directory /workspace/parquet-out ospf show --namespace fabric \
    --type nbr --hostname r2
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The neighbor table (`type nbr`) shows each adjacency: `peerHostname`,
@@ -294,7 +294,7 @@ sq --data-directory /workspace/parquet-out route show --namespace fabric \
 **Predict first:** how many OSPF routes should r1 have, and what are they?
 List them before running the command.
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r1 should have three OSPF routes:
@@ -331,7 +331,7 @@ sq --data-directory /workspace/parquet-out path show --namespace fabric \
 **Predict first:** which hops and which interfaces will appear in the
 r1→r3 path?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The path shows: **r1** (egress via Ethernet1) → **r2** (ingress via Ethernet1,
@@ -385,7 +385,7 @@ sq --data-directory /workspace/parquet-out ospf assert --namespace fabric
 sq --data-directory /workspace/parquet-out interface assert --namespace fabric
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 With `Ethernet1` shut on r1, `ospf assert` shows a FAIL row for r1 (lost
@@ -443,7 +443,7 @@ sq --data-directory /workspace/parquet-out interface show --namespace fabric \
 kill $POLLER_PID
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 After one polling cycle (up to 15 seconds), `Loopback1` appears in SuzieQ's

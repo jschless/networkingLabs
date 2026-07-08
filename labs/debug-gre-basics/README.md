@@ -59,15 +59,15 @@ flowchart LR
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy debug-gre-basics
 
 # Access gateways (EOS CLI)
-docker exec -it clab-debug-gre-basics-gw-a Cli
-docker exec -it clab-debug-gre-basics-gw-b Cli
+./scripts/lab.sh cli debug-gre-basics gw-a
+./scripts/lab.sh cli debug-gre-basics gw-b
 
 # Access hosts
-docker exec -it clab-debug-gre-basics-host-a bash
-docker exec -it clab-debug-gre-basics-host-b bash
+./scripts/lab.sh bash debug-gre-basics host-a
+./scripts/lab.sh bash debug-gre-basics host-b
 ```
 
 ## Observed Symptoms
@@ -113,13 +113,13 @@ traceroute 172.16.0.1
 
 ## Hints
 
-<details><summary>Hint 1 — Where to start</summary>
+<details markdown="1"><summary>Hint 1 — Where to start</summary>
 
 WAN reachability works fine. Compare `show running-config section interface Tunnel0` on **both** gateways.
 
 </details>
 
-<details><summary>Hint 2 — Narrowing it down</summary>
+<details markdown="1"><summary>Hint 2 — Narrowing it down</summary>
 
 Look at `tunnel destination` under `interface Tunnel0` on each gateway:
 - gw-a should show `remote 203.0.113.6` (gw-b's WAN IP)
@@ -129,7 +129,7 @@ Do the `remote` addresses match what you'd expect? Cross-reference with `ip addr
 
 </details>
 
-<details><summary>Hint 3 — The specific problem</summary>
+<details markdown="1"><summary>Hint 3 — The specific problem</summary>
 
 On gw-b, `tunnel destination` is `192.168.1.1` (gw-a LAN) instead of `203.0.113.1` (gw-a WAN), so GRE traffic is sent to the wrong endpoint.
 
@@ -137,7 +137,7 @@ On gw-b, `tunnel destination` is `192.168.1.1` (gw-a LAN) instead of `203.0.113.
 
 ## Solution
 
-<details><summary>Show configuration</summary>
+<details markdown="1"><summary>Show configuration</summary>
 
 On **gw-b** (EOS CLI):
 
@@ -160,7 +160,7 @@ ping 172.16.0.1
 ```
 
 ```bash
-docker exec -it clab-debug-gre-basics-host-b ping -c 3 192.168.1.10
+./scripts/lab.sh cmd debug-gre-basics host-b -- ping -c 3 192.168.1.10
 ```
 
 ## Challenge questions

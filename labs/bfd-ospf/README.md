@@ -47,15 +47,15 @@ All routers in OSPF area 0.
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh deploy bfd-ospf
+./scripts/lab.sh destroy bfd-ospf
 ```
 
 ## What You Configure
 
 ### Step 1: Configure OSPF on all nodes
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Example for r1:
@@ -92,7 +92,7 @@ show ip ospf neighbor
 
 ### Step 2: Enable BFD on OSPF interfaces
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Add BFD to each interface on each router:
@@ -115,7 +115,7 @@ write memory
 
 ### Step 3 (Optional): Tune BFD timers
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Default BFD timers are 300ms tx/rx with multiplier 3 (failure = 900ms).
@@ -156,21 +156,21 @@ link failure will OSPF declare the neighbor down? And *without* BFD, what
 timer governs it — and roughly how many seconds of black-holed traffic
 does that mean? Commit to both numbers, then measure.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Open two terminal windows. In one, watch OSPF:
 
 ```bash
-docker exec -it clab-bfd-ospf-r1 Cli -c "show ip ospf neighbor"
+./scripts/lab.sh cmd bfd-ospf r1 -- Cli -c "show ip ospf neighbor"
 # Run repeatedly with watch:
-watch -n0.5 'docker exec clab-bfd-ospf-r1 Cli -c "show ip ospf neighbor"'
+watch -n0.5 './scripts/lab.sh cmd bfd-ospf r1 -- Cli -c "show ip ospf neighbor"'
 ```
 
 In the other, bring down a link:
 
 ```bash
-docker exec clab-bfd-ospf-r2 ip link set eth1 down
+./scripts/lab.sh cmd bfd-ospf r2 -- ip link set eth1 down
 ```
 
 With BFD enabled, OSPF should reconverge in under 1 second.
@@ -179,7 +179,7 @@ Without BFD, OSPF would wait 40 seconds (dead interval) before declaring the nei
 Bring the link back up:
 
 ```bash
-docker exec clab-bfd-ospf-r2 ip link set eth1 up
+./scripts/lab.sh cmd bfd-ospf r2 -- ip link set eth1 up
 ```
 
 </details>

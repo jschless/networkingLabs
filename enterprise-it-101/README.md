@@ -39,7 +39,7 @@ cd enterprise-it-101
 
 Run `./eit.sh help` for the full command list, or `./eit.sh list` to see every lab.
 
-<details>
+<details markdown="1">
 <summary>What <code>./eit.sh build</code> builds (and what's pulled on demand)</summary>
 
 The helper builds these custom images once; you can also build them by hand from
@@ -68,7 +68,7 @@ docker pull nginx:alpine
 ```
 </details>
 
-<details>
+<details markdown="1">
 <summary>Doing it by hand (without the helper)</summary>
 
 Lab 01 ships a standalone compose file; Labs 02–12 are override files layered on the

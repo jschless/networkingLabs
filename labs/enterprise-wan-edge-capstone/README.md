@@ -73,7 +73,7 @@ flowchart TB
 
 ```bash
 # Edge BGP sessions to both ISPs
-docker exec -it clab-enterprise-wan-edge-capstone-edge Cli
+./scripts/lab.sh cli enterprise-wan-edge-capstone edge
 show bgp summary
 
 # Verify LP policy — routes from isp1 should have local-pref 200
@@ -86,18 +86,18 @@ show bgp neighbors 203.0.114.1 received-routes detail | grep local-pref
 show ip ospf neighbor
 
 # Core1: default route from OSPF
-docker exec -it clab-enterprise-wan-edge-capstone-core1 Cli
+./scripts/lab.sh cli enterprise-wan-edge-capstone core1
 show ip route 0.0.0.0/0
 
 # Server ping to ISP loopbacks
-docker exec -it clab-enterprise-wan-edge-capstone-server ping 1.1.1.1
-docker exec -it clab-enterprise-wan-edge-capstone-server ping 2.2.2.2
+./scripts/lab.sh cmd enterprise-wan-edge-capstone server -- ping 1.1.1.1
+./scripts/lab.sh cmd enterprise-wan-edge-capstone server -- ping 2.2.2.2
 ```
 
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/enterprise-wan-edge-capstone/topology.clab.yml
+./scripts/lab.sh deploy enterprise-wan-edge-capstone
 # or
 ./scripts/lab.sh deploy enterprise-wan-edge-capstone
 ```

@@ -102,7 +102,7 @@ keyed, before any spoke connects.
 no IPsec SA behind it yet — what does "key 1" do, and what installs the
 actual encryption state?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The VTIs exist as plain interfaces with a `key` (kernel mark) but no SA —
@@ -127,7 +127,7 @@ and start strongSwan until the SA is ESTABLISHED.
 vti1. What breaks if you use key 2 instead — does IKEv2 fail to
 authenticate, or does the SA come up but traffic not flow?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `ip tunnel add vti0 mode vti local 203.0.113.6 remote 203.0.113.1 key 1`,
@@ -140,7 +140,7 @@ authenticate, or does the SA come up but traffic not flow?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```bash
@@ -168,7 +168,7 @@ Then `ipsec start`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `ipsec status` shows `to-hub[1]: ESTABLISHED`; `ip xfrm state` shows two
@@ -191,7 +191,7 @@ split (compare ipsec-basics, where the failure modes are IKE-side).
 **Objective:** Add routes so gw-b reaches LAN A (and later spoke2's LAN)
 via the hub VTI, and the hub routes back to LAN B.
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **gw-b**:
@@ -207,7 +207,7 @@ ip route add 192.168.2.0/24 via 10.10.1.2 dev vti1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `host-b → 192.168.1.10` succeeds; `traceroute -n 192.168.1.1` from gw-b
@@ -226,7 +226,7 @@ ties it to the SA. That's the whole appeal over policy-based IPsec
 **Objective:** Repeat for gw-c — VTI key `2` (matching hub vti2), address
 10.10.2.2/30, the `to-hub` conn with `@spoke2`, and routes.
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```bash
@@ -243,7 +243,7 @@ ip route add 192.168.2.0/24 via 10.10.2.1 dev vti0
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `ping -c3 10.10.2.1` from gw-c works; both spokes now have established SAs
@@ -271,7 +271,7 @@ happen on the hub, and how many hops will the traceroute show?
 traceroute -n 192.168.3.10
 ```
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The path is host-b → gw-b → [vti0 encrypt] → **gw-a decrypt + re-encrypt**

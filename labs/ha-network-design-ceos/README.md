@@ -101,17 +101,17 @@ flowchart TB
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/ha-network-design-ceos/topology.clab.yml
+./scripts/lab.sh deploy ha-network-design-ceos
 ```
 
 Access examples:
 
 ```bash
-docker exec -it clab-ha-network-design-ceos-dist1 Cli
-docker exec -it clab-ha-network-design-ceos-edge1 Cli
-docker exec -it clab-ha-network-design-ceos-isp1 vtysh
-docker exec -it clab-ha-network-design-ceos-hosta bash
-docker exec -it clab-ha-network-design-ceos-app1 bash
+./scripts/lab.sh cli ha-network-design-ceos dist1
+./scripts/lab.sh cli ha-network-design-ceos edge1
+./scripts/lab.sh cli ha-network-design-ceos isp1
+./scripts/lab.sh bash ha-network-design-ceos hosta
+./scripts/lab.sh bash ha-network-design-ceos app1
 ```
 
 ## Pre-configured
@@ -133,7 +133,7 @@ Host note:
 
 Configure dist peer-link and MLAG domain.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On `dist1`:
@@ -187,7 +187,7 @@ ip -br address show bond0
 
 ### Task 2 - Configure VRRP gateway HA on VLAN 10
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On `dist1`:
@@ -201,7 +201,7 @@ interface Vlan10
 ```
 </details>
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On `dist2`:
@@ -227,7 +227,7 @@ Expected: `dist1` is Master, `dist2` is Backup.
 
 If dist1 loses upstream routing connectivity, it should relinquish gateway master role.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On `dist1`:
@@ -247,7 +247,7 @@ On `dist2`, add similar tracking for its uplinks.
 Failure drill:
 
 ```bash
-docker exec clab-ha-network-design-ceos-dist1 bash -lc "ip link set Ethernet4 down; ip link set Ethernet5 down"
+./scripts/lab.sh cmd ha-network-design-ceos dist1 -- bash -lc "ip link set Ethernet4 down; ip link set Ethernet5 down"
 ```
 
 Check `show vrrp` on both nodes; `dist2` should take Master.
@@ -262,7 +262,7 @@ Important:
 
 Example (`core1`):
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -299,7 +299,7 @@ Expected: multiple equal-cost next-hops where topology allows ECMP.
 
 ### Task 5 - Enable BFD for faster failure detection
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On each routed point-to-point interface in OSPF domain:
@@ -324,7 +324,7 @@ AS plan:
 - `edge1` = AS65010, peer to `isp1` (AS65101)
 - `edge2` = AS65020, peer to `isp2` (AS65102)
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On `edge1`:
@@ -342,7 +342,7 @@ router bgp 65010
 
 On `edge2` use neighbor `203.0.113.3 remote-as 65102` and `network 10.255.0.32/32`.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On `isp1` (`vtysh`):
@@ -383,7 +383,7 @@ On each edge router, redistribute BGP into OSPF with policy control.
 
 Example (basic):
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -556,5 +556,5 @@ No answers provided — reason them through.
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t labs/ha-network-design-ceos/topology.clab.yml
+./scripts/lab.sh destroy ha-network-design-ceos
 ```

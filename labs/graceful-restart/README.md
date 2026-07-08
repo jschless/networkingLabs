@@ -37,7 +37,7 @@ The service prefixes exist only in BGP. That makes the graceful-restart behavior
 ## Deploy And Access
 
 ```bash
-sudo containerlab deploy -t labs/graceful-restart/topology.clab.yml
+./scripts/lab.sh deploy graceful-restart
 
 ./scripts/lab.sh cli graceful-restart r1
 ./scripts/lab.sh cli graceful-restart r2
@@ -72,7 +72,7 @@ Expected:
 
 This is the disruptive baseline.
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```bash
@@ -114,7 +114,7 @@ show bgp summary
 From the host, restart only the BGP process on `r2`:
 
 ```bash
-docker exec clab-graceful-restart-r2 bash -lc 'sudo pkill Bgp'
+./scripts/lab.sh cmd graceful-restart r2 -- bash -lc 'sudo pkill Bgp'
 ```
 
 What to observe on `r1`:
@@ -126,7 +126,7 @@ That is the baseline without BGP graceful restart.
 
 ## Step 4 — Re-Enable BGP Graceful Restart On `r2`
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```bash
@@ -171,7 +171,7 @@ watch 1 show bgp ipv4 unicast 172.16.3.1/32
 Restart the BGP process on `r2` one more time:
 
 ```bash
-docker exec clab-graceful-restart-r2 bash -lc 'sudo pkill Bgp'
+./scripts/lab.sh cmd graceful-restart r2 -- bash -lc 'sudo pkill Bgp'
 ```
 
 Expected:
@@ -215,7 +215,7 @@ The live validation for this refactor focused on BGP graceful restart because it
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/graceful-restart/topology.clab.yml --cleanup
+./scripts/lab.sh destroy graceful-restart
 ```
 
 ## Extensions

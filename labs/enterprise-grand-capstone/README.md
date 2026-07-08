@@ -112,9 +112,9 @@ relays it to `radius1`, which validates against `dc1` via `ntlm_auth` and return
 dynamic VLAN. On success the access port moves from quarantine (VLAN 99) to VLAN 10.
 
 ```bash
-docker exec clab-enterprise-grand-capstone-corp-pc grep EAP-SUCCESS /var/log/wpa.log
+./scripts/lab.sh cmd enterprise-grand-capstone corp-pc -- grep EAP-SUCCESS /var/log/wpa.log
 # access-sw1: the port is now in VLAN 10
-docker exec clab-enterprise-grand-capstone-access-sw1 bridge vlan show dev eth2
+./scripts/lab.sh cmd enterprise-grand-capstone access-sw1 -- bridge vlan show dev eth2
 ```
 *Predict: which VLAN is eth2 in before vs after auth? What does radius1 return that the
 switch acts on?*
@@ -126,10 +126,10 @@ helper-address`). Kea then registers the lease into `dns1`'s `campus.lab.corp` z
 TSIG.
 
 ```bash
-docker exec clab-enterprise-grand-capstone-corp-pc dhclient eth1
-docker exec clab-enterprise-grand-capstone-corp-pc ip -br addr show eth1   # 10.10.10.100
+./scripts/lab.sh cmd enterprise-grand-capstone corp-pc -- dhclient eth1
+./scripts/lab.sh cmd enterprise-grand-capstone corp-pc -- ip -br addr show eth1   # 10.10.10.100
 # DDNS landed in BIND (reverse PTR):
-docker exec clab-enterprise-grand-capstone-corp-pc host 10.10.10.100 10.100.1.40
+./scripts/lab.sh cmd enterprise-grand-capstone corp-pc -- host 10.10.10.100 10.100.1.40
 ```
 
 ### A3 — DNS + Kerberos (the identity payoff)
@@ -138,8 +138,8 @@ docker exec clab-enterprise-grand-capstone-corp-pc host 10.10.10.100 10.100.1.40
 gets a Kerberos ticket from `dc1`.
 
 ```bash
-docker exec clab-enterprise-grand-capstone-corp-pc nslookup dc1.lab.corp 10.100.1.40
-docker exec clab-enterprise-grand-capstone-corp-pc sh -c 'echo P@ssw0rd1 | kinit bob && klist'
+./scripts/lab.sh cmd enterprise-grand-capstone corp-pc -- nslookup dc1.lab.corp 10.100.1.40
+./scripts/lab.sh cmd enterprise-grand-capstone corp-pc -- sh -c 'echo P@ssw0rd1 | kinit bob && klist'
 ```
 
 ### A4 — segmentation (guest is Internet-only)
@@ -148,9 +148,9 @@ The core's `SEAM-OUT` egress ACL denies guest (VLAN 30) the internal services bu
 the Internet.
 
 ```bash
-docker exec clab-enterprise-grand-capstone-guest-pc ping -c1 10.100.1.10   # DENIED
-docker exec clab-enterprise-grand-capstone-guest-pc ping -c1 1.1.1.1       # OK
-docker exec clab-enterprise-grand-capstone-corp-pc  ping -c1 10.100.1.10   # OK
+./scripts/lab.sh cmd enterprise-grand-capstone guest-pc -- ping -c1 10.100.1.10   # DENIED
+./scripts/lab.sh cmd enterprise-grand-capstone guest-pc -- ping -c1 1.1.1.1       # OK
+./scripts/lab.sh cmd enterprise-grand-capstone corp-pc -- ping -c1 10.100.1.10   # OK
 ```
 
 ---
@@ -175,7 +175,7 @@ still works.
 *Hints:* Is AD actually down? Can other hosts on lab-corp reach `dc1`? From `dc1`, can you
 reach `corp-pc`? Which direction of the conversation is missing?
 
-<details><summary>Root cause &amp; fix</summary>
+<details markdown="1"><summary>Root cause &amp; fix</summary>
 
 `dc1` lost its return route to the corporate subnet (`10.10.10.0/24 via 10.100.254.1`), so
 its Kerberos *replies* are black-holed. AD, DNS, and the forward path are all fine — this
@@ -190,7 +190,7 @@ supplicant or certificate problem.
 *Hints:* Watch `radius1` while the supplicant tries. Does an Access-Request even arrive?
 What does a RADIUS server do with a request whose shared secret doesn't match?
 
-<details><summary>Root cause &amp; fix</summary>
+<details markdown="1"><summary>Root cause &amp; fix</summary>
 
 `access-sw1`'s RADIUS **shared secret** no longer matches `radius1`, so the server
 *silently drops* the request — no reject, no log. The supplicant/cert are fine. Fix:
@@ -204,7 +204,7 @@ normally.
 *Hints:* DHCP is relayed, not local. What's different about VLAN 20's relay path? Follow
 the DISCOVER from the SVI.
 
-<details><summary>Root cause &amp; fix</summary>
+<details markdown="1"><summary>Root cause &amp; fix</summary>
 
 The VLAN-20 SVIs relay to the **wrong helper address** (`10.100.30.99`, not the Kea server
 `10.100.30.10`), so the DISCOVER goes nowhere. A single wrong octet in an L3 relay config,
@@ -217,7 +217,7 @@ presenting as a client problem. Fix: `./faults.sh clear F3`, then re-`dhclient` 
 *Hints:* `show vrrp brief` on both cores. How many masters per VLAN should there be? What
 single link lets the two cores agree?
 
-<details><summary>Root cause &amp; fix</summary>
+<details markdown="1"><summary>Root cause &amp; fix</summary>
 
 The collapsed-core **L2 peer-link (Et4) is down**, so VRRP adverts can't cross, both cores
 become master for every group, and inter-core return paths go asymmetric. An L2 link
@@ -232,10 +232,10 @@ A healthy lab passes all of these:
 
 ```bash
 docker exec dc1 wbinfo -t                                   # AD trust OK
-docker exec clab-enterprise-grand-capstone-cc1 Cli -p15 -c "show vrrp brief"   # one master/VLAN
-docker exec clab-enterprise-grand-capstone-corp-pc sh -c 'echo P@ssw0rd1 | kinit bob && klist'
-docker exec clab-enterprise-grand-capstone-guest-pc ping -c1 10.100.1.10       # must FAIL
-docker exec clab-enterprise-grand-capstone-guest-pc ping -c1 1.1.1.1           # must pass
+./scripts/lab.sh cmd enterprise-grand-capstone cc1 -- Cli -p15 -c "show vrrp brief"   # one master/VLAN
+./scripts/lab.sh cmd enterprise-grand-capstone corp-pc -- sh -c 'echo P@ssw0rd1 | kinit bob && klist'
+./scripts/lab.sh cmd enterprise-grand-capstone guest-pc -- ping -c1 10.100.1.10       # must FAIL
+./scripts/lab.sh cmd enterprise-grand-capstone guest-pc -- ping -c1 1.1.1.1           # must pass
 ```
 
 ## Challenge questions

@@ -54,8 +54,8 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deployment
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-docker exec -it clab-eigrp-variance-r1 vtysh
+./scripts/lab.sh deploy eigrp-variance
+./scripts/lab.sh cli eigrp-variance r1
 ```
 
 ---
@@ -69,7 +69,7 @@ the starting state from r1.
 variance, how many paths to 10.0.0.4/32 will r1 *install*, and will the
 r3 path even appear in the topology table as a backup?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `router eigrp 100`, `network` statements for the loopback and connected
@@ -79,7 +79,7 @@ r3 path even appear in the topology table as a backup?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On each router:
@@ -92,7 +92,7 @@ router eigrp 100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r1 installs **one** route to 10.0.0.4/32 — via r2 (the fast path) — since
@@ -115,7 +115,7 @@ the r3 path is eligible to be installed.
 **Predict first:** if r3's RD is **not** below the FD, will any amount of
 `variance` install the r3 path? Why or why not?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show ip eigrp topology 10.0.0.4/32` — metric pairs are `(FD/RD)`.
@@ -123,7 +123,7 @@ the r3 path is eligible to be installed.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Variance only multiplies the *acceptance threshold*; it never relaxes the
@@ -148,7 +148,7 @@ both r2 and r3.
 **Predict first:** once both paths are installed, will traffic split
 50/50, or favor one path — and which?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -159,7 +159,7 @@ router eigrp 100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip route 10.0.0.4` shows two entries with *different* metrics:
@@ -190,7 +190,7 @@ variance in a real network.
 path? Given the FC, is that even possible — and what real harm does
 over-broad variance actually cause instead?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 No loop appears — and that's the lesson. Because the FC gates every
@@ -241,5 +241,5 @@ No answers provided — reason them through.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy eigrp-variance
 ```

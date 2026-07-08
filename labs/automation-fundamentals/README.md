@@ -103,7 +103,7 @@ ping -c 2 172.31.41.12
 r1# show ip bgp summary
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip bgp summary` on r1 should show peer `10.1.12.2` in state
@@ -122,7 +122,7 @@ client on the management network can send it commands.
 and from the automation container, how could you prove the port is open
 before sending a single API call?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - The config tree lives under `management api http-commands` — go there and
@@ -135,7 +135,7 @@ before sending a single API call?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```text
@@ -150,7 +150,7 @@ end
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show management api http-commands` should report the agent **running** and
@@ -175,7 +175,7 @@ automation library you'll ever use is doing exactly this under the hood.
 what comes back — a JSON error message, or something at the HTTP layer?
 Commit to an answer, then try it.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - The endpoint is `http://<router>/command-api`, credentials go in
@@ -188,7 +188,7 @@ Commit to an answer, then try it.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```bash
@@ -207,7 +207,7 @@ see the status line.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 You get a JSON-RPC envelope back: `"result"` is a **list with one element per
@@ -235,7 +235,7 @@ flat object. What *shape* do you expect `show ip bgp summary` to be — and
 where will the peer state live? Sketch the path
 (`result[0][...][...]`) before you print it.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `inventory.yml` is already in `/workspace` — load it with
@@ -251,7 +251,7 @@ where will the peer state live? Sketch the path
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```python
@@ -303,7 +303,7 @@ if __name__ == "__main__":
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 ```
@@ -334,7 +334,7 @@ state first, only configures what's missing or wrong, and prints `CHANGED` or
 second run print, and how many *config* API calls does it make? (Answering
 the second part forces the design.)
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Read first: `show ip interface brief` returns an `interfaces` dict — if
@@ -348,7 +348,7 @@ the second part forces the design.)
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```python
@@ -419,7 +419,7 @@ if __name__ == "__main__":
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 First run: `CHANGED` on both devices. Second run: `OK` on both devices and
@@ -446,7 +446,7 @@ exit `1` if not. No CLI allowed; the script is the operator.
 **Predict first:** roughly how long after the config call until r2 has the
 route — milliseconds, seconds, or minutes? What BGP mechanics set that clock?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - The config side is one `runCmds` sequence:
@@ -461,7 +461,7 @@ route — milliseconds, seconds, or minutes? What BGP mechanics set that clock?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```python
@@ -530,7 +530,7 @@ if __name__ == "__main__":
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The script should report the route on r2 almost immediately — established
@@ -563,7 +563,7 @@ it. Don't read `break.sh`; that's the answer key.
 write down the *first two commands* you'll run, and what each one would rule
 out, before running anything.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Stuck on where to start: is it a network problem (`ping`), a TCP problem
@@ -577,7 +577,7 @@ out, before running anything.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 The fault: `break.sh` reconfigured r1's eAPI from HTTP to **HTTPS-only**:
@@ -610,7 +610,7 @@ to confirm recovery.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Recovery is proven when `bgp_report.py` prints both routers again and
@@ -637,7 +637,7 @@ change the hostname), re-run, and watch the drift appear. Revert when done.
 No step-by-step hints — you've written every building block already (Tasks
 4–6). One nudge: `show hostname` returns JSON too.
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```python
@@ -721,7 +721,7 @@ if __name__ == "__main__":
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Clean network: six `PASS` lines (hostname, loopback0, one BGP peer — per

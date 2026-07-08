@@ -24,7 +24,7 @@ The automation node includes scripts and playbooks to:
 
 ```bash
 docker build -t netbox-automation:local labs/network-automation-netbox/
-sudo containerlab deploy -t labs/network-automation-netbox/topology.clab.yml
+./scripts/lab.sh deploy network-automation-netbox
 ```
 
 ## Access
@@ -34,7 +34,7 @@ sudo containerlab deploy -t labs/network-automation-netbox/topology.clab.yml
 - automation shell:
 
 ```bash
-docker exec -it clab-network-automation-netbox-automation bash
+./scripts/lab.sh bash network-automation-netbox automation
 ```
 
 If you are on a different machine than the lab host, forward the UI with SSH:
@@ -189,7 +189,7 @@ The Python scripts use the NetBox API.
 By default they can auto-provision a token using the lab credentials `admin` / `admin`, so this is enough on the automation node:
 
 ```bash
-docker exec -it clab-network-automation-netbox-automation bash
+./scripts/lab.sh bash network-automation-netbox automation
 cd /workspace
 export NETBOX_URL=http://172.31.40.23:8080
 export NETBOX_USERNAME=admin

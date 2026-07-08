@@ -57,9 +57,9 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
-docker exec -it clab-isis-multiarea-r1 Cli
+./scripts/lab.sh deploy isis-multiarea
+./scripts/lab.sh destroy isis-multiarea
+./scripts/lab.sh cli isis-multiarea r1
 ```
 
 ---
@@ -74,7 +74,7 @@ interfaces enrolled. Success: r1 can `ping 10.0.0.4` and `ping 10.0.0.5`.
 connected. Will they form an L1 adjacency, an L2 adjacency, both, or
 none? Why?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Per-interface `ip router isis CORE`; process `router isis CORE` with
@@ -84,7 +84,7 @@ none? Why?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 L1 routers (r1/r4/r5), example r1:
@@ -105,7 +105,7 @@ interfaces under IS-IS, NET in the router's own area.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Prediction answer: r2↔r3 form an **L2-only** adjacency — their area IDs
@@ -128,7 +128,7 @@ the *other* area at all.
 **Predict first:** does r1 have a specific route to 10.0.0.4/32, or
 something more general? What in r2's LSP causes whatever you'll find?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show isis route` / `show ip route isis` on r1.
@@ -137,7 +137,7 @@ something more general? What in r2's LSP causes whatever you'll find?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r1 has a **default route** toward r2, not a specific route to 10.0.0.4 —
@@ -161,7 +161,7 @@ that selectively.
 area 49.0002, both connected to r3)? Does leaking change that, or only
 change *external* reachability granularity?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - A `route-map`/`prefix-list` selecting the loopbacks, then
@@ -171,7 +171,7 @@ change *external* reachability granularity?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r3**:
@@ -188,7 +188,7 @@ router isis CORE
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r4 now sees specific L1 routes for the leaked prefixes instead of relying
@@ -213,7 +213,7 @@ adjacency with r3?
 L1/2, will an L2 adjacency form on the r3–r4 link, and will r4's LSP show
 up in the backbone database?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Yes — r4 now maintains both databases and forms an **L2** adjacency with

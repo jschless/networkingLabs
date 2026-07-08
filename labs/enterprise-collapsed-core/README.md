@@ -123,7 +123,7 @@ chmod +x labs/enterprise-collapsed-core/configs/client-a/setup.sh
 chmod +x labs/enterprise-collapsed-core/configs/client-b/setup.sh
 
 # Deploy
-sudo containerlab deploy -t labs/enterprise-collapsed-core/topology.clab.yml
+./scripts/lab.sh deploy enterprise-collapsed-core
 
 # Or with the helper script
 ./scripts/lab.sh deploy enterprise-collapsed-core
@@ -132,7 +132,6 @@ sudo containerlab deploy -t labs/enterprise-collapsed-core/topology.clab.yml
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t labs/enterprise-collapsed-core/topology.clab.yml --cleanup
 ./scripts/lab.sh destroy enterprise-collapsed-core
 ```
 
@@ -144,14 +143,14 @@ sudo containerlab destroy -t labs/enterprise-collapsed-core/topology.clab.yml --
 
 ```bash
 # cEOS nodes
-docker exec -it clab-enterprise-collapsed-core-cc1   Cli
-docker exec -it clab-enterprise-collapsed-core-cc2   Cli
-docker exec -it clab-enterprise-collapsed-core-edge  Cli
-docker exec -it clab-enterprise-collapsed-core-acc1  Cli
+./scripts/lab.sh cli enterprise-collapsed-core cc1
+./scripts/lab.sh cli enterprise-collapsed-core cc2
+./scripts/lab.sh cli enterprise-collapsed-core edge
+./scripts/lab.sh cli enterprise-collapsed-core acc1
 
 # Linux clients
-docker exec -it clab-enterprise-collapsed-core-client-a bash
-docker exec -it clab-enterprise-collapsed-core-client-b bash
+./scripts/lab.sh bash enterprise-collapsed-core client-a
+./scripts/lab.sh bash enterprise-collapsed-core client-b
 ```
 
 ### Routing — Edge
@@ -213,25 +212,25 @@ show spanning-tree detail
 
 ```bash
 # From client-a: ping the VRRP gateway
-docker exec clab-enterprise-collapsed-core-client-a ping -c3 10.10.10.1
+./scripts/lab.sh cmd enterprise-collapsed-core client-a -- ping -c3 10.10.10.1
 
 # From client-a: ping across to VLAN 20 subnet (inter-VLAN routing via cc1/cc2)
-docker exec clab-enterprise-collapsed-core-client-a ping -c3 10.20.20.11
+./scripts/lab.sh cmd enterprise-collapsed-core client-a -- ping -c3 10.20.20.11
 
 # From client-a: ping toward the ISP loopback (tests full default route path)
-docker exec clab-enterprise-collapsed-core-client-a ping -c3 1.1.1.1
+./scripts/lab.sh cmd enterprise-collapsed-core client-a -- ping -c3 1.1.1.1
 
 # From client-b: ping its gateway (VRRP VIP on cc2)
-docker exec clab-enterprise-collapsed-core-client-b ping -c3 10.20.20.1
-docker exec clab-enterprise-collapsed-core-client-b ping -c3 10.10.10.11
-docker exec clab-enterprise-collapsed-core-client-b ping -c3 1.1.1.1
+./scripts/lab.sh cmd enterprise-collapsed-core client-b -- ping -c3 10.20.20.1
+./scripts/lab.sh cmd enterprise-collapsed-core client-b -- ping -c3 10.10.10.11
+./scripts/lab.sh cmd enterprise-collapsed-core client-b -- ping -c3 1.1.1.1
 ```
 
 ### Traceroute — Normal Path
 
 ```bash
 # client-a -> 1.1.1.1 should traverse: cc1 (VRRP active) -> edge -> isp
-docker exec clab-enterprise-collapsed-core-client-a traceroute -n 1.1.1.1
+./scripts/lab.sh cmd enterprise-collapsed-core client-a -- traceroute -n 1.1.1.1
 ```
 
 Expected hops:
@@ -263,7 +262,7 @@ watch show vrrp
 **Step 2**: watch client-a connectivity in another terminal:
 ```bash
 # Continuous ping from client-a
-docker exec clab-enterprise-collapsed-core-client-a ping 10.10.10.1
+./scripts/lab.sh cmd enterprise-collapsed-core client-a -- ping 10.10.10.1
 ```
 
 **Step 3**: shut cc1 down:
@@ -294,7 +293,7 @@ cc1 preempts and reclaims MASTER on VLAN 10 and 30 (preempt is enabled).
 
 ```bash
 # On client-a, run tcpdump to capture VRRP hellos on eth1
-docker exec clab-enterprise-collapsed-core-client-a \
+./scripts/lab.sh cmd enterprise-collapsed-core client-a -- \
   tcpdump -i eth1 -n vrrp
 
 # You should see periodic VRRP advertisements from the active router's real IP
@@ -308,10 +307,10 @@ docker exec clab-enterprise-collapsed-core-client-a \
 
 ```bash
 # On acc1, check which port is the root port (upstream toward cc1)
-docker exec clab-enterprise-collapsed-core-acc1 Cli -c "show spanning-tree vlan 10"
+./scripts/lab.sh cmd enterprise-collapsed-core acc1 -- Cli -c "show spanning-tree vlan 10"
 
 # Now shutdown the cc1-side uplink on acc1 (Ethernet1)
-docker exec clab-enterprise-collapsed-core-acc1 Cli -c \
+./scripts/lab.sh cmd enterprise-collapsed-core acc1 -- Cli -c \
   "enable; configure; interface Ethernet1; shutdown"
 
 # acc1 has no other uplink in this lab — it becomes isolated.
@@ -320,7 +319,7 @@ docker exec clab-enterprise-collapsed-core-acc1 Cli -c \
 # This is the typical recommended design for access switches.
 
 # Restore
-docker exec clab-enterprise-collapsed-core-acc1 Cli -c \
+./scripts/lab.sh cmd enterprise-collapsed-core acc1 -- Cli -c \
   "enable; configure; interface Ethernet1; no shutdown"
 ```
 
@@ -332,17 +331,17 @@ Understand how 0.0.0.0/0 flows from ISP all the way to the clients.
 
 ```bash
 # On isp: what is being advertised?
-docker exec clab-enterprise-collapsed-core-isp Cli -c "show bgp ipv4 unicast"
+./scripts/lab.sh cmd enterprise-collapsed-core isp -- Cli -c "show bgp ipv4 unicast"
 
 # On edge: BGP table shows 0.0.0.0/0 received from ISP
-docker exec clab-enterprise-collapsed-core-edge Cli -c "show ip route 0.0.0.0/0"
+./scripts/lab.sh cmd enterprise-collapsed-core edge -- Cli -c "show ip route 0.0.0.0/0"
 # OSPF redistributes it via "default-information originate always"
 
 # On cc1: OSPF-learned default route
-docker exec clab-enterprise-collapsed-core-cc1 Cli -c "show ip route 0.0.0.0/0"
+./scripts/lab.sh cmd enterprise-collapsed-core cc1 -- Cli -c "show ip route 0.0.0.0/0"
 
 # On client-a: Linux routing table shows it too
-docker exec clab-enterprise-collapsed-core-client-a ip route
+./scripts/lab.sh cmd enterprise-collapsed-core client-a -- ip route
 ```
 
 ---

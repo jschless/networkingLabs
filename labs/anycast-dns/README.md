@@ -90,8 +90,7 @@ docker build -t anycast-dns:local labs/anycast-dns/
 then:
 
 ```bash
-sudo containerlab deploy -t labs/anycast-dns/topology.clab.yml
-# or: ./scripts/lab.sh deploy anycast-dns
+./scripts/lab.sh deploy anycast-dns
 ```
 
 Access a node:
@@ -104,7 +103,7 @@ Access a node:
 Destroy when done:
 
 ```bash
-sudo containerlab destroy -t labs/anycast-dns/topology.clab.yml --cleanup
+./scripts/lab.sh destroy anycast-dns
 ```
 
 ---
@@ -130,7 +129,7 @@ dig @10.53.53.53 TXT whoami.lab.test
 ip route
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both servers hold **two** extra addresses on `lo`: their unique /32
@@ -157,7 +156,7 @@ client subnet and its loopback, so that c1 can ping c2
 **Predict first:** when the session comes up, how many prefixes will r1
 receive from r2? Count before you look.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `router bgp 65001` → `neighbor 10.0.12.2 remote-as 65002`, then under
@@ -171,7 +170,7 @@ receive from r2? Count before you look.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On r1:
@@ -202,7 +201,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp summary` on r1 shows `2` under State/PfxRcd for 10.0.12.2 —
@@ -226,7 +225,7 @@ with no filter. List what dns1 would advertise then — check
 `show ip route connected` on dns1 before answering. Which of those
 prefixes would be genuinely dangerous to leak, and why?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Same shape as Task 2 on the servers (AS numbers and peer addresses are
@@ -245,7 +244,7 @@ prefixes would be genuinely dangerous to leak, and why?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On dns1:
@@ -280,7 +279,7 @@ and r2 the same with `neighbor 10.0.102.2 remote-as 65102`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast 10.53.53.53/32` on r1 shows **two paths**: one
@@ -328,7 +327,7 @@ by path, and by the server's own logs.
 **Predict first:** `traceroute` from c1 to 10.53.53.53 — how many hops,
 and what will the last hop claim to be?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Answer content: the `whoami.lab.test` TXT record differs per instance;
@@ -342,7 +341,7 @@ and what will the last hop claim to be?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 From c1 `whoami` returns `"dns1"`, from c2 `"dns2"` — same question,
@@ -371,14 +370,14 @@ client, that the service converged onto dns2 — then bring dns1 back.
 out from the two moving parts: the watchdog polls every 2 s, and an eBGP
 withdraw propagates in milliseconds on a directly-connected session.
 
-Inject (on dns1's shell — or `docker exec clab-anycast-dns-dns1 pkill
+Inject (on dns1's shell — or `./scripts/lab.sh cmd anycast-dns dns1 -- pkill
 dnsmasq` from the host):
 
 ```bash
 pkill dnsmasq
 ```
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Watch the mechanism fire, in order: `tail /var/log/healthcheck.log` on
@@ -390,7 +389,7 @@ pkill dnsmasq
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The healthcheck log gains `UNHEALTHY — VIP 10.53.53.53/32 withdrawn from
@@ -420,8 +419,8 @@ the fault on dns1 (from the host, without reading the commands' intent
 too closely):
 
 ```bash
-docker exec clab-anycast-dns-dns1 pkill -f healthcheck.sh
-docker exec clab-anycast-dns-dns1 pkill dnsmasq
+./scripts/lab.sh cmd anycast-dns dns1 -- pkill -f healthcheck.sh
+./scripts/lab.sh cmd anycast-dns dns1 -- pkill dnsmasq
 ```
 
 Symptoms: c1's DNS is **dead** — `dig @10.53.53.53` reports
@@ -431,7 +430,7 @@ side (and dns2's, and r2's) the service is completely healthy. Work out
 what's wrong and *where the ICMP refusal is coming from* before opening
 the hints; then repair it and re-verify.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `connection refused` is a different failure than Task 1's `no servers
@@ -444,7 +443,7 @@ the hints; then repair it and re-verify.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r1 still holds **two** paths and still prefers dns1: the VIP never left

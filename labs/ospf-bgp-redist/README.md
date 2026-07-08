@@ -64,10 +64,10 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 
 ```bash
 # Deploy the lab
-sudo containerlab deploy --topo topology.clab.yml
+./scripts/lab.sh deploy ospf-bgp-redist
 
 # Open the EOS CLI on any node
-docker exec -it clab-ospf-bgp-redist-asbr Cli
+./scripts/lab.sh cli ospf-bgp-redist asbr
 ```
 
 ---
@@ -77,7 +77,7 @@ docker exec -it clab-ospf-bgp-redist-asbr Cli
 **Objective:** Run OSPF area 0 between r1 and asbr, loopbacks advertised
 and passive. Success: `Full` adjacency and asbr can ping 10.0.0.1.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `router ospf 1` + `network ... area 0.0.0.0` statements on both nodes.
@@ -86,7 +86,7 @@ and passive. Success: `Full` adjacency and asbr can ping 10.0.0.1.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 r1:
@@ -111,7 +111,7 @@ router ospf 1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf neighbor` on asbr shows r1 in `Full`. r1 knows nothing east
@@ -132,7 +132,7 @@ them, or you'll be debugging two problems through one symptom later.
 What attribute of those prefixes will make them unusable on bgp2 unless
 you add one command on bgp1 — and why does eBGP not have this problem?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - EOS: neighbors defined under `router bgp`, then `activate` under
@@ -142,7 +142,7 @@ you add one command on bgp1 — and why does eBGP not have this problem?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 asbr:
@@ -180,7 +180,7 @@ router bgp 65200
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast summary` shows `Established` on asbr and bgp1
@@ -203,7 +203,7 @@ can see r1's loopback.
 you expect to appear in bgp2's BGP table, and what bgp2 will show as their
 next-hop.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - The command goes under `address-family ipv4` of the **BGP** process on
@@ -212,7 +212,7 @@ next-hop.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 asbr:
@@ -225,7 +225,7 @@ router bgp 65100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 bgp2's table gains 10.0.0.1/32 (r1's loopback, OSPF-learned) and
@@ -248,7 +248,7 @@ Goal succeed.
 **Predict first:** what route code and LSA type will the BGP prefixes
 carry inside the OSPF domain, and will their metric grow as they cross it?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - This one goes under the **OSPF** process on asbr.
@@ -257,7 +257,7 @@ carry inside the OSPF domain, and will their metric grow as they cross it?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 asbr:
@@ -269,7 +269,7 @@ router ospf 1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r1 shows `O E2 10.0.0.3/32` and `O E2 10.0.0.4/32` — Type-5 external
@@ -290,7 +290,7 @@ OSPF→BGP redistribution with a route-map that (a) blocks the transit
 subnet 10.0.12.0/30 from entering BGP and (b) tags everything else with
 community `65100:100`.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Build a `ip prefix-list` with a deny for the transit /30 and a
@@ -302,7 +302,7 @@ community `65100:100`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 asbr:
@@ -321,7 +321,7 @@ router bgp 65100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 On bgp1: 10.0.12.0/30 is gone from the BGP table, and the surviving

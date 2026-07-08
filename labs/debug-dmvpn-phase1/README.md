@@ -30,7 +30,7 @@ flowchart TB
 ## Deploy And Access
 
 ```bash
-sudo containerlab deploy -t labs/debug-dmvpn-phase1/topology.clab.yml
+./scripts/lab.sh deploy debug-dmvpn-phase1
 
 ./scripts/lab.sh cli debug-dmvpn-phase1 hub
 ./scripts/lab.sh cli debug-dmvpn-phase1 spoke1
@@ -72,7 +72,7 @@ If the spoke points the hub mapping at the wrong NBMA address, the WAN stays rea
 
 On `spoke1`:
 
-<details>
+<details markdown="1">
 <summary>Solution — reveal only after attempting the lab</summary>
 
 ```vyos

@@ -64,7 +64,7 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 
 ```bash
 # Deploy the lab (run from this directory)
-containerlab deploy --topo topology.clab.yml
+./scripts/lab.sh deploy ospf-multiarea
 
 # List nodes and their management IPs
 ../../scripts/lab.sh list ospf-multiarea
@@ -93,7 +93,7 @@ which area does each of r2's *three* interfaces (Loopback0, Ethernet1,
 Ethernet2) belong in, and what makes a router an ABR — a knob you configure,
 or a consequence of its interfaces?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - The OSPF process is created with `router ospf 1`; set the router-id there.
@@ -106,7 +106,7 @@ or a consequence of its interfaces?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1** (all interfaces in Area 1):
@@ -173,7 +173,7 @@ interface Ethernet1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf neighbor` on r2 and r3 should each list two neighbors in
@@ -201,7 +201,7 @@ topology information about Area 0 or Area 2 — only summaries.
 **Predict first:** On r1, will `show ip ospf database` contain a Router LSA
 (Type-1) originated by r4? Will it contain r4's loopback prefix anywhere?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Compare `show ip ospf database` on r1 and on r2 (the ABR sees multiple
@@ -212,7 +212,7 @@ topology information about Area 0 or Area 2 — only summaries.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r1's database has Router LSAs only for r1 and r2 (the Area 1 members), and a
@@ -238,7 +238,7 @@ you expect to happen to the r3–r4 adjacency if you configure `stub` on r3
 only — stays up, drops, or flaps? (Configure r3 first, check, then r4 —
 watch it happen.)
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One line under `router ospf 1` on **both** r3 and r4: `area 2 stub`.
@@ -248,7 +248,7 @@ watch it happen.)
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r3 and r4**:
@@ -260,7 +260,7 @@ router ospf 1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 While only r3 was configured, the adjacency **drops** and stays down — the
@@ -290,7 +290,7 @@ interface Ethernet1
 full adjacency with r2 — yet routes are missing. Which routes are gone,
 which survive, and why exactly those?
 
-<details>
+<details markdown="1">
 <summary>Diagnosis hints (try before revealing)</summary>
 
 - `show ip route ospf` on r1 and r2 — what disappeared?
@@ -300,7 +300,7 @@ which survive, and why exactly those?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The r2–r3 adjacency drops (area mismatch in the hello — same rejection

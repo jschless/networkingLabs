@@ -88,7 +88,7 @@ flowchart LR
 ```bash
 docker build -t nac-practice:local labs/dot1x-ceos-practice/
 docker build -f labs/dot1x-ceos-practice/Dockerfile.tacacs -t nac-practice-tacacs:local labs/dot1x-ceos-practice/
-sudo containerlab deploy -t labs/dot1x-ceos-practice/topology.clab.yml
+./scripts/lab.sh deploy dot1x-ceos-practice
 ```
 
 Switch access:
@@ -160,7 +160,7 @@ Expected:
 
 ## Task 2 — Configure endpoint AAA and RADIUS
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Configure the switch to use the RADIUS server on Et5:
@@ -183,7 +183,7 @@ show running-config section aaa
 
 ## Task 3 — Enable global dot1x
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Enable 802.1X globally:
@@ -206,7 +206,7 @@ show logging | grep Dot1x
 
 ## Task 4 — Enable EAP on Et1 and Et2
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Configure `Et1` and `Et2` as wired authenticators:
@@ -240,15 +240,15 @@ Expected:
 Traffic tests:
 
 ```bash
-docker exec clab-dot1x-ceos-practice-supplicant-tls ping -c3 10.10.10.1
-docker exec clab-dot1x-ceos-practice-supplicant-peap ping -c3 10.20.20.1
+./scripts/lab.sh cmd dot1x-ceos-practice supplicant-tls -- ping -c3 10.10.10.1
+./scripts/lab.sh cmd dot1x-ceos-practice supplicant-peap -- ping -c3 10.20.20.1
 ```
 
 </details>
 
 ## Task 5 — Add MAB on Et3
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Configure `Et3` so a non-802.1X endpoint can still be authorized:
@@ -273,7 +273,7 @@ show logging | grep Dot1x
 Traffic test:
 
 ```bash
-docker exec clab-dot1x-ceos-practice-supplicant-mab ping -c3 10.30.30.1
+./scripts/lab.sh cmd dot1x-ceos-practice supplicant-mab -- ping -c3 10.30.30.1
 ```
 
 </details>
@@ -283,7 +283,7 @@ Note:
 
 ## Task 6 — Handle rejected auth on Et4
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Configure a failure policy for the bad supplicant:
@@ -309,7 +309,7 @@ show logging | grep Dot1x
 Traffic test:
 
 ```bash
-docker exec clab-dot1x-ceos-practice-supplicant-fail ping -c3 10.10.10.1
+./scripts/lab.sh cmd dot1x-ceos-practice supplicant-fail -- ping -c3 10.10.10.1
 ```
 
 Expected:
@@ -335,7 +335,7 @@ From `admin1`:
 
 ## Task 8 — Configure TACACS+ login, exec authorization, and accounting
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Configure the switch to use `tacacs1` for device-admin AAA, with local fallback if TACACS+ is unavailable:
@@ -464,9 +464,9 @@ On `tacacs1`:
 On supplicants:
 
 ```bash
-docker exec clab-dot1x-ceos-practice-supplicant-tls tail -n 80 /var/log/wpa_supplicant.log
-docker exec clab-dot1x-ceos-practice-supplicant-peap tail -n 80 /var/log/wpa_supplicant.log
-docker exec clab-dot1x-ceos-practice-supplicant-fail tail -n 80 /var/log/wpa_supplicant.log
+./scripts/lab.sh cmd dot1x-ceos-practice supplicant-tls -- tail -n 80 /var/log/wpa_supplicant.log
+./scripts/lab.sh cmd dot1x-ceos-practice supplicant-peap -- tail -n 80 /var/log/wpa_supplicant.log
+./scripts/lab.sh cmd dot1x-ceos-practice supplicant-fail -- tail -n 80 /var/log/wpa_supplicant.log
 ```
 
 ## Learning checkpoints
@@ -483,7 +483,7 @@ After working through the lab, you should be able to explain:
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/dot1x-ceos-practice/topology.clab.yml --cleanup
+./scripts/lab.sh destroy dot1x-ceos-practice
 ```
 
 ## Challenge questions

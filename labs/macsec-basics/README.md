@@ -68,7 +68,7 @@ docker build -t vyos:local -f Dockerfile.vyos .
 ```bash
 ./scripts/lab.sh cli macsec-basics r1
 # then run: show configuration commands | match macsec
-docker exec clab-macsec-basics-r1 ip macsec show
+./scripts/lab.sh cmd macsec-basics r1 -- ip macsec show
 ```
 
 ## Packet Capture Walkthrough

@@ -75,7 +75,7 @@ sessions. Success: `ping ipv6 2001:db8::4` works from r1.
 the **next-hop** be — an IPv4 address, or an IPv6 one? How can an
 IPv4-transport session even express an IPv6 next-hop?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Define neighbors with IPv4 `remote-as`, then activate them under *both*
@@ -87,7 +87,7 @@ IPv4-transport session even express an IPv6 next-hop?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1** (r4 mirrors; r2/r3 add their iBGP neighbor + next-hop-self):
@@ -125,7 +125,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv6 unicast 2001:db8::1/128` on r2 shows an **IPv6** next-hop
@@ -149,7 +149,7 @@ r3 only (leave the IPv4 AF intact), and diagnose from r3.
 will the IPv4 reachability survive because you left its next-hop-self
 alone?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Only the **IPv6** routes learned via r2 from the eBGP peer r1 go
@@ -170,7 +170,7 @@ and re-verify.
 **Objective:** Confirm that IPv4 and IPv6 reachability are carried
 separately by examining the per-AF tables.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show bgp ipv4 unicast summary` vs `show bgp ipv6 unicast summary` —
@@ -179,7 +179,7 @@ separately by examining the per-AF tables.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Each neighbor appears in both summaries with its own accepted-prefix
@@ -232,7 +232,7 @@ No answers provided — reason them through.
 If you'd rather peer over IPv6 directly, define neighbors by their IPv6
 address and activate only the ipv6 AF:
 
-<details>
+<details markdown="1">
 <summary>Example (r1 ↔ r2)</summary>
 
 ```text

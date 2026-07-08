@@ -61,9 +61,9 @@ AFI (49 = private)
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
-docker exec -it clab-isis-basics-r1 Cli
+./scripts/lab.sh deploy isis-basics
+./scripts/lab.sh destroy isis-basics
+./scripts/lab.sh cli isis-basics r1
 ```
 
 ---
@@ -80,7 +80,7 @@ success.
 routers with the *same* System ID? (You don't have to do it — just
 predict.)
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Per interface: `ip router isis CORE` (loopback also gets
@@ -92,7 +92,7 @@ predict.)
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 Example for **r1** (substitute NET / interfaces per node):
@@ -114,7 +114,7 @@ r2 and r3 add their second transit interface (`eth2`) under IS-IS.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show isis neighbor` shows each router's directly-connected peers; r2/r3
@@ -135,7 +135,7 @@ forgive.
 **Objective:** From r1, use the database to confirm that every router's
 LSP is present and to locate r4's loopback prefix in the flooded LSPs.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show isis database` (summary) and `show isis database detail` (full
@@ -145,7 +145,7 @@ LSP is present and to locate r4's loopback prefix in the flooded LSPs.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Four LSPs, one per system; r4's LSP carries 10.0.0.4/32 in its IP
@@ -169,7 +169,7 @@ r1's route to a far prefix changes.
 metric change the *route* r1 uses, or only the *cost* it records? When
 would the metric actually re-route traffic?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `isis metric 100` under an interface.
@@ -177,7 +177,7 @@ would the metric actually re-route traffic?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 On a linear topology the path can't change — there's no alternative — so
@@ -202,7 +202,7 @@ level-1-2) and diagnose the adjacency failure from its neighbor.
 form an adjacency, a partial one, or none? What does the neighbor's
 circuit/level info reveal?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The adjacency fails (or won't pass routes): an L1-only router and an

@@ -31,7 +31,7 @@ flowchart LR
 
 ```bash
 docker build -t frr-lab:local images/frr/
-sudo containerlab deploy -t labs/acl-basics/topology.clab.yml
+./scripts/lab.sh deploy acl-basics
 ```
 
 ## What Is Prebuilt
@@ -46,12 +46,12 @@ sudo containerlab deploy -t labs/acl-basics/topology.clab.yml
 Before you add policy, both source networks can reach the router services:
 
 ```bash
-docker exec clab-acl-basics-client ping -c 2 192.168.10.1
-docker exec clab-acl-basics-client nc -zvw 2 192.168.10.1 8080
-docker exec clab-acl-basics-client nc -zvw 2 192.168.10.1 2222
+./scripts/lab.sh cmd acl-basics client -- ping -c 2 192.168.10.1
+./scripts/lab.sh cmd acl-basics client -- nc -zvw 2 192.168.10.1 8080
+./scripts/lab.sh cmd acl-basics client -- nc -zvw 2 192.168.10.1 2222
 
-docker exec clab-acl-basics-attacker ping -c 2 192.168.20.1
-docker exec clab-acl-basics-attacker nc -zvw 2 192.168.20.1 8080
+./scripts/lab.sh cmd acl-basics attacker -- ping -c 2 192.168.20.1
+./scripts/lab.sh cmd acl-basics attacker -- nc -zvw 2 192.168.20.1 8080
 ```
 
 ## Policy Goals
@@ -69,7 +69,7 @@ Implement an interface ACL on `router` so that:
 Build the rules on `router` with `iptables-legacy` so you are looking at the real INPUT path:
 
 ```bash
-docker exec clab-acl-basics-router bash -lc '
+./scripts/lab.sh cmd acl-basics router -- bash -lc '
 iptables-legacy -F INPUT
 iptables-legacy -F MGMT-ACL 2>/dev/null || true
 iptables-legacy -X MGMT-ACL 2>/dev/null || true
@@ -90,27 +90,27 @@ iptables-legacy -A MGMT-ACL -j DROP
 Allowed client traffic:
 
 ```bash
-docker exec clab-acl-basics-client ping -c 2 192.168.10.1
-docker exec clab-acl-basics-client nc -zvw 2 192.168.10.1 8080
+./scripts/lab.sh cmd acl-basics client -- ping -c 2 192.168.10.1
+./scripts/lab.sh cmd acl-basics client -- nc -zvw 2 192.168.10.1 8080
 ```
 
 Denied client traffic:
 
 ```bash
-docker exec clab-acl-basics-client nc -zvw 2 192.168.10.1 2222
+./scripts/lab.sh cmd acl-basics client -- nc -zvw 2 192.168.10.1 2222
 ```
 
 Denied attacker traffic:
 
 ```bash
-docker exec clab-acl-basics-attacker nc -zvw 2 192.168.20.1 8080
+./scripts/lab.sh cmd acl-basics attacker -- nc -zvw 2 192.168.20.1 8080
 ```
 
 Check counters and rule order:
 
 ```bash
-docker exec clab-acl-basics-router iptables-legacy -L INPUT -n -v --line-numbers
-docker exec clab-acl-basics-router iptables-legacy -L MGMT-ACL -n -v --line-numbers
+./scripts/lab.sh cmd acl-basics router -- iptables-legacy -L INPUT -n -v --line-numbers
+./scripts/lab.sh cmd acl-basics router -- iptables-legacy -L MGMT-ACL -n -v --line-numbers
 ```
 
 ## What This Lab Teaches

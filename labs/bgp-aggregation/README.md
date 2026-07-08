@@ -47,12 +47,12 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy and Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh deploy bgp-aggregation
+./scripts/lab.sh destroy bgp-aggregation
 ```
 
 ```bash
-docker exec -it clab-bgp-aggregation-originator Cli   # aggregator, receiver
+./scripts/lab.sh cli bgp-aggregation originator   # aggregator, receiver
 ```
 
 ---
@@ -85,7 +85,7 @@ docker exec -it clab-bgp-aggregation-originator Cli   # aggregator, receiver
 management loopback, and originator additionally advertises
 10.1.1.0/24 … 10.1.4.0/24. Success: receiver sees seven prefixes.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - The /24s exist as Loopback1–4 on originator — they just need
@@ -93,7 +93,7 @@ management loopback, and originator additionally advertises
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 ```text
@@ -122,7 +122,7 @@ the world before aggregation, and your "before" snapshot.
 **Predict first:** after this, how many 10.1.x prefixes does the
 receiver have — 1, 4, or 5? And what AS-path will the /21 carry?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `aggregate-address 10.1.0.0/21` under `address-family ipv4` on the
@@ -132,7 +132,7 @@ receiver have — 1, 4, or 5? And what AS-path will the /21 carry?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **aggregator**:
@@ -144,7 +144,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Receiver has **5**: the new /21 *plus* all four /24s — default
@@ -166,7 +166,7 @@ yet, and (b) path information was destroyed — which is what `as-set`
 **Predict first:** after `summary-only`, do the four /24s still exist in
 the **aggregator's** own BGP table? If yes, in what state?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **aggregator**:
@@ -180,7 +180,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Receiver: only 10.1.0.0/21 remains of the customer space. On the
@@ -209,7 +209,7 @@ says *should* happen with what this platform actually does.
 should appear in the aggregate's AS-path on receiver, and which
 attribute should *disappear* compared to Task 2's plain aggregate?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **aggregator**:
@@ -221,7 +221,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 RFC answer: an AS_SET segment — `{65001}` in braces — in the path, and
@@ -248,7 +248,7 @@ aggregate lives and dies, by withdrawing components on the originator.
 **Predict first:** remove only 10.1.4.0/24 — does the receiver's /21
 survive? Then remove all four — what happens, and roughly how fast?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `no network 10.1.4.0/24` under originator's address-family; then
@@ -258,7 +258,7 @@ survive? Then remove all four — what happens, and roughly how fast?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 One component gone: the /21 **stays** — any single surviving component
@@ -283,7 +283,7 @@ OSPF `area range` and its Null0 route.
 let the other three /24s through — the "precision routing for some,
 summary for the rest" pattern.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - EOS has no standalone `suppress-map`; it's
@@ -293,7 +293,7 @@ summary for the rest" pattern.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **aggregator**:
@@ -309,7 +309,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Receiver: 10.1.0.0/21 + 10.1.1.0/24 + 10.1.2.0/24 + 10.1.3.0/24;

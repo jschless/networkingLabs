@@ -68,8 +68,7 @@ Build the base image once if you haven't (`docker build -t frr-lab:local
 images/frr/`), then:
 
 ```bash
-sudo containerlab deploy -t labs/mpls-ldp/topology.clab.yml
-# or: ./scripts/lab.sh deploy mpls-ldp
+./scripts/lab.sh deploy mpls-ldp
 ```
 
 Access a node:
@@ -82,7 +81,7 @@ Access a node:
 Destroy when done:
 
 ```bash
-sudo containerlab destroy -t labs/mpls-ldp/topology.clab.yml --cleanup
+./scripts/lab.sh destroy mpls-ldp
 ```
 
 ---
@@ -104,7 +103,7 @@ show mpls ldp discovery
 show mpls table
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip route` lists only `C>` connected routes (plus the containerlab
@@ -127,7 +126,7 @@ between loopbacks before any label can move.
 **Predict first:** once OSPF converges, how many `O>` routes will r1's
 table hold? Count before you look.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `router ospf` → `network <prefix> area 0`. All addresses in this lab
@@ -139,7 +138,7 @@ table hold? Count before you look.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On r1 (analogous on r2/r3/r4 — change the router-id):
@@ -155,7 +154,7 @@ exit
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf neighbor` on r2 shows two neighbors in `Full`. On r1,
@@ -178,7 +177,7 @@ loopback as the transport address.
 session itself is TCP (port 646) between the two transport addresses.
 For the r1–r2 pair, which router opens that TCP connection?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Two separate things to enable, and forgetting the first is this lab's
@@ -192,7 +191,7 @@ For the r1–r2 pair, which router opens that TCP connection?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On r2 (two interfaces; r1/r4 have only eth1, and use their own
@@ -219,7 +218,7 @@ exit
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show mpls ldp discovery` on r2 lists eth1 and eth2 with the neighbor's
@@ -244,7 +243,7 @@ advertises, and what actually got installed in the forwarding plane.
 advertise a label for `10.0.0.4/32`. How many bindings for that FEC will
 r2 *hold*, and how many will it *install*?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show mpls ldp binding` — the LIB: every label anyone told r2 about,
@@ -255,7 +254,7 @@ r2 *hold*, and how many will it *install*?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The binding table shows `10.0.0.4/32` with a **local label** (what r2
@@ -293,7 +292,7 @@ tcpdump -c 4 -ni eth2 mpls          # r2: the r2->r3 link
 tcpdump -c 4 -ni eth2 ip and icmp   # r3: the r3->r4 link
 ```
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Look at r4's advertised binding for its own loopback in
@@ -303,7 +302,7 @@ tcpdump -c 4 -ni eth2 ip and icmp   # r3: the r3->r4 link
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 On r2→r3 you see `MPLS (label <N>, exp 0, [S], ttl ...)` wrapping each
@@ -331,7 +330,7 @@ carries a labeled packet.
 **Predict first:** after the change, what label value will the capture
 on r3's eth2 show?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One line, on r4 only, inside `mpls ldp` → `address-family ipv4`.
@@ -339,7 +338,7 @@ on r3's eth2 show?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On r4:
@@ -356,7 +355,7 @@ exit
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Re-run the Task 5 ping and capture on r3 with `tcpdump -c 4 -ni eth2
@@ -378,7 +377,7 @@ Inject the fault from your host shell **without reading the command's
 intent too closely** — then investigate from the routers:
 
 ```bash
-docker exec clab-mpls-ldp-r3 ip route add blackhole 10.0.0.2/32
+./scripts/lab.sh cmd mpls-ldp r3 -- ip route add blackhole 10.0.0.2/32
 ```
 
 Now wait — and notice *how long* you're waiting. Nothing visible happens
@@ -394,7 +393,7 @@ now **fails completely**, yet OSPF is `Full` everywhere, r1's
 Work the problem before opening the hints: which session died, why, and
 — the interesting part — *where exactly* do the packets die?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Compare `show mpls ldp discovery` and `show mpls ldp neighbor` on r3.
@@ -409,7 +408,7 @@ Work the problem before opening the hints: which session died, why, and
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The r3↔r2 session is gone from `show mpls ldp neighbor`, while
@@ -442,7 +441,7 @@ not ping alone.
 Repair and re-verify:
 
 ```bash
-docker exec clab-mpls-ldp-r3 ip route del blackhole 10.0.0.2/32
+./scripts/lab.sh cmd mpls-ldp r3 -- ip route del blackhole 10.0.0.2/32
 ```
 
 Recovery is hello-triggered and takes seconds — no hold timer on the way

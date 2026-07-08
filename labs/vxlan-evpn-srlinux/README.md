@@ -50,15 +50,15 @@ flowchart TB
 # Pull SR-Linux image if not present
 docker pull ghcr.io/nokia/srlinux:latest
 
-sudo containerlab deploy -t labs/vxlan-evpn-srlinux/topology.clab.yml
+./scripts/lab.sh deploy vxlan-evpn-srlinux
 
 # SR-Linux CLI
-docker exec -it clab-vxlan-evpn-srlinux-spine  sr_cli
-docker exec -it clab-vxlan-evpn-srlinux-vtep1  sr_cli
+./scripts/lab.sh cli vxlan-evpn-srlinux spine
+./scripts/lab.sh cli vxlan-evpn-srlinux vtep1
 
 # Host shells
-docker exec -it clab-vxlan-evpn-srlinux-host1  bash
-docker exec -it clab-vxlan-evpn-srlinux-host2  bash
+./scripts/lab.sh bash vxlan-evpn-srlinux host1
+./scripts/lab.sh bash vxlan-evpn-srlinux host2
 ```
 
 ---
@@ -120,7 +120,7 @@ Shows the VNI 100 tunnel state and the mac-vrf network instance.
 ### Step 5 — End-to-end L2 ping
 
 ```bash
-docker exec -it clab-vxlan-evpn-srlinux-host1 bash
+./scripts/lab.sh bash vxlan-evpn-srlinux host1
 ping 172.16.0.2 -c 5
 ```
 
@@ -185,5 +185,5 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/vxlan-evpn-srlinux/topology.clab.yml --cleanup
+./scripts/lab.sh destroy vxlan-evpn-srlinux
 ```

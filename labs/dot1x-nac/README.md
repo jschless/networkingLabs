@@ -62,10 +62,10 @@ the matching server.
 docker build -t nac-lab:local labs/dot1x-nac/
 
 # Deploy
-sudo containerlab deploy -t labs/dot1x-nac/topology.clab.yml
+./scripts/lab.sh deploy dot1x-nac
 
 # Destroy
-sudo containerlab destroy -t labs/dot1x-nac/topology.clab.yml --cleanup
+./scripts/lab.sh destroy dot1x-nac
 ```
 
 ## What to observe
@@ -75,7 +75,7 @@ sudo containerlab destroy -t labs/dot1x-nac/topology.clab.yml --cleanup
 Open a terminal and tail the RADIUS log while auth is happening:
 
 ```bash
-docker exec clab-dot1x-nac-radius tail -f /var/log/freeradius/debug.log
+./scripts/lab.sh cmd dot1x-nac radius -- tail -f /var/log/freeradius/debug.log
 ```
 
 You will see the full RADIUS exchange: Access-Request → EAP challenge → Access-Challenge
@@ -85,22 +85,22 @@ You will see the full RADIUS exchange: Access-Request → EAP challenge → Acce
 
 ```bash
 # EAP-TLS
-docker exec clab-dot1x-nac-supplicant-tls tail -f /var/log/wpa_supplicant.log
+./scripts/lab.sh cmd dot1x-nac supplicant-tls -- tail -f /var/log/wpa_supplicant.log
 
 # PEAP/MSCHAPv2
-docker exec clab-dot1x-nac-supplicant-peap tail -f /var/log/wpa_supplicant.log
+./scripts/lab.sh cmd dot1x-nac supplicant-peap -- tail -f /var/log/wpa_supplicant.log
 
 # Rejected supplicant
-docker exec clab-dot1x-nac-supplicant-fail tail -f /var/log/wpa_supplicant.log
+./scripts/lab.sh cmd dot1x-nac supplicant-fail -- tail -f /var/log/wpa_supplicant.log
 ```
 
 ### 3. Watch the authenticator VLAN assignments
 
 ```bash
-docker exec clab-dot1x-nac-authenticator tail -f /var/log/vlan-action.log
+./scripts/lab.sh cmd dot1x-nac authenticator -- tail -f /var/log/vlan-action.log
 
 # Check bridge VLAN table (shows current port→VLAN mapping)
-docker exec clab-dot1x-nac-authenticator bridge vlan show
+./scripts/lab.sh cmd dot1x-nac authenticator -- bridge vlan show
 ```
 
 Expected output after all auth:
@@ -121,16 +121,16 @@ After authentication:
 
 ```bash
 # supplicant-tls can reach employee-server (same VLAN 10)
-docker exec clab-dot1x-nac-supplicant-tls ping -c3 10.10.10.1
+./scripts/lab.sh cmd dot1x-nac supplicant-tls -- ping -c3 10.10.10.1
 
 # supplicant-tls cannot reach contractor-server (different VLAN)
-docker exec clab-dot1x-nac-supplicant-tls ping -c3 10.20.20.1  # should FAIL
+./scripts/lab.sh cmd dot1x-nac supplicant-tls -- ping -c3 10.20.20.1  # should FAIL
 
 # supplicant-peap can reach contractor-server (VLAN 20)
-docker exec clab-dot1x-nac-supplicant-peap ping -c3 10.20.20.1
+./scripts/lab.sh cmd dot1x-nac supplicant-peap -- ping -c3 10.20.20.1
 
 # supplicant-fail cannot reach anything (quarantine VLAN 99)
-docker exec clab-dot1x-nac-supplicant-fail ping -c3 10.10.10.1  # should FAIL
+./scripts/lab.sh cmd dot1x-nac supplicant-fail -- ping -c3 10.10.10.1  # should FAIL
 ```
 
 ### 5. Capture the EAPOL frames
@@ -139,11 +139,11 @@ Capture 802.1X frames on the wire between supplicant-tls and the authenticator:
 
 ```bash
 # On the authenticator, capture EAPOL (EtherType 0x888e) on eth1
-docker exec clab-dot1x-nac-authenticator \
+./scripts/lab.sh cmd dot1x-nac authenticator -- \
     tcpdump -i eth1 -nn ether proto 0x888e -w /tmp/eap-tls.pcap
 
 # Or on the supplicant side
-docker exec clab-dot1x-nac-supplicant-tls \
+./scripts/lab.sh cmd dot1x-nac supplicant-tls -- \
     tcpdump -i eth1 -nn ether proto 0x888e -w /tmp/eap.pcap
 ```
 
@@ -155,7 +155,7 @@ docker cp clab-dot1x-nac-authenticator:/tmp/eap-tls.pcap ./eap-tls.pcap
 ### 6. Capture RADIUS UDP traffic
 
 ```bash
-docker exec clab-dot1x-nac-authenticator \
+./scripts/lab.sh cmd dot1x-nac authenticator -- \
     tcpdump -i eth5 -nn udp port 1812 or udp port 1813 -w /tmp/radius.pcap
 ```
 
@@ -168,11 +168,11 @@ Test RADIUS independently of the 802.1X exchange:
 
 ```bash
 # From the authenticator (or radius node)
-docker exec clab-dot1x-nac-authenticator \
+./scripts/lab.sh cmd dot1x-nac authenticator -- \
     radtest alice password123 192.168.100.2 0 testing123
 
 # Wrong password (should return Access-Reject)
-docker exec clab-dot1x-nac-authenticator \
+./scripts/lab.sh cmd dot1x-nac authenticator -- \
     radtest alice wrongpassword 192.168.100.2 0 testing123
 ```
 
@@ -181,7 +181,7 @@ docker exec clab-dot1x-nac-authenticator \
 Kill and restart wpa_supplicant on a supplicant to force a new EAP exchange:
 
 ```bash
-docker exec clab-dot1x-nac-supplicant-tls \
+./scripts/lab.sh cmd dot1x-nac supplicant-tls -- \
     bash -c "kill \$(cat /var/run/wpa_supplicant-eth1.pid); \
              wpa_supplicant -D wired -i eth1 \
                -c /etc/wpa_supplicant/wpa_supplicant.conf \
@@ -195,7 +195,7 @@ de-authorization):
 
 ```bash
 # From the radius node — disconnect alice
-docker exec clab-dot1x-nac-radius \
+./scripts/lab.sh cmd dot1x-nac radius -- \
     bash -c 'echo "User-Name=alice,NAS-IP-Address=192.168.100.1" | \
              radclient 127.0.0.1:3799 disconnect testing123'
 ```
@@ -209,7 +209,7 @@ docker exec clab-dot1x-nac-radius \
 ### Change the client cert CN
 Modify the wpa_supplicant.conf on supplicant-tls to use a non-existent identity:
 ```bash
-docker exec -it clab-dot1x-nac-supplicant-tls bash
+./scripts/lab.sh bash dot1x-nac supplicant-tls
 # Edit /etc/wpa_supplicant/wpa_supplicant.conf: change identity to "bob-unknown"
 # Restart wpa_supplicant → RADIUS won't find bob-unknown (falls to DEFAULT → VLAN 30!)
 ```
@@ -223,7 +223,7 @@ the authenticator as an unknown NAS (Access-Reject at the protocol level before 
 Simulate what the authenticator sends during MAB:
 ```bash
 # From radius node — simulate MAB with a specific MAC
-docker exec clab-dot1x-nac-radius \
+./scripts/lab.sh cmd dot1x-nac radius -- \
     radtest aabbccddeeff aabbccddeeff 127.0.0.1 0 testing123
 # → Access-Accept + VLAN 30 (DEFAULT entry)
 ```

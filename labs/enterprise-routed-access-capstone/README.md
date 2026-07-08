@@ -108,16 +108,16 @@ flowchart TB
 
 ```bash
 # Core OSPF — 9 neighbors total (4 dist + 1 core peer + 4 dist from other side)
-docker exec -it clab-enterprise-routed-access-capstone-core1 Cli
+./scripts/lab.sh cli enterprise-routed-access-capstone core1
 show ip ospf neighbor
 show bgp summary
 
 # Distribution ABR — should see area 0 and area 1 neighbors
-docker exec -it clab-enterprise-routed-access-capstone-dist1 Cli
+./scripts/lab.sh cli enterprise-routed-access-capstone dist1
 show ip ospf neighbor
 
 # Access — should have 2 area 1 neighbors (dist1 + dist2 for acc1)
-docker exec -it clab-enterprise-routed-access-capstone-acc1 Cli
+./scripts/lab.sh cli enterprise-routed-access-capstone acc1
 show ip ospf neighbor
 show ip route
 
@@ -125,16 +125,16 @@ show ip route
 show bfd peers
 
 # End-to-end: h1 → h3 (across both access switches)
-docker exec -it clab-enterprise-routed-access-capstone-h1 ping 10.10.2.2
+./scripts/lab.sh cmd enterprise-routed-access-capstone h1 -- ping 10.10.2.2
 
 # h1 → h4
-docker exec -it clab-enterprise-routed-access-capstone-h1 ping 10.10.2.6
+./scripts/lab.sh cmd enterprise-routed-access-capstone h1 -- ping 10.10.2.6
 ```
 
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/enterprise-routed-access-capstone/topology.clab.yml
+./scripts/lab.sh deploy enterprise-routed-access-capstone
 # or
 ./scripts/lab.sh deploy enterprise-routed-access-capstone
 ```

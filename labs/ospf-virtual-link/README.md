@@ -51,7 +51,7 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deployment
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy ospf-virtual-link
 ```
 
 ---
@@ -66,7 +66,7 @@ adjacencies must reach `Full`.
 partial. Specifically: which OSPF routes will r1 have, and which will it be
 missing? Same question for r4. Commit to an answer per router.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Plain `router ospf` + `network ... area ...` statements; r2 and r3 each
@@ -77,7 +77,7 @@ missing? Same question for r4. Commit to an answer per router.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 r1:
@@ -116,7 +116,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 All three physical adjacencies are `Full` — and yet:
@@ -148,7 +148,7 @@ end. Is it the peer's interface IP or something else — and through which
 area's LSDB will each router have to *find* that peer for the link to come
 up?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One command on each ABR, under `router ospf`:
@@ -159,7 +159,7 @@ up?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On r2:
@@ -176,7 +176,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf virtual-links` on r2:
@@ -219,7 +219,7 @@ before undoing it.
 **Predict first:** will the CLI even accept it? If it does, what dies
 first — the physical adjacency or the virtual link?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Depending on platform, the config is either rejected outright or the
@@ -285,5 +285,5 @@ No answers provided — reason them through.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy ospf-virtual-link
 ```

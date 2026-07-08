@@ -32,9 +32,9 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-suricata-ids-attacker /opt/soc-lab/run-attack-sequence.sh
+./scripts/lab.sh cmd soc-suricata-ids attacker -- /opt/soc-lab/run-attack-sequence.sh
 
-docker exec clab-soc-suricata-ids-sensor \
+./scripts/lab.sh cmd soc-suricata-ids sensor -- \
   jq -r 'select(.event_type=="alert") |
   [.src_ip,.dest_ip,.dest_port,.alert.signature,.alert.severity] | @tsv' \
   /var/log/suricata/eve.json

@@ -32,8 +32,8 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-arkime-pcap-arkime jq . /var/lib/arkime/sessions.json
-docker exec clab-soc-arkime-pcap-sensor tcpdump -ni eth1 -c 20
+./scripts/lab.sh cmd soc-arkime-pcap arkime -- jq . /var/lib/arkime/sessions.json
+./scripts/lab.sh cmd soc-arkime-pcap sensor -- tcpdump -ni eth1 -c 20
 ```
 
 ## Outcome

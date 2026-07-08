@@ -32,8 +32,8 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-threat-intel-misp-misp jq . /var/lib/misp/iocs.json
-docker exec clab-soc-threat-intel-misp-misp cat /etc/suricata/rules/misp-generated.rules
+./scripts/lab.sh cmd soc-threat-intel-misp misp -- jq . /var/lib/misp/iocs.json
+./scripts/lab.sh cmd soc-threat-intel-misp misp -- cat /etc/suricata/rules/misp-generated.rules
 ```
 
 ## Outcome

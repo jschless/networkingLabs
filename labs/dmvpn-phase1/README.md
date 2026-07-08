@@ -46,7 +46,7 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/dmvpn-phase1/topology.clab.yml
+./scripts/lab.sh deploy dmvpn-phase1
 ./scripts/lab.sh cli dmvpn-phase1 hub      # `configure` to enter config; `run` for show
 ```
 
@@ -68,7 +68,7 @@ show ip ospf neighbor
 show ip ospf interface brief
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 NHRP is empty and OSPF has no neighbors — the hub is a *server* waiting to
@@ -91,7 +91,7 @@ adjacency over `tun0`, advertising its LAN.
 (172.16.0.1) with an *NBMA* (10.0.0.1) mapping. Why does NHRP need
 *both* addresses for the hub — what does each one resolve?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - NHRP: `protocols nhrp tunnel tun0` with `network-id 1`, `nhs tunnel-ip
@@ -102,7 +102,7 @@ adjacency over `tun0`, advertising its LAN.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **spoke1**:
@@ -125,7 +125,7 @@ save
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The hub's `show ip nhrp` now lists 172.16.0.11 via NBMA 10.0.0.11, and
@@ -151,7 +151,7 @@ a non-broadcast medium.
 | spoke2 | 10.0.0.12  | 172.16.0.12/32 | 192.168.2.0/24    |
 | spoke3 | 10.0.0.13  | 172.16.0.13/32 | 192.168.3.0/24    |
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 Same as Task 2 with the per-node values above; NHS remains tunnel-ip
@@ -159,7 +159,7 @@ Same as Task 2 with the per-node values above; NHS remains tunnel-ip
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The hub's NHRP table now has all three spokes; every spoke is Full with
@@ -185,7 +185,7 @@ ping 192.168.2.1 count 3
 traceroute 192.168.2.1
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Reachability works, but the traceroute shows the path going **through the
@@ -247,5 +247,5 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/dmvpn-phase1/topology.clab.yml --cleanup
+./scripts/lab.sh destroy dmvpn-phase1
 ```

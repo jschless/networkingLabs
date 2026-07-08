@@ -32,7 +32,7 @@ flowchart LR
 
 ```bash
 docker build -t ops-lab:local images/ops-lab/
-sudo containerlab deploy -t labs/ipv6-access-services/topology.clab.yml
+./scripts/lab.sh deploy ipv6-access-services
 ```
 
 ## What Is Prebuilt
@@ -49,14 +49,14 @@ sudo containerlab deploy -t labs/ipv6-access-services/topology.clab.yml
 On `router1`:
 
 ```bash
-docker exec clab-ipv6-access-services-router1 radvd -C /etc/radvd.conf
+./scripts/lab.sh cmd ipv6-access-services router1 -- radvd -C /etc/radvd.conf
 ```
 
 ### 2. Verify client SLAAC behavior
 
 ```bash
-docker exec clab-ipv6-access-services-client1 ip -6 addr show dev eth1
-docker exec clab-ipv6-access-services-client1 ip -6 route
+./scripts/lab.sh cmd ipv6-access-services client1 -- ip -6 addr show dev eth1
+./scripts/lab.sh cmd ipv6-access-services client1 -- ip -6 route
 ```
 
 You should see:
@@ -67,8 +67,8 @@ You should see:
 ### 3. Test IPv6 DNS directly
 
 ```bash
-docker exec clab-ipv6-access-services-client1 dig @2001:db8:10::53 app6.internal.lab AAAA
-docker exec clab-ipv6-access-services-client1 ping -6 -c 2 2001:db8:10::53
+./scripts/lab.sh cmd ipv6-access-services client1 -- dig @2001:db8:10::53 app6.internal.lab AAAA
+./scripts/lab.sh cmd ipv6-access-services client1 -- ping -6 -c 2 2001:db8:10::53
 ```
 
 ## What This Lab Teaches
