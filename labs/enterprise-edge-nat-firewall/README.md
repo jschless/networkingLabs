@@ -12,7 +12,7 @@ This lab teaches enterprise internet-edge policy using a small but realistic top
 
 ```bash
 docker build -t dmz-lab:local labs/enterprise-edge-nat-firewall/
-sudo containerlab deploy -t labs/enterprise-edge-nat-firewall/topology.clab.yml
+./scripts/lab.sh deploy enterprise-edge-nat-firewall
 ```
 
 ## How to use this lab
@@ -108,8 +108,8 @@ Allow guest internet access but block guest access to:
 Use:
 
 ```bash
-docker exec clab-enterprise-edge-nat-firewall-fw-outside nft list ruleset
-docker exec clab-enterprise-edge-nat-firewall-fw-inside nft list ruleset
+./scripts/lab.sh cmd enterprise-edge-nat-firewall fw-outside -- nft list ruleset
+./scripts/lab.sh cmd enterprise-edge-nat-firewall fw-inside -- nft list ruleset
 ```
 
 to explain exactly why a flow is allowed or denied.
@@ -119,14 +119,14 @@ to explain exactly why a flow is allowed or denied.
 From outside:
 
 ```bash
-docker exec clab-enterprise-edge-nat-firewall-internet-client curl -I http://203.0.114.2
+./scripts/lab.sh cmd enterprise-edge-nat-firewall internet-client -- curl -I http://203.0.114.2
 ```
 
 From corp and guest:
 
 ```bash
-docker exec clab-enterprise-edge-nat-firewall-workstation ping -c 3 203.0.113.2
-docker exec clab-enterprise-edge-nat-firewall-guest-laptop ping -c 3 203.0.113.2
+./scripts/lab.sh cmd enterprise-edge-nat-firewall workstation -- ping -c 3 203.0.113.2
+./scripts/lab.sh cmd enterprise-edge-nat-firewall guest-laptop -- ping -c 3 203.0.113.2
 ```
 
 Then verify guest cannot reach corp/internal services.

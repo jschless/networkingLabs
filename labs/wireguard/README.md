@@ -48,7 +48,7 @@ This is a **practice lab**, not a tutorial.
 
 ```bash
 docker build -t wireguard-lab:local labs/wireguard/    # once
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy wireguard
 ```
 
 WAN IPs are pre-configured; you generate keys and write
@@ -66,20 +66,20 @@ authority. Given only static key pairs, *how does the hub know it's
 really talking to gw-a* and not an impostor — what binds identity to a
 peer?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```bash
-docker exec clab-wireguard-hub  bash -c 'wg genkey | tee /etc/wireguard/hub.key | wg pubkey > /etc/wireguard/hub.pub'
-docker exec clab-wireguard-gw-a bash -c 'wg genkey | tee /etc/wireguard/gwa.key | wg pubkey > /etc/wireguard/gwa.pub'
-docker exec clab-wireguard-gw-b bash -c 'wg genkey | tee /etc/wireguard/gwb.key | wg pubkey > /etc/wireguard/gwb.pub'
+./scripts/lab.sh cmd wireguard hub -- bash -c 'wg genkey | tee /etc/wireguard/hub.key | wg pubkey > /etc/wireguard/hub.pub'
+./scripts/lab.sh cmd wireguard gw-a -- bash -c 'wg genkey | tee /etc/wireguard/gwa.key | wg pubkey > /etc/wireguard/gwa.pub'
+./scripts/lab.sh cmd wireguard gw-b -- bash -c 'wg genkey | tee /etc/wireguard/gwb.key | wg pubkey > /etc/wireguard/gwb.pub'
 # print each .pub — you need them for peer configs
-docker exec clab-wireguard-hub cat /etc/wireguard/hub.pub
+./scripts/lab.sh cmd wireguard hub -- cat /etc/wireguard/hub.pub
 ```
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Three public keys printed; private keys never leave their device.
@@ -104,7 +104,7 @@ as peers; each spoke points its `Endpoint` at the hub.
 192.168.100.0/24`. Why is the spoke's value a /24 and the hub's a /32 —
 what would break if you swapped them?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Hub `[Interface]` has `ListenPort = 51820`, no `Endpoint`. Each `[Peer]`
@@ -116,7 +116,7 @@ what would break if you swapped them?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 Hub:
@@ -150,7 +150,7 @@ PersistentKeepalive = 25
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Prediction answer: `AllowedIPs` is *both* the routing table and the
@@ -172,15 +172,15 @@ control.
 and capture the WAN to show the payload is opaque.
 
 ```bash
-docker exec clab-wireguard-hub  wg-quick up wg0
-docker exec clab-wireguard-gw-a wg-quick up wg0
-docker exec clab-wireguard-gw-b wg-quick up wg0
-docker exec clab-wireguard-hub  wg show
-docker exec clab-wireguard-gw-a ping -c3 192.168.100.20      # via hub
-docker exec clab-wireguard-hub  tcpdump -i eth1 -n udp port 51820 -c5
+./scripts/lab.sh cmd wireguard hub -- wg-quick up wg0
+./scripts/lab.sh cmd wireguard gw-a -- wg-quick up wg0
+./scripts/lab.sh cmd wireguard gw-b -- wg-quick up wg0
+./scripts/lab.sh cmd wireguard hub -- wg show
+./scripts/lab.sh cmd wireguard gw-a -- ping -c3 192.168.100.20      # via hub
+./scripts/lab.sh cmd wireguard hub -- tcpdump -i eth1 -n udp port 51820 -c5
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `wg show` lists two peers with recent handshakes after traffic; gw-a can
@@ -205,7 +205,7 @@ becomes unreachable.
 may even still succeed. Will the hub→gw-a ping work? Where exactly does
 the packet die — encryption, routing, or filtering?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 hub→gw-a fails. The handshake can still complete (keys are valid), but
@@ -257,5 +257,5 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml --cleanup
+./scripts/lab.sh destroy wireguard
 ```

@@ -151,7 +151,7 @@ GUI path:
 - `Network -> Interfaces`
 - `Network -> Static Routes`
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```fortios
@@ -210,7 +210,7 @@ Create at least one address group that makes a policy cleaner, for example:
 GUI path:
 - `Policy & Objects -> Addresses`
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```fortios
@@ -254,7 +254,7 @@ Required outcome:
 GUI path:
 - `Policy & Objects -> Services`
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```fortios
@@ -283,7 +283,7 @@ Publish the DMZ web server through the FortiGate WAN IP so outside users can rea
 GUI path:
 - `Policy & Objects -> Virtual IPs`
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```fortios
@@ -317,7 +317,7 @@ Minimum policy set:
 GUI path:
 - `Policy & Objects -> Firewall Policy`
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```fortios

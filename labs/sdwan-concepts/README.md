@@ -87,19 +87,19 @@ No licensed images required.
 branch1.
 
 ```bash
-docker exec clab-sdwan-concepts-branch1 ip -br addr      # 2 WAN + 2 tunnels
-docker exec clab-sdwan-concepts-branch1 ip route          # overlay default via tun-inet
-docker exec clab-sdwan-concepts-branch1 ip route show table 100   # voice table
-docker exec clab-sdwan-concepts-branch1 ip rule           # fwmark 1 -> table 100
-docker exec clab-sdwan-concepts-branch1 nft list ruleset  # EF -> mark 1
-docker exec clab-sdwan-concepts-branch1 tail /var/log/pathmon.log
+./scripts/lab.sh cmd sdwan-concepts branch1 -- ip -br addr      # 2 WAN + 2 tunnels
+./scripts/lab.sh cmd sdwan-concepts branch1 -- ip route          # overlay default via tun-inet
+./scripts/lab.sh cmd sdwan-concepts branch1 -- ip route show table 100   # voice table
+./scripts/lab.sh cmd sdwan-concepts branch1 -- ip rule           # fwmark 1 -> table 100
+./scripts/lab.sh cmd sdwan-concepts branch1 -- nft list ruleset  # EF -> mark 1
+./scripts/lab.sh cmd sdwan-concepts branch1 -- tail /var/log/pathmon.log
 ```
 
 **Predict first:** `ip route get 10.2.0.10 from 10.1.0.10 iif eth1` — which
 tunnel? Same query with `mark 1` appended — which tunnel? Answer both from
 the rules you just read, then run them.
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Unmarked: `via 10.255.2.2 dev tun-inet` (main table — the cheap path is the
@@ -118,18 +118,18 @@ Start captures on both cores, then send both classes from h1:
 
 ```bash
 # terminal 1 and 2 (or use ./scripts/lab.sh cmd):
-docker exec clab-sdwan-concepts-mpls-core tcpdump -v -ni eth1 proto gre
-docker exec clab-sdwan-concepts-inet-core tcpdump -v -ni eth1 proto gre
+./scripts/lab.sh cmd sdwan-concepts mpls-core -- tcpdump -v -ni eth1 proto gre
+./scripts/lab.sh cmd sdwan-concepts inet-core -- tcpdump -v -ni eth1 proto gre
 
 # terminal 3:
-docker exec clab-sdwan-concepts-h1 ping -c3 10.2.0.10            # best-effort
-docker exec clab-sdwan-concepts-h1 ping -Q 184 -c3 10.2.0.10     # voice: -Q 184 = tos 0xb8 = DSCP EF
+./scripts/lab.sh cmd sdwan-concepts h1 -- ping -c3 10.2.0.10            # best-effort
+./scripts/lab.sh cmd sdwan-concepts h1 -- ping -Q 184 -c3 10.2.0.10     # voice: -Q 184 = tos 0xb8 = DSCP EF
 ```
 
 **Predict first:** which capture shows which ping — and on the MPLS capture,
 what `tos` value will the **outer** (GRE) IP header carry?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The plain pings appear only on **inet-core**, the `-Q 184` pings only on
@@ -158,17 +158,17 @@ branch2, which you didn't touch?
 
 ```bash
 # keep a voice ping running in one terminal:
-docker exec clab-sdwan-concepts-h1 ping -Q 184 10.2.0.10
+./scripts/lab.sh cmd sdwan-concepts h1 -- ping -Q 184 10.2.0.10
 
 # in another, drop branch1's MPLS link:
-docker exec clab-sdwan-concepts-branch1 ip link set eth2 down
-docker exec clab-sdwan-concepts-branch1 tail -f /var/log/pathmon.log
+./scripts/lab.sh cmd sdwan-concepts branch1 -- ip link set eth2 down
+./scripts/lab.sh cmd sdwan-concepts branch1 -- tail -f /var/log/pathmon.log
 
 # then bring it back and keep watching the log:
-docker exec clab-sdwan-concepts-branch1 ip link set eth2 up
+./scripts/lab.sh cmd sdwan-concepts branch1 -- ip link set eth2 up
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 (a) ~3–4 seconds: 3 probes × 1s, plus up to a second of phase. The running
@@ -198,18 +198,18 @@ gap between blackout detection and SLA enforcement.
 pathmon fail voice over to the internet path? Commit, then:
 
 ```bash
-docker exec clab-sdwan-concepts-mpls-core tc qdisc add dev eth1 root netem delay 150ms
+./scripts/lab.sh cmd sdwan-concepts mpls-core -- tc qdisc add dev eth1 root netem delay 150ms
 
-docker exec clab-sdwan-concepts-h1 ping -Q 184 -c3 10.2.0.10    # voice
-docker exec clab-sdwan-concepts-h1 ping -c3 10.2.0.10           # best-effort
-docker exec clab-sdwan-concepts-branch1 tail /var/log/pathmon.log
-docker exec clab-sdwan-concepts-branch1 ip route show table 100
+./scripts/lab.sh cmd sdwan-concepts h1 -- ping -Q 184 -c3 10.2.0.10    # voice
+./scripts/lab.sh cmd sdwan-concepts h1 -- ping -c3 10.2.0.10           # best-effort
+./scripts/lab.sh cmd sdwan-concepts branch1 -- tail /var/log/pathmon.log
+./scripts/lab.sh cmd sdwan-concepts branch1 -- ip route show table 100
 
 # clean up:
-docker exec clab-sdwan-concepts-mpls-core tc qdisc del dev eth1 root
+./scripts/lab.sh cmd sdwan-concepts mpls-core -- tc qdisc del dev eth1 root
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 No failover. Voice RTT is now ~150 ms (unusable for a phone call — the ITU

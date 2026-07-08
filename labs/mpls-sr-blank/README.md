@@ -79,7 +79,7 @@ flowchart TB
 
 ```bash
 # Deploy the lab (from this directory)
-containerlab deploy --topo topology.clab.yml
+./scripts/lab.sh deploy mpls-sr-blank
 
 # List nodes and their management IPs
 ./../../scripts/lab.sh list mpls-sr-blank
@@ -115,7 +115,7 @@ links are `point-to-point`. What would happen if you forgot `isis passive`
 on a loopback — would it break reachability, or just create a pointless
 behavior? Name it.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Process: `router isis CORE`, `net <NET>` (from the table),
@@ -126,7 +126,7 @@ behavior? Name it.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```text
@@ -171,7 +171,7 @@ SR distributes MPLS labels via IS-IS extensions — no LDP needed.
 
 ### On each SP router: enable SR in IS-IS
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -185,7 +185,7 @@ Use each router's index from the table above (e.g. pe1 = index 2).
 
 ### On each SP router: enable MPLS on transit interfaces
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -224,7 +224,7 @@ BGP sessions run over loopbacks (reachable via IS-IS from step 1).
 
 ### On rr1: global BGP + route reflector
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -255,7 +255,7 @@ router bgp 65000
 
 ### On pe1 and pe2: BGP toward rr1
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -316,7 +316,7 @@ ip link set eth2 master CUST-A    # pe2: CE-facing interface is eth2
 
 ### On pe1 and pe2: declare the VRF in FRR
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -332,7 +332,7 @@ after the Linux VRF is in place.
 
 ### On pe1: BGP VRF instance + L3VPN export
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -356,7 +356,7 @@ router bgp 65000 vrf CUST-A
 
 ### On pe2: same pattern, different addresses
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -380,7 +380,7 @@ router bgp 65000 vrf CUST-A
 
 ### On ce1 and ce2: eBGP toward PE
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -434,7 +434,7 @@ A successful ping means:
 looks healthy everywhere. Will the ping fail, and if so, which `show`
 command will *look fine* and which will reveal the real problem?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The ping breaks, but `show isis neighbor`, `show bgp ipv4 vpn`, and `show

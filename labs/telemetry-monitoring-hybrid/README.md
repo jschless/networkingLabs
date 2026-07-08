@@ -115,7 +115,7 @@ docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/telemetry-monitoring-hybrid/topology-full.clab.yml
+./scripts/lab.sh deploy telemetry-monitoring-hybrid
 ```
 
 OpenNMS takes a little longer than the rest of the stack on first boot.
@@ -210,7 +210,7 @@ Use:
 
 ### Configure `campus1`
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Apply this in the `campus1` CLI:
@@ -240,7 +240,7 @@ copy running-config startup-config
 
 ### Configure `core1`
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Apply this in the `core1` CLI:
@@ -548,9 +548,9 @@ Do:
 ## Fast Reset
 
 ```bash
-sudo containerlab destroy -t labs/telemetry-monitoring-hybrid/topology-full.clab.yml --cleanup
+./scripts/lab.sh destroy telemetry-monitoring-hybrid
 docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/
-sudo containerlab deploy -t labs/telemetry-monitoring-hybrid/topology-full.clab.yml
+./scripts/lab.sh deploy telemetry-monitoring-hybrid
 ```
 
 ## Challenge questions

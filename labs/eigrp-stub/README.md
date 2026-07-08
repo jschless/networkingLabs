@@ -57,8 +57,8 @@ downstream prefixes (like spoke3's CE) without losing stub status.
 ## Deployment
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-docker exec -it clab-eigrp-stub-hub vtysh
+./scripts/lab.sh deploy eigrp-stub
+./scripts/lab.sh cli eigrp-stub hub
 ```
 
 ---
@@ -68,7 +68,7 @@ docker exec -it clab-eigrp-stub-hub vtysh
 **Objective:** EIGRP AS 100 everywhere, full reachability including ce's
 loopback from the hub.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `router eigrp 100`, `network` for each loopback and connected subnet,
@@ -77,7 +77,7 @@ loopback from the hub.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On each node:
@@ -90,7 +90,7 @@ router eigrp 100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Hub reaches 10.0.0.5 via spoke3. Right now *every* spoke is a normal
@@ -111,7 +111,7 @@ summary` and confirm on the hub that it recognizes them as stubs.
 routing tables (can they ping ce)? Stub changes what the hub *does with*
 them — does it change what *they* learn?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One line under `router eigrp 100` on each spoke.
@@ -120,7 +120,7 @@ them — does it change what *they* learn?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **spoke1** and **spoke2**:
@@ -131,7 +131,7 @@ router eigrp 100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip eigrp neighbors detail` on the hub shows `Peer-type is Stub` for
@@ -155,7 +155,7 @@ query process it can't help with anyway.
 on spoke3, what happens to the hub's route to ce? Why does spoke3 need
 special handling that spoke1/spoke2 didn't?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - A `prefix-list` matching ce's two prefixes, a `route-map` referencing
@@ -164,7 +164,7 @@ special handling that spoke1/spoke2 didn't?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **spoke3**:
@@ -181,7 +181,7 @@ router eigrp 100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 With plain stub, the hub would *lose* ce — a stub advertises only
@@ -210,7 +210,7 @@ then restore with `up`.
 neighbors will it send queries to — all spokes, or only some? Which ones,
 and why?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The hub does **not** query spoke1 or spoke2 (flagged stub) — it limits
@@ -260,5 +260,5 @@ No answers provided — reason them through.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy eigrp-stub
 ```

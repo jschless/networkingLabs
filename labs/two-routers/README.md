@@ -31,18 +31,18 @@ command that checks it.
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh deploy two-routers
+./scripts/lab.sh destroy two-routers
 ```
 
 ## Connect to Nodes
 
 ```bash
 # Access r1's cEOS CLI
-docker exec -it clab-two-routers-r1 Cli
+./scripts/lab.sh cli two-routers r1
 
 # Or run a single command
-docker exec clab-two-routers-r1 Cli -c "show ip ospf neighbor"
+./scripts/lab.sh cmd two-routers r1 -- Cli -c "show ip ospf neighbor"
 ```
 
 ## Task 1 — Verify the adjacency and explain each field
@@ -60,7 +60,7 @@ show ip route ospf          # learned routes
 ping 10.0.0.2               # basic connectivity
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 One neighbor each, state `Full` (possibly `Full/DR` or `Full/BDR` — on a
@@ -79,7 +79,7 @@ observe from **r1**.
 **Predict first:** how long until r1 notices the neighbor is gone — instant,
 or after a timeout? Which timer controls it?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 With the veth link still up at the container level, r1 only notices when the

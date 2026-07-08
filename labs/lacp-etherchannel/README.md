@@ -74,7 +74,7 @@ sw2      Loopback0      10.0.0.2/32       Router ID
 
 ```bash
 # From the containerlab repo root:
-sudo containerlab deploy -t labs/lacp-etherchannel/topology.clab.yml
+./scripts/lab.sh deploy lacp-etherchannel
 
 # Or using the helper script:
 ./scripts/lab.sh deploy lacp-etherchannel
@@ -90,8 +90,8 @@ Access the nodes:
 ./scripts/lab.sh Cli lacp-etherchannel host2
 
 # Or directly:
-docker exec -it clab-lacp-etherchannel-sw1 Cli
-docker exec -it clab-lacp-etherchannel-sw2 Cli
+./scripts/lab.sh cli lacp-etherchannel sw1
+./scripts/lab.sh cli lacp-etherchannel sw2
 ```
 
 ---
@@ -102,7 +102,7 @@ Configure a two-member LACP port-channel between sw1 and sw2. Ethernet1 and Ethe
 
 ### On sw1
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -125,7 +125,7 @@ end
 
 ### On sw2
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -249,7 +249,7 @@ ping 10.12.0.2
 
 From host1 (after adding a static route on sw1 and sw2):
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -335,7 +335,7 @@ Shut down one member and observe that the bundle stays up with reduced bandwidth
 
 ### Shut one member on sw1
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -362,7 +362,7 @@ The Port-Channel remains up/up — this is the key benefit of a port-channel ove
 
 ### Restore the link
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -387,7 +387,7 @@ LACP requires negotiation. An alternative is `mode on`, which creates a static b
 
 ### Switch to static mode on sw1
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -402,7 +402,7 @@ end
 
 ### Switch to static mode on sw2
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -431,7 +431,7 @@ The Protocol column now shows `Static` instead of `LACP`. The bundle will form i
 | `passive` | Yes, responds only | Use when partner initiates; will not form if both sides passive |
 | `on` | No | Legacy or when LACP is not supported on the peer |
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 For this lab, switch back to LACP active when done:
@@ -454,7 +454,7 @@ The `port-channel min-links` command sets a minimum number of active member port
 
 ### Configure min-links on both switches
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -472,7 +472,7 @@ Apply the same on sw2.
 
 With `min-links 2`, the port-channel will only stay up when both Ethernet1 and Ethernet2 are bundled. Shut one member:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -496,7 +496,7 @@ This causes Port-Channel1 to drop, which triggers a routing reconvergence — bu
 
 ### Remove min-links
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -509,7 +509,7 @@ end
 
 Then restore the shut interface:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -535,7 +535,7 @@ With slow timers (default), a failed link will not be detected by LACP for up to
 
 ### Enable fast LACP timers on sw1
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -550,7 +550,7 @@ end
 
 ### Enable fast LACP timers on sw2
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -575,7 +575,7 @@ Look for `Timeout=Short` (fast) vs `Timeout=Long` (slow) in the LACP state outpu
 
 With fast timers enabled, shut a member interface and watch how quickly the bundle reacts:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -593,7 +593,7 @@ With slow timers the bundle degrades almost immediately (the physical link drops
 
 To restore:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -704,7 +704,7 @@ show lacp counters
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t labs/lacp-etherchannel/topology.clab.yml --cleanup
+./scripts/lab.sh destroy lacp-etherchannel
 # or:
 ./scripts/lab.sh destroy lacp-etherchannel
 ```

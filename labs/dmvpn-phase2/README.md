@@ -40,7 +40,7 @@ This is a **practice lab**, not a tutorial.
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/dmvpn-phase2/topology.clab.yml
+./scripts/lab.sh deploy dmvpn-phase2
 ./scripts/lab.sh cli dmvpn-phase2 spoke1
 ```
 
@@ -57,7 +57,7 @@ at priority 0. On a broadcast network OSPF elects a DR. Which device will
 *always* be the DR here, and why is it essential that no spoke ever wins
 that election?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - NHRP as in Phase 1, **plus** `protocols nhrp tunnel tun0 shortcut`.
@@ -66,7 +66,7 @@ that election?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **spoke1** (spoke2/spoke3 mirror with their router-id, LAN):
@@ -91,7 +91,7 @@ save
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf neighbor` on the hub shows it as DR and every spoke as
@@ -121,7 +121,7 @@ show ip nhrp
 traceroute 192.168.2.1
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The first traceroute goes **through the hub**; the hub sends an NHRP
@@ -147,7 +147,7 @@ for the specifics.
 spoke2 keep working when the hub goes away, or does it break? What about
 spoke1→spoke3 (no shortcut yet)?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 An *established* shortcut keeps forwarding for as long as its NHRP entry
@@ -199,5 +199,5 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/dmvpn-phase2/topology.clab.yml --cleanup
+./scripts/lab.sh destroy dmvpn-phase2
 ```

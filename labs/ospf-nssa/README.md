@@ -61,7 +61,7 @@ Keep this table handy — the tasks make you prove most of its cells.
 ## Deployment
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy ospf-nssa
 ```
 
 ---
@@ -76,7 +76,7 @@ ASBR with `redistribute connected` and find the external route in r3's LSDB.
 192.168.100.0/30 to r3, and which router will r3 list as the advertising
 router?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Standard `router ospf` + `network ... area ...` statements on all three
@@ -86,7 +86,7 @@ router?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -117,7 +117,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Adjacencies `Full` on both links. r3's `show ip ospf database external`
@@ -140,7 +140,7 @@ the moment you configure NSSA on r1 but haven't yet on r2? (2) Once both
 sides agree, what will r3's external LSA look like — same type, same
 advertising router as in Task 1?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `area 1 nssa` under `router ospf` — on **both** r1 and r2.
@@ -151,7 +151,7 @@ advertising router as in Task 1?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1** and **r2**:
@@ -162,7 +162,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 (1) With only r1 converted, the r1–r2 adjacency **drops** — hello option
@@ -184,7 +184,7 @@ involved.
 pipeline: who originates what, where each LSA floods, and what the P-bit
 and Forward Address do.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show ip ospf database nssa-external` on r1 and r2 — both see the
@@ -195,7 +195,7 @@ and Forward Address do.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The chain you should be able to narrate: r1 redistributes → originates
@@ -226,7 +226,7 @@ leaving r1 with intra-area routes, its own Type-7, and just a default.
 **Predict first:** which router(s) need the change — and as what route type
 will r1's new default appear (`O IA`, `O E2`, or `O N2`)?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One keyword added to the NSSA command, on the **ABR only**.
@@ -234,7 +234,7 @@ will r1's new default appear (`O IA`, `O E2`, or `O N2`)?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r2** only:
@@ -245,7 +245,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r1's `O IA` routes (r3's loopback, the area-0 link) disappear, replaced by
@@ -306,5 +306,5 @@ No answers provided — reason them through.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy ospf-nssa
 ```

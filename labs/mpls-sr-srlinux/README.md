@@ -80,15 +80,15 @@ flowchart TB
 # Pull SR-Linux image first if not already present
 docker pull ghcr.io/nokia/srlinux:latest
 
-sudo containerlab deploy -t labs/mpls-sr-srlinux/topology.clab.yml
+./scripts/lab.sh deploy mpls-sr-srlinux
 
 # SR-Linux CLI
-docker exec -it clab-mpls-sr-srlinux-rr1  sr_cli
-docker exec -it clab-mpls-sr-srlinux-pe1  sr_cli
-docker exec -it clab-mpls-sr-srlinux-p1   sr_cli
+./scripts/lab.sh cli mpls-sr-srlinux rr1
+./scripts/lab.sh cli mpls-sr-srlinux pe1
+./scripts/lab.sh cli mpls-sr-srlinux p1
 
 # CE (FRR)
-docker exec -it clab-mpls-sr-srlinux-ce1  vtysh
+./scripts/lab.sh cli mpls-sr-srlinux ce1
 ```
 
 ---
@@ -145,7 +145,7 @@ Shows VPNv4 routes in the global BGP table.
 
 ```bash
 # From ce1 (FRR), ping ce2's loopback
-docker exec -it clab-mpls-sr-srlinux-ce1 vtysh -c 'ping 10.100.2.1'
+./scripts/lab.sh cmd mpls-sr-srlinux ce1 -- vtysh -c 'ping 10.100.2.1'
 ```
 
 Traffic path: ce1 → pe1 (MPLS label push 16003) → p1 → p2 → pe2 (pop) → ce2
@@ -214,5 +214,5 @@ commit now
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/mpls-sr-srlinux/topology.clab.yml --cleanup
+./scripts/lab.sh destroy mpls-sr-srlinux
 ```

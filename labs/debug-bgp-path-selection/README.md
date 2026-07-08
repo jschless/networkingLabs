@@ -74,10 +74,10 @@ flowchart TB
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-bgp-path-selection/topology.clab.yml
+./scripts/lab.sh deploy debug-bgp-path-selection
 
-docker exec -it clab-debug-bgp-path-selection-isp1 Cli
-docker exec -it clab-debug-bgp-path-selection-isp2 Cli
+./scripts/lab.sh cli debug-bgp-path-selection isp1
+./scripts/lab.sh cli debug-bgp-path-selection isp2
 ```
 
 Wait ~20 seconds after deploy for BGP sessions to establish.
@@ -151,7 +151,7 @@ clear bgp neighbors 10.1.11.1 soft-inbound
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 On isp1, run:
@@ -165,7 +165,7 @@ applied to.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 Local-preference is a **local** attribute — it is set when a route is
@@ -180,7 +180,7 @@ The route-map is applied in the wrong direction.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 On isp1, `LP-CE1-HIGH` is applied `out` to neighbor 10.1.11.1 (ce1).
@@ -194,7 +194,7 @@ and propagating via iBGP to isp2.
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **isp1**:

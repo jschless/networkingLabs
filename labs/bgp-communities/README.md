@@ -47,12 +47,12 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy and Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh deploy bgp-communities
+./scripts/lab.sh destroy bgp-communities
 ```
 
 ```bash
-docker exec -it clab-bgp-communities-r1 Cli   # ... r2, r3, r4
+./scripts/lab.sh cli bgp-communities r1   # ... r2, r3, r4
 ```
 
 ---
@@ -97,7 +97,7 @@ loopback. Success on r4:
  * >  10.0.0.4/32  (local)
 ```
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Same pattern as the bgp-basics lab: `router bgp <ASN>`, neighbor
@@ -106,7 +106,7 @@ loopback. Success on r4:
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 All sessions `Established`, four loopbacks on every router. From here on
@@ -126,7 +126,7 @@ you broke propagation, not the sessions.
 and check r2. The textbook says communities are transitive. Will the tag
 actually show up on r2 on your first try?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Route-map with `set community 65001:100`, applied `out` to 10.1.12.2,
@@ -139,7 +139,7 @@ actually show up on r2 on your first try?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -165,7 +165,7 @@ router bgp 65003          ! on r3
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast 10.0.0.1/32` on r2, r3, and r4 each show
@@ -188,7 +188,7 @@ on it?"
 **Objective:** On r2, accept routes tagged `65001:100` with
 local-preference 200, leaving untagged routes at 100.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `ip community-list standard <NAME> permit 65001:100`, then a route-map
@@ -198,7 +198,7 @@ local-preference 200, leaving untagged routes at 100.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r2**:
@@ -219,7 +219,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast 10.0.0.1/32` on r2 shows `Local Pref: 200`. This
@@ -241,7 +241,7 @@ and verify the propagation cut.
 have 10.0.0.1/32 after this change? Where exactly does the route stop,
 and *which router* makes the suppression decision?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `set community no-export` in r1's existing SET-COMM route-map, then
@@ -251,7 +251,7 @@ and *which router* makes the suppression decision?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -264,7 +264,7 @@ route-map SET-COMM permit 10
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r2 **has** the route (tagged `no-export`); r3 and r4 **don't**. The
@@ -287,7 +287,7 @@ from `no-export`.
 *this* linear topology, does the result differ from Task 4 at all? Where
 would it differ?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -300,7 +300,7 @@ route-map SET-COMM permit 10
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Same observable result here: only r2 has the route. The difference is
@@ -326,7 +326,7 @@ removed** — the "don't leak internal signaling" pattern.
 community-based policy to this route? What does that imply about *where*
 in a chain of ASes community agreements must be made?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `set community none` in a route-map applied **out** toward r3 on r2.
@@ -334,7 +334,7 @@ in a chain of ASes community agreements must be made?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r2**:
@@ -351,7 +351,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast 10.0.0.1/32` on r3 has no Community line; r2
@@ -373,7 +373,7 @@ simultaneously, without losing either.
 **Predict first:** if a route already carries `65001:100` and your
 route-map says `set community 65001:200`, what's on the route afterward?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -386,7 +386,7 @@ route-map SET-COMM permit 10
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r2 shows both communities. Prediction answer: without `additive`,

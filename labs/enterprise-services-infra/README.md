@@ -14,7 +14,7 @@ This lab teaches the supporting services that make an enterprise network operati
 ```bash
 docker build -t enterprise-services-infra:local labs/enterprise-services-infra/
 docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/
-sudo containerlab deploy -t labs/enterprise-services-infra/topology.clab.yml
+./scripts/lab.sh deploy enterprise-services-infra
 ```
 
 ## How to use this lab
@@ -96,10 +96,10 @@ Create a secure user on the switch and validate your config from `mgmt1`.
 ## Useful Commands
 
 ```bash
-docker exec clab-enterprise-services-infra-client1 dhclient -r eth1
-docker exec clab-enterprise-services-infra-client1 dhclient -v eth1
-docker exec clab-enterprise-services-infra-services1 find /var/log/remote -maxdepth 1 -type f
-docker exec clab-enterprise-services-infra-services1 tail -f /var/log/remote/campus1.log
+./scripts/lab.sh cmd enterprise-services-infra client1 -- dhclient -r eth1
+./scripts/lab.sh cmd enterprise-services-infra client1 -- dhclient -v eth1
+./scripts/lab.sh cmd enterprise-services-infra services1 -- find /var/log/remote -maxdepth 1 -type f
+./scripts/lab.sh cmd enterprise-services-infra services1 -- tail -f /var/log/remote/campus1.log
 ```
 
 On EOS:

@@ -15,7 +15,7 @@ The compact campus underlay is already working. Your job is to harden the access
 
 ```bash
 docker build -t enterprise-access-tools:local labs/enterprise-access-security/
-sudo containerlab deploy -t labs/enterprise-access-security/topology.clab.yml
+./scripts/lab.sh deploy enterprise-access-security
 ```
 
 ## How to use this lab
@@ -95,8 +95,8 @@ On `dist1`, `acc1`, and `acc2`, configure:
 Verify `client-a` gets an address:
 
 ```bash
-docker exec clab-enterprise-access-security-client-a ip addr show eth1
-docker exec clab-enterprise-access-security-client-a ip route
+./scripts/lab.sh cmd enterprise-access-security client-a -- ip addr show eth1
+./scripts/lab.sh cmd enterprise-access-security client-a -- ip route
 ```
 
 ### 2. Enable DHCP Snooping
@@ -104,8 +104,8 @@ docker exec clab-enterprise-access-security-client-a ip route
 On the distribution/access switches, make only the legitimate uplink path trusted. Then renew `client-a`:
 
 ```bash
-docker exec clab-enterprise-access-security-client-a dhclient -r eth1
-docker exec clab-enterprise-access-security-client-a dhclient -v eth1
+./scripts/lab.sh cmd enterprise-access-security client-a -- dhclient -r eth1
+./scripts/lab.sh cmd enterprise-access-security client-a -- dhclient -v eth1
 ```
 
 Success criteria:
@@ -119,7 +119,7 @@ Success criteria:
 From `attacker`, try an ARP spoof:
 
 ```bash
-docker exec clab-enterprise-access-security-attacker arping -I eth1 -S 10.10.10.1 10.10.10.100
+./scripts/lab.sh cmd enterprise-access-security attacker -- arping -I eth1 -S 10.10.10.1 10.10.10.100
 ```
 
 Success criteria:
@@ -152,9 +152,9 @@ show logging last 20
 On Linux nodes:
 
 ```bash
-docker exec clab-enterprise-access-security-dhcp-server tail -f /var/log/syslog
-docker exec clab-enterprise-access-security-rogue-dhcp tail -f /var/log/syslog
-docker exec clab-enterprise-access-security-client-a ping -c 3 10.10.10.2
+./scripts/lab.sh cmd enterprise-access-security dhcp-server -- tail -f /var/log/syslog
+./scripts/lab.sh cmd enterprise-access-security rogue-dhcp -- tail -f /var/log/syslog
+./scripts/lab.sh cmd enterprise-access-security client-a -- ping -c 3 10.10.10.2
 ```
 
 ## What This Lab Teaches

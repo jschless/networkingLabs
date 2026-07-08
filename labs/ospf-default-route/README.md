@@ -51,12 +51,12 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Lab Setup
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy ospf-default-route
 ```
 
 Connect to a router:
 ```bash
-sudo docker exec -it clab-ospf-default-route-asbr Cli
+sudo ./scripts/lab.sh cli ospf-default-route asbr
 ```
 
 ---
@@ -68,7 +68,7 @@ in area 0, loopbacks passive). asbr's Ethernet2 toward internet must stay
 **out** of OSPF. Success: adjacency `Full`, and core has routes to asbr's
 loopback — but no default.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `network <prefix> area 0` statements under `router ospf`; simply don't
@@ -78,7 +78,7 @@ loopback — but no default.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **core**:
@@ -103,7 +103,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf neighbor` on asbr shows core in `Full`. On core,
@@ -124,7 +124,7 @@ then check core.
 **Predict first:** after the static is in asbr's table, will core's routing
 table change at all? Why or why not?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `ip route 0.0.0.0/0 <next-hop>` on asbr.
@@ -132,7 +132,7 @@ table change at all? Why or why not?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **asbr**:
@@ -143,7 +143,7 @@ ip route 0.0.0.0/0 203.0.113.2
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 asbr shows `S 0.0.0.0/0 [1/0] via 203.0.113.2` — and core shows nothing
@@ -164,7 +164,7 @@ core both in the routing table and in the LSDB.
 **Predict first:** what LSA type will carry `0.0.0.0/0`, and what route code
 will core display for it?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One command under `router ospf` on asbr.
@@ -172,7 +172,7 @@ will core display for it?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **asbr**:
@@ -184,7 +184,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 core now shows:
@@ -213,7 +213,7 @@ nearest ASBR.
 **Predict first:** does core's `O E2 0.0.0.0/0` survive? If it disappears,
 what *withdrew* it — a timer, an LSA flush, or the adjacency dropping?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Within seconds to ~40 s, core's default vanishes. The adjacency never
@@ -236,7 +236,7 @@ Restore the static default before continuing:
 Task 4's break, and observe the difference from core's point of view —
 then explain where a packet from core to 8.8.8.8 dies.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `default-information originate always` on asbr.
@@ -245,7 +245,7 @@ then explain where a packet from core to 8.8.8.8 dies.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 With `always`, core **keeps** `O E2 0.0.0.0/0` even though asbr has no
@@ -270,7 +270,7 @@ actually up, using the presence of the connected route `203.0.113.0/30` as
 the health signal. Then prove it by failing the link from the container
 shell.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Three pieces on asbr: a `ip prefix-list` matching 203.0.113.0/30, a
@@ -279,11 +279,11 @@ shell.
 - `always` + route-map is the intended combination: the route-map, not the
   FIB-default check, decides.
 - Fail the link from the host shell:
-  `sudo docker exec clab-ospf-default-route-asbr ip link set eth2 down`.
+  `sudo ./scripts/lab.sh cmd ospf-default-route asbr -- ip link set eth2 down`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **asbr**:
@@ -299,14 +299,14 @@ router ospf
 
 Test:
 ```bash
-sudo docker exec clab-ospf-default-route-asbr ip link set eth2 down
+sudo ./scripts/lab.sh cmd ospf-default-route asbr -- ip link set eth2 down
 # watch core's table, then:
-sudo docker exec clab-ospf-default-route-asbr ip link set eth2 up
+sudo ./scripts/lab.sh cmd ospf-default-route asbr -- ip link set eth2 up
 ```
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Link down → the connected route 203.0.113.0/30 leaves asbr's table → the
@@ -325,7 +325,7 @@ provider, which also catches "link up but provider dead."
 
 internet needs a return route before core can ping it:
 
-<details>
+<details markdown="1">
 <summary>Configuration (on internet)</summary>
 
 ```text
@@ -408,5 +408,5 @@ available in cEOS — `default-information originate` is the modern answer.)
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy ospf-default-route
 ```

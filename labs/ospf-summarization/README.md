@@ -58,12 +58,12 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Lab Setup
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy ospf-summarization
 ```
 
 Connect to a router:
 ```bash
-sudo docker exec -it clab-ospf-summarization-r4 Cli
+sudo ./scripts/lab.sh cli ospf-summarization r4
 ```
 
 ---
@@ -76,7 +76,7 @@ OSPF on all four routers with the area assignments from the topology table.
 Success: r3 has two `Full` neighbors and r4 sees three separate `O IA`
 routes for r1's loopbacks.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Secondary addresses on cEOS: just issue additional `ip address x.x.x.x/32`
@@ -89,7 +89,7 @@ routes for r1's loopbacks.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -142,7 +142,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 All adjacencies `Full` (`show ip ospf neighbor` on r2 and r3). On r4,
@@ -166,7 +166,7 @@ confirm r4 learns it.
 carry — `O`, `O IA`, or something else — and will its metric grow as it
 crosses r3 → r4?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `ip route <prefix> <next-hop>` then `redistribute static` under
@@ -176,7 +176,7 @@ crosses r3 → r4?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r3**:
@@ -189,7 +189,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r4 shows `O E2 192.168.100.0/24`. **E2** (the default) means the metric is
@@ -216,7 +216,7 @@ will install a new route to `10.1.0.0/22` pointing at... where? (Hint:
 think about what must happen to traffic for a destination inside the
 summary that doesn't actually exist.)
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One command under `router ospf` on r2: `area <id> range <prefix>` — the
@@ -226,7 +226,7 @@ summary that doesn't actually exist.)
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r2**:
@@ -238,7 +238,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 On r4: the three `O IA /32` routes are replaced by a single
@@ -269,7 +269,7 @@ Type-5 LSA for `192.168.100.0/24`.
 can't that same command summarize the external route — what's different
 about where Type-5 LSAs enter the network?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - The ASBR-side command is `summary-address <prefix>` under `router ospf`
@@ -278,7 +278,7 @@ about where Type-5 LSAs enter the network?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r3**:
@@ -290,7 +290,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf database external` on r4 shows a single Type-5 LSA for the
@@ -368,7 +368,7 @@ topologically closer one.
 EOS sets the metric type via a route-map (no inline `metric-type` on
 `redistribute`):
 
-<details>
+<details markdown="1">
 <summary>Configuration</summary>
 
 ```text
@@ -397,7 +397,7 @@ Observe on r4: `O E2` has a fixed metric; `O E1` varies with distance to r3.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy ospf-summarization
 ```
 
 ## Extensions

@@ -45,12 +45,12 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Lab Setup
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy ospf-auth
 ```
 
 Connect to a router:
 ```bash
-sudo docker exec -it clab-ospf-auth-r1 Cli
+sudo ./scripts/lab.sh cli ospf-auth r1
 ```
 
 ---
@@ -61,7 +61,7 @@ sudo docker exec -it clab-ospf-auth-r1 Cli
 loopbacks passive, everything in area 0) so that r2 has two `Full` neighbors
 and `ping 10.0.0.3 source 10.0.0.1` succeeds.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - This lab's solution uses `network <prefix> area 0` statements under
@@ -72,7 +72,7 @@ and `ping 10.0.0.3 source 10.0.0.1` succeeds.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -108,7 +108,7 @@ router ospf
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf neighbor` on r2 shows both neighbors `Full`:
@@ -135,7 +135,7 @@ not by the underlying OSPF config.
 **Predict first:** when you enable auth on r2's Ethernet1 *before* touching
 r1, what happens to that adjacency — and roughly how quickly?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Two per-interface commands: one turns on `message-digest` authentication
@@ -146,7 +146,7 @@ r1, what happens to that adjacency — and roughly how quickly?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1** (Ethernet1), **r3** (Ethernet1), and **r2** (Ethernet1 *and*
@@ -161,7 +161,7 @@ interface Ethernet1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf interface Ethernet1` on r2 shows:
@@ -200,7 +200,7 @@ interface Ethernet1
 **Predict first:** what exactly will r2 show — a neighbor in a broken state,
 or no neighbor at all? Will r3 be affected?
 
-<details>
+<details markdown="1">
 <summary>Diagnosis hints (try before revealing)</summary>
 
 - Wait out the dead interval (~40 s), then `show ip ospf neighbor` on r2.
@@ -211,7 +211,7 @@ or no neighbor at all? Will r3 be affected?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Neighbor `10.0.0.1` disappears from r2's table entirely — there is no
@@ -241,7 +241,7 @@ ID 2) on **all** links without any adjacency dropping at any point.
 must "add key 2" and "remove key 1" happen across the three routers so no
 link is ever left without a shared key?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Phase 1: add the new key (`message-digest-key 2`) on *every* interface of
@@ -254,7 +254,7 @@ link is ever left without a shared key?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 Phase 1 — on every OSPF interface of all three routers:
@@ -273,7 +273,7 @@ interface Ethernet1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf interface` now lists only `Key ID: 2`, and at no point did
@@ -351,5 +351,5 @@ MD5 when interoperability is required.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy ospf-auth
 ```

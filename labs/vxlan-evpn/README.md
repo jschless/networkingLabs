@@ -77,8 +77,8 @@ flowchart TB
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml --cleanup
+./scripts/lab.sh deploy vxlan-evpn
+./scripts/lab.sh destroy vxlan-evpn
 ```
 
 Allow ~60 seconds after deploy for EOS to boot and BGP to converge before testing.
@@ -87,12 +87,12 @@ Allow ~60 seconds after deploy for EOS to boot and BGP to converge before testin
 
 ```bash
 # Leaves and spines
-docker exec -it clab-vxlan-evpn-leaf1 Cli
-docker exec -it clab-vxlan-evpn-spine1 Cli
+./scripts/lab.sh cli vxlan-evpn leaf1
+./scripts/lab.sh cli vxlan-evpn spine1
 
 # Hosts (to run pings)
-docker exec -it clab-vxlan-evpn-host-a1 Cli
-docker exec -it clab-vxlan-evpn-host-b1 Cli
+./scripts/lab.sh cli vxlan-evpn host-a1
+./scripts/lab.sh cli vxlan-evpn host-b1
 ```
 
 ---
@@ -125,7 +125,7 @@ leaf1 is in `configs/leaf1/startup-config` as comments. Adapt the per-leaf value
 
 ### Task 1 — Create VRF instances
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -175,7 +175,7 @@ interface Vxlan1
 Hosts ARP for their gateway and get a consistent response regardless of which leaf
 they're attached to.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -203,7 +203,7 @@ not to the spine.
 
 **Adjust these per leaf** (shown for leaf1):
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -317,7 +317,7 @@ show ip route vrf TENANT-B
 
 ```
 ! Ping from host-a1 to host-a2 (cross-fabric, same tenant)
-docker exec -it clab-vxlan-evpn-host-a1 Cli -c "ping 10.10.10.12 repeat 5"
+./scripts/lab.sh cmd vxlan-evpn host-a1 -- Cli -c "ping 10.10.10.12 repeat 5"
 
 ! After ping — MAC address table should show remote MACs with VTEP next-hop
 show mac address-table vlan 10
@@ -339,12 +339,12 @@ before running, then prove it with the `show ip route vrf` lines.
 
 ```
 ! ✓ PASS — same tenant, cross-fabric
-docker exec -it clab-vxlan-evpn-host-a1 Cli -c "ping 10.10.10.12 repeat 5"
-docker exec -it clab-vxlan-evpn-host-b1 Cli -c "ping 10.20.20.12 repeat 5"
+./scripts/lab.sh cmd vxlan-evpn host-a1 -- Cli -c "ping 10.10.10.12 repeat 5"
+./scripts/lab.sh cmd vxlan-evpn host-b1 -- Cli -c "ping 10.20.20.12 repeat 5"
 
 ! ✗ FAIL — cross-tenant (must be blocked)
-docker exec -it clab-vxlan-evpn-host-a1 Cli -c "ping 10.20.20.11 repeat 5"
-docker exec -it clab-vxlan-evpn-host-b1 Cli -c "ping 10.10.10.11 repeat 5"
+./scripts/lab.sh cmd vxlan-evpn host-a1 -- Cli -c "ping 10.20.20.11 repeat 5"
+./scripts/lab.sh cmd vxlan-evpn host-b1 -- Cli -c "ping 10.10.10.11 repeat 5"
 
 ! Verify WHY it's blocked — Tenant-A has no route to Tenant-B subnet
 show ip route vrf TENANT-A 10.20.20.0/24    ! should say "not found"

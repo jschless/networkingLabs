@@ -32,8 +32,8 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-elk-ingest-siem jq . /var/lib/soc-siem/indexes.json
-docker exec clab-soc-elk-ingest-sensor jq -s length /var/log/suricata/eve.json
+./scripts/lab.sh cmd soc-elk-ingest siem -- jq . /var/lib/soc-siem/indexes.json
+./scripts/lab.sh cmd soc-elk-ingest sensor -- jq -s length /var/log/suricata/eve.json
 ```
 
 ## Outcome

@@ -64,10 +64,10 @@ flowchart LR
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-bgp-basics/topology.clab.yml
+./scripts/lab.sh deploy debug-bgp-basics
 
-docker exec -it clab-debug-bgp-basics-r1 Cli
-docker exec -it clab-debug-bgp-basics-r3 Cli
+./scripts/lab.sh cli debug-bgp-basics r1
+./scripts/lab.sh cli debug-bgp-basics r3
 ```
 
 Wait ~20 seconds after deploy for BGP sessions to establish.
@@ -160,7 +160,7 @@ show bgp ipv4 unicast neighbors 10.1.23.2 advertised-routes
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 On r3, run:
@@ -173,7 +173,7 @@ that r3 cannot reach — it's on a subnet that r3 has no direct connection to.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 The next-hop for 10.0.0.1/32 on r3 is `10.1.12.1` — that's r1's address,
@@ -187,7 +187,7 @@ Which router needs the fix, and on which neighbor?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 On r2, `next-hop-self` is missing for neighbor `10.1.23.2` (r3) in the
@@ -200,7 +200,7 @@ next-hop of 10.1.12.1, which r3 can't reach.
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **r2**:

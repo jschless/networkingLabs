@@ -111,18 +111,18 @@ gateway, even during BGP convergence.
 docker build -t frr-lab:local images/frr/
 
 # Deploy
-sudo containerlab deploy -t labs/enterprise-wan-edge/topology.clab.yml
+./scripts/lab.sh deploy enterprise-wan-edge
 
 # Access nodes
-docker exec -it clab-enterprise-wan-edge-edge  Cli       # EOS CLI on edge
-docker exec -it clab-enterprise-wan-edge-isp1  Cli       # EOS CLI on isp1
-docker exec -it clab-enterprise-wan-edge-isp2  Cli       # EOS CLI on isp2
-docker exec -it clab-enterprise-wan-edge-core1 Cli       # EOS CLI on core1
-docker exec -it clab-enterprise-wan-edge-core2 Cli       # EOS CLI on core2
-docker exec -it clab-enterprise-wan-edge-server bash     # Linux shell on server
+./scripts/lab.sh cli enterprise-wan-edge edge       # EOS CLI on edge
+./scripts/lab.sh cli enterprise-wan-edge isp1       # EOS CLI on isp1
+./scripts/lab.sh cli enterprise-wan-edge isp2       # EOS CLI on isp2
+./scripts/lab.sh cli enterprise-wan-edge core1       # EOS CLI on core1
+./scripts/lab.sh cli enterprise-wan-edge core2       # EOS CLI on core2
+./scripts/lab.sh bash enterprise-wan-edge server     # Linux shell on server
 
 # Destroy
-sudo containerlab destroy -t labs/enterprise-wan-edge/topology.clab.yml --cleanup
+./scripts/lab.sh destroy enterprise-wan-edge
 ```
 
 ## Verification Commands
@@ -234,7 +234,7 @@ ping -c 3 2.2.2.2
 
 Simulate isp1 going down and watch traffic fail over to isp2.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -266,7 +266,7 @@ ping -c 3 2.2.2.2    # isp2 loopback reachable via new default path
 ```
 
 Restore:
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -301,7 +301,7 @@ remote peers would prefer the shorter isp1 path to reach your 198.51.100.0/24 bl
 
 Reduce or increase the prepend count and observe the change.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```

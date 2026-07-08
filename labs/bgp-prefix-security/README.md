@@ -50,8 +50,8 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy / Access
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-docker exec -it clab-bgp-prefix-security-victim Cli   # legitimate, isp, hijacker
+./scripts/lab.sh deploy bgp-prefix-security
+./scripts/lab.sh cli bgp-prefix-security victim   # legitimate, isp, hijacker
 ```
 
 ---
@@ -63,7 +63,7 @@ docker exec -it clab-bgp-prefix-security-victim Cli   # legitimate, isp, hijacke
 advertise their loopbacks. Success: victim receives 192.0.2.0/24 with
 AS-path `65100 65001`.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Each edge node peers only with isp. Standard `router bgp`, neighbor,
@@ -72,7 +72,7 @@ AS-path `65100 65001`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 legitimate (others mirror the shape):
@@ -89,7 +89,7 @@ router bgp 65001
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast 192.0.2.0/24` on victim → one path, AS-path
@@ -111,7 +111,7 @@ see what the victim does.
 `65100 65002`). With everything else equal, which one wins on victim, and
 what single attribute decides it?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **hijacker**:
@@ -123,7 +123,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 victim now has two paths. With AS-path length tied, the decision falls to
@@ -146,7 +146,7 @@ more-specific covering half the victim's space.
 but the hijacker's AS-path is no shorter. Will the /25 win for traffic to
 192.0.2.130 anyway? Why does this beat the Task 2 approach decisively?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **hijacker**:
@@ -158,7 +158,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip route 192.0.2.128/25` on victim points at the hijacker —
@@ -182,7 +182,7 @@ before tearing the session down.
 or only contain a different threat? What class of attack is it actually
 for?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - EOS calls it `maximum-routes` (not `maximum-prefix`), per-neighbor under
@@ -191,7 +191,7 @@ for?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **isp**:
@@ -202,7 +202,7 @@ router bgp 65100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Prediction answer: it does **not** stop a one- or two-prefix targeted
@@ -225,7 +225,7 @@ and all its more-specifics.
 **Predict first:** after applying and soft-resetting, what happens on
 victim to both the /24 hijack *and* the /25 hijack? Both gone, one gone?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Inbound prefix-list on isp's hijacker neighbor.
@@ -236,7 +236,7 @@ victim to both the /24 hijack *and* the /25 hijack? Both gone, one gone?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **isp**:
@@ -253,7 +253,7 @@ router bgp 65100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both hijacked routes disappear from victim — the `le 32` deny swept up
@@ -328,5 +328,5 @@ No answers provided — reason them through.
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml --cleanup
+./scripts/lab.sh destroy bgp-prefix-security
 ```

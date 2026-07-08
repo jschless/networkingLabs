@@ -65,10 +65,10 @@ flowchart LR
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-ospf-multiarea/topology.clab.yml
+./scripts/lab.sh deploy debug-ospf-multiarea
 
 # Open cEOS CLI on any node
-docker exec -it clab-debug-ospf-multiarea-r1 Cli
+./scripts/lab.sh cli debug-ospf-multiarea r1
 
 # Or use the helper script
 ./scripts/lab.sh Cli debug-ospf-multiarea r3
@@ -148,7 +148,7 @@ Run these on **both r3 and r4** and compare.
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 The r3–r4 link is up at the IP layer (they can ping each other's interface
@@ -159,7 +159,7 @@ on r4. Look at the **Area** field in each output.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 OSPF hellos carry the area ID. If the two ends of a link are configured
@@ -170,7 +170,7 @@ One side of the r3–r4 link has the wrong area number. Which one?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 On r3, `show ip ospf interface Ethernet2` shows **Area 0.0.0.0** (Area 0).
@@ -185,7 +185,7 @@ The fix is a single interface command on r3.
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **r3**:

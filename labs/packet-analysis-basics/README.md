@@ -39,7 +39,7 @@ flowchart LR
 
 ```bash
 docker build -t frr-lab:local images/frr/
-sudo containerlab deploy -t labs/packet-analysis-basics/topology.clab.yml
+./scripts/lab.sh deploy packet-analysis-basics
 ```
 
 ## What Is Prebuilt
@@ -57,10 +57,10 @@ sudo containerlab deploy -t labs/packet-analysis-basics/topology.clab.yml
 On `client`, start a short capture and then ping the default gateway:
 
 ```bash
-docker exec clab-packet-analysis-basics-client \
+./scripts/lab.sh cmd packet-analysis-basics client -- \
   tcpdump -ni eth1 -c 6 arp or icmp
 
-docker exec clab-packet-analysis-basics-client ping -c 2 10.1.0.1
+./scripts/lab.sh cmd packet-analysis-basics client -- ping -c 2 10.1.0.1
 ```
 
 You should see:
@@ -74,7 +74,7 @@ You should see:
 The analyzer receives mirrored frames from the `r1` to `r2` link:
 
 ```bash
-docker exec clab-packet-analysis-basics-analyzer \
+./scripts/lab.sh cmd packet-analysis-basics analyzer -- \
   tcpdump -ni eth1 -vv proto ospf
 ```
 
@@ -89,10 +89,10 @@ Look for:
 Start a filtered capture on `analyzer`, then generate ICMP from `client` toward `r2`:
 
 ```bash
-docker exec clab-packet-analysis-basics-analyzer \
+./scripts/lab.sh cmd packet-analysis-basics analyzer -- \
   tcpdump -ni eth1 -vv icmp
 
-docker exec clab-packet-analysis-basics-client ping -c 3 10.2.0.1
+./scripts/lab.sh cmd packet-analysis-basics client -- ping -c 3 10.2.0.1
 ```
 
 Notice:
@@ -105,14 +105,14 @@ Notice:
 On `analyzer`, capture just TCP port 8080:
 
 ```bash
-docker exec clab-packet-analysis-basics-analyzer \
+./scripts/lab.sh cmd packet-analysis-basics analyzer -- \
   tcpdump -ni eth1 -vv tcp port 8080
 ```
 
 Then generate an HTTP request from `client`:
 
 ```bash
-docker exec clab-packet-analysis-basics-client \
+./scripts/lab.sh cmd packet-analysis-basics client -- \
   bash -lc 'printf "GET / HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
 ```
 
@@ -134,8 +134,8 @@ docker exec -d clab-packet-analysis-basics-analyzer \
   -w /tmp/packet-analysis-basics.pcap >/tmp/tshark-basic.log 2>&1"
 
 sleep 1
-docker exec clab-packet-analysis-basics-client ping -c 2 10.2.0.1
-docker exec clab-packet-analysis-basics-client \
+./scripts/lab.sh cmd packet-analysis-basics client -- ping -c 2 10.2.0.1
+./scripts/lab.sh cmd packet-analysis-basics client -- \
   bash -lc 'printf "GET /healthz HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
 
 sleep 16
@@ -144,10 +144,10 @@ sleep 16
 Now summarize the pcap without opening a GUI:
 
 ```bash
-docker exec clab-packet-analysis-basics-analyzer \
+./scripts/lab.sh cmd packet-analysis-basics analyzer -- \
   tshark -r /tmp/packet-analysis-basics.pcap -q -z io,phs
 
-docker exec clab-packet-analysis-basics-analyzer \
+./scripts/lab.sh cmd packet-analysis-basics analyzer -- \
   tshark -r /tmp/packet-analysis-basics.pcap \
   -Y 'icmp or http' \
   -T fields \
@@ -177,10 +177,10 @@ While that runs, generate one known-good request and one failing request from `c
 
 ```bash
 sleep 1
-docker exec clab-packet-analysis-basics-client \
+./scripts/lab.sh cmd packet-analysis-basics client -- \
   bash -lc 'printf "GET /healthz HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
 
-docker exec clab-packet-analysis-basics-client \
+./scripts/lab.sh cmd packet-analysis-basics client -- \
   bash -lc 'printf "GET /api/status HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
 
 sleep 21
@@ -189,17 +189,17 @@ sleep 21
 Use `tshark` to inspect the resulting pcap:
 
 ```bash
-docker exec clab-packet-analysis-basics-analyzer \
+./scripts/lab.sh cmd packet-analysis-basics analyzer -- \
   tshark -r /tmp/app-triage.pcap -q -z conv,tcp
 
-docker exec clab-packet-analysis-basics-analyzer \
+./scripts/lab.sh cmd packet-analysis-basics analyzer -- \
   tshark -r /tmp/app-triage.pcap \
   -Y 'http.request or http.response' \
   -T fields \
   -e tcp.stream -e ip.src -e ip.dst -e http.request.method \
   -e http.request.uri -e http.response.code -e http.response.phrase
 
-docker exec clab-packet-analysis-basics-analyzer \
+./scripts/lab.sh cmd packet-analysis-basics analyzer -- \
   tshark -r /tmp/app-triage.pcap -Y 'http.response.code == 404' -V | sed -n '1,120p'
 ```
 
@@ -229,12 +229,12 @@ Open the pcaps in Wireshark and compare:
 ## Verification Commands
 
 ```bash
-docker exec clab-packet-analysis-basics-r1 vtysh -c "show ip ospf neighbor"
-docker exec clab-packet-analysis-basics-r1 ip route
-docker exec clab-packet-analysis-basics-client ping -c 2 10.2.0.1
-docker exec clab-packet-analysis-basics-client \
+./scripts/lab.sh cmd packet-analysis-basics r1 -- vtysh -c "show ip ospf neighbor"
+./scripts/lab.sh cmd packet-analysis-basics r1 -- ip route
+./scripts/lab.sh cmd packet-analysis-basics client -- ping -c 2 10.2.0.1
+./scripts/lab.sh cmd packet-analysis-basics client -- \
   bash -lc 'printf "GET /healthz HTTP/1.0\r\n\r\n" | nc 10.2.0.2 8080'
-docker exec clab-packet-analysis-basics-services ss -ltn
+./scripts/lab.sh cmd packet-analysis-basics services -- ss -ltn
 ```
 
 ## What This Lab Teaches

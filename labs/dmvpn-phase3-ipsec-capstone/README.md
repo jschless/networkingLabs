@@ -54,7 +54,7 @@ else** — PKI issuance, NHRP, OSPF, IPsec — is yours to build.
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/dmvpn-phase3-ipsec-capstone/topology.clab.yml
+./scripts/lab.sh deploy dmvpn-phase3-ipsec-capstone
 ./scripts/lab.sh cli  dmvpn-phase3-ipsec-capstone hub
 ./scripts/lab.sh bash dmvpn-phase3-ipsec-capstone ca
 ```
@@ -71,7 +71,7 @@ PSK you used in ipsec-basics. With a full mesh of 4 routers, how many
 distinct secrets would PSK require versus how many *trust anchors* certs
 require? Why does that ratio decide which scales?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `cd /lab/pki && ./init-ca.sh`, then `openssl genrsa`/`req -x509` for the
@@ -81,7 +81,7 @@ require? Why does that ratio decide which scales?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```bash
@@ -98,7 +98,7 @@ openssl req -x509 -new -key private/dmvpn-ca.key -sha256 -days 3650 \
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Each router has `certs/<r>.pem`, `private/<r>.key`, and an
@@ -125,7 +125,7 @@ mode**.
 already supplying the outer, WAN-routable header that tunnel mode would
 otherwise add?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 After pasting each node's `set pki ...` snippet (`cat
@@ -149,7 +149,7 @@ set vpn ipsec esp-group DMVPN-ESP proposal 10 hash 'sha256'
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 CA naming: `DMVPN-CA`; local certs `hub-cert`, `spoke1-cert`, etc.
@@ -182,7 +182,7 @@ Hub peer matrix:
 | spoke2 | 10.0.0.12 | `spoke2.dmvpn.lab` | `10.0.0.1/32` ↔ `10.0.0.12/32` |
 | spoke3 | 10.0.0.13 | `spoke3.dmvpn.lab` | `10.0.0.1/32` ↔ `10.0.0.13/32` |
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 Phase 3 + OSPF:
@@ -221,7 +221,7 @@ set vpn ipsec site-to-site peer spoke1 tunnel 1 protocol 'gre'
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Prediction answer: the summary must be a **blackhole** so that traffic
@@ -262,7 +262,7 @@ Per-spoke values:
 | spoke2 | 10.0.0.12 | 172.16.0.12/32 | 192.168.2.0/24 |
 | spoke3 | 10.0.0.13 | 172.16.0.13/32 | 192.168.3.0/24 |
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 Overlay (spoke1; adjust per node):
@@ -298,7 +298,7 @@ set vpn ipsec site-to-site peer hub tunnel 1 protocol 'gre'
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 NHRP registers all spokes; OSPF is up; spokes learn the /16 summary, and a
@@ -325,7 +325,7 @@ traffic looks like.
 shortcut still enabled, will spoke1→spoke2 traffic (a) fail, (b) flow
 encrypted via the hub, or (c) flow *unencrypted* directly spoke-to-spoke?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Depending on VyOS policy enforcement you'll see either dropped GRE or —
@@ -388,7 +388,7 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/dmvpn-phase3-ipsec-capstone/topology.clab.yml --cleanup
+./scripts/lab.sh destroy dmvpn-phase3-ipsec-capstone
 ```
 
 ## Extensions

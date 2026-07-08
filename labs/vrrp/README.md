@@ -43,8 +43,8 @@ and hints; configuration is behind solution toggles.
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-docker exec -it clab-vrrp-r1 Cli
+./scripts/lab.sh deploy vrrp
+./scripts/lab.sh cli vrrp r1
 ```
 
 ---
@@ -58,7 +58,7 @@ docker exec -it clab-vrrp-r1 Cli
 *owns* as a real interface IP. What MAC will the host see for that VIP, and
 which router answers ARP for it?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - On the LAN interface: `vrrp 1 ip 192.168.1.254`, plus `vrrp 1 priority
@@ -67,7 +67,7 @@ which router answers ARP for it?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -86,7 +86,7 @@ interface Ethernet1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show vrrp` on r1 shows `State Master`, `Priority 110`, `Virtual MAC
@@ -111,7 +111,7 @@ through the VIP.
 # on host: ping 10.99.0.1
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 r1 Master, r2 Backup, and the host pings the server loopback through
@@ -135,7 +135,7 @@ Break it: `ip link set eth1 down` on r1. Check `show vrrp` on r2.
 timeout? What's the timer, and does the host have to re-ARP for the VIP to
 keep working?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 r2 transitions to Master after ~3 seconds — three missed 1-second
@@ -161,7 +161,7 @@ Restore: `ip link set eth1 up` on r1.
 `preempt` configured. Will it reclaim master immediately, or wait? What
 would happen if `preempt` were *off*?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 With `preempt`, r1 reclaims master on its first advertisement (priority
@@ -210,7 +210,7 @@ No answers provided — reason them through.
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy vrrp
 ```
 
 ## Extensions

@@ -55,12 +55,12 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy and Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml --cleanup
+./scripts/lab.sh deploy bgp-filtering
+./scripts/lab.sh destroy bgp-filtering
 ```
 
 ```bash
-docker exec -it clab-bgp-filtering-r1 Cli   # ... r2, r3, r4
+./scripts/lab.sh cli bgp-filtering r1   # ... r2, r3, r4
 ```
 
 ---
@@ -111,7 +111,7 @@ matching inside `650012`.
 each router advertising its loopback, and r1 additionally advertising
 172.16.1.0/24 and 172.16.2.0/24. Success: r4 sees all six prefixes.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Same session pattern as bgp-basics; EOS needs no eBGP policy to pass
@@ -122,7 +122,7 @@ each router advertising its loopback, and r1 additionally advertising
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 Example on r1 (r2–r4 follow the same shape with their own ASN/neighbors):
@@ -142,7 +142,7 @@ router bgp 65001
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 On r4, `show bgp ipv4 unicast` shows six prefixes with AS-paths that
@@ -173,7 +173,7 @@ everything else. Prove the block with the pre-/post-filter views.
 see — and what does r2's `received-routes` view for the r1 session show?
 (Two different answers.)
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Two prefix-list entries: a `deny` for the /24 and a
@@ -185,7 +185,7 @@ see — and what does r2's `received-routes` view for the r1 session show?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r2**:
@@ -202,7 +202,7 @@ Then: `clear bgp neighbors 10.1.12.1 soft-inbound`
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 ```text
@@ -230,7 +230,7 @@ AS 65001, using an AS-path access-list applied through a route-map.
 mark which survive a "must originate in 65001" filter. What happens to
 r2's own loopback 10.0.0.2/32 on r3 and on r4?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - The regex for "originated by 65001, any transits": `_65001$`.
@@ -244,7 +244,7 @@ r2's own loopback 10.0.0.2/32 on r3 and on r4?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r3**:
@@ -263,7 +263,7 @@ Then: `clear bgp neighbors 10.1.23.1 soft-inbound`
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Survivors on r3 from this session: 10.0.0.1/32 and 172.16.1.0/24 (paths
@@ -289,7 +289,7 @@ loopback to r2, suppressing both /24s outbound.
 172.16.2.0/24. Once r1 stops sending both /24s, which views change on
 r2 — `received-routes`, `routes`, both, or neither?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - A permit-the-loopback / deny-everything-else prefix-list, applied
@@ -298,7 +298,7 @@ r2 — `received-routes`, `routes`, both, or neither?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -315,7 +315,7 @@ Then: `clear bgp * soft-outbound`
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Now **both** of r2's views change: `received-routes` shrinks to just
@@ -345,7 +345,7 @@ first-match-wins and an implicit deny at the end. Write down on paper the
 three stanzas you need and what happens to a route matching none of your
 match clauses if you forget the final stanza.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Two single-purpose prefix-lists (one per /24) used as `match`
@@ -358,7 +358,7 @@ match clauses if you forget the final stanza.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r2**:
@@ -383,7 +383,7 @@ Then: `clear bgp neighbors 10.1.12.1 soft-inbound`
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast 172.16.1.0/24` on r2 shows localpref **150**;

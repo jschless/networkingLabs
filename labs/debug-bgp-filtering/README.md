@@ -67,11 +67,11 @@ flowchart LR
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-bgp-filtering/topology.clab.yml
+./scripts/lab.sh deploy debug-bgp-filtering
 
-docker exec -it clab-debug-bgp-filtering-r2 Cli
-docker exec -it clab-debug-bgp-filtering-r3 Cli
-docker exec -it clab-debug-bgp-filtering-r4 Cli
+./scripts/lab.sh cli debug-bgp-filtering r2
+./scripts/lab.sh cli debug-bgp-filtering r3
+./scripts/lab.sh cli debug-bgp-filtering r4
 ```
 
 Wait ~20 seconds after deploy for BGP sessions to establish.
@@ -156,7 +156,7 @@ clear bgp neighbors 10.1.23.2 soft-outbound
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 On r2, run:
@@ -170,7 +170,7 @@ it's applied in the wrong direction.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 On r2, run:
@@ -189,7 +189,7 @@ A prefix-list applied `in` filters what r2 **receives** from r3.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 On r2, `BLOCK-172-16-2` is applied `in` on neighbor 10.1.23.2 (r3). This filters
@@ -205,7 +205,7 @@ The filter should be applied `out` on the r3 neighbor, so that r2 blocks
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **r2**:

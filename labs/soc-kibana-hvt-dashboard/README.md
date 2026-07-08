@@ -32,7 +32,7 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-kibana-hvt-dashboard-siem \
+./scripts/lab.sh cmd soc-kibana-hvt-dashboard siem -- \
   grep title /var/lib/soc-siem/hvt-dashboard.ndjson
 ```
 

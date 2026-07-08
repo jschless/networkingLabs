@@ -14,7 +14,7 @@ It does **not** try to emulate RF. It teaches the wired and control-plane side o
 
 ```bash
 docker build -t enterprise-wireless-architecture:local labs/enterprise-wireless-architecture/
-sudo containerlab deploy -t labs/enterprise-wireless-architecture/topology.clab.yml
+./scripts/lab.sh deploy enterprise-wireless-architecture
 ```
 
 ## How to use this lab
@@ -82,8 +82,8 @@ flowchart TB
 On `ap1`:
 
 ```bash
-docker exec clab-enterprise-wireless-architecture-ap1 ip addr
-docker exec clab-enterprise-wireless-architecture-ap1 bridge link
+./scripts/lab.sh cmd enterprise-wireless-architecture ap1 -- ip addr
+./scripts/lab.sh cmd enterprise-wireless-architecture ap1 -- bridge link
 ```
 
 Confirm:
@@ -95,14 +95,14 @@ Confirm:
 ### 2. Verify Controller Reachability
 
 ```bash
-docker exec clab-enterprise-wireless-architecture-ap1 curl http://192.168.99.10:8080
+./scripts/lab.sh cmd enterprise-wireless-architecture ap1 -- curl http://192.168.99.10:8080
 ```
 
 ### 3. Compare Corp and Guest Paths
 
 ```bash
-docker exec clab-enterprise-wireless-architecture-corp-sta ping -c 3 10.110.0.1
-docker exec clab-enterprise-wireless-architecture-guest-sta ping -c 3 10.120.0.1
+./scripts/lab.sh cmd enterprise-wireless-architecture corp-sta -- ping -c 3 10.110.0.1
+./scripts/lab.sh cmd enterprise-wireless-architecture guest-sta -- ping -c 3 10.120.0.1
 ```
 
 Then decide what should be different operationally between those two classes.

@@ -99,27 +99,27 @@ flowchart TB
 
 ```bash
 # OSPF on edge
-docker exec -it clab-enterprise-collapsed-core-capstone-edge Cli
+./scripts/lab.sh cli enterprise-collapsed-core-capstone edge
 show ip ospf neighbor
 show bgp summary
 
 # cc1: VRRP state (should be Master for VLAN 10/30)
-docker exec -it clab-enterprise-collapsed-core-capstone-cc1 Cli
+./scripts/lab.sh cli enterprise-collapsed-core-capstone cc1
 show vrrp
 show ip ospf neighbor
 show spanning-tree vlan 10
 
 # End-to-end: client-a → internet
-docker exec -it clab-enterprise-collapsed-core-capstone-client-a ping 1.1.1.1
+./scripts/lab.sh cmd enterprise-collapsed-core-capstone client-a -- ping 1.1.1.1
 
 # Cross-VLAN: client-a → client-b
-docker exec -it clab-enterprise-collapsed-core-capstone-client-a ping 10.20.20.11
+./scripts/lab.sh cmd enterprise-collapsed-core-capstone client-a -- ping 10.20.20.11
 ```
 
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/enterprise-collapsed-core-capstone/topology.clab.yml
+./scripts/lab.sh deploy enterprise-collapsed-core-capstone
 # or
 ./scripts/lab.sh deploy enterprise-collapsed-core-capstone
 ```

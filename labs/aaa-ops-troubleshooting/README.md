@@ -34,7 +34,7 @@ flowchart LR
 docker build -t ops-lab:local images/ops-lab/
 docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
-sudo containerlab deploy -t labs/aaa-ops-troubleshooting/topology.clab.yml
+./scripts/lab.sh deploy aaa-ops-troubleshooting
 ```
 
 ## What Is Prebuilt
@@ -68,8 +68,8 @@ Then test these scenarios from `admin1`:
 Useful commands:
 
 ```bash
-docker exec clab-aaa-ops-troubleshooting-tacacs1 pkill tac_plus
-docker exec clab-aaa-ops-troubleshooting-tacacs1 tac_plus -G -d 16 -l /dev/stdout -C /etc/tacacs+/tac_plus.conf >/tmp/tac_plus.log 2>&1 &
+./scripts/lab.sh cmd aaa-ops-troubleshooting tacacs1 -- pkill tac_plus
+./scripts/lab.sh cmd aaa-ops-troubleshooting tacacs1 -- tac_plus -G -d 16 -l /dev/stdout -C /etc/tacacs+/tac_plus.conf >/tmp/tac_plus.log 2>&1 &
 ```
 
 ## What This Lab Teaches

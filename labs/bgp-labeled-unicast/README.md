@@ -52,9 +52,9 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy / Destroy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-sudo containerlab destroy -t topology.clab.yml
-docker exec -it clab-bgp-labeled-unicast-r1 Cli
+./scripts/lab.sh deploy bgp-labeled-unicast
+./scripts/lab.sh destroy bgp-labeled-unicast
+./scripts/lab.sh cli bgp-labeled-unicast r1
 ```
 
 ## Background — what BGP-LU does
@@ -79,7 +79,7 @@ each advertising its loopback in the labeled-unicast AF.
 Loopback0`). What has to already be true for that TCP session to even
 establish — and which pre-built protocol provides it here?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `neighbor 10.0.0.2 remote-as 65001` + `update-source Loopback0`.
@@ -90,7 +90,7 @@ establish — and which pre-built protocol provides it here?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -119,7 +119,7 @@ router bgp 65001
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 labeled-unicast summary` shows the r1↔r2 session up.
@@ -144,7 +144,7 @@ end.
 loopbacks — why is `update-source Loopback0` wrong here, and what would
 break if you used it?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r3**:
@@ -173,7 +173,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 All sessions up; `show bgp ipv4 labeled-unicast` on r1 shows
@@ -195,7 +195,7 @@ eBGP uses the link because that's the only thing both sides can resolve.
 **Objective:** Trace the label binding for 10.0.0.4/32 hop by hop and
 confirm the swap operations in the LFIB.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `show bgp ipv4 labeled-unicast 10.0.0.4/32` on r4, r3, r2, r1 — read
@@ -205,7 +205,7 @@ confirm the swap operations in the LFIB.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 You should be able to narrate: r4 originates a label for its loopback →
@@ -229,7 +229,7 @@ and determine whether end-to-end r1↔r4 connectivity survives — and why.
 r1's or r4's. Will removing it break the r1→r4 LSP, or only reachability
 *to r2 itself*?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Think carefully and test: removing r2's own loopback advertisement

@@ -50,7 +50,7 @@ flowchart TB
 
 ```bash
 docker build -t dmz-lab:local labs/enterprise-dmz-capstone/
-sudo containerlab deploy -t labs/enterprise-dmz-capstone/topology.clab.yml
+./scripts/lab.sh deploy enterprise-dmz-capstone
 ```
 
 ## Access

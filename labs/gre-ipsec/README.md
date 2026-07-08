@@ -60,7 +60,7 @@ dest IPs? payload? both?
 ./scripts/lab.sh capture gre-ipsec internet eth1 'gre'
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 The capture shows raw GRE packets with the inner IP header and ICMP
@@ -84,7 +84,7 @@ selectors. Here it's `mode transport` and `protocol gre`. Why transport
 mode — what header does it *avoid* adding, and why is that the right
 choice when GRE is already providing the encapsulation?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - IKE group as before (ikev2, aes256/sha256/dh14).
@@ -95,7 +95,7 @@ choice when GRE is already providing the encapsulation?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **gw-a** (gw-b mirrors with addresses/IDs swapped):
@@ -126,7 +126,7 @@ save
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show vpn ike sa` and `show vpn ipsec sa` show the SAs up (the child SA's
@@ -153,7 +153,7 @@ unchanged.
 ./scripts/lab.sh capture gre-ipsec gw-a tun0 'icmp'
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 WAN capture: IKE on UDP/500 then **ESP** — and **no raw GRE** anymore;
@@ -178,7 +178,7 @@ and determine what host-a ↔ host-b connectivity does.
 GRE. Does traffic fall back to plaintext GRE, or fail entirely? What does
 that tell you about how IPsec policy enforces protection?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Connectivity **fails** — it does not silently fall back to plaintext.

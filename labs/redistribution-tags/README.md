@@ -47,8 +47,8 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-docker exec -it clab-redistribution-tags-r1 vtysh
+./scripts/lab.sh deploy redistribution-tags
+./scripts/lab.sh cli redistribution-tags r1
 ```
 
 ---
@@ -60,7 +60,7 @@ docker exec -it clab-redistribution-tags-r1 vtysh
 redistribution yet. Success: each protocol island is internally
 reachable.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - OSPF: `router ospf` + `network ... area 0` on r1/asbr1 and asbr2/r3.
@@ -70,7 +70,7 @@ reachable.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Each island converges, but r1 cannot yet reach r3 — the two OSPF domains
@@ -92,7 +92,7 @@ domain. After dual redistribution, do you expect to see 10.0.0.1 come
 *back* to asbr1 as an external/EIGRP route — i.e. the network learning
 about its own prefix from the far side?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Permit-only maps: `route-map EIGRP-TO-OSPF permit 10` and
@@ -105,7 +105,7 @@ about its own prefix from the far side?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **asbr1** and **asbr2** (identical):
@@ -121,7 +121,7 @@ router eigrp 100
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Reachability *appears* to work (r1 sees r3's prefixes), but the danger is
@@ -147,7 +147,7 @@ on OSPF→EIGRP routes and tag 200 on EIGRP→OSPF routes, and on each ASBR
 **Predict first:** write the four route-map stanzas on paper first. What
 *exactly* must the EIGRP-TO-OSPF map deny, and what tag must it set?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Convention: tag 100 = "was OSPF, now in EIGRP"; tag 200 = "was EIGRP,
@@ -159,7 +159,7 @@ on OSPF→EIGRP routes and tag 200 on EIGRP→OSPF routes, and on each ASBR
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **asbr1** and **asbr2** (identical):
@@ -180,7 +180,7 @@ route-map OSPF-TO-EIGRP permit 20
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 On r1: r3's prefixes appear as `O E2` with **tag 200**, and r1's own
@@ -205,7 +205,7 @@ correct) and observe whether the loop returns.
 correctly-configured ASBR enough to prevent the loop, or do both need the
 logic?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The loop comes back. Tag-based loop prevention only works if **every**
@@ -257,5 +257,5 @@ No answers provided — reason them through.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy redistribution-tags
 ```

@@ -43,7 +43,7 @@ older labs may predate the contract.
 
 Two rules worth repeating here:
 
-- Never expose a solution outside a collapsed `<details>` block, and never make the
+- Never expose a solution outside a collapsed `<details markdown="1">` block, and never make the
   solution toggle the *only* content of a task.
 - Optional follow-on ideas belong in an `## Extensions` section, clearly labeled as
   unvalidated.

@@ -58,9 +58,9 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/gre-basics/topology.clab.yml
-docker exec -it clab-gre-basics-gw-a Cli       # EOS CLI
-docker exec -it clab-gre-basics-host-a bash    # host shell for pings
+./scripts/lab.sh deploy gre-basics
+./scripts/lab.sh cli gre-basics gw-a       # EOS CLI
+./scripts/lab.sh bash gre-basics host-a    # host shell for pings
 ```
 
 ---
@@ -81,7 +81,7 @@ ping 203.0.113.6 repeat 3        # should succeed
 ping 192.168.2.10 -c 3           # should fail
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 WAN ping works (the `internet` router forwards between the two /30s);
@@ -104,7 +104,7 @@ protocol up.
 *tunnel* IP (172.16.0.2) being reachable, or the far *WAN* IP
 (203.0.113.6) being reachable? Which must work first?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `interface Tunnel0` with `tunnel source <Eth>`, `tunnel destination
@@ -114,7 +114,7 @@ protocol up.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 gw-a:
@@ -139,7 +139,7 @@ interface Tunnel0
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `ping 172.16.0.1 repeat 3` from gw-b succeeds. Prediction answer: the
@@ -160,7 +160,7 @@ routing protocol over the tunnel (Task 4).
 **Objective:** Add static routes so each LAN is reachable via the far
 tunnel IP, then prove host-a ↔ host-b works.
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 gw-a: `ip route 192.168.2.0/24 172.16.0.2`
@@ -168,7 +168,7 @@ gw-b: `ip route 192.168.1.0/24 172.16.0.1`
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 host-a → host-b now succeeds, and `traceroute` shows the WAN hops are
@@ -192,7 +192,7 @@ EOS-specific traps.
 broadcast network type on the tunnel, what will it keep trying (and
 failing) to do?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Remove the static LAN routes first.
@@ -205,7 +205,7 @@ failing) to do?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **gw-a** (mirror on gw-b with router-id 10.0.0.2):
@@ -228,7 +228,7 @@ router ospf 1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip ospf neighbor` reaches Full and `show ip route ospf` is now
@@ -255,7 +255,7 @@ Break it on gw-a: `ip route 203.0.113.6/32 172.16.0.2`.
 **Predict first:** what does this tell gw-a to do when it needs to send a
 GRE packet to 203.0.113.6, and why does that make the tunnel flap?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The tunnel line protocol flaps and traffic dies. The route says "to reach
@@ -329,5 +329,5 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/gre-basics/topology.clab.yml --cleanup
+./scripts/lab.sh destroy gre-basics
 ```

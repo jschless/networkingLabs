@@ -5,7 +5,7 @@ This is a focused Layer 2 campus lab for spanning-tree operations and failure ha
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/stp-operations/topology.clab.yml
+./scripts/lab.sh deploy stp-operations
 ```
 
 ## How to use this lab
@@ -116,7 +116,7 @@ show logging last 20
 From the host:
 
 ```bash
-docker exec clab-stp-operations-client-a ping -c 3 10.10.10.1
+./scripts/lab.sh cmd stp-operations client-a -- ping -c 3 10.10.10.1
 ```
 
 ## What This Lab Teaches

@@ -169,7 +169,7 @@ ensuring traffic doesn't hairpin across the distribution-core-distribution path.
 docker build -t frr-lab:local images/frr/
 
 # Deploy the lab
-sudo containerlab deploy -t labs/enterprise-campus/topology.clab.yml
+./scripts/lab.sh deploy enterprise-campus
 # or via helper:
 ./scripts/lab.sh deploy enterprise-campus
 ```
@@ -177,17 +177,17 @@ sudo containerlab deploy -t labs/enterprise-campus/topology.clab.yml
 ### Access Nodes
 ```bash
 # cEOS nodes
-docker exec -it clab-enterprise-campus-edge Cli
-docker exec -it clab-enterprise-campus-core1 Cli
-docker exec -it clab-enterprise-campus-dist1 Cli
-docker exec -it clab-enterprise-campus-acc1 Cli
+./scripts/lab.sh cli enterprise-campus edge
+./scripts/lab.sh cli enterprise-campus core1
+./scripts/lab.sh cli enterprise-campus dist1
+./scripts/lab.sh cli enterprise-campus acc1
 
 # Linux clients
-docker exec -it clab-enterprise-campus-client-a bash
-docker exec -it clab-enterprise-campus-client-b bash
+./scripts/lab.sh bash enterprise-campus client-a
+./scripts/lab.sh bash enterprise-campus client-b
 
 # cEOS ISP
-docker exec -it clab-enterprise-campus-isp Cli
+./scripts/lab.sh cli enterprise-campus isp
 ```
 
 ### BGP Verification (edge, isp)
@@ -252,14 +252,14 @@ show spanning-tree vlan 20
 ### End-to-End Connectivity Tests
 ```bash
 # From client-a (VLAN 10):
-docker exec -it clab-enterprise-campus-client-a bash
+./scripts/lab.sh bash enterprise-campus client-a
 ping 10.10.10.1     # VRRP VIP (dist1/dist2 gateway)
 ping 10.20.20.11    # client-b (inter-VLAN, routed via distribution)
 ping 1.1.1.1        # ISP loopback (internet reachability via BGP default)
 ping 8.8.8.8        # simulated internet (if ISP is configured to forward)
 
 # From client-b (VLAN 20):
-docker exec -it clab-enterprise-campus-client-b bash
+./scripts/lab.sh bash enterprise-campus client-b
 ping 10.20.20.1     # VRRP VIP (dist2/dist1 gateway)
 ping 10.10.10.11    # client-a (inter-VLAN)
 ping 1.1.1.1        # ISP loopback
@@ -289,18 +289,18 @@ Test that VLAN 10 traffic fails over to dist2 when dist1 goes down.
 
 ```bash
 # Baseline: ping from client-a works through dist1 (VRRP master)
-docker exec clab-enterprise-campus-client-a ping -c 5 1.1.1.1
+./scripts/lab.sh cmd enterprise-campus client-a -- ping -c 5 1.1.1.1
 
 # Simulate dist1 failure:
-docker exec clab-enterprise-campus-dist1 Cli -c "interface Ethernet1,2 / shutdown"
+./scripts/lab.sh cmd enterprise-campus dist1 -- Cli -c "interface Ethernet1,2 / shutdown"
 # OR simply stop the container:
 # docker stop clab-enterprise-campus-dist1
 
 # After failover: client-a should still reach internet (via dist2 VRRP backup→master)
-docker exec clab-enterprise-campus-client-a ping -c 10 1.1.1.1
+./scripts/lab.sh cmd enterprise-campus client-a -- ping -c 10 1.1.1.1
 
 # Restore dist1:
-docker exec clab-enterprise-campus-dist1 Cli -c "interface Ethernet1,2 / no shutdown"
+./scripts/lab.sh cmd enterprise-campus dist1 -- Cli -c "interface Ethernet1,2 / no shutdown"
 ```
 
 Expected behavior:
@@ -313,14 +313,14 @@ With core1 down, traffic should reroute through core2.
 
 ```bash
 # Baseline: full connectivity
-docker exec clab-enterprise-campus-client-a ping -c 5 1.1.1.1
+./scripts/lab.sh cmd enterprise-campus client-a -- ping -c 5 1.1.1.1
 
 # Simulate core1 failure:
 docker stop clab-enterprise-campus-core1
 
 # Traffic should reconverge via the surviving path:
 #   client-a → acc1 → dist1 → core2 → edge → isp
-docker exec clab-enterprise-campus-client-a ping -c 20 1.1.1.1
+./scripts/lab.sh cmd enterprise-campus client-a -- ping -c 20 1.1.1.1
 
 # Restore core1:
 docker start clab-enterprise-campus-core1
@@ -328,7 +328,7 @@ docker start clab-enterprise-campus-core1
 
 Expected: OSPF reconverges within ~30-40 seconds (dead interval × hello interval default).
 To speed up, configure OSPF BFD or reduce timers:
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -341,7 +341,7 @@ router ospf 1
 ### Task 4: Add ABR Route Summarization
 Reduce LSA flooding into area 0 by summarizing area 1 subnets on both dist1 and dist2.
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```bash
@@ -422,7 +422,7 @@ Verify neighbors still form, then test with a wrong key to see OSPF drop.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/enterprise-campus/topology.clab.yml --cleanup
+./scripts/lab.sh destroy enterprise-campus
 # or:
 ./scripts/lab.sh destroy enterprise-campus
 ```

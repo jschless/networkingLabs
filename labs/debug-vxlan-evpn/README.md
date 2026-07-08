@@ -55,11 +55,11 @@ flowchart TB
 ## Deploy & Access
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
+./scripts/lab.sh deploy debug-vxlan-evpn
 
-docker exec -it clab-debug-vxlan-evpn-vtep1 vtysh
-docker exec -it clab-debug-vxlan-evpn-vtep2 bash
-docker exec -it clab-debug-vxlan-evpn-host1 bash
+./scripts/lab.sh cli debug-vxlan-evpn vtep1
+./scripts/lab.sh bash debug-vxlan-evpn vtep2
+./scripts/lab.sh bash debug-vxlan-evpn host1
 ```
 
 ## Observed Symptoms
@@ -106,19 +106,19 @@ bridge fdb show
 
 ## Hints
 
-<details><summary>Hint 1 — Where to start</summary>
+<details markdown="1"><summary>Hint 1 — Where to start</summary>
 
 Run `show bgp l2vpn evpn` on vtep1 and vtep2. Look at the "Next Hop" column for routes advertised by vtep2. The next-hop for EVPN Type-2 routes should be the advertising VTEP's own loopback IP. What loopback IP does vtep2 advertise as its next-hop?
 
 </details>
 
-<details><summary>Hint 2 — Narrowing it down</summary>
+<details markdown="1"><summary>Hint 2 — Narrowing it down</summary>
 
 The BGP EVPN next-hop is derived from the `local` address of the vxlan interface, which should match the VTEP's loopback. Run `ip link show vxlan100` on vtep2 (bash) and look at the `local` field. Compare it to vtep2's loopback (`ip addr show lo`).
 
 </details>
 
-<details><summary>Hint 3 — The specific problem</summary>
+<details markdown="1"><summary>Hint 3 — The specific problem</summary>
 
 vtep2's vxlan100 interface was created with `local 10.0.0.1` — vtep1's loopback IP — instead of `local 10.0.0.2` (vtep2's own loopback). As a result, vtep2 advertises EVPN routes with next-hop 10.0.0.1. Remote VTEPs send traffic toward vtep1 instead of vtep2, so host2's frames are never delivered correctly.
 
@@ -126,7 +126,7 @@ vtep2's vxlan100 interface was created with `local 10.0.0.1` — vtep1's loopbac
 
 ## Solution
 
-<details><summary>Show configuration</summary>
+<details markdown="1"><summary>Show configuration</summary>
 
 On **vtep2** (inside container bash):
 

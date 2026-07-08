@@ -39,8 +39,8 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-docker exec -it clab-ip-sla-tracking-router Cli
+./scripts/lab.sh deploy ip-sla-tracking
+./scripts/lab.sh cli ip-sla-tracking router
 ```
 
 ---
@@ -54,7 +54,7 @@ AD 10. Confirm only the primary is in the RIB.
 `show ip route`, and where does the AD-10 route "live" while it's not
 installed?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `ip route 0.0.0.0/0 <next-hop> <AD>` — the trailing number is the
@@ -64,7 +64,7 @@ installed?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **router**:
@@ -75,7 +75,7 @@ ip route 0.0.0.0/0 10.0.2.2 10
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Only `S>* 0.0.0.0/0 [5/0] via 10.0.1.2` is installed; the AD-10 backup is
@@ -94,7 +94,7 @@ and the route happily installed.
 **Objective:** Probe 10.99.0.1 via eth1 with IP SLA, and bind a track
 object to its reachability.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `ip sla 1` / `icmp-echo 10.99.0.1 source-interface eth1` / `frequency 5`,
@@ -105,7 +105,7 @@ object to its reachability.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **router**:
@@ -120,7 +120,7 @@ track 1 ip sla 1 reachability
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip sla statistics` shows `Latest operation return code: Success`
@@ -142,7 +142,7 @@ RIB follows the probe, not just the link.
 different than in Task 1? When *exactly* will tying the route to the track
 matter?
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **router**:
@@ -153,7 +153,7 @@ ip route 0.0.0.0/0 10.0.1.2 5 track 1
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 With the track Up, the table is identical to Task 1 — primary installed,
@@ -181,7 +181,7 @@ bounded by the probe frequency/threshold? And what's the symptom
 difference between this and a plain floating static reacting to a dead
 next-hop?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 After the probe fails (bounded by `frequency` and any failure threshold —
@@ -242,5 +242,5 @@ No answers provided — reason them through.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy ip-sla-tracking
 ```

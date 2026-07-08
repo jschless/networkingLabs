@@ -4,7 +4,7 @@
 
 The README is the primary guide — it's read on the docs page. The intent is:
 - **Explanations and parameter tables are always visible** — users can read why and what
-- **Actual CLI commands are hidden by default** in `<details>` toggles — users attempt the config themselves first, then reveal if stuck
+- **Actual CLI commands are hidden by default** in `<details markdown="1">` toggles — users attempt the config themselves first, then reveal if stuck
 
 ```markdown
 # <Protocol/Feature> — Practice Lab
@@ -36,11 +36,17 @@ The README is the primary guide — it's read on the docs page. The intent is:
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/<name>/topology.yml
+./scripts/lab.sh deploy <name>
 
-# Open CLI on any node
+# Open CLI on any node (auto-selects Cli / vtysh / sr_cli / bash by node type)
 ./scripts/lab.sh cli <name> r1
 ```
+
+> Prefer `./scripts/lab.sh` (deploy / destroy / cli / bash / cmd) over raw
+> `sudo containerlab ...` and `docker exec -it clab-<name>-<node> ...` in every
+> README. The runner needs no `sudo`, resolves the topology from the lab name, and
+> picks the right interactive CLI per node — so the reader types one consistent
+> command shape across all labs.
 
 ---
 
@@ -54,7 +60,7 @@ sudo containerlab deploy -t labs/<name>/topology.yml
 |---------|---------|
 | `command x` | what it does |
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```bash
@@ -97,14 +103,24 @@ sudo containerlab deploy -t labs/<name>/topology.yml
 - <cause and fix>
 ```
 
-### Key rules for `<details>` usage
+### Key rules for `<details markdown="1">` usage
 
-- Wrap **all node configuration commands** (the actual CLI input) in `<details>`
+- **Always write the tag as `<details markdown="1">`, never bare `<details>`.** The docs
+  site renders these READMEs through MkDocs (`md_in_html` extension). Inside a *bare*
+  `<details>`, MkDocs treats the body as raw HTML and does **not** parse the Markdown — bullet
+  lists, `**bold**`, and `` `inline code` `` all show as literal characters, and text like
+  `<Eth>` gets silently eaten as an unknown HTML tag. Fenced code blocks happen to survive
+  (superfences preprocesses them), which makes the bug easy to miss: the Solution's code looks
+  fine while the Hints list next to it is mangled. The `markdown="1"` attribute forces MkDocs
+  to parse the body; GitHub ignores the attribute and renders the same either way. So this is
+  mandatory on every `<details>` in every lab README — hints, solutions, check-your-work, all
+  of them.
+- Wrap **all node configuration commands** (the actual CLI input) in `<details markdown="1">`
 - Leave **verification/show commands** outside — they're the guide, not the answer
 - Leave **parameter explanation tables** outside — they help users understand what to type
 - Leave **conceptual explanations** outside — reading is allowed, typing is the challenge
 - Use summary text: `<summary>Configuration — reveal if stuck</summary>`
-- Include the access command (`./scripts/lab.sh cli ...`) inside the `<details>` block so the whole "how to configure this node" section is self-contained
+- Include the access command (`./scripts/lab.sh cli ...`) inside the `<details markdown="1">` block so the whole "how to configure this node" section is self-contained
 - Do not make an exception during platform migrations; a VyOS or cEOS rewrite still hides config by default
 - If the lab is being migrated to a router image, validate the feature on the actual local image before rebuilding the lab
 
@@ -151,10 +167,8 @@ Your job: deploy the lab, use show commands to find the fault, and fix it.
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/<name>/topology.yml
-
-docker exec -it clab-<name>-r1 Cli
-./scripts/lab.sh Cli <name> r1
+./scripts/lab.sh deploy <name>
+./scripts/lab.sh cli <name> r1
 ```
 
 Wait ~15 seconds after deploy for <protocol> to attempt convergence.
@@ -175,14 +189,14 @@ Start here:
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to look</summary>
 
 <which node or interface or protocol area to investigate>
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — What command to run</summary>
 
 ```
@@ -191,7 +205,7 @@ Start here:
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — What you will see</summary>
 
 <describe the specific wrong value or missing config that appears>
@@ -202,7 +216,7 @@ Start here:
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Solution — reveal only after attempting the lab</summary>
 
 **Bug**: <one sentence description of the bug>

@@ -94,10 +94,10 @@ grants borrows in priority order — voice borrows first, then video, then data.
 
 ```bash
 # Deploy the lab
-sudo containerlab deploy -t labs/qos-enterprise/topology.clab.yml
+./scripts/lab.sh deploy qos-enterprise
 
 # Wait ~15 seconds for iperf3 clients to start, then watch the server logs
-docker exec -it clab-qos-enterprise-server tail -f /tmp/iperf3-server.log
+./scripts/lab.sh cmd qos-enterprise server -- tail -f /tmp/iperf3-server.log
 ```
 
 The data client floods the 2Mbps WAN link with TCP. Without QoS, voice and
@@ -106,7 +106,7 @@ reporting packet loss and jitter.
 
 Check voice client stats:
 ```bash
-docker exec -it clab-qos-enterprise-client-voice tail -f /tmp/iperf3-voice.log
+./scripts/lab.sh cmd qos-enterprise client-voice -- tail -f /tmp/iperf3-voice.log
 ```
 
 Look for `lost/total` in the UDP report — high loss means voice is unprotected.
@@ -115,7 +115,7 @@ Look for `lost/total` in the UDP report — high loss means voice is unprotected
 
 ```bash
 # Enable the HTB QoS policy on the router's WAN interface (eth4)
-docker exec -it clab-qos-enterprise-router bash /qos-apply.sh
+./scripts/lab.sh cmd qos-enterprise router -- bash /qos-apply.sh
 ```
 
 After applying QoS, watch the voice client log again. The voice stream should
@@ -126,7 +126,7 @@ strict priority over video and data.
 
 ```bash
 # View class hierarchy, byte counts, and drop counters
-docker exec -it clab-qos-enterprise-router bash /qos-show.sh
+./scripts/lab.sh cmd qos-enterprise router -- bash /qos-show.sh
 ```
 
 Key fields to observe:
@@ -145,15 +145,15 @@ You can also fire one-off iperf3 streams to test specific DSCP classes:
 
 ```bash
 # Voice-class test: UDP 800kbps, DSCP EF
-docker exec -it clab-qos-enterprise-client-voice \
+./scripts/lab.sh cmd qos-enterprise client-voice -- \
     iperf3 -c 10.2.0.2 -u -b 800k -t 30 -S 0xb8
 
 # Video-class test: UDP 1.5Mbps, DSCP AF41 (above guarantee — tests borrowing)
-docker exec -it clab-qos-enterprise-client-video \
+./scripts/lab.sh cmd qos-enterprise client-video -- \
     iperf3 -c 10.2.0.2 -u -b 1500k -t 30 -S 0x88
 
 # Data-class test: TCP, DSCP BE
-docker exec -it clab-qos-enterprise-client-data \
+./scripts/lab.sh cmd qos-enterprise client-data -- \
     iperf3 -c 10.2.0.2 -b 0 -t 30 -S 0x00
 ```
 
@@ -163,7 +163,7 @@ Capture packets on the router's WAN interface and verify DSCP markings:
 
 ```bash
 # Open a bash shell on the router
-docker exec -it clab-qos-enterprise-router bash
+./scripts/lab.sh bash qos-enterprise router
 
 # Capture and display DSCP (ToS) field for traffic leaving toward the server
 tcpdump -i eth4 -v ip | grep -E 'tos|length' | head -40
@@ -178,10 +178,10 @@ Look for:
 
 ```bash
 # Remove QoS to return to uncontrolled best-effort
-docker exec -it clab-qos-enterprise-router bash /qos-remove.sh
+./scripts/lab.sh cmd qos-enterprise router -- bash /qos-remove.sh
 
 # Watch voice degrade again as data floods the link
-docker exec -it clab-qos-enterprise-client-voice tail -f /tmp/iperf3-voice.log
+./scripts/lab.sh cmd qos-enterprise client-voice -- tail -f /tmp/iperf3-voice.log
 ```
 
 ### Task 7 — Experiment: Change class rates
@@ -189,7 +189,7 @@ docker exec -it clab-qos-enterprise-client-voice tail -f /tmp/iperf3-voice.log
 Edit `/qos-apply.sh` inside the router container and re-apply:
 
 ```bash
-docker exec -it clab-qos-enterprise-router bash
+./scripts/lab.sh bash qos-enterprise router
 
 # Edit directly (vi is not installed — use cat/echo or re-bind from host)
 # Remove current QoS
@@ -209,7 +209,7 @@ Policers enforce a hard cap (drop above rate) vs. shapers (delay above rate).
 Add a police action to the data class to hard-limit it at 600kbps:
 
 ```bash
-docker exec -it clab-qos-enterprise-router bash
+./scripts/lab.sh bash qos-enterprise router
 
 # Add ingress policing on the data client's ingress interface (eth3)
 tc qdisc add dev eth3 handle ffff: ingress
@@ -274,7 +274,7 @@ tc filter add dev eth3 parent ffff: protocol ip prio 1 \
 ## Destroy the lab
 
 ```bash
-sudo containerlab destroy -t labs/qos-enterprise/topology.clab.yml --cleanup
+./scripts/lab.sh destroy qos-enterprise
 ```
 
 ## Challenge questions

@@ -56,8 +56,8 @@ This is a **practice lab**, not a tutorial.
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t labs/vrf-lite/topology.clab.yml
-docker exec -it clab-vrf-lite-pe1 Cli
+./scripts/lab.sh deploy vrf-lite
+./scripts/lab.sh cli vrf-lite pe1
 ```
 
 ---
@@ -72,7 +72,7 @@ with their addresses.
 ordering trap: if you set `ip address` *before* `vrf`, what happens to the
 address when you then assign the VRF?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `vrf instance VRF-RED` / `ip routing vrf VRF-RED` (and BLUE).
@@ -82,7 +82,7 @@ address when you then assign the VRF?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```text
@@ -116,7 +116,7 @@ interface Ethernet4
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show vrf` shows Eth1/Eth2 in RED, Eth3/Eth4 in BLUE; `show ip route vrf
@@ -140,7 +140,7 @@ mirror the whole config on pe2, and verify both end-to-end reachability
 (VRF-BLUE). They share the same physical PEs. Will it succeed or fail, and
 *why* — is it a missing route or an enforced boundary?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `ip route vrf VRF-RED 10.10.0.1/32 10.10.12.1` etc. — every route is
@@ -150,7 +150,7 @@ mirror the whole config on pe2, and verify both end-to-end reachability
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 pe1 statics:
@@ -171,7 +171,7 @@ ip route vrf VRF-BLUE 10.20.0.2/32 10.20.34.2
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `ce-a1# ping 10.10.0.2 source 10.10.0.1` succeeds (RED end to end);
@@ -197,7 +197,7 @@ pattern).
 what isolation property have you *kept* and what have you *lost* — can
 ce-b1 now reach *all* of RED, or just the leaked prefix?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - EOS cross-VRF static: `ip route vrf VRF-BLUE 10.10.0.1/32 10.10.12.1 vrf
@@ -207,7 +207,7 @@ ce-b1 now reach *all* of RED, or just the leaked prefix?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **pe1** (and the equivalent on pe2):
@@ -217,7 +217,7 @@ ip route vrf VRF-BLUE 10.10.0.1/32 10.10.12.1 vrf VRF-RED
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 ce-b1 → 10.10.0.1 now works; ce-b1 → 10.10.0.2 (un-leaked) still fails.
@@ -269,7 +269,7 @@ No answers provided — reason them through.
 
 Each VRF gets its own OSPF instance number in EOS:
 
-<details>
+<details markdown="1">
 <summary>Configuration (pe1; mirror on pe2)</summary>
 
 ```text

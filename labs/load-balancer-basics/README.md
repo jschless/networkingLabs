@@ -91,12 +91,12 @@ edge, and that HAProxy is installed but not running on lb.
 Setup commands, given:
 
 ```bash
-docker exec clab-load-balancer-basics-client curl -s http://172.16.0.11/
-docker exec clab-load-balancer-basics-client curl -s http://172.16.0.12/
-docker exec clab-load-balancer-basics-lb pgrep haproxy   # no output = not running
+./scripts/lab.sh cmd load-balancer-basics client -- curl -s http://172.16.0.11/
+./scripts/lab.sh cmd load-balancer-basics client -- curl -s http://172.16.0.12/
+./scripts/lab.sh cmd load-balancer-basics lb -- pgrep haproxy   # no output = not running
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both backends answer with their identity page, and
@@ -118,7 +118,7 @@ Start it, and prove from the client that consecutive requests to
 `client-ip-seen-by-backend` say — the client's 203.0.113.2, or something
 else? Why?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - You need a `frontend` (with `bind :80` and `mode tcp`) pointing at a
@@ -133,7 +133,7 @@ else? Why?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 Append to `haproxy/haproxy.cfg`:
@@ -160,7 +160,7 @@ haproxy -D -f /etc/haproxy/haproxy.cfg
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Requests alternate `server: web1` / `server: web2` strictly — that's
@@ -192,7 +192,7 @@ six requests — exactly what does the client experience? Then answer: with
 checks on, what determines how many requests can still fail after the
 backend dies?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Health checks are one keyword on each `server` line. Defaults: probe every
@@ -206,7 +206,7 @@ backend dies?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```text
@@ -227,7 +227,7 @@ listen stats
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Without checks, half your requests fail for as long as web1 is down — HAProxy
@@ -257,7 +257,7 @@ the identity page.
 have to *do* to the traffic to be able to add a header — and name one thing
 that breaks the moment the traffic is TLS instead of plain HTTP.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `mode http` in both the frontend and backend sections (a TCP frontend
@@ -268,7 +268,7 @@ that breaks the moment the traffic is TLS instead of plain HTTP.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```text
@@ -287,7 +287,7 @@ backend webfarm
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 ```
@@ -317,7 +317,7 @@ with Task 2/4.
 There's no proxy and no X-Forwarded-For — reason from what DNAT does and
 doesn't rewrite.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - On edge: a `nat`-type prerouting chain in a new table, then one rule.
@@ -330,7 +330,7 @@ doesn't rewrite.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On edge:
@@ -344,7 +344,7 @@ nft 'add rule ip natlb pre ip daddr 203.0.113.1 tcp dport 8080 \
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 ```
@@ -380,7 +380,7 @@ down the symptom *precisely*: which VIP fails, how often, and what does
 "fails" look like (refused? timeout? wrong content?). Precision here is most
 of the diagnosis.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Characterize first: requests to `http://203.0.113.1:8080/` vs
@@ -395,7 +395,7 @@ of the diagnosis.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 `break.sh` changed **web1's default route** to point at edge2
@@ -423,14 +423,14 @@ second request".
 Fix — restore the symmetric return:
 
 ```bash
-docker exec clab-load-balancer-basics-web1 ip route replace default via 172.16.0.1
+./scripts/lab.sh cmd load-balancer-basics web1 -- ip route replace default via 172.16.0.1
 ```
 
 Then re-verify both VIPs and run `./scripts/lab.sh check load-balancer-basics`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both VIPs alternate cleanly again and `check.sh` passes. The transferable
@@ -456,7 +456,7 @@ No step-by-step hints — Tasks 2–4 contain every building block. One nudge:
 HAProxy routes with `acl` + `use_backend`, and a `server` line can be marked
 as standby.
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 ```text
@@ -483,7 +483,7 @@ backend apifarm
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 While healthy: `curl http://172.16.0.10/api` answers `server: web2` every

@@ -61,11 +61,11 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy --topo topology.clab.yml
+./scripts/lab.sh deploy bgp-basics
 
 # EOS CLI
-docker exec -it clab-bgp-basics-r1 Cli
-docker exec -it clab-bgp-basics-r2 Cli
+./scripts/lab.sh cli bgp-basics r1
+./scripts/lab.sh cli bgp-basics r2
 ```
 
 > Note: EOS does not require any explicit policy configuration for eBGP
@@ -84,7 +84,7 @@ loopback. Success: session `Established`, and each router sees the other's
 **Predict first:** when r1 receives 10.0.0.2/32 from r2, what next-hop
 will the route carry — and will r1 be able to use it immediately?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `router bgp <ASN>`, `bgp router-id <loopback>`, `neighbor <ip>
@@ -96,7 +96,7 @@ will the route carry — and will r1 be able to use it immediately?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r1**:
@@ -125,7 +125,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show bgp ipv4 unicast summary` on r1 shows the neighbor `Established`
@@ -149,7 +149,7 @@ loopback — and fix what you find.
 10.0.0.1/32 in its BGP table. Commit to two answers: what next-hop will
 it carry, and will r3 install it in the routing table?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Same configuration shape as Task 1 — only the `remote-as` makes it
@@ -162,7 +162,7 @@ it carry, and will r3 install it in the routing table?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r2** (add):
@@ -198,7 +198,7 @@ router bgp 65002
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Before the fix: r3's table lists 10.0.0.1/32 with next-hop **10.1.12.1**
@@ -226,7 +226,7 @@ loopback, and both Goal pings succeed end to end.
 also need `next-hop-self` toward r2, or did Task 2's fix on r2 cover it?
 Decide before configuring.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - Mirror Task 1's shape for the new eBGP session.
@@ -236,7 +236,7 @@ Decide before configuring.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **r3** (add):
@@ -264,7 +264,7 @@ router bgp 65003
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Prediction answer: yes, r3 needs its own `next-hop-self` toward r2 —
@@ -290,7 +290,7 @@ looking at r4's config. Then repair.
 **Predict first:** will r3's session show `Idle`, `Active`, or flap
 continuously? Will r3 log anything that names the actual cause?
 
-<details>
+<details markdown="1">
 <summary>Diagnosis hints (try before revealing)</summary>
 
 - `show bgp ipv4 unicast summary` on r3 — watch the state column for a
@@ -301,7 +301,7 @@ continuously? Will r3 log anything that names the actual cause?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 The session flaps: TCP connects fine, OPEN messages are exchanged, then

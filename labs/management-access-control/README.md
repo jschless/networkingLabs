@@ -27,7 +27,7 @@ flowchart LR
 
 ```bash
 docker build -t ops-lab:local images/ops-lab/
-sudo containerlab deploy -t labs/management-access-control/topology.clab.yml
+./scripts/lab.sh deploy management-access-control
 ```
 
 ## What Is Prebuilt
@@ -47,7 +47,7 @@ Apply a management ACL on `device1` so that:
 Suggested policy:
 
 ```bash
-docker exec clab-management-access-control-device1 bash -lc '
+./scripts/lab.sh cmd management-access-control device1 -- bash -lc '
 iptables -F INPUT
 iptables -X MGMT-IN 2>/dev/null || true
 iptables -N MGMT-IN
@@ -67,18 +67,18 @@ iptables -A MGMT-IN -j ACCEPT
 Before policy:
 
 ```bash
-docker exec clab-management-access-control-admin1 nc -zvw 2 192.168.99.1 22
-docker exec clab-management-access-control-guest1 nc -zvw 2 192.168.50.1 22
-docker exec clab-management-access-control-admin1 nc -zvw 2 192.168.99.1 8443
-docker exec clab-management-access-control-guest1 nc -zvw 2 192.168.50.1 8443
+./scripts/lab.sh cmd management-access-control admin1 -- nc -zvw 2 192.168.99.1 22
+./scripts/lab.sh cmd management-access-control guest1 -- nc -zvw 2 192.168.50.1 22
+./scripts/lab.sh cmd management-access-control admin1 -- nc -zvw 2 192.168.99.1 8443
+./scripts/lab.sh cmd management-access-control guest1 -- nc -zvw 2 192.168.50.1 8443
 ```
 
 After policy:
 
 ```bash
-docker exec clab-management-access-control-admin1 nc -zvw 2 192.168.99.1 22
-docker exec clab-management-access-control-guest1 nc -zvw 2 192.168.50.1 22
-docker exec clab-management-access-control-device1 iptables -L MGMT-IN -n -v --line-numbers
+./scripts/lab.sh cmd management-access-control admin1 -- nc -zvw 2 192.168.99.1 22
+./scripts/lab.sh cmd management-access-control guest1 -- nc -zvw 2 192.168.50.1 22
+./scripts/lab.sh cmd management-access-control device1 -- iptables -L MGMT-IN -n -v --line-numbers
 ```
 
 ## What This Lab Teaches

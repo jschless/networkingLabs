@@ -62,7 +62,7 @@ IPsec.
 ./scripts/lab.sh cmd ipsec-basics host-a ping -c2 192.168.2.10   # fails
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Local gateway pings succeed; host-a → host-b fails — the WAN won't route
@@ -86,7 +86,7 @@ proposal, the PSK, and the traffic selectors. Which of these, if
 mismatched, fails at *Phase 1* (IKE) versus *Phase 2* (child SA)? Predict
 where a wrong DH group fails versus a wrong selector.
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `vpn ipsec ike-group` (key-exchange ikev2, proposal with encryption/
@@ -99,7 +99,7 @@ where a wrong DH group fails versus a wrong selector.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **gw-a**:
@@ -135,7 +135,7 @@ remote prefix '192.168.1.0/24'`.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show vpn ike sa` shows an established IKE SA between 203.0.113.1 and
@@ -164,7 +164,7 @@ invisible (encrypted in ESP).
 # generate traffic: host-a ping host-b in another terminal
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 You see UDP/500 (or 4500) during IKE negotiation, then **ESP** packets
@@ -188,7 +188,7 @@ peeking at the config.
 no IKE SA, (b) IKE SA up but no child SA, or (c) everything up but no
 traffic?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 `show vpn ike sa` shows **no established IKE SA** — the two ends can't

@@ -32,8 +32,8 @@ docker build -t soc-attacker:local images/soc-attacker/
 ## Useful Commands
 
 ```bash
-docker exec clab-soc-adversary-simulation-attacker /opt/soc-lab/run-attack-sequence.sh
-docker exec clab-soc-adversary-simulation-sensor jq . /var/log/soc/detection-matrix.json
+./scripts/lab.sh cmd soc-adversary-simulation attacker -- /opt/soc-lab/run-attack-sequence.sh
+./scripts/lab.sh cmd soc-adversary-simulation sensor -- jq . /var/log/soc/detection-matrix.json
 ```
 
 ## Outcome

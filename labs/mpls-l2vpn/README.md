@@ -128,7 +128,7 @@ This lab uses **LDP FEC 128 (VPWS)** — the simplest and most widely deployed f
 docker build -t frr-lab:local images/frr/
 
 # Deploy
-sudo containerlab deploy -t labs/mpls-l2vpn/topology.clab.yml
+./scripts/lab.sh deploy mpls-l2vpn
 
 # Or using the helper script
 ./scripts/lab.sh deploy mpls-l2vpn
@@ -472,7 +472,7 @@ looks like a single switch. When the core breaks, what will the customer
 *see* — a routing error, or something that looks like a dead cable? Which
 PE-side command reveals the true cause?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 From the CE it looks like a **layer-2 failure**: ARP for the peer stops
@@ -590,7 +590,7 @@ If issues persist, manually run `vtysh -b` inside the container.
 ## Destroy
 
 ```bash
-sudo containerlab destroy -t labs/mpls-l2vpn/topology.clab.yml --cleanup
+./scripts/lab.sh destroy mpls-l2vpn
 # or
 ./scripts/lab.sh destroy mpls-l2vpn
 ```

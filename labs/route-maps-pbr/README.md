@@ -44,8 +44,8 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ## Deploy
 
 ```bash
-sudo containerlab deploy -t topology.clab.yml
-docker exec -it clab-route-maps-pbr-router Cli
+./scripts/lab.sh deploy route-maps-pbr
+./scripts/lab.sh cli route-maps-pbr router
 ```
 
 ---
@@ -60,7 +60,7 @@ isp1 path.
 traffic to 10.99.2.1 take — out isp1 or isp2? Why does the destination
 being "isp2's address" not matter?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - `ip route 0.0.0.0/0 10.0.1.2` on router.
@@ -69,7 +69,7 @@ being "isp2's address" not matter?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both hosts exit via isp1 (first hop 10.0.1.1) — the routing table has one
@@ -92,7 +92,7 @@ arrives.
 inbound and not outbound — at what point relative to the routing-table
 lookup does PBR act?
 
-<details>
+<details markdown="1">
 <summary>Hints</summary>
 
 - One extended ACL per source subnet (`permit ip 192.168.1.0/30 any`,
@@ -104,7 +104,7 @@ lookup does PBR act?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Solution</summary>
 
 On **router**:
@@ -130,7 +130,7 @@ interface Ethernet2
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 host-b's traceroute to 10.99.1.1 now exits via **isp2** (first hop
@@ -153,7 +153,7 @@ single route.
 **Predict first:** after Task 2, how many routes to host-b's ISP path are
 in `show ip route` — a new one for isp2, or still just the isp1 default?
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 `show ip route` still shows only `S>* 0.0.0.0/0 via 10.0.1.2`. PBR lives
@@ -177,7 +177,7 @@ next-hop verify` / a fallback.
 unconditionally. If isp2 is unreachable, does host-b's traffic fall back
 to the isp1 default, or get black-holed?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 With a plain `set ip next-hop`, host-b's traffic is **black-holed** when
@@ -235,5 +235,5 @@ No answers provided — reason them through.
 ## Teardown
 
 ```bash
-sudo containerlab destroy -t topology.clab.yml
+./scripts/lab.sh destroy route-maps-pbr
 ```

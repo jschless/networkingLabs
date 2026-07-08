@@ -43,7 +43,7 @@ flowchart LR
 ```bash
 docker build -t frr-lab:local images/frr/
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
-sudo containerlab deploy -t labs/vlan-trunks-switchport-basics/topology.clab.yml
+./scripts/lab.sh deploy vlan-trunks-switchport-basics
 ```
 
 ## What Is Prebuilt
@@ -66,7 +66,7 @@ On both switches:
 Verify:
 
 ```bash
-docker exec clab-vlan-trunks-switchport-basics-host-a ping -c 3 10.10.10.12
+./scripts/lab.sh cmd vlan-trunks-switchport-basics host-a -- ping -c 3 10.10.10.12
 ```
 
 ### 2. Add VLAN 20
@@ -80,7 +80,7 @@ On both switches:
 Verify:
 
 ```bash
-docker exec clab-vlan-trunks-switchport-basics-voice-a ping -c 3 10.20.20.12
+./scripts/lab.sh cmd vlan-trunks-switchport-basics voice-a -- ping -c 3 10.20.20.12
 ```
 
 ### 3. Prove VLAN pruning behavior

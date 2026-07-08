@@ -106,14 +106,14 @@ flowchart TB
 docker build -t frr-lab:local images/frr/
 
 # Deploy
-sudo containerlab deploy -t labs/enterprise-dmz/topology.clab.yml
+./scripts/lab.sh deploy enterprise-dmz
 
 # Access nodes
-docker exec -it clab-enterprise-dmz-fw-outside bash
-docker exec -it clab-enterprise-dmz-fw-inside bash
-docker exec -it clab-enterprise-dmz-internet-client bash
-docker exec -it clab-enterprise-dmz-workstation bash
-docker exec -it clab-enterprise-dmz-isp Cli            # EOS CLI
+./scripts/lab.sh bash enterprise-dmz fw-outside
+./scripts/lab.sh bash enterprise-dmz fw-inside
+./scripts/lab.sh bash enterprise-dmz internet-client
+./scripts/lab.sh bash enterprise-dmz workstation
+./scripts/lab.sh cli enterprise-dmz isp            # EOS CLI
 ```
 
 ## Demo Tasks
@@ -126,7 +126,7 @@ From **internet-client**, connect to the web-server through fw-outside:
 
 ```bash
 # Get a shell on internet-client
-docker exec -it clab-enterprise-dmz-internet-client bash
+./scripts/lab.sh bash enterprise-dmz internet-client
 
 # Try HTTP to web-server's public-facing address (WAN IP, port 80)
 # fw-outside receives this on eth1, forwards to 172.16.0.2 on eth2
@@ -148,7 +148,7 @@ nc -zv 172.16.0.2 80        # Times out — private DMZ address is unreachable
 
 From **isp** (cEOS), try to reach across:
 ```bash
-docker exec -it clab-enterprise-dmz-isp Cli
+./scripts/lab.sh cli enterprise-dmz isp
 ping 203.0.114.2       ! Should reach fw-outside WAN — success
 ```
 
@@ -158,13 +158,13 @@ To test that fw-outside correctly forwards HTTP (the policy is for traffic trans
 
 **Shell 1** — Watch firewall logs on fw-outside:
 ```bash
-docker exec -it clab-enterprise-dmz-fw-outside bash
+./scripts/lab.sh bash enterprise-dmz fw-outside
 nft monitor          # Live log of all nft events
 ```
 
 **Shell 2** — Send traffic from internet-client toward fw-outside:
 ```bash
-docker exec -it clab-enterprise-dmz-internet-client bash
+./scripts/lab.sh bash enterprise-dmz internet-client
 
 # Ping fw-outside WAN IP — succeeds (input chain accepts, no forward involved)
 ping -c 3 203.0.114.2
@@ -178,7 +178,7 @@ nc -zv 172.16.0.2 80        # Connection to web-server port 80
 ### Task 3 — Verify blocked access (internet → db-server)
 
 ```bash
-docker exec -it clab-enterprise-dmz-internet-client bash
+./scripts/lab.sh bash enterprise-dmz internet-client
 
 # Try to reach the internal database — should be blocked by BOTH firewalls
 nc -zv 10.0.0.2 3306        # Times out (no route through — correct!)
@@ -187,7 +187,7 @@ nc -zv 10.0.0.6 22          # Times out (workstation — correct!)
 
 Watch the drop logs on fw-outside:
 ```bash
-docker exec -it clab-enterprise-dmz-fw-outside bash
+./scripts/lab.sh bash enterprise-dmz fw-outside
 # The kernel log messages from nft log rules appear in dmesg
 dmesg | grep "fw-outside DROP"
 ```
@@ -195,7 +195,7 @@ dmesg | grep "fw-outside DROP"
 ### Task 4 — Verify web-server → db-server (allowed by fw-inside)
 
 ```bash
-docker exec -it clab-enterprise-dmz-web-server bash
+./scripts/lab.sh bash enterprise-dmz web-server
 
 # This is allowed: web-server → db-server on TCP 3306
 nc -zv 10.0.0.2 3306        # Should connect!
@@ -210,7 +210,7 @@ nc -zv 10.0.0.6 22          # Should time out (blocked by fw-inside)
 ### Task 5 — Verify workstation internet access (LAN → internet via SNAT)
 
 ```bash
-docker exec -it clab-enterprise-dmz-workstation bash
+./scripts/lab.sh bash enterprise-dmz workstation
 
 # Workstation can reach internet (ping isp, which forwards)
 ping -c 3 203.0.114.1       # fw-outside WAN gateway
@@ -224,12 +224,12 @@ nc -zv 172.16.0.6 25        # mail-server — allowed
 ### Task 6 — Inspect nftables rules
 
 ```bash
-docker exec -it clab-enterprise-dmz-fw-outside bash
+./scripts/lab.sh bash enterprise-dmz fw-outside
 nft list ruleset            # Show full ruleset
 nft list chain inet fw_outside forward   # Show just forward chain
 nft list chain inet fw_outside postrouting
 
-docker exec -it clab-enterprise-dmz-fw-inside bash
+./scripts/lab.sh bash enterprise-dmz fw-inside
 nft list ruleset
 nft list chain inet fw_inside forward
 ```
@@ -240,19 +240,19 @@ Open three shells simultaneously:
 
 **Shell 1 — fw-outside forward chain log monitor:**
 ```bash
-docker exec -it clab-enterprise-dmz-fw-outside bash
+./scripts/lab.sh bash enterprise-dmz fw-outside
 dmesg -w | grep "fw-outside"
 ```
 
 **Shell 2 — fw-inside forward chain log monitor:**
 ```bash
-docker exec -it clab-enterprise-dmz-fw-inside bash
+./scripts/lab.sh bash enterprise-dmz fw-inside
 dmesg -w | grep "fw-inside"
 ```
 
 **Shell 3 — Generate traffic from internet-client:**
 ```bash
-docker exec -it clab-enterprise-dmz-internet-client bash
+./scripts/lab.sh bash enterprise-dmz internet-client
 # Legitimate: HTTP to web-server
 nc -w 2 172.16.0.2 80
 # Blocked: attempt to reach LAN (hits fw-outside DROP first)
@@ -266,7 +266,7 @@ Observe that the LAN-directed traffic is blocked at **fw-outside** — it never 
 This demonstrates defense in depth: even if an attacker compromises web-server, fw-inside limits lateral movement.
 
 ```bash
-docker exec -it clab-enterprise-dmz-web-server bash
+./scripts/lab.sh bash enterprise-dmz web-server
 
 # Attacker has shell on web-server. What can they reach?
 nc -zv 10.0.0.2 3306        # db-server on 3306 — ALLOWED (this is the risk!)
@@ -338,7 +338,7 @@ permitted flow. With stateful filtering, only the initial connection direction n
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/enterprise-dmz/topology.clab.yml --cleanup
+./scripts/lab.sh destroy enterprise-dmz
 ```
 
 ## Challenge questions

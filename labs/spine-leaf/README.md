@@ -57,11 +57,11 @@ Loopbacks: spine1=10.0.0.101/32, spine2=10.0.0.102/32, leaf1-4=10.0.0.1-4/32
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/spine-leaf/topology.clab.yml
+./scripts/lab.sh deploy spine-leaf
 
 # EOS CLI
-docker exec -it clab-spine-leaf-spine1 Cli
-docker exec -it clab-spine-leaf-leaf1  Cli
+./scripts/lab.sh cli spine-leaf spine1
+./scripts/lab.sh cli spine-leaf leaf1
 ```
 
 ---
@@ -73,11 +73,11 @@ CLOS). When spine1 receives leaf2's loopback (AS-path `65002`) and leaf1's
 (AS-path `65001`), will standard BGP install *both* as a multipath, or
 just one? What's the default behavior, and which command changes it?
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```bash
-docker exec -it clab-spine-leaf-spine1 Cli
+./scripts/lab.sh cli spine-leaf spine1
 ```
 
 ```
@@ -111,11 +111,11 @@ router bgp 65100
 
 ## Step 2 — Configure spine2 (AS65200)
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```bash
-docker exec -it clab-spine-leaf-spine2 Cli
+./scripts/lab.sh cli spine-leaf spine2
 ```
 
 ```
@@ -143,11 +143,11 @@ router bgp 65200
 
 ## Step 3 — Configure leaf1 (AS65001)
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```bash
-docker exec -it clab-spine-leaf-leaf1 Cli
+./scripts/lab.sh cli spine-leaf leaf1
 ```
 
 ```
@@ -268,7 +268,7 @@ show running-config section router bgp
 Failure drill:
 ```
 # host shell example
-docker exec clab-spine-leaf-leaf1 ip link set eth1 down
+./scripts/lab.sh cmd spine-leaf leaf1 -- ip link set eth1 down
 ```
 Measure session and route convergence before/after BFD.
 
@@ -356,7 +356,7 @@ These are starter templates, not final answer keys. Fill the TODOs and adapt per
 
 ### Phase 2 Snippet — Underlay Hardening
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Leaf template:
@@ -373,7 +373,7 @@ router bgp <LEAF_ASN>
 ```
 </details>
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Spine template:
@@ -394,7 +394,7 @@ router bgp <SPINE_ASN>
 
 ### Phase 3 Snippet — VRFs + VLANs on Leafs
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -427,7 +427,7 @@ TODO ideas:
 
 ### Phase 4 Snippet — EVPN Control Plane
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Leaf template:
@@ -449,7 +449,7 @@ router bgp <LEAF_ASN>
 ```
 </details>
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Spine template:
@@ -466,7 +466,7 @@ router bgp <SPINE_ASN>
 
 ### Phase 5 Snippet — VXLAN + VNI Mapping
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -487,7 +487,7 @@ router bgp <LEAF_ASN>
 ```
 </details>
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Optional L3VNI direction:
@@ -506,7 +506,7 @@ router bgp <LEAF_ASN>
 
 ### Phase 6 Snippet — Policy + Failure Drills
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 Policy skeleton:
@@ -536,7 +536,7 @@ loopback.
 reachability break, or does something subtler happen to the *number* of
 forwarding paths?
 
-<details>
+<details markdown="1">
 <summary>What you should observe</summary>
 
 Reachability survives, but the leaf collapses from two equal-cost spine
@@ -595,5 +595,5 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/spine-leaf/topology.clab.yml --cleanup
+./scripts/lab.sh destroy spine-leaf
 ```

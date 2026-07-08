@@ -69,11 +69,11 @@ flowchart LR
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-ospf-bgp-redist/topology.clab.yml
+./scripts/lab.sh deploy debug-ospf-bgp-redist
 
-docker exec -it clab-debug-ospf-bgp-redist-r1    Cli
-docker exec -it clab-debug-ospf-bgp-redist-asbr  Cli
-docker exec -it clab-debug-ospf-bgp-redist-bgp2  Cli
+./scripts/lab.sh cli debug-ospf-bgp-redist r1
+./scripts/lab.sh cli debug-ospf-bgp-redist asbr
+./scripts/lab.sh cli debug-ospf-bgp-redist bgp2
 ```
 
 Wait ~25 seconds after deploy for OSPF and BGP to converge.
@@ -152,7 +152,7 @@ show running-config             ! (only if you need a final confirmation)
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 On asbr, run `show ip route bgp`. asbr should have BGP routes for the
@@ -164,7 +164,7 @@ into OSPF?
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 On r1, run:
@@ -181,7 +181,7 @@ Compare: is `redistribute ospf` present under BGP on asbr? And is
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 The asbr has `redistribute ospf` in its BGP address-family (OSPF→BGP
@@ -197,7 +197,7 @@ OSPF process configuration on asbr.
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **asbr**:

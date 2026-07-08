@@ -108,7 +108,7 @@ flowchart TB
 docker build -t frr-lab:local images/frr/
 
 # Deploy
-sudo containerlab deploy -t labs/ipv6-transition/topology.clab.yml
+./scripts/lab.sh deploy ipv6-transition
 ```
 
 ### Verification

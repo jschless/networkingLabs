@@ -91,7 +91,7 @@ A common policy:
 docker build -t frr-lab:local images/frr/
 
 # Deploy the lab
-sudo containerlab deploy -t labs/bgp-rpki/topology.clab.yml
+./scripts/lab.sh deploy bgp-rpki
 ```
 
 Edge uses `sleep 5 && vtysh -b` to give the RTR server time to start before
@@ -103,7 +103,7 @@ FRR's rpkid tries to connect.
 
 ```
 # On edge:
-docker exec -it clab-bgp-rpki-edge vtysh
+./scripts/lab.sh cli bgp-rpki edge
 
 edge# show rpki cache-connection
 edge# show rpki prefix-table
@@ -177,7 +177,7 @@ edge# show rpki cache-connection
 edge# show rpki prefix-table
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 Both ROAs load (10.100.0.0/24→AS65100 and 10.200.0.0/24→AS65200) — the
@@ -204,7 +204,7 @@ edge# show bgp ipv4 unicast
 edge# show bgp ipv4 unicast 10.100.0.0/24
 ```
 
-<details>
+<details markdown="1">
 <summary>Check your work</summary>
 
 isp1's route is **VALID** (origin AS65100 matches the ROA); hijacker's is
@@ -224,7 +224,7 @@ the same hijack won on a router-id tiebreaker).
 Edit the route-map on edge to comment out the deny clause for INVALID routes.
 Change sequence 30 from `deny` to `permit`:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -251,7 +251,7 @@ Even without the explicit deny, the VALID route wins on local-preference.
 
 Restore the deny:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -273,7 +273,7 @@ to change this behavior).
 
 First, temporarily remove the LP manipulation:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -295,7 +295,7 @@ Does RPKI state influence the tie-break?
 
 Restore after exploring:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -317,13 +317,13 @@ edge# clear bgp * soft in
 
 Add a new announcement from isp1 for a prefix that has *no* ROA:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On `isp1`:
 
 ```
-docker exec -it clab-bgp-rpki-isp1 vtysh
+./scripts/lab.sh cli bgp-rpki isp1
 
 isp1# conf t
 isp1(config)# ip route 10.50.0.0/24 Null0
@@ -352,7 +352,7 @@ edge# show bgp ipv4 unicast 10.50.0.0/24
 
 Modify the policy to only accept VALID routes (strict mode):
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -372,7 +372,7 @@ edge# show bgp ipv4 unicast
 
 Restore permissive NOT-FOUND policy when done:
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 ```
@@ -426,5 +426,5 @@ No answers provided — reason them through.
 ## Cleanup
 
 ```bash
-sudo containerlab destroy -t labs/bgp-rpki/topology.clab.yml --cleanup
+./scripts/lab.sh destroy bgp-rpki
 ```

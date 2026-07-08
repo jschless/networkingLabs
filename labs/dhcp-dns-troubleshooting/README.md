@@ -31,7 +31,7 @@ flowchart LR
 ```bash
 docker build -t ops-lab:local images/ops-lab/
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
-sudo containerlab deploy -t labs/dhcp-dns-troubleshooting/topology.clab.yml
+./scripts/lab.sh deploy dhcp-dns-troubleshooting
 ```
 
 ## What Is Prebuilt
@@ -46,10 +46,10 @@ sudo containerlab deploy -t labs/dhcp-dns-troubleshooting/topology.clab.yml
 ### 1. Confirm DHCP works but DNS is wrong
 
 ```bash
-docker exec clab-dhcp-dns-troubleshooting-client1 udhcpc -i eth1 -q
-docker exec clab-dhcp-dns-troubleshooting-client1 cat /etc/resolv.conf
-docker exec clab-dhcp-dns-troubleshooting-client1 ping -c 2 10.10.10.80
-docker exec clab-dhcp-dns-troubleshooting-client1 dig @10.10.10.53 app.internal.lab A
+./scripts/lab.sh cmd dhcp-dns-troubleshooting client1 -- udhcpc -i eth1 -q
+./scripts/lab.sh cmd dhcp-dns-troubleshooting client1 -- cat /etc/resolv.conf
+./scripts/lab.sh cmd dhcp-dns-troubleshooting client1 -- ping -c 2 10.10.10.80
+./scripts/lab.sh cmd dhcp-dns-troubleshooting client1 -- dig @10.10.10.53 app.internal.lab A
 ```
 
 You should see:
@@ -63,7 +63,7 @@ You should see:
 On `services1`, edit `/etc/dnsmasq.conf` so option 6 points at `10.10.10.53`, then restart dnsmasq:
 
 ```bash
-docker exec -it clab-dhcp-dns-troubleshooting-services1 sh
+./scripts/lab.sh bash dhcp-dns-troubleshooting services1
 pkill dnsmasq
 dnsmasq --keep-in-foreground --log-facility=/tmp/dnsmasq.log &
 ```
@@ -71,9 +71,9 @@ dnsmasq --keep-in-foreground --log-facility=/tmp/dnsmasq.log &
 ### 3. Renew the lease and validate DNS
 
 ```bash
-docker exec clab-dhcp-dns-troubleshooting-client1 udhcpc -i eth1 -q -n
-docker exec clab-dhcp-dns-troubleshooting-client1 cat /etc/resolv.conf
-docker exec clab-dhcp-dns-troubleshooting-client1 dig app.internal.lab A
+./scripts/lab.sh cmd dhcp-dns-troubleshooting client1 -- udhcpc -i eth1 -q -n
+./scripts/lab.sh cmd dhcp-dns-troubleshooting client1 -- cat /etc/resolv.conf
+./scripts/lab.sh cmd dhcp-dns-troubleshooting client1 -- dig app.internal.lab A
 ```
 
 ## What This Lab Teaches

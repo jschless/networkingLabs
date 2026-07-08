@@ -58,11 +58,11 @@ flowchart LR
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-eigrp-basics/topology.clab.yml
+./scripts/lab.sh deploy debug-eigrp-basics
 
-docker exec -it clab-debug-eigrp-basics-r1 vtysh
-docker exec -it clab-debug-eigrp-basics-r3 vtysh
-docker exec -it clab-debug-eigrp-basics-r4 vtysh
+./scripts/lab.sh cli debug-eigrp-basics r1
+./scripts/lab.sh cli debug-eigrp-basics r3
+./scripts/lab.sh cli debug-eigrp-basics r4
 ```
 
 Wait ~15 seconds after deploy for EIGRP hello timers to expire.
@@ -145,7 +145,7 @@ show ip eigrp neighbors detail
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 On r3, run:
@@ -161,7 +161,7 @@ Compare: on r1, run `show ip eigrp neighbors` — is r3's address (10.1.13.2) pr
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 EIGRP adjacencies only form between routers in the **same Autonomous System number**.
@@ -177,7 +177,7 @@ Look at the `AS(X)` value in the output. Compare it with what r1 shows.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 r3 is configured with `router eigrp 101` instead of `router eigrp 100`. All other
@@ -190,7 +190,7 @@ by r1 and r4, and vice versa. r3 appears isolated.
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **r3**:

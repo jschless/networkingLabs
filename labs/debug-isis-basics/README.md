@@ -57,10 +57,10 @@ flowchart LR
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-isis-basics/topology.clab.yml
+./scripts/lab.sh deploy debug-isis-basics
 
-docker exec -it clab-debug-isis-basics-r2 Cli
-docker exec -it clab-debug-isis-basics-r3 Cli
+./scripts/lab.sh cli debug-isis-basics r2
+./scripts/lab.sh cli debug-isis-basics r3
 ```
 
 Wait ~20 seconds after deploy for IS-IS hello timers to expire.
@@ -139,7 +139,7 @@ show ip route isis
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 On each router, run:
@@ -157,7 +157,7 @@ Compare the area portion (the 4 digits after `49.`) on r2, r3, and r1.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 IS-IS L1 adjacencies only form between routers **with the same area ID**. If r2's
@@ -174,7 +174,7 @@ a different area from everyone else.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 r2's NET is `49.0002.0100.0000.0002.00` — area `0002`. All other routers use area
@@ -187,7 +187,7 @@ area, r2 cannot form any adjacencies. It should be `49.0001.0100.0000.0002.00`.
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **r2**:

@@ -134,7 +134,7 @@ What you should notice:
 - the black core should learn `10.255.0.0/30` and `10.255.0.4/30`
 - the black core should not know `10.10.10.0/24` or `10.20.20.0/24`
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```vyos
@@ -231,7 +231,7 @@ Capture before IPsec:
 
 At this point, the black core should be able to see raw GRE.
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```vyos
@@ -297,7 +297,7 @@ Expected:
 - `client-a` reaches the remote red service over the overlay
 - the black core still does not have routes to the red LAN subnets
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```vyos
@@ -372,7 +372,7 @@ What should change:
 - the black core should now see `ESP` and possibly IKE/NAT-T
 - the red overlay and red services should still work normally
 
-<details>
+<details markdown="1">
 <summary>Configuration — reveal if stuck</summary>
 
 ```vyos

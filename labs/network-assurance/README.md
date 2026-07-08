@@ -65,7 +65,7 @@ flowchart LR
 
 ```bash
 docker build -t assurance-lab:local labs/network-assurance/
-sudo containerlab deploy -t labs/network-assurance/topology.clab.yml
+./scripts/lab.sh deploy network-assurance
 ```
 
 ## Assurance Mechanisms
@@ -78,22 +78,22 @@ All three routers run `snmpd` with:
 
 ```bash
 # Poll interface table via SNMPv2c (from management container)
-docker exec clab-network-assurance-management \
+./scripts/lab.sh cmd network-assurance management -- \
     snmpwalk -v2c -c public 172.16.0.1 1.3.6.1.2.1.2.2
 
 # Get sysName via SNMPv3
-docker exec clab-network-assurance-management \
+./scripts/lab.sh cmd network-assurance management -- \
     snmpget -v3 -u snmpv3user -l authPriv \
     -a SHA -A authpass123 -x AES -X privpass456 \
     172.16.0.1 sysName.0
 
 # Get OSPF neighbor count (OSPF-MIB)
-docker exec clab-network-assurance-management \
+./scripts/lab.sh cmd network-assurance management -- \
     snmpwalk -v2c -c public 172.16.0.1 1.3.6.1.2.1.14
 
 # Poll all three routers' interface error counts
 for ip in 172.16.0.1 172.16.0.5 172.16.0.9; do
-    docker exec clab-network-assurance-management \
+    ./scripts/lab.sh cmd network-assurance management -- \
         snmpget -v2c -c public $ip ifInErrors.2 2>/dev/null || true
 done
 ```
@@ -104,15 +104,15 @@ All routers forward syslog (UDP 514) to the management node. Logs are written to
 
 ```bash
 # Watch r1 syslog in real time
-docker exec clab-network-assurance-management \
+./scripts/lab.sh cmd network-assurance management -- \
     tail -f /var/log/remote/r1.log
 
 # Generate a syslog message manually
-docker exec clab-network-assurance-r1 \
+./scripts/lab.sh cmd network-assurance r1 -- \
     logger -p local0.notice "Test syslog message from r1"
 
 # Trigger OSPF state change (brings down eth2 → OSPF logs appear)
-docker exec clab-network-assurance-r1 \
+./scripts/lab.sh cmd network-assurance r1 -- \
     bash -c "ip link set eth2 down; sleep 3; ip link set eth2 up"
 ```
 
@@ -122,16 +122,16 @@ r2's eth1 is mirrored to eth3 (management link) via `tc mirred`. The management 
 
 ```bash
 # On analyzer: watch mirrored frames from r2:eth1
-docker exec clab-network-assurance-analyzer tcpdump -i eth1 -n
+./scripts/lab.sh cmd network-assurance analyzer -- tcpdump -i eth1 -n
 
 # Generate traffic through r2 (client → server)
-docker exec clab-network-assurance-client ping -c 5 10.3.0.2
+./scripts/lab.sh cmd network-assurance client -- ping -c 5 10.3.0.2
 
 # On analyzer: watch only ICMP mirrored from r2
-docker exec clab-network-assurance-analyzer tcpdump -i eth1 -n icmp
+./scripts/lab.sh cmd network-assurance analyzer -- tcpdump -i eth1 -n icmp
 
 # Save SPAN traffic to pcap for Wireshark analysis
-docker exec clab-network-assurance-analyzer tcpdump -i eth1 -w /tmp/span.pcap -c 100
+./scripts/lab.sh cmd network-assurance analyzer -- tcpdump -i eth1 -w /tmp/span.pcap -c 100
 docker cp clab-network-assurance-analyzer:/tmp/span.pcap /tmp/
 ```
 
@@ -141,19 +141,19 @@ Each router exports NetFlow v5 records (via `softflowd`) to the management node'
 
 ```bash
 # Generate traffic for flow records
-docker exec clab-network-assurance-client \
+./scripts/lab.sh cmd network-assurance client -- \
     ping -c 20 10.3.0.2
 
 # Wait ~30 seconds for nfcapd to rotate files, then query
-docker exec clab-network-assurance-management \
+./scripts/lab.sh cmd network-assurance management -- \
     nfdump -R /var/log/netflow -s bytes -n 10
 
 # Show flows by source/destination
-docker exec clab-network-assurance-management \
+./scripts/lab.sh cmd network-assurance management -- \
     nfdump -R /var/log/netflow -o extended
 
 # Filter by protocol
-docker exec clab-network-assurance-management \
+./scripts/lab.sh cmd network-assurance management -- \
     nfdump -R /var/log/netflow 'proto icmp'
 ```
 

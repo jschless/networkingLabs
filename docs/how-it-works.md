@@ -26,7 +26,7 @@ Practice lab README convention (the full contract is `labs/AUTHORING.md`):
 
 - every task states an **objective** the student attempts first; **hints**,
   the **solution**, and a **check your work** explanation are each hidden in
-  their own `<details>` toggle
+  their own `<details markdown="1">` toggle
 - prediction prompts and verification stay visible; raw configuration is
   never shown in the open
 - debug labs hide the exact fix in a solution block rather than exposing it inline

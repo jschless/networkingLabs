@@ -50,20 +50,20 @@ docker build -t soc-attacker:local images/soc-attacker/
 Generate baseline traffic:
 
 ```bash
-docker exec clab-soc-dmz-foundation-attacker /opt/soc-lab/run-attack-sequence.sh
+./scripts/lab.sh cmd soc-dmz-foundation attacker -- /opt/soc-lab/run-attack-sequence.sh
 ```
 
 Watch mirrored frames:
 
 ```bash
-docker exec clab-soc-dmz-foundation-sensor tcpdump -ni eth1 -c 20
+./scripts/lab.sh cmd soc-dmz-foundation sensor -- tcpdump -ni eth1 -c 20
 ```
 
 Verify service reachability:
 
 ```bash
-docker exec clab-soc-dmz-foundation-attacker curl -s http://172.16.10.10/
-docker exec clab-soc-dmz-foundation-attacker curl -s http://172.16.20.10:8080/
+./scripts/lab.sh cmd soc-dmz-foundation attacker -- curl -s http://172.16.10.10/
+./scripts/lab.sh cmd soc-dmz-foundation attacker -- curl -s http://172.16.20.10:8080/
 ```
 
 ## Outcome

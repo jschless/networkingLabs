@@ -70,10 +70,10 @@ flowchart LR
 ## Deploy and access
 
 ```bash
-sudo containerlab deploy -t labs/debug-vrf-lite/topology.clab.yml
+./scripts/lab.sh deploy debug-vrf-lite
 
-docker exec -it clab-debug-vrf-lite-pe1  Cli
-docker exec -it clab-debug-vrf-lite-ce-a1 Cli
+./scripts/lab.sh cli debug-vrf-lite pe1
+./scripts/lab.sh cli debug-vrf-lite ce-a1
 ```
 
 ---
@@ -145,7 +145,7 @@ pe1# ping vrf VRF-RED 10.10.0.1
 
 ## Hints
 
-<details>
+<details markdown="1">
 <summary>Hint 1 — Where to start</summary>
 
 On pe1, run:
@@ -161,7 +161,7 @@ If Ethernet1 (10.10.12.2) appears under VRF-BLUE instead of VRF-RED, that's the 
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 2 — Narrowing it down</summary>
 
 On pe1, run:
@@ -181,7 +181,7 @@ in the wrong VRF.
 
 </details>
 
-<details>
+<details markdown="1">
 <summary>Hint 3 — The specific problem</summary>
 
 pe1's startup-config has `vrf VRF-BLUE` under `interface Ethernet1` instead of `vrf VRF-RED`.
@@ -195,7 +195,7 @@ shows up under VRF-BLUE, and the VRF-RED static route to ce-a1's loopback is ina
 
 ## Solution
 
-<details>
+<details markdown="1">
 <summary>Show configuration</summary>
 
 On **pe1**:
