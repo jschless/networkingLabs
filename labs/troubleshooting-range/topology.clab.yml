@@ -1,0 +1,102 @@
+name: troubleshooting-range
+
+mgmt:
+  network: clab-troubleshooting-range-mgmt
+  ipv4-subnet: 172.30.251.0/24
+
+topology:
+  nodes:
+    acc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc1/startup-config
+    acc2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc2/startup-config
+
+    core1:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/core1/frr.conf:/etc/frr/frr.conf.orig:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'for i in eth1 eth2 eth3 eth4 eth5; do ip link set \"$i\" mtu 1500 2>/dev/null || true; done; cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b'"]
+    core2:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/core2/frr.conf:/etc/frr/frr.conf.orig:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'for i in eth1 eth2 eth3 eth4 eth5; do ip link set \"$i\" mtu 1500 2>/dev/null || true; done; cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b'"]
+    edge:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/edge/frr.conf:/etc/frr/frr.conf.orig:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'for i in eth1 eth2 eth3; do ip link set \"$i\" mtu 1500 2>/dev/null || true; done; cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b'"]
+    branch1:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/branch1/frr.conf:/etc/frr/frr.conf.orig:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'for i in eth1 eth2; do ip link set \"$i\" mtu 1500 2>/dev/null || true; done; cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b'"]
+
+    services1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/services1/reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/services1/dnsmasq.conf:/etc/dnsmasq.conf.orig:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+    corp1:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/corp1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    voice1:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/voice1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    guest1:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/guest1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    branch-client:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/branch-client/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    internet1:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/internet1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+
+  links:
+    - endpoints: ["acc1:eth1", "core1:eth1"]
+    - endpoints: ["acc1:eth2", "core2:eth1"]
+    - endpoints: ["acc2:eth1", "core1:eth2"]
+    - endpoints: ["acc2:eth2", "core2:eth2"]
+    - endpoints: ["core1:eth3", "core2:eth3"]
+    - endpoints: ["core1:eth4", "edge:eth1"]
+    - endpoints: ["core2:eth4", "edge:eth2"]
+    - endpoints: ["core2:eth5", "branch1:eth1"]
+    - endpoints: ["core1:eth5", "services1:eth1"]
+    - endpoints: ["edge:eth3", "internet1:eth1"]
+    - endpoints: ["branch1:eth2", "branch-client:eth1"]
+    - endpoints: ["acc1:eth3", "corp1:eth1"]
+    - endpoints: ["acc1:eth4", "voice1:eth1"]
+    - endpoints: ["acc2:eth3", "guest1:eth1"]

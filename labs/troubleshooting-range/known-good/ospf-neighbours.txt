@@ -1,0 +1,12 @@
+Golden OSPF neighbour expectations (all state Full):
+
+  acc1     2 neighbours: core1, core2
+  acc2     2 neighbours: core1, core2
+  core1    4 neighbours: acc1, acc2, core2, edge
+  core2    5 neighbours: acc1, acc2, core1, edge, branch1
+  edge     2 neighbours: core1, core2
+  branch1  1 neighbour:  core2
+
+Useful commands:
+  cEOS: show ip ospf neighbor
+  FRR:  show ip ospf neighbor

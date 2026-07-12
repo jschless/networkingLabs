@@ -197,6 +197,7 @@ nav:
       - network-automation-netbox: tracks/operations/network-automation-netbox.md
       - suzieq-network-observability: tracks/operations/suzieq-network-observability.md
       - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
+      - troubleshooting-range: tracks/operations/troubleshooting-range.md
     - Debug Labs:
       - tracks/debug/index.md
       - debug-ospf-multiarea: tracks/debug/debug-ospf-multiarea.md

@@ -1,0 +1,8 @@
+Golden access-port mapping:
+
+  acc1 Ethernet3  corp1   VLAN 10   connected
+  acc1 Ethernet4  voice1  VLAN 20   connected
+  acc2 Ethernet3  guest1  VLAN 30   connected
+
+Useful command:
+  show interfaces status

@@ -1,0 +1,12 @@
+Golden service expectations:
+
+  From corp1:
+    ping -c 1 10.250.50.10
+    nslookup web.range.test 10.250.40.10
+    python3 -c 'import socket; socket.create_connection(("10.250.40.10", 8080), 2).close()'
+
+  From guest1:
+    ping -c 1 198.18.0.10
+
+  From branch-client:
+    ping -c 1 10.250.40.10

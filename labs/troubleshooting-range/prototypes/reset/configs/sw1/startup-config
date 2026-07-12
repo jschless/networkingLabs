@@ -1,0 +1,24 @@
+hostname sw1
+!
+vlan 10
+   name RANGE-PROTOTYPE
+!
+interface Ethernet1
+   description to-r1
+   switchport access vlan 10
+   switchport mode access
+   no shutdown
+!
+interface Ethernet2
+   description to-host1
+   switchport access vlan 10
+   switchport mode access
+   no shutdown
+!
+interface Vlan10
+   ip address 192.0.2.1/24
+   no shutdown
+!
+ip routing
+!
+end
