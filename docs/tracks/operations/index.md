@@ -1,6 +1,6 @@
 # Network Operations Track
 
-Thirteen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, network automation with NetBox, and streaming telemetry.
+Fourteen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, network automation with NetBox, streaming telemetry, and proctored troubleshooting assessment.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
@@ -17,6 +17,7 @@ Thirteen labs covering management access, DHCP/DNS, AAA operations, packet captu
 | [network-automation-netbox](network-automation-netbox.md) | Practice | NetBox capstone: DCIM, IPAM, native config templates, discovery sync, and drift validation |
 | [suzieq-network-observability](suzieq-network-observability.md) | Reference | SuzieQ: agentless polling, fleet-wide queries, LLDP topology mapping, path tracing, health assertions |
 | [telemetry-monitoring-hybrid](telemetry-monitoring-hybrid.md) | Practice | gNMI telemetry, Prometheus, Grafana, classic NMS |
+| [troubleshooting-range](troubleshooting-range.md) | Assessment | Persistent enterprise range with blind tickets, transcript capture, reset, and proctor rubrics |
 
 ## Platform Notes
 
@@ -31,3 +32,4 @@ Thirteen labs covering management access, DHCP/DNS, AAA operations, packet captu
 - **network-automation-netbox**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t netbox-automation:local labs/network-automation-netbox/`
 - **suzieq-network-observability**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t suzieq-lab:local labs/suzieq-network-observability/`
 - **telemetry-monitoring-hybrid**: `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/`
+- **troubleshooting-range**: `frr-lab:local`, `ops-lab:local`, and `ceos:4.35.2F` (all existing local images)

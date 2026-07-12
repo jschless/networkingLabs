@@ -60,13 +60,13 @@ Lab lives at `labs/troubleshooting-range/`; scenarios under
 
 ## Phase 0 — Access + load-bearing prototypes (serial; everything depends on these)
 
-- [ ] **0.0 Lab-host working setup** — get the agent workflow running on the lab
+- [x] **0.0 Lab-host working setup** — get the agent workflow running on the lab
       host (Claude Code on the host itself, or SSH from the Mac — note the June
       2026 finding that the host rejected key auth; fix keys or run locally).
       Confirm: repo clone, image builds (`frr-lab:local`, cEOS import), a clab
       deploy/destroy cycle, and free-RAM headroom measured. Record the chosen
       workflow here for future sessions.
-- [ ] **0.1 `DESIGN.md`** — topology + addressing plan + RAM budget. Sketch to
+- [x] **0.1 `DESIGN.md`** — topology + addressing plan + RAM budget. Sketch to
       refine: ISP node → edge firewall/NAT (FRR+nftables) → core pair (FRR,
       OSPF + VRRP or routed) → **cEOS access pair** with corp/voice/guest VLANs;
       one branch site over a WAN link (FRR); services block (bind9 DNS, Kea DHCP
@@ -74,7 +74,7 @@ Lab lives at `labs/troubleshooting-range/`; scenarios under
       containers per VLAN + branch. Target ≤ ~18 nodes, ≤ ~8 GB steady-state
       (3 cEOS ≈ 4.5 GB is the bulk). Include: golden-config layout, a
       `topology_version` field scenarios pin to, and the attempt-directory format.
-- [ ] **0.2 Prototype: no-restart reset (THE load-bearing unknown).** Prove on a
+- [x] **0.2 Prototype: no-restart reset (THE load-bearing unknown).** Prove on a
       3-node throwaway (1 cEOS + 1 FRR + 1 Linux host): break each node, then
       restore golden **without container restarts** — cEOS `configure replace
       flash:golden.cfg`, FRR config reload via vtysh/frr-reload, Linux node reset
@@ -83,7 +83,7 @@ Lab lives at `labs/troubleshooting-range/`; scenarios under
       counters, DHCP leases) → the reset script must flush those explicitly.
       If cEOS config-replace proves unreliable, fallback is scripted
       inverse-diffs per scenario — decide here, before Phase 1 hard-codes either.
-- [ ] **0.3 Prototype: transcript capture.** `script(1)`-wrapped node shell with
+- [x] **0.3 Prototype: transcript capture.** `script(1)`-wrapped node shell with
       per-command timestamps (util-linux `script --log-timing` or equivalent in
       the container/host), filed under a per-attempt directory with scenario id +
       start/stop times. Must survive the engineer opening shells on several nodes
@@ -91,29 +91,29 @@ Lab lives at `labs/troubleshooting-range/`; scenarios under
 
 ## Phase 1 — Build the range
 
-- [ ] **1.1 Topology + golden state.** `topology.clab.yml`, golden configs for
+- [x] **1.1 Topology + golden state.** `topology.clab.yml`, golden configs for
       every node, deploy scripting, and the **health gate** (`range.sh status` →
       NN/NN checks: adjacencies, VRRP state, DHCP lease grant, DNS resolution,
       end-to-end paths incl. branch + internet). Gate must be fast (< ~30 s) —
       it runs before/after every task.
-- [ ] **1.2 `range.sh`** — the proctor tool: `deploy` / `destroy` / `status` /
+- [x] **1.2 `range.sh`** — the proctor tool: `deploy` / `destroy` / `status` /
       `start <scenario|--tier N>` (blind draw for `--tier`) / `reset` /
       `shell <node>` (transcript-wrapped) / `attempt` management (open attempt id,
       file transcripts, record start/stop for time-band grading). Start prints the
       ticket only — never the scenario slug's cause.
-- [ ] **1.3 Engineer docs pack.** Student-facing README (range orientation, how
+- [x] **1.3 Engineer docs pack.** Student-facing README (range orientation, how
       tickets work, what's expected in a write-up), topology diagram, IP plan,
       and a `known-good/` directory of reference outputs (the docs a real
       helpdesk engineer would have). Rubric-free.
 
 ## Phase 2 — Scenario framework, proven by two reference scenarios
 
-- [ ] **2.1 `scenarios/AUTHORING.md`** — the scenario contract: directory format,
+- [x] **2.1 `scenarios/AUTHORING.md`** — the scenario contract: directory format,
       metadata header (tier, domain, est. time band, `topology_version`,
       parameterization axes), rubric template (decision tree + per-step points +
       red-flag deductions + pass threshold), the scenario definition-of-done from
       "Working conventions" above. Extends `labs/AUTHORING.md`; link both ways.
-- [ ] **2.2 Two hand-built reference scenarios** — one T1 (e.g. access port
+- [x] **2.2 Two hand-built reference scenarios** — one T1 (e.g. access port
       admin-down / wrong VLAN) and one T3 (e.g. "web is down" but the cause is a
       lost route to DNS) — built end-to-end through the contract, then a **full
       dry run**: inject via `range.sh start`, work the ticket as the engineer in
@@ -126,23 +126,23 @@ Parallelizable across agents once 2.1/2.2 merge (disjoint scenario dirs; catalog
 index updated per-PR). Candidate pool — final pick + parameterization decided at
 build time, aim for spread across L1–L4 and across nodes:
 
-- [ ] **3.1 T1 batch** (+3): DHCP pool exhausted; server with wrong
+- [x] **3.1 T1 batch** (+3): DHCP pool exhausted; server with wrong
       gateway/netmask; access-port link down (or err-disable analogue);
       trunk missing a VLAN.
-- [ ] **3.2 T2 batch** (+3): OSPF MTU mismatch (stuck EXSTART); ACL blocking
+- [x] **3.2 T2 batch** (+3): OSPF MTU mismatch (stuck EXSTART); ACL blocking
       return traffic only; NAT/masquerade broken for one subnet; PMTUD blackhole
       (DF + filtered ICMP); BGP route-map dropping the branch prefix.
-- [ ] **3.3 T3 batch** (+3): VRRP dual-master via filtered peer traffic;
+- [x] **3.3 T3 batch** (+3): VRRP dual-master via filtered peer traffic;
       asymmetric routing breaking stateful firewall flows; DDNS chain broken
       (new leases resolve nothing — DHCP "works", DNS "works"); intermittent path
       degradation (netem loss on one ECMP member); redistribution loop.
-- [ ] **3.4 Catalog index + docs registration** — scenario table (tier/domain/
+- [x] **3.4 Catalog index + docs registration** — scenario table (tier/domain/
       time band) in the lab README; register the lab in the docs site + tracks
       the way every lab is registered.
 
 ## Phase 4 — Assessment kit + pilot
 
-- [ ] **4.1 Grading guide + tier qualification doc.** How a supervisor runs an
+- [x] **4.1 Grading guide + tier qualification doc.** How a supervisor runs an
       assessment end to end. Proposed starting numbers (tune in 4.2): draw 3 of 4
       scenarios per tier; time bands T1 ≤ 15 min / T2 ≤ 35 min / T3 ≤ 60 min;
       pass = ≥ 70% rubric points on every drawn scenario **and** `verify` green;
@@ -173,3 +173,11 @@ Phase 3 done.
 | Date | Item | Status / notes |
 |------|------|----------------|
 | 2026-07-12 | Plan created | Requirements session with Joe (see decided-requirements block). Confirmed same day: all build work happens on the lab host / via SSH, CLI-only. Nothing started; next action is 0.0. |
+| 2026-07-12 | 0.0 lab-host setup | Working directly on lab host via Codex CLI. Confirmed ContainerLab 0.74.1, Docker 29.5.3, `frr-lab:local`, and `ceos:4.35.2F`; host had 12 GiB available RAM before testing. A disposable deploy/destroy cycle passed. |
+| 2026-07-12 | 0.1 design | Added `labs/troubleshooting-range/DESIGN.md`: two-cEOS / FRR topology, addressing reservation, ≤6.9 GiB planning budget, golden-state contract, and attempt-evidence layout. |
+| 2026-07-12 | 0.2 reset prototype | Added and live-tested the cEOS + FRR + Linux three-node reset harness. It injected one fault per node type, restored from writable in-container golden copies without restart, then asserted unchanged container `StartedAt` timestamps. Results in `prototypes/reset/RESULTS.md`. |
+| 2026-07-12 | 0.3 transcript prototype | Added `script(1)` output/timing wrapper and a passing concurrent-session test. Future `range.sh shell` will supply the attempt/node command binding. |
+| 2026-07-12 | 1.1–1.3 | Built and live-tested a 12-node persistent range: 2 cEOS access switches, 4 FRR routers, 6 service/endpoint containers. `range.sh deploy` snapshots writable golden state; the 11-check health gate proves OSPF, branch, internet-test, DNS, and TCP paths. Engineer pack and known-good outputs added. |
+| 2026-07-12 | 2.1–2.2 | Added scenario contract, proctor assessment guide, and live dry-run reference tickets TR-101 (T1 access port) and TR-301 (T3 DNS symptom caused by services-link routing). |
+| 2026-07-12 | 3.1–3.4 | Added 12 Wave 1 tickets (4 per tier), catalog table, Operations-track docs page/nav registration, and live inject/clear/verify/reset testing for the catalog patterns. |
+| 2026-07-12 | 4.1 | Added `ASSESSMENT.md` with blind-draw, transcript, rubric, qualification-band, and red-flag guidance; `range.sh verify` runs the active scenario verifier. Pilot assessment (4.2) remains a human-only next step. |

@@ -1,0 +1,35 @@
+hostname acc2
+ip routing
+vlan 30
+   name GUEST
+interface Loopback0
+   ip address 10.250.255.12/32
+interface Ethernet1
+   description to-core1
+   no switchport
+   ip address 10.250.0.5/31
+   no shutdown
+interface Ethernet2
+   description to-core2
+   no switchport
+   ip address 10.250.0.7/31
+   no shutdown
+interface Ethernet3
+   description to-guest1
+   switchport access vlan 30
+   switchport mode access
+   spanning-tree portfast
+   no shutdown
+interface Vlan30
+   ip address 10.250.30.1/24
+   no shutdown
+router ospf 1
+   router-id 10.250.255.12
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   network 10.250.0.4/31 area 0.0.0.0
+   network 10.250.0.6/31 area 0.0.0.0
+   network 10.250.30.0/24 area 0.0.0.0
+   network 10.250.255.12/32 area 0.0.0.0
+end
