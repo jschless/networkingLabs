@@ -1,5 +1,8 @@
 # Gap-Closure Plan (CCNP + Broad Enterprise IT) — COMPLETE, ARCHIVED
 
+> **The active roadmap is now `PLAN-troubleshooting-range.md`** (helpdesk-tier
+> troubleshooting/assessment range, July 2026). Resume work from there, not here.
+
 > **Status: all four phases finished (June 2026).** This file is kept as a historical
 > record of the gap-closure effort, not an active roadmap — don't resume work from it.
 > The working conventions it established still apply to new work: one branch + PR per
