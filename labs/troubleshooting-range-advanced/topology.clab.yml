@@ -1,0 +1,79 @@
+name: troubleshooting-range-advanced
+
+mgmt:
+  network: clab-troubleshooting-range-advanced-mgmt
+  ipv4-subnet: 172.30.252.0/24
+
+topology:
+  defaults:
+    kind: linux
+    image: frr-lab:local
+  nodes:
+    core1:
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/core1/frr.conf:/etc/frr/frr.conf.orig:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'for i in eth1 eth2 eth4; do ip link set \"$i\" mtu 1500; done; ip link set eth3 mtu 1400; cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b'"]
+    edge1:
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/edge1/frr.conf:/etc/frr/frr.conf.orig:ro
+        - configs/edge1/runtime-reset.sh:/opt/range/golden/runtime-reset.sh:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b && sh /opt/range/golden/runtime-reset.sh'"]
+    edge2:
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/edge2/frr.conf:/etc/frr/frr.conf.orig:ro
+        - configs/edge2/runtime-reset.sh:/opt/range/golden/runtime-reset.sh:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b && sh /opt/range/golden/runtime-reset.sh'"]
+    isp1:
+      binds: &frr_binds_isp1
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/isp1/frr.conf:/etc/frr/frr.conf.orig:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'for i in eth1 eth2; do ip link set \"$i\" mtu 1500; done; cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b'"]
+    isp2:
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/isp2/frr.conf:/etc/frr/frr.conf.orig:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'for i in eth1 eth2; do ip link set \"$i\" mtu 1500; done; cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b'"]
+    internet-core:
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons:ro
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf:ro
+        - configs/internet-core/frr.conf:/etc/frr/frr.conf.orig:ro
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh -lc 'for i in eth1 eth2 eth3; do ip link set \"$i\" mtu 1500; done; cp /etc/frr/frr.conf.orig /etc/frr/frr.conf && vtysh -b'"]
+    corp1:
+      image: ops-lab:local
+      binds: ["configs/corp1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    branch-client:
+      image: ops-lab:local
+      binds: ["configs/branch-client/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    internet1:
+      image: ops-lab:local
+      binds: ["configs/internet1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+
+  links:
+    - endpoints: ["core1:eth1", "corp1:eth1"]
+    - endpoints: ["core1:eth2", "branch-client:eth1"]
+    - endpoints: ["core1:eth3", "edge1:eth1"]
+    - endpoints: ["core1:eth4", "edge2:eth1"]
+    - endpoints: ["edge1:eth2", "edge2:eth2"]
+    - endpoints: ["edge1:eth3", "isp1:eth1"]
+    - endpoints: ["edge2:eth3", "isp2:eth1"]
+    - endpoints: ["isp1:eth2", "internet-core:eth1"]
+    - endpoints: ["isp2:eth2", "internet-core:eth2"]
+    - endpoints: ["internet-core:eth3", "internet1:eth1"]
