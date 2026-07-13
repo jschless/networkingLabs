@@ -159,11 +159,17 @@ dmvpn-phase1 (VyOS) → dmvpn-phase2 → dmvpn-phase3
 
 ## Troubleshooting Practice
 
+Start with guided failures, then move into blind proctored incidents:
+
 ```
 debug-ospf-multiarea → debug-bgp-basics → debug-eigrp-basics → debug-isis-basics
 → debug-bgp-filtering → debug-gre-basics → debug-spine-leaf
 → debug-vxlan-evpn → debug-mpls-sr-isis-bgp
+→ troubleshooting-range → troubleshooting-range-advanced
 ```
+
+See the [Troubleshooting & Assessment track](tracks/troubleshooting/index.md)
+for the differences between guided debug labs and proctored ranges.
 
 ## Enterprise IT 101
 

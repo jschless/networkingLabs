@@ -197,9 +197,9 @@ nav:
       - network-automation-netbox: tracks/operations/network-automation-netbox.md
       - suzieq-network-observability: tracks/operations/suzieq-network-observability.md
       - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
-      - troubleshooting-range: tracks/operations/troubleshooting-range.md
-      - troubleshooting-range-advanced: tracks/operations/troubleshooting-range-advanced.md
-    - Debug Labs:
+  - Troubleshooting:
+    - Overview: tracks/troubleshooting/index.md
+    - Guided Debug Labs:
       - tracks/debug/index.md
       - debug-ospf-multiarea: tracks/debug/debug-ospf-multiarea.md
       - debug-ospf-auth: tracks/debug/debug-ospf-auth.md
@@ -216,6 +216,9 @@ nav:
       - debug-spine-leaf: tracks/debug/debug-spine-leaf.md
       - debug-mpls-sr-isis-bgp: tracks/debug/debug-mpls-sr-isis-bgp.md
       - debug-vxlan-evpn: tracks/debug/debug-vxlan-evpn.md
+    - Proctored Assessment Ranges:
+      - Enterprise Troubleshooting Range: tracks/troubleshooting/troubleshooting-range.md
+      - Advanced Edge Troubleshooting Range: tracks/troubleshooting/troubleshooting-range-advanced.md
   - Security Operations (SOC):
     - tracks/security-infrastructure/index.md
     - soc-dmz-foundation: tracks/security-infrastructure/soc-dmz-foundation.md

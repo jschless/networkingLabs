@@ -1,11 +1,6 @@
----
-title: troubleshooting-range-advanced
----
+<meta http-equiv="refresh" content="0; url=../../troubleshooting/troubleshooting-range-advanced/">
 
-!!! tip "Advanced Assessment Lab"
-    Proctored BGP, NAT, policy, and PMTUD troubleshooting tickets.
+# Advanced Edge Troubleshooting Range moved
 
-!!! note "Images"
-    `frr-lab:local` and `ops-lab:local`
-
-{% include-markdown "../../../labs/troubleshooting-range-advanced/README.md" %}
+This page now lives in the dedicated
+[Troubleshooting & Assessment track](../troubleshooting/troubleshooting-range-advanced.md).

@@ -169,19 +169,28 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-chart-line: **Network Operations** (15 labs)
+- :material-chart-line: **Network Operations** (13 labs)
 
     ---
-    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, zero-touch provisioning, API automation fundamentals, NetBox automation, gNMI telemetry, SuzieQ observability, proctored troubleshooting assessment
+    Management access, DHCP/DNS, AAA, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, zero-touch provisioning, API automation, NetBox, gNMI telemetry, and SuzieQ observability
 
     [:octicons-arrow-right-24: Operations track](tracks/operations/index.md)
 
-- :material-bug: **Debug Labs** (15 labs)
+</div>
+
+---
+
+## Troubleshooting & Assessment
+
+<div class="grid cards" markdown>
+
+- :material-stethoscope: **Troubleshooting & Assessment** (2 ranges, 25 tickets)
 
     ---
-    One real bug per lab — scenario, symptoms, 3-level hints, solution
+    Progress from 15 guided debug labs with hints and solutions to blind,
+    proctored enterprise and edge-routing assessment ranges.
 
-    [:octicons-arrow-right-24: Debug track](tracks/debug/index.md)
+    [:octicons-arrow-right-24: Troubleshooting track](tracks/troubleshooting/index.md)
 
 </div>
 

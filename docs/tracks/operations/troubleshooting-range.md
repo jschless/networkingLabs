@@ -1,11 +1,6 @@
----
-title: troubleshooting-range
----
+<meta http-equiv="refresh" content="0; url=../../troubleshooting/troubleshooting-range/">
 
-!!! tip "Assessment Lab"
-    Persistent proctored troubleshooting range with blind tickets, no-restart recovery, and captured command transcripts.
+# Enterprise Troubleshooting Range moved
 
-!!! note "Images"
-    `frr-lab:local`, `ops-lab:local`, and `ceos:4.35.2F`
-
-{% include-markdown "../../../labs/troubleshooting-range/README.md" %}
+This page now lives in the dedicated
+[Troubleshooting & Assessment track](../troubleshooting/troubleshooting-range.md).
