@@ -49,7 +49,7 @@ cEOS switches for access-layer CLI realism; the core, edge, and branch are FRR.
 HTTP endpoint on TCP/8080. The `internet1` segment is local-only test space; it
 is not the public Internet.
 
-## Wave 1 ticket catalog
+## Ticket catalog
 
 | Tier | Ticket | Domain | Time band |
 |---|---|---|---:|
@@ -65,6 +65,13 @@ is not the public Internet.
 | T3 | Internal portal appears down | Service return path | 60 min |
 | T3 | Corporate portal outage | Core return-path routing | 60 min |
 | T3 | Branch portal failure | Branch return-path routing | 60 min |
+| T1 | Corporate workstation intermittently isolated | ARP / neighbor cache | 15 min |
+| T1 | Voice provisioning name failure | Endpoint DNS | 15 min |
+| T2 | Core transit adjacency stuck | OSPF MTU negotiation | 35 min |
+| T2 | Voice subnet missing from remote sites | OSPF advertisement | 35 min |
+| T2 | Corporate services path drift | OSPF metric / path selection | 35 min |
+| T3 | Guest portal resolves incorrectly | DNS data | 60 min |
+| T3 | Voice-only portal timeout | Service policy / ACL | 60 min |
 
 ## Assessment workflow
 

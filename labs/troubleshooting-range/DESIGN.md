@@ -78,6 +78,33 @@ headroom during fault recovery.
 Do not add a third cEOS node unless the measured steady state still leaves at
 least 5 GiB available on the 16 GiB host.
 
+## CCNP expansion decision
+
+The version 1 topology should remain the fast, single-area assessment range.
+It still has enough independent paths and client perspectives for OSPF state,
+metric, route-origination, ARP, DNS, and service-policy tickets. Wave 2 uses
+those capabilities without adding nodes, which keeps startup time, memory use,
+and the reset contract unchanged.
+
+A separate version 2 topology is justified for technologies whose healthy
+state cannot be represented honestly in version 1. Do not bolt these onto the
+current range as one-off injectors; give them explicit golden-state and health
+assertions from the start.
+
+| Version 2 capability | Minimum topology addition | Candidate fault families |
+|---|---|---|
+| eBGP internet edge | ISP router plus expected-prefix and path-policy gates | AS mismatch, prefix-list direction, local preference, MED, next-hop reachability |
+| Redundant switched campus | L2 triangle, trunk links, and a second host per VLAN | native/allowed VLAN mismatch, STP root drift, BPDU guard, EtherChannel inconsistency |
+| First-hop redundancy | dual routed SVIs with VRRP/VARP and tracked uplinks | priority/preemption, virtual IP, failed tracking, asymmetric gateway state |
+| Stateful edge policy and NAT | dedicated firewall namespace and inside/outside probes | ACL order, missing return rule, NAT exemption, overload pool, PMTUD/ICMP filtering |
+| Enterprise services | DHCP relay/server, NTP, syslog, and AAA probes | helper address, scope exhaustion, time source, logging destination, AAA fallback |
+| Dual stack and QoS | IPv6 addressing plus controlled traffic generators | RA/default route, OSPFv3, IPv6 ACL, DSCP trust, classification and queuing |
+
+Recommended sequence: land the version 1 Wave 2 tickets first, then fork a
+`troubleshooting-range-advanced` lab around the BGP edge and switched-campus
+additions. Those two additions unlock the largest number of distinct CCNP
+diagnostic patterns without requiring a third cEOS node.
+
 ## Attempts and evidence
 
 Each assessment attempt is stored outside the lab directory at

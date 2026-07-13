@@ -44,6 +44,21 @@ check_neighbors frr branch1 1
 check_ping "corp reaches branch client" corp1 10.250.50.10
 check_ping "guest reaches internet-test endpoint" guest1 198.18.0.10
 check_ping "branch reaches services" branch-client 10.250.40.10
+check_ping "branch reaches voice endpoint" branch-client 10.250.20.10
+
+core_mtu="$(node core1 "cat /sys/class/net/eth3/mtu" || true)"
+if [[ "$core_mtu" == 1500 ]]; then
+    ok "core1/core2 transit MTU is 1500"
+else
+    bad "core1/core2 transit MTU" "expected 1500, got ${core_mtu:-unknown}"
+fi
+
+service_route="$(eos acc1 'show ip route 10.250.40.10' || true)"
+if [[ "$service_route" == *'via 10.250.0.0, Ethernet1'* ]]; then
+    ok "corporate access uses the primary services path"
+else
+    bad "corporate services path" "expected next hop 10.250.0.0 on Ethernet1"
+fi
 
 dns_output="$(node corp1 'timeout 3 nslookup web.range.test 10.250.40.10' || true)"
 if [[ "$dns_output" == *'10.250.40.10'* ]]; then
@@ -55,6 +70,18 @@ if node corp1 'python3 -c "import socket; socket.create_connection((\"10.250.40.
     ok "corp opens TCP/8080 to web service"
 else
     bad "corp web reachability" "TCP/8080 connection failed"
+fi
+
+voice_dns="$(node voice1 'timeout 3 getent ahostsv4 web.range.test' || true)"
+if [[ "$voice_dns" == *'10.250.40.10'* ]]; then
+    ok "voice resolves web.range.test through configured DNS"
+else
+    bad "voice DNS resolution" "configured resolver did not return 10.250.40.10"
+fi
+if node voice1 'python3 -c "import socket; socket.create_connection((\"10.250.40.10\", 8080), 2).close()"'; then
+    ok "voice opens TCP/8080 to web service"
+else
+    bad "voice web reachability" "TCP/8080 connection failed"
 fi
 
 echo "Results: $pass passed, $fail failed"

@@ -10,3 +10,13 @@ Golden service expectations:
 
   From branch-client:
     ping -c 1 10.250.40.10
+    ping -c 1 10.250.20.10
+
+  From voice1:
+    getent ahostsv4 web.range.test
+    python3 -c 'import socket; socket.create_connection(("10.250.40.10", 8080), 2).close()'
+
+Golden routed-path expectations:
+
+  acc1 reaches 10.250.40.0/24 via 10.250.0.0 on Ethernet1 at metric 20.
+  core1 eth3 and core2 eth3 use MTU 1500 and form a Full adjacency.
