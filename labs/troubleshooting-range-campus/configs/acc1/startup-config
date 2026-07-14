@@ -1,0 +1,51 @@
+hostname acc1
+!
+no ip routing
+!
+spanning-tree mode rstp
+!
+vlan 10
+   name CORPORATE
+!
+vlan 20
+   name VOICE
+!
+interface Port-Channel1
+   description to-dist1 LACP campus trunk
+   switchport mode trunk
+   switchport trunk allowed vlan 10,20
+   no shutdown
+!
+interface Ethernet1
+   description to-dist1 bundle member 1
+   channel-group 1 mode active
+   no shutdown
+!
+interface Ethernet2
+   description to-dist1 bundle member 2
+   channel-group 1 mode active
+   no shutdown
+!
+interface Ethernet3
+   description to-campus1 corporate desk
+   switchport mode access
+   switchport access vlan 10
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet4
+   description to-voice1 voice endpoint
+   switchport mode access
+   switchport access vlan 20
+   spanning-tree portfast
+   no shutdown
+!
+interface Ethernet5
+   description to-rogue1 protected meeting-room edge
+   switchport mode access
+   switchport access vlan 10
+   spanning-tree portfast
+   spanning-tree bpduguard enable
+   no shutdown
+!
+end

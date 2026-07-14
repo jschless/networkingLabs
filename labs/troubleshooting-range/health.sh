@@ -46,6 +46,16 @@ check_ping "guest reaches internet-test endpoint" guest1 198.18.0.10
 check_ping "branch reaches services" branch-client 10.250.40.10
 check_ping "branch reaches voice endpoint" branch-client 10.250.20.10
 
+corp_address="$(node corp1 "ip -o -4 addr show dev eth1 scope global" || true)"
+corp_default="$(node corp1 "ip route show default" || true)"
+if grep -q 'inet 10.250.10.10/24 ' <<<"$corp_address" \
+    && ! grep -q 'inet 10.250.10.1/24 ' <<<"$corp_address" \
+    && [[ "$corp_default" == 'default via 10.250.10.1 dev eth1'* ]]; then
+    ok "corporate endpoint addressing is golden"
+else
+    bad "corporate endpoint addressing" "expected unique 10.250.10.10/24 and default via 10.250.10.1"
+fi
+
 core_mtu="$(node core1 "cat /sys/class/net/eth3/mtu" || true)"
 if [[ "$core_mtu" == 1500 ]]; then
     ok "core1/core2 transit MTU is 1500"
@@ -70,6 +80,27 @@ if node corp1 'python3 -c "import socket; socket.create_connection((\"10.250.40.
     ok "corp opens TCP/8080 to web service"
 else
     bad "corp web reachability" "TCP/8080 connection failed"
+fi
+
+service_queue="$(node services1 "ss -H -lnt '( sport = :8080 )' | awk '{print \$2}'" || true)"
+if node services1 "pgrep -f 'python3 -m http.server 8080'" >/dev/null && [[ "${service_queue:-1}" -eq 0 ]]; then
+    ok "web service process is accepting sessions"
+else
+    bad "web service process" "approved listener is absent or its accept queue is not empty"
+fi
+
+services_qdisc="$(node core1 'tc qdisc show dev eth5' || true)"
+if [[ "$services_qdisc" != *netem* ]]; then
+    ok "services link has no impairment qdisc"
+else
+    bad "services link qdisc" "unexpected netem policy is active"
+fi
+
+corp_port_range="$(node corp1 'sysctl -n net.ipv4.ip_local_port_range' || true)"
+if [[ "$corp_port_range" == $'32768\t60999' || "$corp_port_range" == '32768 60999' ]]; then
+    ok "corp TCP ephemeral port range is golden"
+else
+    bad "corp TCP ephemeral port range" "expected 32768-60999, got ${corp_port_range:-unknown}"
 fi
 
 voice_dns="$(node voice1 'timeout 3 getent ahostsv4 web.range.test' || true)"

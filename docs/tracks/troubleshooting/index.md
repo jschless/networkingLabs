@@ -19,8 +19,9 @@ and no-restart golden-state reset.
 
 | Range | Tickets | Focus | Suggested readiness |
 |---|---:|---|---|
-| [Enterprise Troubleshooting Range](troubleshooting-range.md) | 19 | Access, addressing, OSPF, forwarding, DNS, and service policy | After the core routing and Operations labs |
-| [Advanced Edge Troubleshooting Range](troubleshooting-range-advanced.md) | 6 | eBGP, iBGP, redistribution, NAT, and PMTUD | After BGP, route control, and enterprise-edge labs |
+| [Enterprise Troubleshooting Range](troubleshooting-range.md) | 24 | Access, addressing, OSPF, forwarding, DNS, TCP, and service policy | After the core routing and Operations labs |
+| [Advanced Edge Troubleshooting Range](troubleshooting-range-advanced.md) | 8 | eBGP, iBGP, containment, redistribution, NAT, and PMTUD | After BGP, route control, and enterprise-edge labs |
+| [Campus Troubleshooting Range](troubleshooting-range-campus.md) | 4 | STP, LACP, VLAN forwarding, and protected access ports | After Layer 2 campus and access-security labs |
 
 ## Recommended Progression
 
@@ -29,5 +30,5 @@ and no-restart golden-state reset.
 3. Review evidence quality and repeat weak diagnostic domains.
 4. Attempt the advanced edge range under the published time limits.
 
-The two ranges currently provide 25 blind tickets across T1, T2, and T3
+The three ranges currently provide 36 blind tickets across T1, T2, and T3
 diagnostic-distance tiers.

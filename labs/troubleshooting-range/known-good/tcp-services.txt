@@ -1,0 +1,14 @@
+# Golden TCP service and client expectations
+
+services1 listens on 10.250.40.10:8080 (not loopback-only).
+The idle listener has an empty receive queue and accepts new sessions.
+Corporate clients use the Linux default ephemeral range 32768-60999.
+New TCP/8080 connections succeed from both corporate and voice clients.
+Repeated DNS, ICMP, and HTTP checks complete without intermittent loss.
+
+Useful comparison commands:
+  services1: ss -lntp '( sport = :8080 )'
+  services1: ss -lnt '( sport = :8080 )'
+  corp1:     sysctl net.ipv4.ip_local_port_range
+  corp1:     ss -tan '( dport = :8080 )'
+  corp1:     ping -c 10 10.250.40.10

@@ -184,7 +184,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
 <div class="grid cards" markdown>
 
-- :material-stethoscope: **Troubleshooting & Assessment** (2 ranges, 25 tickets)
+- :material-stethoscope: **Troubleshooting & Assessment** (3 ranges, 36 tickets)
 
     ---
     Progress from 15 guided debug labs with hints and solutions to blind,
