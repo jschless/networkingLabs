@@ -27,6 +27,21 @@ check_bgp edge2 10.251.0.4
 check_bgp isp1 192.0.2.5
 check_bgp isp2 192.0.2.7
 
+edge1_running="$(frr edge1 'show running-config' || true)"
+if [[ "$edge1_running" != *'network 10.251.10.0/24'* && "$edge1_running" != *'maximum-prefix'* ]]; then
+  ok 'edge1 has no private-prefix origination or stale prefix ceiling'
+else
+  bad 'edge1 BGP containment baseline' 'unexpected private network statement or maximum-prefix override'
+fi
+
+leaked_route="$(frr internet-core 'show bgp ipv4 unicast 10.251.10.0/24' || true)"
+extra_provider_route="$(frr internet-core 'show bgp ipv4 unicast 203.0.113.0/24' || true)"
+if [[ "$leaked_route" == *'not in table'* && "$extra_provider_route" == *'not in table'* ]]; then
+  ok 'external BGP table contains only approved baseline prefixes'
+else
+  bad 'external BGP baseline' 'private leak or maintenance-only provider prefix remains'
+fi
+
 edge1_route="$(frr edge1 'show bgp ipv4 unicast 198.18.10.0/24' || true)"
 [[ "$edge1_route" == *'192.0.2.1'* && "$edge1_route" == *'localpref 200'* ]] && ok 'edge1 prefers ISP1 at local preference 200' || bad 'edge1 internet path' 'ISP1/local-pref 200 is not selected'
 edge2_route="$(frr edge2 'show bgp ipv4 unicast 198.18.10.0/24' || true)"

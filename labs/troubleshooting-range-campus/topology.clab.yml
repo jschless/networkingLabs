@@ -1,0 +1,46 @@
+name: troubleshooting-range-campus
+
+mgmt:
+  network: clab-troubleshooting-range-campus-mgmt
+  ipv4-subnet: 172.30.253.0/24
+
+topology:
+  nodes:
+    dist1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist1/startup-config
+    acc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc1/startup-config
+    campus1:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/campus1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    voice1:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/voice1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    dhcp1:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - "configs/dhcp1/reset.sh:/opt/range/golden/reset.sh:ro"
+        - "configs/dhcp1/dnsmasq.conf:/etc/dnsmasq.conf.orig:ro"
+      exec: ["sh /opt/range/golden/reset.sh"]
+    rogue1:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/rogue1/reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+
+  links:
+    - endpoints: ["dist1:eth1", "acc1:eth1"]
+    - endpoints: ["dist1:eth2", "acc1:eth2"]
+    - endpoints: ["dist1:eth3", "dhcp1:eth1"]
+    - endpoints: ["acc1:eth3", "campus1:eth1"]
+    - endpoints: ["acc1:eth4", "voice1:eth1"]
+    - endpoints: ["acc1:eth5", "rogue1:eth1"]

@@ -219,6 +219,7 @@ nav:
     - Proctored Assessment Ranges:
       - Enterprise Troubleshooting Range: tracks/troubleshooting/troubleshooting-range.md
       - Advanced Edge Troubleshooting Range: tracks/troubleshooting/troubleshooting-range-advanced.md
+      - Campus Troubleshooting Range: tracks/troubleshooting/troubleshooting-range-campus.md
   - Security Operations (SOC):
     - tracks/security-infrastructure/index.md
     - soc-dmz-foundation: tracks/security-infrastructure/soc-dmz-foundation.md

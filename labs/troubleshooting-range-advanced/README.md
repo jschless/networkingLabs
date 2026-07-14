@@ -29,6 +29,8 @@ core-to-edge path has a controlled 1400-byte bottleneck for PMTUD assessment.
 | T2 | Preferred provider accepts no service prefix | BGP prefix policy | 35 min |
 | T2 | Backup edge cannot use preferred route | iBGP next-hop resolution | 35 min |
 | T2 | Primary internet route missing internally | OSPF/BGP boundary | 35 min |
+| T2 | Provider reports an internal prefix leak | BGP export containment | 35 min |
+| T2 | Preferred provider resets after route expansion | BGP maximum-prefix | 35 min |
 | T3 | Corporate internet requests receive no replies | Source NAT | 60 min |
 | T3 | Large downloads stall while small requests work | PMTUD / ICMP policy | 60 min |
 

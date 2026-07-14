@@ -5,3 +5,6 @@ ip addr flush dev eth1 scope global || true
 ip addr add 10.250.10.10/24 dev eth1
 ip route replace default via 10.250.10.1
 ip neigh flush dev eth1 || true
+pkill -f range_ephemeral_holder 2>/dev/null || true
+pkill -f range_accept_client 2>/dev/null || true
+sysctl -q -w 'net.ipv4.ip_local_port_range=32768 60999'

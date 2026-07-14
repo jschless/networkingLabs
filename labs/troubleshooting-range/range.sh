@@ -67,6 +67,7 @@ restore_golden() {
     for n in acc1 acc2; do eos "$n" 'configure replace flash:range-golden.cfg' >/dev/null; done
     for n in "${frr_nodes[@]}"; do
         node "$n" /usr/lib/frr/frr-reload.py --reload /opt/range/golden/frr.conf --overwrite >/dev/null
+        node "$n" sh -lc 'for path in /sys/class/net/eth*; do dev=${path##*/}; tc qdisc del dev "$dev" root 2>/dev/null || true; done'
     done
     for n in "${linux_nodes[@]}"; do node "$n" sh /opt/range/golden/reset.sh; done
 }

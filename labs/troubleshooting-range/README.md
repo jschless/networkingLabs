@@ -66,12 +66,17 @@ is not the public Internet.
 | T3 | Corporate portal outage | Core return-path routing | 60 min |
 | T3 | Branch portal failure | Branch return-path routing | 60 min |
 | T1 | Corporate workstation intermittently isolated | ARP / neighbor cache | 15 min |
+| T1 | Readdressed corporate desk offline | Duplicate IPv4 / gateway address | 15 min |
 | T1 | Voice provisioning name failure | Endpoint DNS | 15 min |
+| T1 | Portal refusing remote connections | TCP listener scope | 15 min |
 | T2 | Core transit adjacency stuck | OSPF MTU negotiation | 35 min |
 | T2 | Voice subnet missing from remote sites | OSPF advertisement | 35 min |
 | T2 | Corporate services path drift | OSPF metric / path selection | 35 min |
+| T2 | Corporate client cannot open new sessions | TCP ephemeral ports | 35 min |
+| T2 | Portal listener stops taking sessions | TCP accept queue | 35 min |
 | T3 | Guest portal resolves incorrectly | DNS data | 60 min |
 | T3 | Voice-only portal timeout | Service policy / ACL | 60 min |
+| T3 | Internal portal fails intermittently | Services-path packet loss | 60 min |
 
 ## Assessment workflow
 
@@ -109,6 +114,7 @@ causes.
 - `known-good/ospf-neighbours.txt` — OSPF neighbour expectations
 - `known-good/services.txt` — service checks
 - `known-good/access-ports.txt` — access-port reference
+- `known-good/tcp-services.txt` — listener and client ephemeral-port expectations
 
 ## Proctor quick reference
 
