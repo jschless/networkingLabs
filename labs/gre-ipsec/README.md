@@ -149,7 +149,7 @@ ESP — then capture *inside* the tunnel and confirm the overlay is
 unchanged.
 
 ```bash
-./scripts/lab.sh capture gre-ipsec internet eth1 'udp port 500 or udp port 4500 or esp or gre'
+./scripts/lab.sh capture gre-ipsec internet eth1 'udp.port == 500 || udp.port == 4500 || esp || gre'
 ./scripts/lab.sh capture gre-ipsec gw-a tun0 'icmp'
 ```
 
