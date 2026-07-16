@@ -3,4 +3,9 @@ set -euo pipefail
 ip addr add 10.70.10.10/24 dev eth1
 ip route replace default via 10.70.10.1
 ip link set eth1 up
-while true; do printf 'corp application\n' | nc -l -p 8443 -q 1 2>/dev/null || true; done &
+cat >/tmp/app-response.sh <<'EOF'
+#!/bin/bash
+printf 'corp application\n'
+EOF
+chmod +x /tmp/app-response.sh
+nohup socat TCP-LISTEN:8443,reuseaddr,fork EXEC:/tmp/app-response.sh >/tmp/app.log 2>&1 &

@@ -14,15 +14,12 @@ address=/public.lab/198.51.100.10
 EOF
 nohup dnsmasq --keep-in-foreground --conf-file=/tmp/dnsmasq.conf >/tmp/dnsmasq.log 2>&1 &
 
-cat >/tmp/serve-http.sh <<'EOF'
+cat >/tmp/http-response.sh <<'EOF'
 #!/bin/bash
-RESPONSE="HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 32\r\nConnection: close\r\n\r\nHello from the public internet!\n"
-while true; do
-    printf "$RESPONSE" | nc -l -p 80 -q 1 2>/dev/null || true
-done
+printf 'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 32\r\nConnection: close\r\n\r\nHello from the public internet!\n'
 EOF
-chmod +x /tmp/serve-http.sh
-nohup bash /tmp/serve-http.sh >/tmp/http.log 2>&1 &
+chmod +x /tmp/http-response.sh
+nohup socat TCP-LISTEN:80,reuseaddr,fork EXEC:/tmp/http-response.sh >/tmp/http.log 2>&1 &
 
 openssl req -x509 -nodes -newkey rsa:2048 \
   -keyout /tmp/public.key -out /tmp/public.crt \
