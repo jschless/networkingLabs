@@ -57,9 +57,16 @@ computer. Stop the VM with
 
 ## Task 1 — Assign interfaces and establish the edge
 
-Assign the five data NICs, set the table addresses, and add the default route
-through `203.0.113.1`. Verify every directly connected host reaches its local
-gateway and that the firewall can resolve/reach the public-test network.
+Assign the five data NICs, set the table addresses, and create `WAN_GW` on
+`vtnet1` with gateway address `203.0.113.1` (mark it **Upstream**). Verify the
+default route in **System -> Routes -> Status** and that the firewall can
+resolve/reach the public-test network.
+
+At this stage, each connected host should resolve the MAC address of its local
+gateway, but ICMP echo requests to that gateway are expected to fail. OPNsense
+has no pass rules on the new inside interfaces yet, so its default-deny policy
+blocks the first IP packet. Add the narrow ICMP rules in Task 3 before using
+gateway pings as a reachability test.
 
 **Predict first:** with no pass rules, which data-plane flow does OPNsense
 allow? Where will a rejected first packet be visible?
@@ -74,6 +81,9 @@ later rules; do not scatter literal addresses and ports through rules.
 
 Create and log these explicit policies:
 
+0. On CORP, GUEST, DMZ, and DB, permit ICMP echo requests from the interface
+   network to that interface's address. This is the local-gateway ping rule;
+   it does not permit traffic through the firewall.
 1. GUEST to CORP: deny.
 2. GUEST to DB: deny.
 3. CORP to DMZ web: permit HTTP/HTTPS.
