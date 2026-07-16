@@ -1,0 +1,73 @@
+name: opnsense-ngfw-basics
+
+# OPNsense NGFW Basics
+#
+# Containerlab deploys the surrounding hosts and five host bridges.
+# A separate QEMU/KVM OPNsense VM attaches to those bridges as vtnet1..vtnet5.
+# The OPNsense management plane stays on a QEMU user-mode NIC exposed on
+# localhost ports 2222/8080/8443.
+
+topology:
+  defaults:
+    kind: linux
+    image: opnsense-tools:local
+
+  nodes:
+    br-ngfw-wan:
+      kind: bridge
+
+    br-ngfw-corp:
+      kind: bridge
+
+    br-ngfw-guest:
+      kind: bridge
+
+    br-ngfw-dmz:
+      kind: bridge
+
+    br-ngfw-db:
+      kind: bridge
+
+    isp:
+      binds:
+        - configs/isp/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    internet-client:
+      binds:
+        - configs/internet-client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    corp-client:
+      binds:
+        - configs/corp-client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    guest-client:
+      binds:
+        - configs/guest-client/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    dmz-web:
+      binds:
+        - configs/dmz-web/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    db-server:
+      binds:
+        - configs/db-server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["br-ngfw-wan:eth1", "isp:eth1"]
+    - endpoints: ["isp:eth2", "internet-client:eth1"]
+    - endpoints: ["br-ngfw-corp:eth2", "corp-client:eth1"]
+    - endpoints: ["br-ngfw-guest:eth3", "guest-client:eth1"]
+    - endpoints: ["br-ngfw-dmz:eth4", "dmz-web:eth1"]
+    - endpoints: ["br-ngfw-db:eth5", "db-server:eth1"]

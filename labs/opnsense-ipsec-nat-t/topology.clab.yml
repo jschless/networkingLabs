@@ -1,0 +1,37 @@
+name: opnsense-ipsec-nat-t
+
+# Two external OPNsense VMs attach to these bridges.  nat-cpe makes the branch
+# WAN private and forwards UDP/500 + UDP/4500, forcing IKEv2 NAT traversal.
+topology:
+  defaults:
+    kind: linux
+    image: opnsense-tools:local
+  nodes:
+    br-public:
+      kind: bridge
+    br-private-wan:
+      kind: bridge
+    br-hq-lan:
+      kind: bridge
+    br-branch-lan:
+      kind: bridge
+    nat-cpe:
+      binds:
+        - configs/nat-cpe/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    hq-host:
+      binds:
+        - configs/hq-host/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    branch-host:
+      binds:
+        - configs/branch-host/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+  links:
+    - endpoints: ["br-public:eth1", "nat-cpe:eth1"]
+    - endpoints: ["br-private-wan:eth2", "nat-cpe:eth2"]
+    - endpoints: ["br-hq-lan:eth3", "hq-host:eth1"]
+    - endpoints: ["br-branch-lan:eth4", "branch-host:eth1"]

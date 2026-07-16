@@ -1,0 +1,40 @@
+name: opnsense-remote-access-concentrator
+
+# An external OPNsense VM is the concentrator.  The developer and contractor
+# containers are WireGuard road warriors after the learner configures them.
+topology:
+  defaults:
+    kind: linux
+    image: wireguard-lab:local
+  nodes:
+    br-remote-wan:
+      kind: bridge
+    br-corp:
+      kind: bridge
+    developer:
+      binds:
+        - configs/developer/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    contractor:
+      binds:
+        - configs/contractor/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    corp-app:
+      image: opnsense-tools:local
+      binds:
+        - configs/corp-app/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    jump-host:
+      image: opnsense-tools:local
+      binds:
+        - configs/jump-host/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+  links:
+    - endpoints: ["br-remote-wan:eth1", "developer:eth1"]
+    - endpoints: ["br-remote-wan:eth2", "contractor:eth1"]
+    - endpoints: ["br-corp:eth3", "corp-app:eth1"]
+    - endpoints: ["br-corp:eth4", "jump-host:eth1"]

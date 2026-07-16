@@ -59,7 +59,7 @@ labs into an order.
 | 3.2.c eBGP between directly connected neighbors | ✅ | `bgp-basics`, `bgp-path-selection` |
 | 3.2.d Policy-based routing | ✅ | `route-maps-pbr` |
 | 3.3.a NTP and PTP | 🟡 | `enterprise-services-infra` (NTP), `enterprise-it-101/02-ntp-time-services` — PTP not covered |
-| 3.3.b NAT/PAT | 🟡 | `enterprise-edge-nat-firewall`, `enterprise-dmz` (+capstone), `fortigate-firewall-capstone` — nftables/FortiGate, not IOS `ip nat` syntax |
+| 3.3.b NAT/PAT | 🟡 | `enterprise-edge-nat-firewall`, `enterprise-dmz` (+capstone), `opnsense-ngfw-basics` — nftables/OPNsense, not IOS `ip nat` syntax |
 | 3.3.c FHRP (HSRP, VRRP) | 🟡 | `vrrp`, `ha-network-design-ceos` — VRRP hands-on; HSRP syntax is Cisco-only |
 | 3.3.d Multicast (RPF, PIM-SM, IGMP, SSM) | ✅ | `enterprise-multicast` |
 
@@ -82,7 +82,7 @@ labs into an order.
 | 5.2.a ACLs | ✅ | `acl-basics` |
 | 5.2.b CoPP | ✅ | `copp-basics` |
 | 5.3 REST API security | 🟡 | `automation-fundamentals` — basic auth, 401 vs JSON-RPC errors, HTTP→HTTPS hardening (break-it + extension); token auth/OAuth is theory |
-| 5.4.a–c Threat defense, endpoint security, NGFW | 🟡 | `fortigate-firewall-capstone`, `enterprise-edge-nat-firewall`, the SOC track (`soc-*`) — deeper than the exam needs, but not Cisco Firepower/ISE |
+| 5.4.a–c Threat defense, endpoint security, NGFW | ✅ | `opnsense-ngfw-basics`, `enterprise-edge-nat-firewall`, the SOC track (`soc-*`) — policy, NAT, logging, and Suricata IPS; not Cisco Firepower/ISE syntax |
 | 5.4.d TrustSec and MACsec | 🟡 | `macsec-basics` hands-on; TrustSec/SGT is Cisco-only (theory) |
 
 ### 6.0 Automation and Artificial Intelligence (15%)

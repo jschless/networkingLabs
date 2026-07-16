@@ -6,7 +6,7 @@ Hands-on labs across **three tracks**, all running locally on your own machine:
   [ContainerLab](https://containerlab.dev/) with [FRRouting](https://frrouting.org/),
   [Arista cEOS](https://www.arista.com/en/support/software-download),
   [VyOS](https://vyos.io/), [Nokia SR-Linux](https://learn.srlinux.dev/), and
-  [FortiGate](https://www.fortinet.com/).
+  [OPNsense](https://opnsense.org/).
 - **Security Operations (SOC)** — DMZ visibility, Zeek, Suricata, YARA, SIEM ingest,
   dashboards, threat intel, and incident response (also ContainerLab).
 - **Enterprise IT 101** — build a complete mini enterprise domain from scratch (AD, PKI, DNS,
@@ -120,10 +120,10 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Route Control track](tracks/route-control/index.md)
 
-- :material-tunnel: **Tunnels & VPN** (10 labs)
+- :material-tunnel: **Tunnels & VPN** (12 labs)
 
     ---
-    GRE, IPsec, DMVPN Phase 1/2/3, FlexVPN, WireGuard, VRF-Lite
+    GRE, IPsec, NAT-T, DMVPN Phase 1/2/3, FlexVPN, WireGuard, VPN concentration, VRF-Lite
 
     [:octicons-arrow-right-24: Tunnels & VPN track](tracks/tunnels-vpn/index.md)
 
@@ -165,7 +165,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 - :material-shield-lock: **Security** (8 labs)
 
     ---
-    ACLs, black-core routing, FortiGate firewall policy, MACsec, 802.1X/NAC, uRPF, CoPP, dot1x on EOS
+    ACLs, black-core routing, OPNsense NGFW policy and IPS, MACsec, 802.1X/NAC, uRPF, CoPP, dot1x on EOS
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 

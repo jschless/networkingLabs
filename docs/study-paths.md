@@ -59,7 +59,7 @@ show you:
 | **MQC QoS** (`class-map`/`policy-map`/`service-policy`) | Linux `tc` classification and scheduling (`qos-enterprise`) |
 | **HSRP and GLBP** | VRRP (`vrrp`, `ha-network-design-ceos`) — same FHRP concept, different protocol and CLI |
 | **Cisco NHRP/DMVPN syntax** (`ip nhrp map`, `tunnel mode gre multipoint`) | VyOS DMVPN (`dmvpn-phase1/2/3`) — identical NHRP behavior, different config grammar |
-| **IOS NAT** (`ip nat inside/outside`) | nftables and FortiGate NAT |
+| **IOS NAT** (`ip nat inside/outside`) | nftables and OPNsense NAT |
 | **LDP via IOS `mpls ip` syntax** | Real LDP on FRR (`mpls-ldp`) — identical protocol, FRR's `mpls ldp` config block instead; plus the SR alternative (`mpls-sr-*`) |
 | **Catalyst Center (DNA Center), SD-WAN Manager (vManage), ISE, EEM, LISP, TrustSec** | Nothing — these are products, not protocols, and can't be containerized here |
 
@@ -127,10 +127,11 @@ Capstones: enterprise-collapsed-core-capstone → enterprise-campus-capstone
 
 ```
 acl-basics → bgp-prefix-security → bgp-rpki
-ipsec-basics → gre-ipsec → black-core-routing → flexvpn-basics
+ipsec-basics → opnsense-ipsec-nat-t → gre-ipsec → black-core-routing → flexvpn-basics
+wireguard → opnsense-remote-access-concentrator
 macsec-basics → dot1x-nac → dot1x-ceos-practice
 urpf-antispoofing → copp-basics
-enterprise-edge-nat-firewall → fortigate-firewall-capstone
+enterprise-edge-nat-firewall → opnsense-ngfw-basics
 ```
 
 ## Security Infrastructure / SOC

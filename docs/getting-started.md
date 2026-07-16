@@ -26,8 +26,8 @@ topology wins.
 
 ### Provision everything for your architecture
 
-Both **Intel/Linux (amd64)** and **Apple Silicon (arm64)** are supported, and the same
-topology files run on either host. `scripts/build-images.sh` makes that work by filling each
+Both **Intel/Linux (amd64)** and **Apple Silicon (arm64)** are supported for the container labs,
+and `scripts/build-images.sh` makes that work by filling each
 image tag with content native to the machine it runs on:
 
 ```bash
@@ -47,6 +47,9 @@ It handles three image classes automatically:
 
 The two things it can't fetch for you are the **cEOS tarball** (licensed — see below) and
 **`vyos:local`** (needs a VyOS ISO for your arch, see [vyos.md](platforms/vyos.md)).
+
+> **OPNsense exception:** the OPNsense firewall/VPN labs run external x86-64
+> QEMU/KVM appliances and therefore require Linux/amd64 with `/dev/kvm`.
 
 > **Tip:** if you've ever set `DOCKER_DEFAULT_PLATFORM=linux/amd64` (a common Mac workaround),
 > `unset` it first — it forces amd64 pulls and silently defeats native arch selection.
@@ -86,7 +89,7 @@ demand — nothing to do.
    To import by hand instead: `docker import <tarball> ceos:4.35.2F`.
 
 `ceos` powers most routing, switching, data-center, and enterprise labs. SR-Linux is used only by
-`mpls-sr-srlinux` and `vxlan-evpn-srlinux`. FortiGate uses a separate VM flow (see below).
+`mpls-sr-srlinux` and `vxlan-evpn-srlinux`. OPNsense uses a separate VM flow (see below).
 
 ### Images you build
 
@@ -117,7 +120,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `lb-lab:local` | `load-balancer-basics` | `docker build -t lb-lab:local labs/load-balancer-basics/` |
 | `service-ha:local` | `service-ha` | `docker build -t service-ha:local labs/service-ha/` |
 | `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
-| `fortigate-tools:local` | `fortigate-firewall-capstone` | `docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/` |
+| `opnsense-tools:local` | `opnsense-ngfw-basics`, `opnsense-ipsec-nat-t` | `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/` |
 | `enterprise-services-infra:local` | `enterprise-services-infra` | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |
 | `enterprise-tacacs:local` | `aaa-ops-troubleshooting`, `enterprise-services-infra` | `docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/` |
 | `enterprise-access-tools:local` | `enterprise-access-security` | `docker build -t enterprise-access-tools:local labs/enterprise-access-security/` |
@@ -140,20 +143,11 @@ DMVPN labs), and `netboxcommunity/netbox:v4.1.11` + `postgres:15` + `redis:7-alp
 > Apple Silicon under emulation — fine for a lightweight auth daemon, just slower. Everything
 > else builds native.
 
-### FortiGate (separate VM flow)
+### OPNsense (separate VM flow)
 
-`fortigate-firewall-capstone` runs a FortiGate VM rather than a container. Confirm the source image,
-then let the lab extract and boot the VM:
-
-```bash
-docker image ls vrnetlab/vr-fortios:4.7.11
-sudo labs/fortigate-firewall-capstone/prepare-bridges.sh
-./scripts/lab.sh deploy fortigate-firewall-capstone
-labs/fortigate-firewall-capstone/extract-fortios.sh
-sudo labs/fortigate-firewall-capstone/start-fgt.sh
-```
-
-Note: manual license activation is required before the lab can be completed.
+The OPNsense labs run a local QEMU/KVM appliance alongside ContainerLab. Install
+the free OPNsense image once, create the reusable base disk, then start each
+lab's disposable overlay. See [OPNsense platform notes](platforms/opnsense.md).
 
 ## Enterprise IT 101 Images
 

@@ -1,13 +1,17 @@
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wireguard-tools \
+    curl \
+    dnsutils \
+    dnsmasq \
+    iptables \
     iproute2 \
     iputils-ping \
-    iptables \
-    net-tools \
     netcat-openbsd \
+    openssl \
+    procps \
+    socat \
     tcpdump \
     && rm -rf /var/lib/apt/lists/*
 
-CMD ["/bin/bash", "-c", "while true; do sleep 3600; done"]
+CMD ["sleep", "infinity"]

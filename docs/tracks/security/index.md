@@ -1,13 +1,13 @@
 # Security Track
 
-Eight labs covering ACL fundamentals, black-core routing, FortiGate firewall policy, MACsec encryption, 802.1X NAC, uRPF anti-spoofing, Control Plane Policing, and wired dot1x on Arista EOS.
+Eight labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, MACsec encryption, 802.1X NAC, uRPF anti-spoofing, Control Plane Policing, and wired dot1x on Arista EOS.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
 | [acl-basics](acl-basics.md) | Practice | FRR | Interface ACLs, default deny, source/protocol/port filtering, counters |
 | [macsec-basics](macsec-basics.md) | Practice | VyOS | IEEE 802.1AE MACsec, MKA key agreement, plain-vs-protected Ethernet |
 | [black-core-routing](black-core-routing.md) | Capstone | VyOS + Linux | Red/black separation, ciphertext underlay, plaintext overlay, packet-capture proof |
-| [fortigate-firewall-capstone](fortigate-firewall-capstone.md) | Capstone | FortiGate | Address objects, service groups, NAT, VIPs, ordered policy, logging |
+| [opnsense-ngfw-basics](opnsense-ngfw-basics.md) | Capstone | OPNsense | Aliases, NAT, DMZ publishing, state, logs, Suricata IPS |
 | [dot1x-nac](dot1x-nac.md) | Practice | Custom | 802.1X port auth, RADIUS, EAP, NAC enforcement |
 | [urpf-antispoofing](urpf-antispoofing.md) | Practice | FRR | Unicast RPF, source IP anti-spoofing, strict vs loose mode |
 | [copp-basics](copp-basics.md) | Practice | FRR | Control Plane Policing, traffic classification, rate limiting |
@@ -17,7 +17,7 @@ Eight labs covering ACL fundamentals, black-core routing, FortiGate firewall pol
 
 - **macsec-basics**: `vyos:local` — one-time build from a VyOS ISO, see [VyOS platform notes](../../platforms/vyos.md)
 - **black-core-routing**: `vyos:local` (see [VyOS platform notes](../../platforms/vyos.md)) and `docker build -t black-core-tools:local labs/black-core-routing/`
-- **FortiGate capstone**: `docker image ls vrnetlab/vr-fortios:4.7.11` and `docker build -t fortigate-tools:local labs/fortigate-firewall-capstone/`
+- **OPNsense NGFW**: local QEMU/KVM base image (see [OPNsense platform notes](../../platforms/opnsense.md)) and `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/`
 - **dot1x-nac**: `docker build -t nac-lab:local labs/dot1x-nac/`
 - **FRR labs**: `docker build -t frr-lab:local images/frr/`
 - **cEOS**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
