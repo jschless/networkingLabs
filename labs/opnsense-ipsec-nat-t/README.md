@@ -36,7 +36,21 @@ sudo labs/opnsense-ipsec-nat-t/start-opnsense.sh
 ```
 
 HQ GUI: `https://127.0.0.1:8544`; branch GUI:
-`https://127.0.0.1:8545`.
+`https://127.0.0.1:8545`. Both use username `root` and password `opnsense`.
+Local SSH is available on ports `2301` for HQ and `2302` for branch, using the
+same credentials.
+
+From another computer, forward both web interfaces through the lab machine:
+
+```bash
+ssh -N \
+  -L 8544:127.0.0.1:8544 \
+  -L 8545:127.0.0.1:8545 \
+  <lab-host-user>@<lab-host-ip>
+```
+
+Keep the session open, then browse to `https://127.0.0.1:8544` for HQ or
+`https://127.0.0.1:8545` for branch.
 
 ## Task 1 — Build the underlay
 

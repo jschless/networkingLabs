@@ -41,9 +41,19 @@ sudo labs/opnsense-ngfw-basics/prepare-bridges.sh
 sudo labs/opnsense-ngfw-basics/start-opnsense.sh
 ```
 
-Open `https://127.0.0.1:8444` or use
-`labs/opnsense-ngfw-basics/console-opnsense.sh`. The VM manager prints the SSH
-port as well. Stop it with `sudo labs/opnsense-ngfw-basics/stop-opnsense.sh`.
+Open `https://127.0.0.1:8444` and log in with username `root` and password
+`opnsense`, or use `labs/opnsense-ngfw-basics/console-opnsense.sh`. SSH is
+available locally with `ssh -p 2201 root@127.0.0.1` and uses the same password.
+
+From another computer, tunnel the web UI through SSH to the lab machine:
+
+```bash
+ssh -N -L 8444:127.0.0.1:8444 <lab-host-user>@<lab-host-ip>
+```
+
+Keep that session open and browse to `https://127.0.0.1:8444` on the other
+computer. Stop the VM with
+`sudo labs/opnsense-ngfw-basics/stop-opnsense.sh`.
 
 ## Task 1 — Assign interfaces and establish the edge
 
