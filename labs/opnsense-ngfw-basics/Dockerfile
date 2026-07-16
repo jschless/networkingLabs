@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     dnsutils \
     dnsmasq \
+    iptables \
     iproute2 \
     iputils-ping \
     netcat-openbsd \

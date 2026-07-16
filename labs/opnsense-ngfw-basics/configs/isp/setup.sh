@@ -15,5 +15,5 @@ ip route replace 172.16.10.0/24 via 203.0.113.2
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 echo "[isp] Ready"
-echo "  WAN toward FortiGate: 203.0.113.1/30"
+echo "  WAN toward OPNsense: 203.0.113.1/30"
 echo "  Public segment:       198.51.100.1/24"

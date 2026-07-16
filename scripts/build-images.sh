@@ -69,6 +69,7 @@ LOCAL_BUILDS=(
   "-t anycast-dns:local labs/anycast-dns/"
   "-t service-ha:local labs/service-ha/"
   "-t netbox-automation:local labs/network-automation-netbox/"
+  "-t opnsense-tools:local labs/opnsense-ngfw-basics/"
   "-t enterprise-services-infra:local labs/enterprise-services-infra/"
   "-t enterprise-access-tools:local labs/enterprise-access-security/"
   "-t enterprise-multicast:local labs/enterprise-multicast/"

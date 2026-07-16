@@ -6,11 +6,11 @@ if [[ "$(id -u)" -ne 0 ]]; then
     exit 1
 fi
 
-for bridge in br-fgt-wan br-fgt-corp br-fgt-guest br-fgt-dmz br-fgt-db; do
+for bridge in br-ngfw-wan br-ngfw-corp br-ngfw-guest br-ngfw-dmz br-ngfw-db; do
     if ! ip link show "$bridge" >/dev/null 2>&1; then
         ip link add name "$bridge" type bridge
     fi
     ip link set "$bridge" up
 done
 
-echo "FortiGate host bridges are ready."
+echo "OPNsense host bridges are ready."

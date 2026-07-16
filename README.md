@@ -3,15 +3,14 @@
 A local, self-hosted lab environment for hands-on practice across **three tracks**, all on
 your own machine — no cloud account, no license fees. Deploy, break things, learn.
 
-> Two caveats to "no fees": the Arista cEOS image requires a free arista.com account to
-> download, and the optional `fortigate-firewall-capstone` lab needs a FortiGate eval
-> license. Everything else is fully open source.
+> One caveat to "no fees": the Arista cEOS image requires a free arista.com account to
+> download. Everything else is fully open source.
 
 1. **Networking** — routing, switching, data center, tunnels/VPN, enterprise design
    (OSPF, BGP, IS-IS, EIGRP, MPLS/SR, VXLAN/EVPN, …) on
    [FRRouting](https://frrouting.org/), [Arista cEOS](https://www.arista.com/),
    [VyOS](https://vyos.io/), [Nokia SR-Linux](https://learn.srlinux.dev/), and
-   [FortiGate](https://www.fortinet.com/).
+   [OPNsense](https://opnsense.org/).
 2. **Security Operations (SOC)** — DMZ visibility, Zeek, Suricata, YARA, SIEM ingest,
    dashboards, threat intel, and incident-response workflow.
 3. **Enterprise IT 101** — build a complete mini enterprise domain from scratch:

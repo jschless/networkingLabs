@@ -121,6 +121,8 @@ nav:
       - dmvpn-phase3-ipsec-capstone: tracks/tunnels-vpn/dmvpn-phase3-ipsec-capstone.md
       - flexvpn-basics: tracks/tunnels-vpn/flexvpn-basics.md
       - wireguard: tracks/tunnels-vpn/wireguard.md
+      - opnsense-ipsec-nat-t: tracks/tunnels-vpn/opnsense-ipsec-nat-t.md
+      - opnsense-remote-access-concentrator: tracks/tunnels-vpn/opnsense-remote-access-concentrator.md
       - vrf-lite: tracks/tunnels-vpn/vrf-lite.md
     - MPLS & SP:
       - tracks/mpls-sp/index.md
@@ -177,7 +179,7 @@ nav:
       - acl-basics: tracks/security/acl-basics.md
       - macsec-basics: tracks/security/macsec-basics.md
       - black-core-routing: tracks/security/black-core-routing.md
-      - fortigate-firewall-capstone: tracks/security/fortigate-firewall-capstone.md
+      - opnsense-ngfw-basics: tracks/security/opnsense-ngfw-basics.md
       - dot1x-nac: tracks/security/dot1x-nac.md
       - urpf-antispoofing: tracks/security/urpf-antispoofing.md
       - copp-basics: tracks/security/copp-basics.md
@@ -253,7 +255,7 @@ nav:
   - Platforms:
     - FRR: platforms/frr.md
     - Arista cEOS: platforms/ceos.md
-    - FortiGate: platforms/fortigate.md
+    - OPNsense: platforms/opnsense.md
     - VyOS: platforms/vyos.md
     - Nokia SR-Linux: platforms/srlinux.md
   - Contributing: contributing.md
