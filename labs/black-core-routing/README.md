@@ -363,7 +363,7 @@ Re-test client traffic:
 Now capture on the black core again:
 
 ```bash
-./scripts/lab.sh capture black-core-routing core1 eth2 'esp || isakmp || udp port 4500 || gre'
+./scripts/lab.sh capture black-core-routing core1 eth2 'esp || isakmp || udp.port == 4500 || gre'
 ```
 
 What should change:

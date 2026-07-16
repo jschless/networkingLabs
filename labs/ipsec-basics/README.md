@@ -160,7 +160,7 @@ it.
 invisible (encrypted in ESP).
 
 ```bash
-./scripts/lab.sh capture ipsec-basics internet eth1 'udp port 500 or udp port 4500 or esp'
+./scripts/lab.sh capture ipsec-basics internet eth1 'udp.port == 500 || udp.port == 4500 || esp'
 # generate traffic: host-a ping host-b in another terminal
 ```
 
