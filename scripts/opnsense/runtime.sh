@@ -75,7 +75,7 @@ opnsense_start_vm() {
     local runtime_dir="$lab_dir/runtime/$name"
     local overlay="$runtime_dir/overlay.qcow2"
     local pidfile="$runtime_dir/$name.pid"
-    local qemu_args=() bridge tap tapfile index=1
+    local qemu_args=() bridge tap tapfile safe_name index=1
 
     opnsense_require_root
     opnsense_require_host
@@ -92,8 +92,12 @@ opnsense_start_vm() {
     done
 
     qemu-img create -q -f qcow2 -F qcow2 -b "$OPNSENSE_BASE_IMAGE" "$overlay"
+    # Linux limits interface names to 15 characters.  Keep taps deterministic
+    # and unique per VM without embedding the much longer bridge name.
+    safe_name="${name//[^[:alnum:]]/}"
+    safe_name="${safe_name:0:8}"
     for bridge in "${bridges[@]}"; do
-        tap="${name}-${bridge}"
+        tap="opn-${safe_name}-${index}"
         tapfile="$runtime_dir/${index}.tap"
         ip tuntap add dev "$tap" mode tap user root
         ip link set "$tap" master "$bridge"
