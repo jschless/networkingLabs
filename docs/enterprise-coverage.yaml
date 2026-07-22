@@ -53,12 +53,12 @@ topics:
     notes: Existing checked labs; SR-Linux reference material is supplementary.
   - domain: data center and DCI
     topic: multi-site data-center interconnect
-    level: 0
-    labs: []
-    fidelity: Planned standards-based routed DCI; vendor-specific EVPN Multi-Site features require a probe.
-    last_live_validation: null
+    level: 4
+    labs: [labs/dci-evpn-multisite]
+    fidelity: Live cEOS EVPN type-5 control/data plane over a routed DCI with Linux endpoints; not a vendor EVPN Multi-Site, L2 stretch, ESI, ASIC, or BUM-containment implementation.
+    last_live_validation: 2026-07-22
     owner: WP-03
-    notes: Planned as labs/dci-evpn-multisite (target level 4).
+    notes: Validated practice and RT-import Break-It; optional L2 stretch and mobility are deliberately excluded.
   - domain: data center and DCI
     topic: IP storage networking
     level: 0

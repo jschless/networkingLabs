@@ -1,0 +1,44 @@
+hostname b-bgw
+no aaa root
+ip routing
+vrf instance PROD
+ip routing vrf PROD
+vlan 10
+interface Loopback0
+ ip address 10.20.0.3/32
+interface Ethernet1
+ no switchport
+ description to b-spine 10.21.0.4/30
+ ip address 10.21.0.5/30
+interface Ethernet2
+ no switchport
+ description to a-bgw DCI 10.255.10.0/30
+ ip address 10.255.10.2/30
+interface Vlan10
+ vrf PROD
+ ip address virtual 172.17.10.1/24
+ no autostate
+interface Vxlan1
+ vxlan source-interface Loopback0
+ vxlan udp-port 4789
+ vxlan vlan 10 vni 10010
+ vxlan vrf PROD vni 50010
+ip virtual-router mac-address 00:1c:73:dc:10:01
+router bgp 65022
+ router-id 10.20.0.3
+ neighbor 10.21.0.6 remote-as 65120
+ neighbor 10.21.0.6 send-community extended
+ address-family ipv4
+  neighbor 10.21.0.6 activate
+  network 10.20.0.3/32
+ address-family evpn
+  neighbor 10.21.0.6 activate
+ vlan 10
+  rd auto
+  route-target both 65020:10010
+  redistribute learned
+ vrf PROD
+  rd 10.20.0.3:50010
+  route-target import evpn 65020:50010
+  route-target export evpn 65020:50010
+end

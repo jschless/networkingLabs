@@ -131,6 +131,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `suzieq-lab:local` | `suzieq-network-observability` | `docker build -t suzieq-lab:local labs/suzieq-network-observability/` |
 | `gcap-node:local` | `enterprise-grand-capstone` | `labs/enterprise-grand-capstone/gcap.sh build` (also ensures the EIT101 service images exist) |
 | `cloud-lab:local` | `cloud-hybrid-networking` | `docker build -t cloud-lab:local labs/cloud-hybrid-networking/` (pinned FRR 10.5.0 base plus BIND/nftables tools) |
+| `dci-endpoint:local` | `dci-evpn-multisite` | `docker build -t dci-endpoint:local -f labs/dci-evpn-multisite/Dockerfile.endpoint labs/dci-evpn-multisite/` (pinned `alpine:3.22.1` base with iproute2, ping, and tcpdump) |
 
 ### Images pulled automatically
 
