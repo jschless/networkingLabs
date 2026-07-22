@@ -52,6 +52,16 @@ If the lab introduces a new image, add it to the table in
 [getting-started](getting-started.md) and reference the build command in the lab README
 and its wrapper page.
 
+## Image pinning and validation records
+
+New or materially rebuilt labs must follow the
+[third-party image pinning and vulnerability-refresh policy](image-policy.md).
+Copy the standard [probe](https://github.com/jschless/networkingLabs/blob/main/labs/templates/PROBE.md)
+and [validation](https://github.com/jschless/networkingLabs/blob/main/labs/templates/VALIDATION.md)
+records into the lab, then keep the exact versions, commands, output summary,
+resource figures, and cleanup result. For evidence files, follow the
+[fixture rules](https://github.com/jschless/networkingLabs/blob/main/labs/fixtures/README.md).
+
 ## Platform Validation Before Rebuild
 
 Before migrating a lab from FRR to a router image:

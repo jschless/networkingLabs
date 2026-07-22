@@ -1,0 +1,10 @@
+topics:
+  - domain: test
+    topic: missing registration
+    level: 2
+    labs:
+      - labs/does-not-exist
+    fidelity: test fixture only
+    last_live_validation: null
+    owner: test
+    notes: Must fail because the lab path is absent.

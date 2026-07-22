@@ -1,0 +1,237 @@
+# Source inventory for docs/enterprise-coverage-map.md.  Level meanings are
+# defined in that page and in PLAN-enterprise-network-engineering-expansion.md.
+schema_version: 1
+updated: 2026-07-22
+topics:
+  - domain: campus LAN
+    topic: switching, access control, and campus resilience
+    level: 4
+    labs: [labs/vlan-trunks-switchport-basics, labs/stp-operations, labs/lacp-etherchannel, labs/campus-l2-hardening]
+    fidelity: Live cEOS/Linux switching and failure diagnosis; hardware ASIC counters are not emulated.
+    last_live_validation: null
+    owner: existing networking tracks
+    notes: Existing checked labs; validation dates have not been backfilled into this inventory.
+  - domain: campus LAN
+    topic: enterprise campus architecture and services
+    level: 3
+    labs: [labs/enterprise-collapsed-core, labs/enterprise-campus, labs/enterprise-routed-access, labs/enterprise-services-infra]
+    fidelity: Live cEOS/Linux topology with practice configuration; not a Catalyst hardware or controller replica.
+    last_live_validation: null
+    owner: existing enterprise track
+    notes: Existing checked labs; the shared blind-assessment expansion is planned separately.
+  - domain: WAN and overlay
+    topic: routed WAN, VPN, and segmentation
+    level: 4
+    labs: [labs/gre-basics, labs/ipsec-basics, labs/gre-ipsec, labs/dmvpn-phase3-ipsec-capstone, labs/vrf-lite]
+    fidelity: Live FRR/cEOS/VyOS control and data planes; vendor-specific CLI differs where noted in each lab.
+    last_live_validation: null
+    owner: existing tunnels and VPN track
+    notes: Existing checked labs.
+  - domain: WAN and overlay
+    topic: SD-WAN control and operations
+    level: 3
+    labs: [labs/sdwan-concepts]
+    fidelity: Live provider-neutral overlay mechanisms; not Cisco SD-WAN Manager or vManage product workflow.
+    last_live_validation: null
+    owner: WP-13
+    notes: Existing concepts lab; labs/sdwan-operations is planned for level 4.
+  - domain: cloud and hybrid
+    topic: transit, private DNS, inspection, and cloud route-table semantics
+    level: 0
+    labs: []
+    fidelity: Planned provider-neutral Linux/cEOS lab; no cloud control-plane or billing claim.
+    last_live_validation: null
+    owner: WP-01
+    notes: Planned as labs/cloud-hybrid-networking (target level 4).
+  - domain: data center and DCI
+    topic: fabric, VXLAN, and EVPN
+    level: 4
+    labs: [labs/spine-leaf, labs/vxlan-evpn, labs/evpn-border-ceos, labs/debug-vxlan-evpn]
+    fidelity: Live cEOS EVPN/VXLAN control and data plane; no ASIC or vendor-controller fidelity claim.
+    last_live_validation: null
+    owner: existing data-center track
+    notes: Existing checked labs; SR-Linux reference material is supplementary.
+  - domain: data center and DCI
+    topic: multi-site data-center interconnect
+    level: 0
+    labs: []
+    fidelity: Planned standards-based routed DCI; vendor-specific EVPN Multi-Site features require a probe.
+    last_live_validation: null
+    owner: WP-03
+    notes: Planned as labs/dci-evpn-multisite (target level 4).
+  - domain: data center and DCI
+    topic: IP storage networking
+    level: 0
+    labs: []
+    fidelity: Planned live Ethernet/IP storage paths; not Fibre Channel or RoCE hardware emulation.
+    last_live_validation: null
+    owner: WP-11
+    notes: Planned as labs/dc-storage-networking (target level 4).
+  - domain: data center and DCI
+    topic: Fibre Channel, FCoE, and RoCE hardware evidence
+    level: 0
+    labs: []
+    fidelity: Planned provenance-controlled evidence pack only; no synthetic hardware telemetry.
+    last_live_validation: null
+    owner: WP-11
+    notes: Planned fixture pack alongside the storage lab (target level 1).
+  - domain: internet edge
+    topic: interdomain routing and prefix security
+    level: 4
+    labs: [labs/bgp-basics, labs/bgp-filtering, labs/bgp-prefix-security, labs/bgp-rpki, labs/bgp-labeled-unicast]
+    fidelity: Live BGP policy and validation mechanisms; no production RIR or transit-provider workflow.
+    last_live_validation: null
+    owner: existing BGP track
+    notes: Existing checked labs.
+  - domain: internet edge
+    topic: internet peering and exchange operations
+    level: 0
+    labs: []
+    fidelity: Planned multi-AS exchange/peering lab with evidence-only external business processes.
+    last_live_validation: null
+    owner: WP-07
+    notes: Planned as labs/internet-peering-ixp (target level 4).
+  - domain: wireless
+    topic: wireless architecture and access-policy concepts
+    level: 1
+    labs: [labs/enterprise-wireless-architecture]
+    fidelity: Architecture and Ethernet access-policy approximation only; no RF, association, or roaming claim.
+    last_live_validation: null
+    owner: existing enterprise track
+    notes: Current material is evidence/theory, not a live WLAN implementation.
+  - domain: wireless
+    topic: WLAN association, authentication, roaming, and wired policy
+    level: 0
+    labs: []
+    fidelity: Planned virtual-radio lab only if the host probe succeeds; otherwise narrowed to honest evidence/live control scope.
+    last_live_validation: null
+    owner: WP-02
+    notes: Planned as labs/wireless-core-operations (target level 4).
+  - domain: wireless
+    topic: RF survey and spectrum interpretation
+    level: 0
+    labs: []
+    fidelity: Planned labeled evidence pack; no fabricated RSSI, SNR, or airtime measurements.
+    last_live_validation: null
+    owner: WP-02
+    notes: Planned fixture pack (target level 1).
+  - domain: mobile
+    topic: private mobile core and enterprise attachment
+    level: 0
+    labs: []
+    fidelity: Planned open-source core and simulated UE behavior; no cellular RF or commercial RAN claim.
+    last_live_validation: null
+    owner: WP-05
+    notes: Planned as labs/private-5g-enterprise (target level 4).
+  - domain: mobile
+    topic: mobile transport, QoS, and timing seam
+    level: 0
+    labs: []
+    fidelity: Planned IP transport practice; hardware timing accuracy remains evidence-only.
+    last_live_validation: null
+    owner: WP-05
+    notes: Planned as labs/mobile-transport-timing (target level 3).
+  - domain: security
+    topic: network access control, segmentation, firewalling, and detection
+    level: 4
+    labs: [labs/dot1x-nac, labs/enterprise-access-security, labs/enterprise-edge-nat-firewall, labs/opnsense-ngfw-basics, labs/soc-suricata-ids]
+    fidelity: Live policy, identity, firewall, and detection paths; proprietary product features are separately labeled.
+    last_live_validation: null
+    owner: existing security and SOC tracks
+    notes: Existing checked labs.
+  - domain: security
+    topic: identity-aware zero-trust secure access
+    level: 0
+    labs: []
+    fidelity: Planned standards-based identity and policy enforcement; not a commercial ZTNA product replica.
+    last_live_validation: null
+    owner: WP-06
+    notes: Planned as labs/zero-trust-secure-access (target level 4).
+  - domain: security
+    topic: advanced security architecture
+    level: 0
+    labs: []
+    fidelity: Planned Linux/NGFW-capability-dependent architecture; application identification and product feeds require evidence.
+    last_live_validation: null
+    owner: WP-14
+    notes: Planned as labs/advanced-security-architecture (target level 4).
+  - domain: operations
+    topic: assurance, telemetry, and network automation
+    level: 3
+    labs: [labs/network-assurance, labs/telemetry-monitoring-hybrid, labs/automation-fundamentals, labs/network-automation-netbox]
+    fidelity: Live telemetry, APIs, and automation workflows; controller-specific APIs are not claimed.
+    last_live_validation: null
+    owner: existing operations track
+    notes: Existing checked labs.
+  - domain: operations
+    topic: GitOps change validation and rollback
+    level: 0
+    labs: []
+    fidelity: Planned local repository/pipeline practice; no hosted CI service claim.
+    last_live_validation: null
+    owner: WP-12
+    notes: Planned as labs/network-gitops-change-pipeline (target level 4).
+  - domain: IPv6
+    topic: IPv6 routing, access services, and transition mechanisms
+    level: 3
+    labs: [labs/ipv6-ospf3, labs/ipv6-bgp, labs/ipv6-access-services, labs/ipv6-transition]
+    fidelity: Live dual-stack protocol and host behavior; hardware first-hop inspection features remain limited.
+    last_live_validation: null
+    owner: existing networking tracks
+    notes: Existing checked labs; systemic enterprise validation is planned separately.
+  - domain: IPv6
+    topic: systemic enterprise dual-stack operations
+    level: 0
+    labs: []
+    fidelity: Planned end-to-end dual-stack capstone with real IPv4 and IPv6 paths.
+    last_live_validation: null
+    owner: WP-08
+    notes: Planned as labs/enterprise-dual-stack-capstone (target level 4).
+  - domain: carrier and physical
+    topic: carrier Ethernet handoff and service demarcation
+    level: 0
+    labs: []
+    fidelity: Planned live packet-Ethernet handoff; carrier provisioning and optics are outside the runtime claim.
+    last_live_validation: null
+    owner: WP-04
+    notes: Planned as labs/carrier-ethernet-handoff (target level 4).
+  - domain: carrier and physical
+    topic: physical cross-connect and legacy-service evidence
+    level: 0
+    labs: []
+    fidelity: Planned provenance-controlled evidence pack; no optical levels or hardware counters are simulated.
+    last_live_validation: null
+    owner: WP-04
+    notes: Planned fixture pack (target level 1).
+  - domain: voice and collaboration
+    topic: enterprise SIP, RTP, and QoS
+    level: 0
+    labs: []
+    fidelity: Planned live SIP/RTP and IP QoS behavior; no PSTN/provider or handset-DSP claim.
+    last_live_validation: null
+    owner: WP-09
+    notes: Planned as labs/enterprise-voice-sip-qos (target level 4).
+  - domain: OT and IoT
+    topic: zone-and-conduit networking
+    level: 0
+    labs: []
+    fidelity: Planned safe protocol and policy practice; no real industrial process control claim.
+    last_live_validation: null
+    owner: WP-10
+    notes: Planned as labs/ot-zone-conduit (target level 4).
+  - domain: application delivery
+    topic: global application delivery and edge services
+    level: 0
+    labs: []
+    fidelity: Planned local DNS/load-balancing/cache behavior; not a global CDN or provider edge.
+    last_live_validation: null
+    owner: WP-15
+    notes: Planned as labs/global-application-delivery (target level 4).
+  - domain: blind assessment
+    topic: enterprise domain-specific blind assessment ranges
+    level: 0
+    labs: []
+    fidelity: Planned runtime injection, clear, verification, and proctor rubric; no range is claimed complete here.
+    last_live_validation: null
+    owner: WP-16
+    notes: Three planned ranges follow validated source labs (target level 5).

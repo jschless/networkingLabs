@@ -1,0 +1,10 @@
+topics:
+  - domain: test
+    topic: unqualified blind assessment
+    level: 5
+    labs:
+      - labs/acl-basics
+    fidelity: test fixture only
+    last_live_validation: null
+    owner: test
+    notes: Must fail because scenario metadata is absent.

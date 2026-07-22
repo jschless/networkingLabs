@@ -1,0 +1,9 @@
+topics:
+  - domain: test
+    topic: unknown level
+    level: 6
+    labs: []
+    fidelity: test fixture only
+    last_live_validation: null
+    owner: test
+    notes: Must fail because level 6 is not defined.

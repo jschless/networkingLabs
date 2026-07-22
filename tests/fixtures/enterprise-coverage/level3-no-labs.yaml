@@ -1,0 +1,9 @@
+topics:
+  - domain: test
+    topic: unregistered practice topic
+    level: 3
+    labs: []
+    fidelity: test fixture only
+    last_live_validation: null
+    owner: test
+    notes: Must fail because a level 3 topic needs a checked lab registration.

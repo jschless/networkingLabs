@@ -26,10 +26,6 @@ vxlan-evpn-srlinux (reference)
 - cEOS EVPN: `send-community extended` is **required** on every eBGP neighbor — not automatic in EOS
 - **k8s-fabric** (no cEOS needed): `docker build -t frr-lab:local images/frr/` and `docker build -t ops-lab:local images/ops-lab/`; k3s + MetalLB + nginx images pull from the internet at deploy, so this lab needs internet access
 
-## Additional cEOS Variants
-
-Two more cEOS data-center labs live in the repo but are not yet documented here:
-[`labs/spine-leaf-ceos/`](https://github.com/jschless/networkingLabs/tree/main/labs/spine-leaf-ceos)
-and
-[`labs/evpn-vxlan-ceos/`](https://github.com/jschless/networkingLabs/tree/main/labs/evpn-vxlan-ceos).
-Each has its own README.
+The five labs above are the maintained data-center track inventory. The
+[Enterprise Coverage Map](../../enterprise-coverage-map.md) records the planned
+DCI and storage additions separately, without presenting them as delivered labs.

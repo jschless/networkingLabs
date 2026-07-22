@@ -21,7 +21,9 @@ teach — when a new lab lands, update the matching rows.
 | ❌ Not covered | No lab. Study from notes/reading; flagged in the [gap summary](#gap-summary) if a lab is planned. |
 
 Read this page together with the [study paths](study-paths.md), which sequence these
-labs into an order.
+labs into an order. For the wider curriculum (cloud, wireless, DCI, mobile,
+carrier, voice, OT, storage, and assessment maturity), see the
+[Enterprise Coverage Map](enterprise-coverage-map.md).
 
 ---
 
