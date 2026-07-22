@@ -1,0 +1,10 @@
+topics:
+  - domain: test
+    topic: unchecked practice registration
+    level: 3
+    labs:
+      - labs/ha-network-design-ceos
+    fidelity: test fixture only
+    last_live_validation: null
+    owner: test
+    notes: Must fail because this existing lab has no check.sh.

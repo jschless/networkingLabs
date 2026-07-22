@@ -1,0 +1,21 @@
+topics:
+  - domain: test
+    topic: validated practice registration
+    level: 3
+    labs:
+      - labs/acl-basics
+    fidelity: test fixture only
+    last_live_validation: null
+    owner: test
+    notes: Uses an existing checked lab to exercise the level 3 rule.
+  - domain: test
+    topic: validated blind-assessment registration
+    level: 5
+    labs:
+      - labs/acl-basics
+    fidelity: test fixture only
+    last_live_validation: null
+    owner: test
+    notes: Uses a real scenario directory to exercise the metadata rule.
+    scenario_metadata:
+      root: labs/troubleshooting-range/scenarios

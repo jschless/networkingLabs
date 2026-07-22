@@ -183,8 +183,8 @@ Foundation:  01-active-directory → 02-ntp-time-services
 Core:        05-dns-deep-dive → 06-dhcp-dynamic-dns
              → 07-file-shares → 08-group-policy → 09-email-gateway
 Advanced:    10-sso-federation → 11-web-proxy → 12-radius
-Operations:  13-monitoring → 14-siem-logging          (planned)
-             → 15-backup-recovery → 16-capstone        (planned)
+Operations:  13-monitoring → 14-siem-logging
+             → 15-backup-recovery → 16-capstone
 ```
 
 Labs 01–16 are all built (13 monitoring, 14 SIEM, 15 backup, 16 capstone).

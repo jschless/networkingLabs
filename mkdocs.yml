@@ -72,6 +72,8 @@ nav:
   - How It Works: how-it-works.md
   - Study Paths: study-paths.md
   - CCNP Coverage Map: coverage-map.md
+  - Enterprise Coverage Map: enterprise-coverage-map.md
+  - Image Pinning Policy: image-policy.md
   - Quick Reference: quick-reference.md
   - Networking Labs:
     - OSPF:
