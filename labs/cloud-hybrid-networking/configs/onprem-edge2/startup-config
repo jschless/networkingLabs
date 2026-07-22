@@ -1,0 +1,14 @@
+hostname onprem-edge2
+no aaa root
+ip routing
+interface Ethernet1
+ no switchport
+ mtu 9000
+ description Hybrid-attachment-2-to-cloud-transit
+ ip address 169.254.60.5/30
+interface Ethernet2
+ no switchport
+ mtu 9000
+ description Corporate-LAN
+ ip address 10.60.10.2/24
+! Task 2: configure eBGP 65060 to cloud-transit (65100) and advertise 10.60.10.0/24.
