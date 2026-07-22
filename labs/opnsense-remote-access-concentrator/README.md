@@ -33,7 +33,17 @@ sudo labs/opnsense-remote-access-concentrator/prepare-bridges.sh
 sudo labs/opnsense-remote-access-concentrator/start-opnsense.sh
 ```
 
-The concentrator GUI is `https://127.0.0.1:8644`.
+The concentrator GUI is `https://127.0.0.1:8644`. Log in with username `root`
+and password `opnsense`; local SSH on port `2401` uses the same credentials.
+
+From another computer, tunnel the web UI through SSH to the lab machine:
+
+```bash
+ssh -N -L 8644:127.0.0.1:8644 <lab-host-user>@<lab-host-ip>
+```
+
+Keep that session open and browse to `https://127.0.0.1:8644` on the other
+computer.
 
 ## Task 1 — Make the firewall a concentrator
 

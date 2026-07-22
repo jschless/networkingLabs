@@ -44,3 +44,6 @@ labs/soc-*/runtime/
 labs/soc-*/pcap/
 labs/soc-*/logs/
 labs/soc-*/data/
+
+# OPNsense disposable VM overlays and tap metadata
+labs/opnsense-*/runtime/
