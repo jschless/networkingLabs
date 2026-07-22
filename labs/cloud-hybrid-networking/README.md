@@ -8,12 +8,41 @@ billing, or private-circuit provisioning.
 
 ## Topology
 
-```text
-                         +-- app-a-rtr (10.61.10.10 HTTPS)
-corp-client -- br-corp -- edge1 == cloud-transit == inspection == private-dns
-                    \    edge2 ==/       |              \
-                     \                   +-- app-b-rtr (10.62.10.10 restricted)
-                                      public-client
+```mermaid
+flowchart LR
+    corp_client(["corp-client\n10.60.10.10"])
+    corp_switch["corp-switch\ncorporate LAN"]
+    edge1["onprem-edge1\ncEOS"]
+    edge2["onprem-edge2\ncEOS"]
+    transit["cloud-transit\nFRR transit hub"]
+    inspection["inspection\nstateful policy"]
+    app_a(["app-a-rtr\n10.61.10.10 · HTTPS"])
+    app_b(["app-b-rtr\n10.62.10.10 · restricted"])
+    dns(["dns\nprivate resolver"])
+    public_client(["public-client\n198.18.60.2"])
+
+    corp_client --- corp_switch
+    corp_switch --- edge1
+    corp_switch --- edge2
+    edge1 -- "169.254.60.0/30" --- transit
+    edge2 -- "169.254.60.4/30" --- transit
+    transit -- "10.60.100.0/30" --- app_a
+    transit -- "10.60.100.4/30" --- app_b
+    transit -- "10.60.100.8/30" --- inspection
+    inspection -- "10.60.100.12/30" --- app_a
+    inspection -- "10.60.100.16/30" --- app_b
+    inspection -- "10.63.10.0/24" --- dns
+    transit -- "198.18.60.0/30" --- public_client
+
+    classDef edge fill:#1a1aff,color:#fff,stroke:#000
+    classDef service fill:#3d7a3d,color:#fff,stroke:#000
+    classDef transit fill:#555,color:#fff,stroke:#000
+    classDef client fill:#ccc,color:#000,stroke:#666
+
+    class edge1,edge2 edge
+    class transit,inspection transit
+    class app_a,app_b,dns service
+    class corp_client,corp_switch,public_client client
 ```
 
 ### Link addressing
