@@ -1,0 +1,15 @@
+options {
+  directory "/var/bind";
+  listen-on { 10.63.10.53; };
+  listen-on-v6 { none; };
+  recursion no;
+  allow-query { any; };
+};
+view "private" {
+  match-clients { 10.60.10.0/24; 10.60.100.0/24; 10.61.10.0/24; 10.62.10.0/24; };
+  zone "prod.corp" { type master; file "/etc/bind/db.prod.corp"; };
+};
+view "untrusted" {
+  match-clients { any; };
+  zone "prod.corp" { type master; file "/etc/bind/db.empty"; };
+};

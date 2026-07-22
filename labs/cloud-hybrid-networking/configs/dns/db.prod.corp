@@ -1,0 +1,5 @@
+$TTL 60
+@ IN SOA dns.prod.corp. hostmaster.prod.corp. (1 60 60 60 60)
+@ IN NS dns.prod.corp.
+dns IN A 10.63.10.53
+api IN A 10.61.10.10

@@ -37,12 +37,12 @@ topics:
     notes: Existing concepts lab; labs/sdwan-operations is planned for level 4.
   - domain: cloud and hybrid
     topic: transit, private DNS, inspection, and cloud route-table semantics
-    level: 0
-    labs: []
-    fidelity: Planned provider-neutral Linux/cEOS lab; no cloud control-plane or billing claim.
-    last_live_validation: null
+    level: 4
+    labs: [labs/cloud-hybrid-networking]
+    fidelity: Live cEOS/FRR eBGP, Linux policy-route domains, nftables/conntrack, BIND views, captures, and TLS; no cloud control-plane, IAM, billing, or private-circuit claim.
+    last_live_validation: 2026-07-22
     owner: WP-01
-    notes: Planned as labs/cloud-hybrid-networking (target level 4).
+    notes: Validated practice and symptom-led Break-It; the overlapping-prefix response is isolation evidence, not a production NAT implementation.
   - domain: data center and DCI
     topic: fabric, VXLAN, and EVPN
     level: 4

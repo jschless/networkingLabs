@@ -164,6 +164,7 @@ nav:
       - enterprise-services-infra: tracks/enterprise/enterprise-services-infra.md
       - sdwan-concepts: tracks/enterprise/sdwan-concepts.md
       - enterprise-wireless-architecture: tracks/enterprise/enterprise-wireless-architecture.md
+      - cloud-hybrid-networking: tracks/enterprise/cloud-hybrid-networking.md
       - enterprise-campus-capstone: tracks/enterprise/enterprise-campus-capstone.md
       - enterprise-collapsed-core-capstone: tracks/enterprise/enterprise-collapsed-core-capstone.md
       - enterprise-dmz-capstone: tracks/enterprise/enterprise-dmz-capstone.md
@@ -201,6 +202,7 @@ nav:
       - network-automation-netbox: tracks/operations/network-automation-netbox.md
       - suzieq-network-observability: tracks/operations/suzieq-network-observability.md
       - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
+      - cloud-hybrid-networking: tracks/operations/cloud-hybrid-networking.md
   - Troubleshooting:
     - Overview: tracks/troubleshooting/index.md
     - Guided Debug Labs:
