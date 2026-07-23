@@ -131,6 +131,7 @@ acl-basics → bgp-prefix-security → bgp-rpki
 ipsec-basics → opnsense-ipsec-nat-t → gre-ipsec → black-core-routing → flexvpn-basics
 wireguard → opnsense-remote-access-concentrator
 macsec-basics → dot1x-nac → dot1x-ceos-practice
+→ wireless-auth-control-operations
 urpf-antispoofing → copp-basics
 enterprise-edge-nat-firewall → opnsense-ngfw-basics
 ```
@@ -151,6 +152,7 @@ Ops:      soc-adversary-simulation → soc-threat-intel-misp → soc-ir-case-man
 management-access-control → dhcp-dns-troubleshooting → aaa-ops-troubleshooting
 → packet-analysis-basics → mtu-pmtud-troubleshooting → ipv6-access-services
 → cloud-hybrid-networking → telemetry-monitoring-hybrid → network-automation-netbox
+→ wireless-auth-control-operations
 ```
 
 ## DMVPN Progression
@@ -168,6 +170,7 @@ debug-ospf-multiarea → debug-bgp-basics → debug-eigrp-basics → debug-isis-
 → debug-bgp-filtering → debug-gre-basics → debug-spine-leaf
 → debug-vxlan-evpn → debug-mpls-sr-isis-bgp
 → troubleshooting-range → troubleshooting-range-advanced
+→ wireless-auth-control-operations (certificate-trust Break-It)
 ```
 
 See the [Troubleshooting & Assessment track](tracks/troubleshooting/index.md)

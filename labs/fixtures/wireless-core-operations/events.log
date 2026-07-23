@@ -1,0 +1,4 @@
+2026-07-23T09:00:00Z client-a EAP-SUCCESS VLAN=110 result=healthy
+2026-07-23T09:03:00Z client-b association=stable EAP-SUCCESS throughput=poor evidence=high-utilization
+2026-07-23T09:06:00Z client-c association-retry=8 EAP-not-started evidence=weak-coverage-or-driver
+2026-07-23T09:09:00Z client-d EAP-FAILURE server-cert=untrusted evidence=authentication-fault

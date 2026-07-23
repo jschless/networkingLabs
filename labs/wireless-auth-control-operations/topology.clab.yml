@@ -1,0 +1,64 @@
+name: wireless-auth-control-operations
+
+topology:
+  defaults:
+    kind: linux
+    image: wireless-auth-control:local
+
+  nodes:
+    radius:
+      binds:
+        - configs/radius/setup.sh:/setup.sh
+        - configs/radius/clients.conf:/etc/freeradius/3.0/clients.conf
+        - configs/radius/authorize:/etc/freeradius/3.0/mods-config/files/authorize
+        - configs/radius/eap:/etc/freeradius/3.0/mods-available/eap
+      exec:
+        - bash /setup.sh
+    authenticator:
+      binds:
+        - configs/authenticator/setup.sh:/setup.sh
+        - configs/authenticator/hostapd-corp.conf:/etc/hostapd/hostapd-corp.conf
+        - configs/authenticator/hostapd-quarantine.conf:/etc/hostapd/hostapd-quarantine.conf
+        - configs/authenticator/vlan-action.sh:/etc/hostapd/vlan-action.sh
+        - configs/authenticator/manager.py:/opt/wlan-manager.py
+      exec:
+        - bash /setup.sh
+    corp-client:
+      binds:
+        - configs/clients/corp.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    guest-client:
+      binds:
+        - configs/clients/guest.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    quarantine-client:
+      binds:
+        - configs/clients/quarantine.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    corp-service:
+      binds:
+        - configs/services/corp.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    guest-service:
+      binds:
+        - configs/services/guest.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+    quarantine-service:
+      binds:
+        - configs/services/quarantine.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    - endpoints: ["corp-client:eth1", "authenticator:eth1"] # VLAN 110 client access
+    - endpoints: ["guest-client:eth1", "authenticator:eth2"] # VLAN 120 guest policy
+    - endpoints: ["quarantine-client:eth1", "authenticator:eth3"] # VLAN 130 authorization outcome
+    - endpoints: ["corp-service:eth1", "authenticator:eth4"] # VLAN 110 approved service
+    - endpoints: ["guest-service:eth1", "authenticator:eth5"] # VLAN 120 guest service
+    - endpoints: ["quarantine-service:eth1", "authenticator:eth6"] # VLAN 130 remediation service
+    - endpoints: ["authenticator:eth7", "radius:eth1"] # 192.168.99.0/24 RADIUS management

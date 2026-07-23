@@ -1,0 +1,4 @@
+ap,channel,utilization_percent,client,observation,label
+ap1,36,18,client-a,-62 dBm seen in original survey export,synthetic evidence
+ap2,36,76,client-b,-51 dBm with throughput collapse,synthetic evidence
+ap3,44,22,client-c,-79 dBm and repeated reassociation,synthetic evidence
