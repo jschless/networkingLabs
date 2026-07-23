@@ -1,0 +1,10 @@
+{
+  "realm": "ztna", "enabled": true, "accessTokenLifespan": 20,
+  "clients": [{"clientId":"pep","enabled":true,"secret":"LAB-ONLY-PEP-SECRET","publicClient":false,"directAccessGrantsEnabled":true,"protocol":"openid-connect","protocolMappers":[{"name":"groups","protocol":"openid-connect","protocolMapper":"oidc-group-membership-mapper","config":{"full.path":"false","id.token.claim":"true","access.token.claim":"true","userinfo.token.claim":"true","claim.name":"groups","jsonType.label":"String"}},{"name":"pep-audience","protocol":"openid-connect","protocolMapper":"oidc-audience-mapper","config":{"included.client.audience":"pep","id.token.claim":"true","access.token.claim":"true"}}]}],
+  "groups": [{"name":"finance"},{"name":"operations"},{"name":"partner"}],
+  "users": [
+    {"username":"finuser","email":"finuser@lab.invalid","emailVerified":true,"firstName":"Finance","lastName":"User","enabled":true,"credentials":[{"type":"password","value":"LAB-ONLY-finance-password","temporary":false}],"groups":["finance"]},
+    {"username":"opsuser","email":"opsuser@lab.invalid","emailVerified":true,"firstName":"Operations","lastName":"User","enabled":true,"credentials":[{"type":"password","value":"LAB-ONLY-ops-password","temporary":false}],"groups":["operations"]},
+    {"username":"partneruser","email":"partneruser@lab.invalid","emailVerified":true,"firstName":"Partner","lastName":"User","enabled":true,"credentials":[{"type":"password","value":"LAB-ONLY-partner-password","temporary":false}],"groups":["partner"]}
+  ]
+}

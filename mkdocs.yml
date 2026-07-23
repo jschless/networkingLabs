@@ -191,6 +191,7 @@ nav:
       - urpf-antispoofing: tracks/security/urpf-antispoofing.md
       - copp-basics: tracks/security/copp-basics.md
       - dot1x-ceos-practice: tracks/security/dot1x-ceos-practice.md
+      - zero-trust-secure-access: tracks/security/zero-trust-secure-access.md
     - Network Operations:
       - tracks/operations/index.md
       - management-access-control: tracks/operations/management-access-control.md

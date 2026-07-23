@@ -141,12 +141,12 @@ topics:
     notes: Existing checked labs.
   - domain: security
     topic: identity-aware zero-trust secure access
-    level: 0
-    labs: []
-    fidelity: Planned standards-based identity and policy enforcement; not a commercial ZTNA product replica.
-    last_live_validation: null
+    level: 4
+    labs: [labs/zero-trust-secure-access]
+    fidelity: Live Keycloak OIDC claims, mTLS client-certificate signal, resource policy, origin firewall enforcement, and auditable PEP decisions; not a commercial ZTNA/SSE/SASE product or full device-posture system.
+    last_live_validation: 2026-07-23
     owner: WP-06
-    notes: Planned as labs/zero-trust-secure-access (target level 4).
+    notes: ZTNA is live. SSE/SASE PoP, CASB, SWG, DLP, continuous risk, and global-service availability are explicitly conceptual mappings only.
   - domain: security
     topic: advanced security architecture
     level: 0

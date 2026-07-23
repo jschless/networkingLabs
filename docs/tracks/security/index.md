@@ -1,6 +1,6 @@
 # Security Track
 
-Eight labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, MACsec encryption, 802.1X NAC, uRPF anti-spoofing, Control Plane Policing, and wired dot1x on Arista EOS.
+Nine labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, MACsec encryption, 802.1X NAC, uRPF anti-spoofing, Control Plane Policing, wired dot1x on Arista EOS, and zero-trust access.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
@@ -12,6 +12,7 @@ Eight labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, 
 | [urpf-antispoofing](urpf-antispoofing.md) | Practice | FRR | Unicast RPF, source IP anti-spoofing, strict vs loose mode |
 | [copp-basics](copp-basics.md) | Practice | FRR | Control Plane Policing, traffic classification, rate limiting |
 | [dot1x-ceos-practice](dot1x-ceos-practice.md) | Practice | cEOS | 802.1X wired NAC on Arista EOS, RADIUS, MAB |
+| [zero-trust-secure-access](zero-trust-secure-access.md) | Practice | Keycloak + Linux | OIDC claims, mTLS device signal, resource policy, origin isolation, decision logs |
 
 ## Platform Notes
 
@@ -19,5 +20,6 @@ Eight labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, 
 - **black-core-routing**: `vyos:local` (see [VyOS platform notes](../../platforms/vyos.md)) and `docker build -t black-core-tools:local labs/black-core-routing/`
 - **OPNsense NGFW**: local QEMU/KVM base image (see [OPNsense platform notes](../../platforms/opnsense.md)) and `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/`
 - **dot1x-nac**: `docker build -t nac-lab:local labs/dot1x-nac/`
+- **zero-trust-secure-access**: `docker build -t zt-access-tools:local labs/zero-trust-secure-access/` and `docker build -f labs/zero-trust-secure-access/Dockerfile.keycloak -t zt-keycloak:local labs/zero-trust-secure-access/`
 - **FRR labs**: `docker build -t frr-lab:local images/frr/`
 - **cEOS**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`

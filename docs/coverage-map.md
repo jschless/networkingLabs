@@ -87,6 +87,13 @@ carrier, voice, OT, storage, and assessment maturity), see the
 | 5.4.a–c Threat defense, endpoint security, NGFW | ✅ | `opnsense-ngfw-basics`, `enterprise-edge-nat-firewall`, the SOC track (`soc-*`) — policy, NAT, logging, and Suricata IPS; not Cisco Firepower/ISE syntax |
 | 5.4.d TrustSec and MACsec | 🟡 | `macsec-basics` hands-on; TrustSec/SGT is Cisco-only (theory) |
 
+### Zero-trust mapping (non-blueprint supplemental coverage)
+
+| Topic | Fidelity | Lab |
+|---|---|---|
+| ZTNA: identity, group, route, mTLS, origin-boundary and decision-log enforcement | Live | `zero-trust-secure-access` |
+| SSE/SASE PoP, CASB, SWG, DLP, continuous risk and global availability | Conceptual | `zero-trust-secure-access` maps the decision points but does not claim those services |
+
 ### 6.0 Automation and Artificial Intelligence (15%)
 
 | Topic | Status | Labs |
