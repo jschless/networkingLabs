@@ -103,7 +103,7 @@ IPv6:     ipv6-transition
 ```
 Prereq:   bgp-basics → bgp-path-selection
 Fabric:   spine-leaf
-VXLAN:    vxlan-evpn → evpn-border-ceos
+VXLAN:    vxlan-evpn → evpn-border-ceos → dci-evpn-multisite
 SR-Linux: vxlan-evpn-srlinux (reference)
 VRF:      vrf-lite
 ```

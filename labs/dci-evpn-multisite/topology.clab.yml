@@ -1,0 +1,60 @@
+name: dci-evpn-multisite
+
+topology:
+  nodes:
+    a-leaf:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/a-leaf/startup-config
+    a-spine:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/a-spine/startup-config
+    a-bgw:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/a-bgw/startup-config
+    b-leaf:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/b-leaf/startup-config
+    b-spine:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/b-spine/startup-config
+    b-bgw:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/b-bgw/startup-config
+    a-app:
+      kind: linux
+      image: dci-endpoint:local
+      binds: [configs/a-app/setup.sh:/setup.sh]
+      exec: [sh /setup.sh]
+    a-client:
+      kind: linux
+      image: dci-endpoint:local
+      binds: [configs/a-client/setup.sh:/setup.sh]
+      exec: [sh /setup.sh]
+    b-app:
+      kind: linux
+      image: dci-endpoint:local
+      binds: [configs/b-app/setup.sh:/setup.sh]
+      exec: [sh /setup.sh]
+    b-client:
+      kind: linux
+      image: dci-endpoint:local
+      binds: [configs/b-client/setup.sh:/setup.sh]
+      exec: [sh /setup.sh]
+  links:
+    - endpoints: ["a-leaf:eth1", "a-spine:eth1"]  # 10.11.0.0/30
+    - endpoints: ["a-bgw:eth1", "a-spine:eth2"]   # 10.11.0.4/30
+    - endpoints: ["b-leaf:eth1", "b-spine:eth1"]  # 10.21.0.0/30
+    - endpoints: ["b-bgw:eth1", "b-spine:eth2"]   # 10.21.0.4/30
+    - endpoints: ["a-bgw:eth2", "b-bgw:eth2"]     # 10.255.10.0/30
+    - endpoints: ["a-app:eth1", "a-bgw:eth3"]     # VLAN 30 / 172.31.10.0/24
+    - endpoints: ["a-client:eth1", "a-leaf:eth3"] # VLAN 10 / 172.16.10.0/24
+    - endpoints: ["a-client:eth2", "a-leaf:eth4"] # VLAN 20 / 172.16.20.0/24
+    - endpoints: ["b-app:eth1", "b-leaf:eth3"]    # VLAN 10 / 172.17.10.0/24
+    - endpoints: ["b-client:eth1", "b-leaf:eth4"] # VLAN 10 / 172.17.10.0/24
+    - endpoints: ["b-client:eth2", "b-leaf:eth5"] # VLAN 20 / 172.17.20.0/24
