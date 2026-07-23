@@ -204,7 +204,10 @@ These labs are **IPv4-only by design**. The `lab-corp` network is a single IPv4 
 (`10.100.0.0/16`), and every service — AD, DNS, DHCP, RADIUS — is configured for v4 only.
 This is a deliberate scope cut, not an oversight: it keeps addressing legible while you're
 learning the *services*, and it mirrors the reality that most enterprise **internal**
-networks are still IPv4-primary even where the perimeter is dual-stacked.
+networks are still IPv4-primary even where the perimeter is dual-stacked. For an
+explicit dual-stack operations exercise, use the networking track's
+[enterprise-dual-stack-capstone](../docs/tracks/enterprise/enterprise-dual-stack-capstone.md);
+it is complementary and does not make this EIT environment dual-stack.
 
 A real dual-stack deployment would add, at minimum: `AAAA` records alongside `A` in
 AD-integrated DNS (and the matching `ip6.arpa` reverse zones); **DHCPv6 or SLAAC** for

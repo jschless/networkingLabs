@@ -1,6 +1,6 @@
 # Enterprise Design Track
 
-Twenty labs covering campus design patterns, WAN edge, hybrid connectivity, SD-WAN concepts, DMZ architecture, load balancing, access security, multicast, services, and wireless architecture/authorization — primarily on Arista cEOS with Linux service nodes where needed.
+Twenty-one labs covering campus design patterns, WAN edge, hybrid connectivity, SD-WAN concepts, DMZ architecture, load balancing, access security, multicast, services, wireless architecture/authorization, and systemic dual-stack operations — primarily on Arista cEOS with Linux service nodes where needed.
 
 ## Reference Designs
 
@@ -38,6 +38,7 @@ Build an entire design from scratch with only IPs and interfaces pre-configured.
 | [enterprise-dmz-capstone](enterprise-dmz-capstone.md) | Capstone | Dual-firewall screened-subnet DMZ with DNAT, SNAT, and segmentation policy |
 | [enterprise-routed-access-capstone](enterprise-routed-access-capstone.md) | Capstone | L3-everywhere campus — OSPF multi-area, BFD |
 | [enterprise-wan-edge-capstone](enterprise-wan-edge-capstone.md) | Capstone | Dual-homed BGP with traffic engineering |
+| [enterprise-dual-stack-capstone](enterprise-dual-stack-capstone.md) | Capstone | Campus-to-edge IPv4/IPv6, DNS, policy parity, and return-path diagnosis |
 
 ## Platform
 
@@ -53,3 +54,4 @@ The Security track's [zero-trust-secure-access](../security/zero-trust-secure-ac
 - **sdwan-concepts** (no cEOS needed): `docker build -t sdwan-lab:local labs/sdwan-concepts/`
 - **cloud-hybrid-networking**: `docker build -t cloud-lab:local labs/cloud-hybrid-networking/` and import cEOS 4.35.2F
 - **wireless-auth-control-operations**: `docker build -t wireless-auth-control:local labs/wireless-auth-control-operations/`
+- **enterprise-dual-stack-capstone**: `docker build -t enterprise-dual-stack-tools:local labs/enterprise-dual-stack-capstone/`, plus cEOS import

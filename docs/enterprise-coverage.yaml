@@ -181,12 +181,12 @@ topics:
     notes: Existing checked labs; systemic enterprise validation is planned separately.
   - domain: IPv6
     topic: systemic enterprise dual-stack operations
-    level: 0
-    labs: []
-    fidelity: Planned end-to-end dual-stack capstone with real IPv4 and IPv6 paths.
-    last_live_validation: null
+    level: 4
+    labs: [labs/enterprise-dual-stack-capstone]
+    fidelity: Live cEOS/FRR IPv4/IPv6 routing, eBGP, Linux DNS/application observation, and policy checks; ASIC first-hop guards and cEOS IPv6 VRRP are evidence-only on the tested container image.
+    last_live_validation: 2026-07-23
     owner: WP-08
-    notes: Planned as labs/enterprise-dual-stack-capstone (target level 4).
+    notes: Feature probe confirms routed OSPF/OSPFv3 mechanics and documents unavailable first-hop guard/FHRP commands in the lab PROBE.md.
   - domain: carrier and physical
     topic: carrier Ethernet handoff and service demarcation
     level: 4

@@ -148,7 +148,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: HA track](tracks/high-availability/index.md)
 
-- :material-office-building: **Enterprise Design** (22 labs)
+- :material-office-building: **Enterprise Design** (23 labs)
 
     ---
     Campus tiers, WAN edge, cloud hybrid routing, SD-WAN concepts, load balancing, access security, multicast, services, capstones
@@ -169,7 +169,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-chart-line: **Network Operations** (15 labs)
+- :material-chart-line: **Network Operations** (16 labs)
 
     ---
     Management access, DHCP/DNS, AAA, hybrid-flow evidence, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, zero-touch provisioning, API automation, NetBox, gNMI telemetry, and SuzieQ observability

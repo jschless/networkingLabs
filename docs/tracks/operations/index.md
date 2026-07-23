@@ -8,6 +8,7 @@ Fifteen labs covering management access, DHCP/DNS, AAA operations, packet captur
 | [dhcp-dns-troubleshooting](dhcp-dns-troubleshooting.md) | Practice | Diagnose DHCP option issues and DNS correctness from the client side |
 | [aaa-ops-troubleshooting](aaa-ops-troubleshooting.md) | Practice | TACACS reachability, shared secrets, local fallback, break-glass access |
 | [ipv6-access-services](ipv6-access-services.md) | Practice | Router advertisements, SLAAC, default route learning, DNS over IPv6 |
+| [enterprise-dual-stack-capstone](enterprise-dual-stack-capstone.md) | Cross-track capstone | IPv4/IPv6 control/data path parity, DNS, PMTUD, and return-path diagnosis |
 | [packet-analysis-basics](packet-analysis-basics.md) | Practice | ARP, OSPF, ICMP, TCP handshake capture, mirrored traffic, Wireshark workflow |
 | [mtu-pmtud-troubleshooting](mtu-pmtud-troubleshooting.md) | Practice | GRE overhead, exact-size probes, PMTUD, tunnel MTU correction |
 | [network-assurance](network-assurance.md) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |

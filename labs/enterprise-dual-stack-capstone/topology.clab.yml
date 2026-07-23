@@ -1,0 +1,94 @@
+name: enterprise-dual-stack-capstone
+
+# Three cEOS nodes carry the live campus/edge control plane.  Linux endpoints
+# make application, DNS, DHCPv6, packet capture, and policy observations cheap.
+topology:
+  nodes:
+    dist1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist1/startup-config
+    dist2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist2/startup-config
+    edge:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/edge/startup-config
+    isp:
+      kind: linux
+      image: quay.io/frrouting/frr:10.5.0
+      binds:
+        - configs/isp/daemons:/etc/frr/daemons
+        - configs/isp/frr.conf:/etc/frr/frr.conf
+        - configs/isp/vtysh.conf:/etc/frr/vtysh.conf
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1 net.ipv6.conf.all.forwarding=1
+        - vtysh -b
+    corp-client:
+      kind: linux
+      image: enterprise-dual-stack-tools:local
+      exec:
+        - ip addr add 10.108.10.10/24 dev eth1
+        - ip -6 addr add 2001:db8:108:10::10/64 dev eth1
+        - ip route replace default via 10.108.10.2 dev eth1
+        - ip -6 route replace default via 2001:db8:108:10::2 dev eth1
+    guest-client:
+      kind: linux
+      image: enterprise-dual-stack-tools:local
+      exec:
+        - ip addr add 10.108.20.10/24 dev eth1
+        - ip -6 addr add 2001:db8:108:20::10/64 dev eth1
+        - ip route replace default via 10.108.20.2 dev eth1
+        - ip -6 route replace default via 2001:db8:108:20::2 dev eth1
+    services:
+      kind: linux
+      image: enterprise-dual-stack-tools:local
+      binds:
+        - configs/services/named.conf:/etc/bind/named.conf
+        - configs/services/db.corp.example:/etc/bind/db.corp.example
+        - configs/services/db.108.10:/etc/bind/db.108.10
+        - configs/services/db.108.ip6:/etc/bind/db.108.ip6
+        - configs/services/kea-dhcp6.conf:/etc/kea/kea-dhcp6.conf
+      exec:
+        - ip addr add 10.108.30.10/24 dev eth1
+        - ip -6 addr add 2001:db8:108:30::10/64 dev eth1
+        - ip route replace default via 10.108.30.2 dev eth1
+        - ip -6 route replace default via 2001:db8:108:30::2 dev eth1
+        - named -c /etc/bind/named.conf
+    app-v4v6:
+      kind: linux
+      image: enterprise-dual-stack-tools:local
+      exec:
+        - ip addr add 10.108.40.10/24 dev eth1
+        - ip -6 addr add 2001:db8:108:40::10/64 dev eth1
+        - ip route replace default via 10.108.40.2 dev eth1
+        - ip -6 route replace default via 2001:db8:108:40::2 dev eth1
+        - bash -c 'mkdir -p /srv/app; printf dual-stack > /srv/app/index.html; nohup python3 -m http.server 8080 -d /srv/app >/tmp/http.log 2>&1 &'
+    app-v4only:
+      kind: linux
+      image: enterprise-dual-stack-tools:local
+      exec:
+        - ip addr add 10.108.41.10/24 dev eth1
+        - ip route replace default via 10.108.41.2 dev eth1
+        - bash -c 'mkdir -p /srv/v4only; printf ipv4-only > /srv/v4only/index.html; nohup python3 -m http.server 8080 -d /srv/v4only >/tmp/http.log 2>&1 &'
+    internet-test:
+      kind: linux
+      image: enterprise-dual-stack-tools:local
+      exec:
+        - ip addr add 198.18.109.10/24 dev eth1
+        - ip -6 addr add 2001:db8:ffff:109::10/64 dev eth1
+        - ip route replace default via 198.18.109.2 dev eth1
+        - ip -6 route replace default via 2001:db8:ffff:109::2 dev eth1
+  links:
+    - endpoints: ["corp-client:eth1", "dist1:eth1"] # 10.108.10.0/24, 2001:db8:108:10::/64
+    - endpoints: ["services:eth1", "dist1:eth2"] # 10.108.30.0/24, 2001:db8:108:30::/64
+    - endpoints: ["dist1:eth3", "dist2:eth3"] # 10.108.101.0/30, 2001:db8:108:101::/64
+    - endpoints: ["dist1:eth4", "edge:eth1"] # 10.108.105.0/30, 2001:db8:108:105::/64
+    - endpoints: ["guest-client:eth1", "dist2:eth1"] # 10.108.20.0/24, 2001:db8:108:20::/64
+    - endpoints: ["app-v4v6:eth1", "dist2:eth2"] # 10.108.40.0/24, 2001:db8:108:40::/64
+    - endpoints: ["app-v4only:eth1", "dist2:eth5"] # 10.108.41.0/24 (IPv4-only application attachment)
+    - endpoints: ["dist2:eth4", "edge:eth2"] # 10.108.102.0/30, 2001:db8:108:102::/64
+    - endpoints: ["edge:eth3", "isp:eth1"] # 198.18.108.0/24, 2001:db8:ffff:108::/64
+    - endpoints: ["isp:eth2", "internet-test:eth1"] # public test segment
