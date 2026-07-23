@@ -8,7 +8,7 @@
 | Host OS/kernel | Ubuntu Linux `5.15.0-181-generic` x86_64 |
 | ContainerLab/Docker versions | `0.74.1` / client and server `29.5.3` |
 | Image tags/digests | `wireless-auth-control:local` built from `debian:12.12-slim@sha256:d5d3f9c23164ea16f31852f95bd5959aad1c5e854332fe00f7b3a20fcc9f635c` |
-| Repository commit | pending commit; based on `origin/main` `97d4e27` |
+| Repository commit | `e8d4297` (based on `origin/main` `97d4e27`) |
 
 ## Clean run
 
