@@ -1,6 +1,6 @@
 # BGP Track
 
-Nine labs from basic eBGP/iBGP sessions through path selection, filtering, communities, aggregation, security (RPKI), labeled unicast, and dual-stack IPv6.
+Ten labs from basic eBGP/iBGP sessions through path selection, filtering, communities, aggregation, security (RPKI), labeled unicast, dual-stack IPv6, and IXP operations.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
@@ -13,6 +13,7 @@ Nine labs from basic eBGP/iBGP sessions through path selection, filtering, commu
 | [bgp-rpki](bgp-rpki.md) | Practice | BGP RPKI, Route Origin Validation, ROA validation with rpkid |
 | [bgp-labeled-unicast](bgp-labeled-unicast.md) | Practice | BGP-LU (RFC 3107), inter-AS MPLS label distribution |
 | [ipv6-bgp](ipv6-bgp.md) | Practice | Dual-stack BGP, extended next-hop, native IPv6 sessions |
+| [internet-peering-ixp](internet-peering-ixp.md) | Practice | Bilateral and route-server peering, local IRR/RTR policy, RTBH, and stale-filter diagnosis |
 
 ## Recommended Order
 

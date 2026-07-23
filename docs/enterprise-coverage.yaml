@@ -85,12 +85,12 @@ topics:
     notes: Existing checked labs.
   - domain: internet edge
     topic: internet peering and exchange operations
-    level: 0
-    labs: []
-    fidelity: Planned multi-AS exchange/peering lab with evidence-only external business processes.
-    last_live_validation: null
+    level: 4
+    labs: [labs/internet-peering-ixp]
+    fidelity: Live FRR bilateral and route-server BGP, local deterministic IRR generation, local RTR validation, scoped RTBH, and stale-filter diagnosis; public IXP/PeeringDB/LOA/NOC and physical-port workflows are evidence-only.
+    last_live_validation: 2026-07-23
     owner: WP-07
-    notes: Planned as labs/internet-peering-ixp (target level 4).
+    notes: cEOS 4.35.2F route-server-client probe failed; the plan-authorized FRR fallback is documented in labs/internet-peering-ixp/PROBE.md.
   - domain: wireless
     topic: wireless architecture and access-policy concepts
     level: 1

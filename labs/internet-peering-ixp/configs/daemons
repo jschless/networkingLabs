@@ -1,0 +1,7 @@
+zebra=yes
+bgpd=yes
+# The repository's FRR 8.4 package ships RPKI as a dynamically loaded bgpd
+# module, not as the historical standalone rpkid daemon.
+bgpd_options="  -A 127.0.0.1 -M rpki"
+staticd=yes
+vtysh_enable=yes

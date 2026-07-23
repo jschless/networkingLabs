@@ -99,7 +99,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: EIGRP track](tracks/eigrp/index.md)
 
-- :material-transit-connection-variant: **BGP** (9 labs)
+- :material-transit-connection-variant: **BGP** (10 labs)
 
     ---
     Sessions, path selection, filtering, communities, RPKI, BGP-LU, IPv6
@@ -127,7 +127,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Tunnels & VPN track](tracks/tunnels-vpn/index.md)
 
-- :material-cloud-tags: **MPLS & SP** (7 labs)
+- :material-cloud-tags: **MPLS & SP** (8 labs)
 
     ---
     LDP, IS-IS + SR-MPLS + BGP VPNv4, L2VPN, 6PE
@@ -148,7 +148,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: HA track](tracks/high-availability/index.md)
 
-- :material-office-building: **Enterprise Design** (21 labs)
+- :material-office-building: **Enterprise Design** (22 labs)
 
     ---
     Campus tiers, WAN edge, cloud hybrid routing, SD-WAN concepts, load balancing, access security, multicast, services, capstones
