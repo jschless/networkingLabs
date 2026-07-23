@@ -4,6 +4,8 @@ Seven labs covering the full SP stack and enterprise carrier handoff: LDP label 
 
 Before the pseudowire lab, [carrier-ethernet-handoff](carrier-ethernet-handoff.md) practises the enterprise UNI/QinQ demarc; it is registered as a follow-on without adding a duplicate SP lab count.
 
+Before provider-edge design work, [internet-peering-ixp](internet-peering-ixp.md) practises route-server and bilateral Internet peering policy; it is counted in BGP only.
+
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
 | [mpls-ldp](mpls-ldp.md) | Practice | FRR | LDP on an OSPF core — sessions, label bindings, PHP, and a mid-path LSP blackhole the IGP can't see |

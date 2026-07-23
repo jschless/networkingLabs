@@ -101,6 +101,7 @@ nav:
       - bgp-aggregation: tracks/bgp/bgp-aggregation.md
       - bgp-prefix-security: tracks/bgp/bgp-prefix-security.md
       - bgp-rpki: tracks/bgp/bgp-rpki.md
+      - internet-peering-ixp: tracks/bgp/internet-peering-ixp.md
       - bgp-labeled-unicast: tracks/bgp/bgp-labeled-unicast.md
       - ipv6-bgp: tracks/bgp/ipv6-bgp.md
     - IS-IS:
@@ -135,6 +136,7 @@ nav:
       - mpls-l2vpn: tracks/mpls-sp/mpls-l2vpn.md
       - ipv6-transition: tracks/mpls-sp/ipv6-transition.md
       - carrier-ethernet-handoff (UNI follow-on): tracks/mpls-sp/carrier-ethernet-handoff.md
+      - internet-peering-ixp (BGP cross-track): tracks/mpls-sp/internet-peering-ixp.md
     - Data Center:
       - tracks/data-center/index.md
       - spine-leaf: tracks/data-center/spine-leaf.md
@@ -175,6 +177,7 @@ nav:
       - enterprise-routed-access-capstone: tracks/enterprise/enterprise-routed-access-capstone.md
       - enterprise-wan-edge-capstone: tracks/enterprise/enterprise-wan-edge-capstone.md
       - enterprise-grand-capstone: tracks/enterprise/enterprise-grand-capstone.md
+      - internet-peering-ixp (cross-track): tracks/enterprise/internet-peering-ixp.md
     - Layer 2:
       - tracks/layer2/index.md
       - vlan-trunks-switchport-basics: tracks/layer2/vlan-trunks-switchport-basics.md

@@ -43,6 +43,8 @@ Build an entire design from scratch with only IPs and interfaces pre-configured.
 
 ## Cross-track practice
 
+The BGP track's [internet-peering-ixp](internet-peering-ixp.md) lab practises operational Internet peering and IXP incident evidence. It is counted in BGP only.
+
 The Security track's [zero-trust-secure-access](../security/zero-trust-secure-access.md) lab complements enterprise designs with resource-centric OIDC, mTLS, route authorization, and origin segmentation. It is registered and counted in Security only.
 
 - **Arista cEOS**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`

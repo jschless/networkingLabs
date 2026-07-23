@@ -1,0 +1,5 @@
+aut-num: AS65002
+as-name: CONTENT-LAB
+route: 198.51.100.0/24
+origin: AS65002
+source: IXP-LAB

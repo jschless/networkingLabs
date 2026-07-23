@@ -1,0 +1,5 @@
+aut-num: AS65003
+as-name: SAAS-LAB
+route: 192.0.2.0/24
+origin: AS65003
+source: IXP-LAB

@@ -1,0 +1,113 @@
+name: internet-peering-ixp
+
+# Internet Peering and IXP Operations — practice topology.
+# All peer ports share the `ixp` bridge (198.18.70.0/24).  BGP, filters,
+# communities, and RTR policy are intentionally absent from startup state.
+topology:
+  nodes:
+    ixp:
+      kind: linux
+      image: frr-lab:local
+      binds: ["configs/ixp/setup.sh:/setup.sh"]
+      exec: ["bash /setup.sh"]
+
+    rs1:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/rs1/frr.conf:/etc/frr/frr.conf
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["vtysh -b"]
+    rs2:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/rs2/frr.conf:/etc/frr/frr.conf
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["vtysh -b"]
+    enterprise:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/enterprise/frr.conf:/etc/frr/frr.conf
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["vtysh -b"]
+    peer-content:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/peer-content/frr.conf:/etc/frr/frr.conf
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["vtysh -b"]
+    peer-saas:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/peer-saas/frr.conf:/etc/frr/frr.conf
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["vtysh -b"]
+    transit:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/transit/frr.conf:/etc/frr/frr.conf
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["vtysh -b"]
+    rpki:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/rpki/setup.sh:/setup.sh
+        - configs/rpki/rtr_server.py:/rtr_server.py
+      exec: ["bash /setup.sh"]
+    irr:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - irr:/irr:ro
+        - configs/irr/setup.sh:/setup.sh
+      exec: ["bash /setup.sh"]
+    looking-glass:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/daemons:/etc/frr/daemons
+        - configs/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/looking-glass/frr.conf:/etc/frr/frr.conf
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["vtysh -b"]
+    content-host:
+      kind: linux
+      image: frr-lab:local
+      binds: ["configs/content-host/setup.sh:/setup.sh"]
+      exec: ["bash /setup.sh"]
+    saas-host:
+      kind: linux
+      image: frr-lab:local
+      binds: ["configs/saas-host/setup.sh:/setup.sh"]
+      exec: ["bash /setup.sh"]
+
+  links:
+    - endpoints: ["rs1:eth1", "ixp:eth1"]
+    - endpoints: ["rs2:eth1", "ixp:eth2"]
+    - endpoints: ["enterprise:eth1", "ixp:eth3"]
+    - endpoints: ["peer-content:eth1", "ixp:eth4"]
+    - endpoints: ["peer-saas:eth1", "ixp:eth5"]
+    - endpoints: ["looking-glass:eth1", "ixp:eth6"]
+    - endpoints: ["enterprise:eth2", "transit:eth1"]       # 192.0.2.4/30
+    - endpoints: ["enterprise:eth3", "rpki:eth1"]           # 10.100.70.0/30
+    - endpoints: ["enterprise:eth4", "irr:eth1"]            # 10.100.70.4/30
+    - endpoints: ["peer-content:eth2", "content-host:eth1"] # 198.51.100.0/24
+    - endpoints: ["peer-saas:eth2", "saas-host:eth1"]       # 192.0.2.0/24
