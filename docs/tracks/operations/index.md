@@ -1,6 +1,6 @@
 # Network Operations Track
 
-Fifteen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, network automation with NetBox, and streaming telemetry.
+Sixteen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, network automation with NetBox, and streaming telemetry.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
