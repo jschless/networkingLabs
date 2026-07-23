@@ -1,0 +1,20 @@
+# Training identities. The reply attributes are RFC 3580 VLAN authorization
+# evidence; the authenticator action handler projects the accepted role to its
+# corresponding bridge port for this host-safe fallback.
+corp-user
+    Tunnel-Type = VLAN,
+    Tunnel-Medium-Type = IEEE-802,
+    Tunnel-Private-Group-ID = "110",
+    Reply-Message = "corp role VLAN 110"
+
+quarantine-user
+    Tunnel-Type = VLAN,
+    Tunnel-Medium-Type = IEEE-802,
+    Tunnel-Private-Group-ID = "130",
+    Reply-Message = "quarantine role VLAN 130"
+
+guest-user Cleartext-Password := "guest-password"
+    Tunnel-Type = VLAN,
+    Tunnel-Medium-Type = IEEE-802,
+    Tunnel-Private-Group-ID = "120",
+    Reply-Message = "guest role VLAN 120"

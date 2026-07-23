@@ -110,6 +110,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `rancher/k3s:v1.30.6-k3s1` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1` (multi-arch; MetalLB + nginx also pull at deploy — needs internet) |
 | `anycast-dns:local` | `anycast-dns` | `docker build -t anycast-dns:local labs/anycast-dns/` |
 | `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
+| `wireless-auth-control:local` | `wireless-auth-control-operations` | `docker build -t wireless-auth-control:local labs/wireless-auth-control-operations/` (pinned Debian 12.12 base; live wired EAPOL/RADIUS only) |
 | `nac-practice:local` | `dot1x-ceos-practice` | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
 | `nac-practice-tacacs:local` | `dot1x-ceos-practice` | `docker build -f labs/dot1x-ceos-practice/Dockerfile.tacacs -t nac-practice-tacacs:local labs/dot1x-ceos-practice/` |
 | `assurance-lab:local` | `network-assurance` | `docker build -t assurance-lab:local labs/network-assurance/` |

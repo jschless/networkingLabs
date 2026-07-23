@@ -148,7 +148,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: HA track](tracks/high-availability/index.md)
 
-- :material-office-building: **Enterprise Design** (19 labs)
+- :material-office-building: **Enterprise Design** (20 labs)
 
     ---
     Campus tiers, WAN edge, cloud hybrid routing, SD-WAN concepts, load balancing, access security, multicast, services, capstones

@@ -100,21 +100,21 @@ topics:
     owner: existing enterprise track
     notes: Current material is evidence/theory, not a live WLAN implementation.
   - domain: wireless
-    topic: WLAN association, authentication, roaming, and wired policy
-    level: 0
-    labs: []
-    fidelity: Planned virtual-radio lab only if the host probe succeeds; otherwise narrowed to honest evidence/live control scope.
-    last_live_validation: null
+    topic: WLAN authentication and wired policy control
+    level: 4
+    labs: [labs/wireless-auth-control-operations]
+    fidelity: Live wired EAPOL, EAP-TLS server validation, FreeRADIUS authorization, VLAN policy projection, and certificate-trust diagnosis; no SSID, association, roaming, or RF claim.
+    last_live_validation: 2026-07-23
     owner: WP-02
-    notes: Planned as labs/wireless-core-operations (target level 4).
+    notes: Fallback name and scope required by the failed mac80211_hwsim host probe in labs/wireless-auth-control-operations/PROBE.md.
   - domain: wireless
     topic: RF survey and spectrum interpretation
-    level: 0
-    labs: []
-    fidelity: Planned labeled evidence pack; no fabricated RSSI, SNR, or airtime measurements.
-    last_live_validation: null
+    level: 1
+    labs: [labs/fixtures/wireless-core-operations]
+    fidelity: Provenance-labeled synthetic evidence exercise; no fabricated live RSSI, SNR, or airtime measurement claim.
+    last_live_validation: 2026-07-23
     owner: WP-02
-    notes: Planned fixture pack (target level 1).
+    notes: Pack is paired with the WP-02 fallback and cannot establish hardware RF behavior.
   - domain: mobile
     topic: private mobile core and enterprise attachment
     level: 0
