@@ -1,0 +1,3 @@
+# Carrier cross-connect evidence manifest
+
+All files are repo-created synthetic teaching evidence dated 2026-07-23 and released CC0-1.0. No production carrier, customer, address, circuit, credential, payload, or hardware telemetry is included. `service-order.md` models an anonymized order; `physical-evidence.md` is a hand-calculated evidence exercise; `cfm-evidence.txt` is a labeled state/output example. Expected deductions are validated by `validate.sh`: 2.2 dB loss, B-to-C wrong patch, legacy T1/SONET boundary, and Silver S-VLAN 3120. Calculate checksums with `sha256sum service-order.md physical-evidence.md cfm-evidence.txt`; text fixtures have no capture transformation.

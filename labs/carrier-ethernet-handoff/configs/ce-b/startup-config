@@ -1,0 +1,7 @@
+hostname ce-b
+no aaa root
+spanning-tree mode none
+interface Ethernet1
+   description to tester-b (customer trunk pending)
+interface Ethernet2
+   description to nid-b UNI (customer trunk pending)

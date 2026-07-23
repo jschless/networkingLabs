@@ -134,6 +134,7 @@ nav:
       - mpls-sr-srlinux: tracks/mpls-sp/mpls-sr-srlinux.md
       - mpls-l2vpn: tracks/mpls-sp/mpls-l2vpn.md
       - ipv6-transition: tracks/mpls-sp/ipv6-transition.md
+      - carrier-ethernet-handoff (UNI follow-on): tracks/mpls-sp/carrier-ethernet-handoff.md
     - Data Center:
       - tracks/data-center/index.md
       - spine-leaf: tracks/data-center/spine-leaf.md
@@ -167,6 +168,7 @@ nav:
       - enterprise-wireless-architecture: tracks/enterprise/enterprise-wireless-architecture.md
       - wireless-auth-control-operations: tracks/enterprise/wireless-auth-control-operations.md
       - cloud-hybrid-networking: tracks/enterprise/cloud-hybrid-networking.md
+      - carrier-ethernet-handoff: tracks/enterprise/carrier-ethernet-handoff.md
       - enterprise-campus-capstone: tracks/enterprise/enterprise-campus-capstone.md
       - enterprise-collapsed-core-capstone: tracks/enterprise/enterprise-collapsed-core-capstone.md
       - enterprise-dmz-capstone: tracks/enterprise/enterprise-dmz-capstone.md
@@ -205,6 +207,7 @@ nav:
       - suzieq-network-observability: tracks/operations/suzieq-network-observability.md
       - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
       - cloud-hybrid-networking: tracks/operations/cloud-hybrid-networking.md
+      - carrier-ethernet-handoff: tracks/operations/carrier-ethernet-handoff.md
   - Troubleshooting:
     - Overview: tracks/troubleshooting/index.md
     - Guided Debug Labs:

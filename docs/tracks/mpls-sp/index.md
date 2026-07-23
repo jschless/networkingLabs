@@ -1,6 +1,8 @@
 # MPLS & Service Provider Track
 
-Six labs covering the full SP stack: LDP label distribution, Segment Routing, IS-IS underlay, BGP VPNv4 L3VPN, L2VPN pseudowires, and IPv6 transition via 6PE.
+Seven labs covering the full SP stack and enterprise carrier handoff: LDP label distribution, Segment Routing, IS-IS underlay, BGP VPNv4 L3VPN, L2VPN pseudowires, IPv6 transition via 6PE, and UNI QinQ acceptance.
+
+Before the pseudowire lab, [carrier-ethernet-handoff](carrier-ethernet-handoff.md) practises the enterprise UNI/QinQ demarc; it is registered as a follow-on without adding a duplicate SP lab count.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|

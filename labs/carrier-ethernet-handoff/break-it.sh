@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -euo pipefail
+docker exec clab-carrier-ethernet-handoff-nid-b bash -lc 'ovs-ofctl -O OpenFlow13 del-flows br-service; ovs-ofctl -O OpenFlow13 add-flow br-service "priority=100,in_port=1,dl_vlan=110,actions=push_vlan:0x88a8,set_field:0x1c1c->vlan_vid,set_field:5->vlan_pcp,output:2"; ovs-ofctl -O OpenFlow13 add-flow br-service "priority=100,in_port=1,dl_vlan=120,actions=push_vlan:0x88a8,set_field:0x1c1c->vlan_vid,set_field:3->vlan_pcp,output:2"; ovs-ofctl -O OpenFlow13 add-flow br-service "priority=100,in_port=2,dl_vlan=3100,actions=pop_vlan,output:1"; ovs-ofctl -O OpenFlow13 add-flow br-service "priority=100,in_port=2,dl_vlan=3120,actions=pop_vlan,output:1"'
