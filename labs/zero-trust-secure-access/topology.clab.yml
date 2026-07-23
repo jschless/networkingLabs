@@ -1,0 +1,85 @@
+name: zero-trust-secure-access
+
+topology:
+  defaults:
+    kind: linux
+    image: zt-access-tools:local
+  nodes:
+    remote-lan:
+      binds: [configs/lan-bridge.sh:/setup.sh]
+      env: {PORTS: "eth1 eth2 eth3"}
+      exec: [bash /setup.sh]
+    identity-lan:
+      binds: [configs/lan-bridge.sh:/setup.sh]
+      env: {PORTS: "eth1 eth2 eth3 eth4"}
+      exec: [bash /setup.sh]
+    origin-lan:
+      binds: [configs/lan-bridge.sh:/setup.sh]
+      env: {PORTS: "eth1 eth2 eth3 eth4"}
+      exec: [bash /setup.sh]
+    management-lan:
+      binds: [configs/lan-bridge.sh:/setup.sh]
+      env: {PORTS: "eth1 eth2"}
+      exec: [bash /setup.sh]
+    seg-gw:
+      binds: [configs/seg-gw/setup.sh:/setup.sh]
+      exec: [bash /setup.sh]
+    managed-client:
+      env: {IP_ADDR: 10.90.10.11/24, GATEWAY: 10.90.10.1, ROLE: client}
+      binds: [configs/common/setup-node.sh:/setup.sh, runtime:/runtime]
+      exec: [bash /setup.sh]
+    unmanaged-client:
+      env: {IP_ADDR: 10.90.10.12/24, GATEWAY: 10.90.10.1, ROLE: client}
+      binds: [configs/common/setup-node.sh:/setup.sh, runtime:/runtime]
+      exec: [bash /setup.sh]
+    admin-client:
+      env: {IP_ADDR: 10.90.50.10/24, GATEWAY: 10.90.50.1, ROLE: client}
+      binds: [configs/common/setup-node.sh:/setup.sh, runtime:/runtime]
+      exec: [bash /setup.sh]
+    pep:
+      env: {IP_ADDR: 10.90.20.10/24, GATEWAY: 10.90.20.1, ROLE: pep}
+      binds: [configs/common/setup-node.sh:/setup.sh, runtime:/runtime]
+      exec: [bash /setup.sh]
+    idp:
+      image: zt-keycloak:local
+      env:
+        KC_BOOTSTRAP_ADMIN_USERNAME: lab-admin
+        KC_BOOTSTRAP_ADMIN_PASSWORD: LAB-ONLY-admin-credential
+      binds: [configs/idp/realm.json:/opt/keycloak/data/import/ztna-realm.json, configs/idp/setup.sh:/setup.sh]
+      cmd: start-dev --import-realm --hostname-strict=false
+      exec: [bash /setup.sh]
+    pki:
+      env: {IP_ADDR: 10.90.30.11/24, GATEWAY: 10.90.30.1, ROLE: pki}
+      binds: [configs/common/setup-node.sh:/setup.sh, runtime:/runtime]
+      exec: [bash /setup.sh]
+    log-viewer:
+      env: {IP_ADDR: 10.90.30.12/24, GATEWAY: 10.90.30.1, ROLE: log}
+      binds: [configs/common/setup-node.sh:/setup.sh, runtime:/runtime]
+      exec: [bash /setup.sh]
+    public-app:
+      env: {IP_ADDR: 10.90.40.10/24, GATEWAY: 10.90.40.1, ROLE: public-app}
+      binds: [configs/common/setup-node.sh:/setup.sh]
+      exec: [bash /setup.sh]
+    finance-app:
+      env: {IP_ADDR: 10.90.40.11/24, GATEWAY: 10.90.40.1, ROLE: finance-app}
+      binds: [configs/common/setup-node.sh:/setup.sh]
+      exec: [bash /setup.sh]
+    ops-app:
+      env: {IP_ADDR: 10.90.40.12/24, GATEWAY: 10.90.40.1, ROLE: ops-app}
+      binds: [configs/common/setup-node.sh:/setup.sh]
+      exec: [bash /setup.sh]
+  links:
+    - endpoints: ["managed-client:eth1", "remote-lan:eth1"]
+    - endpoints: ["unmanaged-client:eth1", "remote-lan:eth2"]
+    - endpoints: ["seg-gw:eth1", "remote-lan:eth3"]
+    - endpoints: ["pep:eth1", "seg-gw:eth2"]
+    - endpoints: ["seg-gw:eth3", "identity-lan:eth1"]
+    - endpoints: ["idp:eth1", "identity-lan:eth2"]
+    - endpoints: ["pki:eth1", "identity-lan:eth3"]
+    - endpoints: ["log-viewer:eth1", "identity-lan:eth4"]
+    - endpoints: ["seg-gw:eth4", "origin-lan:eth1"]
+    - endpoints: ["public-app:eth1", "origin-lan:eth2"]
+    - endpoints: ["finance-app:eth1", "origin-lan:eth3"]
+    - endpoints: ["ops-app:eth1", "origin-lan:eth4"]
+    - endpoints: ["admin-client:eth1", "management-lan:eth1"]
+    - endpoints: ["seg-gw:eth5", "management-lan:eth2"]

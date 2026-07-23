@@ -112,6 +112,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
 | `wireless-auth-control:local` | `wireless-auth-control-operations` | `docker build -t wireless-auth-control:local labs/wireless-auth-control-operations/` (pinned Debian 12.12 base; live wired EAPOL/RADIUS only) |
 | `carrier-ethernet-tools:1.0.0` | `carrier-ethernet-handoff` | `docker build -t carrier-ethernet-tools:1.0.0 labs/carrier-ethernet-handoff/` (pinned Debian 12.12 base; OVS userspace QinQ and Linux test tools) |
+| `zt-access-tools:local`, `zt-keycloak:local` | `zero-trust-secure-access` | `docker build -t zt-access-tools:local labs/zero-trust-secure-access/` and `docker build -f labs/zero-trust-secure-access/Dockerfile.keycloak -t zt-keycloak:local labs/zero-trust-secure-access/` (pinned Python 3.12.7, Keycloak 26.0.7, and BusyBox base images) |
 | `nac-practice:local` | `dot1x-ceos-practice` | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
 | `nac-practice-tacacs:local` | `dot1x-ceos-practice` | `docker build -f labs/dot1x-ceos-practice/Dockerfile.tacacs -t nac-practice-tacacs:local labs/dot1x-ceos-practice/` |
 | `assurance-lab:local` | `network-assurance` | `docker build -t assurance-lab:local labs/network-assurance/` |

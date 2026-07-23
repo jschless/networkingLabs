@@ -41,6 +41,10 @@ Build an entire design from scratch with only IPs and interfaces pre-configured.
 
 ## Platform
 
+## Cross-track practice
+
+The Security track's [zero-trust-secure-access](../security/zero-trust-secure-access.md) lab complements enterprise designs with resource-centric OIDC, mTLS, route authorization, and origin segmentation. It is registered and counted in Security only.
+
 - **Arista cEOS**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 - **DMZ Linux services/firewalls**: `docker build -t dmz-lab:local labs/enterprise-dmz-capstone/`
 - **load-balancer-basics** (no cEOS needed): `docker build -t lb-lab:local labs/load-balancer-basics/`
