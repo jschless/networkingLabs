@@ -1,0 +1,4 @@
+SYNTHETIC, repo-created 2026-07-23, CC0-1.0
+OVS Interface cfm_mpid: 101
+OVS Interface cfm_remote_mpids: [102]
+Interpretation: configuration/state-field example only. No live CCM/LBM/LTM counter claim.

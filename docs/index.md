@@ -127,7 +127,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Tunnels & VPN track](tracks/tunnels-vpn/index.md)
 
-- :material-cloud-tags: **MPLS & SP** (6 labs)
+- :material-cloud-tags: **MPLS & SP** (7 labs)
 
     ---
     LDP, IS-IS + SR-MPLS + BGP VPNv4, L2VPN, 6PE
@@ -148,7 +148,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: HA track](tracks/high-availability/index.md)
 
-- :material-office-building: **Enterprise Design** (20 labs)
+- :material-office-building: **Enterprise Design** (21 labs)
 
     ---
     Campus tiers, WAN edge, cloud hybrid routing, SD-WAN concepts, load balancing, access security, multicast, services, capstones
@@ -169,7 +169,7 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 
-- :material-chart-line: **Network Operations** (14 labs)
+- :material-chart-line: **Network Operations** (15 labs)
 
     ---
     Management access, DHCP/DNS, AAA, hybrid-flow evidence, packet capture, MTU troubleshooting, SNMP/syslog/NetFlow, QoS, zero-touch provisioning, API automation, NetBox, gNMI telemetry, and SuzieQ observability

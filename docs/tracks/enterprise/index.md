@@ -25,6 +25,7 @@ Twenty labs covering campus design patterns, WAN edge, hybrid connectivity, SD-W
 | [enterprise-wireless-architecture](enterprise-wireless-architecture.md) | Practice | Enterprise WLAN design, controller modes, WLC architectures |
 | [wireless-auth-control-operations](wireless-auth-control-operations.md) | Practice | EAP-TLS/RADIUS authorization, role VLAN policy, and certificate-trust incident; no live RF claim |
 | [cloud-hybrid-networking](cloud-hybrid-networking.md) | Practice | Hybrid eBGP, transit route domains, inspection, private DNS, and asymmetric-return diagnosis |
+| [carrier-ethernet-handoff](carrier-ethernet-handoff.md) | Practice | QinQ E-Line turn-up, MTU acceptance, evidence-only OAM/physical analysis, and wrong-cross-connect diagnosis |
 
 ## Capstone Labs
 

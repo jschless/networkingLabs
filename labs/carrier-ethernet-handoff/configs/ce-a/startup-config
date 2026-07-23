@@ -1,0 +1,7 @@
+hostname ce-a
+no aaa root
+spanning-tree mode none
+interface Ethernet1
+   description to tester-a (customer trunk pending)
+interface Ethernet2
+   description to nid-a UNI (customer trunk pending)

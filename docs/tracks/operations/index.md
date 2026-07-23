@@ -1,6 +1,6 @@
 # Network Operations Track
 
-Fourteen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, network automation with NetBox, and streaming telemetry.
+Fifteen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, network automation with NetBox, and streaming telemetry.
 
 | Lab | Type | What You Learn |
 |-----|------|----------------|
@@ -18,6 +18,7 @@ Fourteen labs covering management access, DHCP/DNS, AAA operations, packet captu
 | [suzieq-network-observability](suzieq-network-observability.md) | Reference | SuzieQ: agentless polling, fleet-wide queries, LLDP topology mapping, path tracing, health assertions |
 | [telemetry-monitoring-hybrid](telemetry-monitoring-hybrid.md) | Practice | gNMI telemetry, Prometheus, Grafana, classic NMS |
 | [cloud-hybrid-networking](cloud-hybrid-networking.md) | Practice | Route-table, conntrack, DNS-view, and capture evidence for a hybrid outage |
+| [carrier-ethernet-handoff](carrier-ethernet-handoff.md) | Practice | Demarc capture, MTU/SLA acceptance, evidence packet, and wrong S-VLAN diagnosis |
 
 ## Platform Notes
 

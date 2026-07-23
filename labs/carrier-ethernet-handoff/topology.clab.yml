@@ -1,0 +1,46 @@
+name: carrier-ethernet-handoff
+topology:
+  nodes:
+    tester-a:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      binds: [configs/tester-a/setup.sh:/setup.sh]
+      exec: [bash /setup.sh]
+    ce-a:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/ce-a/startup-config
+    nid-a:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      env: {ROLE: nid}
+      binds: [configs/nid/setup.sh:/setup.sh]
+      exec: [bash /setup.sh]
+    p-core:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      env: {ROLE: core}
+      binds: [configs/core/setup.sh:/setup.sh]
+      exec: [bash /setup.sh]
+    nid-b:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      env: {ROLE: nid}
+      binds: [configs/nid/setup.sh:/setup.sh]
+      exec: [bash /setup.sh]
+    ce-b:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/ce-b/startup-config
+    tester-b:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      binds: [configs/tester-b/setup.sh:/setup.sh]
+      exec: [bash /setup.sh]
+  links:
+    - endpoints: ["tester-a:eth1", "ce-a:eth1"] # Customer UNI, VLANs 110/120
+    - endpoints: ["ce-a:eth2", "nid-a:eth1"] # CE-A to NID-A UNI
+    - endpoints: ["nid-a:eth2", "p-core:eth1"] # Provider S-VLAN transport 3100/3120
+    - endpoints: ["p-core:eth2", "nid-b:eth2"] # Provider S-VLAN transport 3100/3120
+    - endpoints: ["nid-b:eth1", "ce-b:eth2"] # NID-B to CE-B UNI
+    - endpoints: ["ce-b:eth1", "tester-b:eth1"] # Customer UNI, VLANs 110/120

@@ -189,20 +189,20 @@ topics:
     notes: Planned as labs/enterprise-dual-stack-capstone (target level 4).
   - domain: carrier and physical
     topic: carrier Ethernet handoff and service demarcation
-    level: 0
-    labs: []
-    fidelity: Planned live packet-Ethernet handoff; carrier provisioning and optics are outside the runtime claim.
-    last_live_validation: null
+    level: 4
+    labs: [labs/carrier-ethernet-handoff]
+    fidelity: Live cEOS UNI trunks plus userspace OVS QinQ E-Line, tag capture, MTU/throughput and wrong-S-VLAN diagnosis; CFM and provider provisioning are evidence-only.
+    last_live_validation: 2026-07-23
     owner: WP-04
-    notes: Planned as labs/carrier-ethernet-handoff (target level 4).
+    notes: cEOS QinQ/CFM probe failed; the plan-authorized OVS fallback is documented in PROBE.md.
   - domain: carrier and physical
     topic: physical cross-connect and legacy-service evidence
-    level: 0
-    labs: []
-    fidelity: Planned provenance-controlled evidence pack; no optical levels or hardware counters are simulated.
-    last_live_validation: null
+    level: 1
+    labs: [labs/carrier-ethernet-handoff]
+    fidelity: Provenance-labeled synthetic evidence pack; no optical levels or hardware counters are simulated.
+    last_live_validation: 2026-07-23
     owner: WP-04
-    notes: Planned fixture pack (target level 1).
+    notes: Pack accompanies the live packet-Ethernet practice lab and cannot claim hardware fidelity.
   - domain: voice and collaboration
     topic: enterprise SIP, RTP, and QoS
     level: 0
