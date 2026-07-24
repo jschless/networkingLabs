@@ -29,12 +29,12 @@ topics:
     notes: Existing checked labs.
   - domain: WAN and overlay
     topic: SD-WAN control and operations
-    level: 3
-    labs: [labs/sdwan-concepts]
-    fidelity: Live provider-neutral overlay mechanisms; not Cisco SD-WAN Manager or vManage product workflow.
-    last_live_validation: null
+    level: 4
+    labs: [labs/sdwan-concepts, labs/orchestrated-wan-overlay]
+    fidelity: Live provider-neutral controller/PKI separation, mTLS enrollment and revocation, WireGuard multi-transport overlay, centralized desired/applied policy, segment policy, SLA hysteresis, and local breakout; not Cisco SD-WAN Manager or vManage product workflow.
+    last_live_validation: 2026-07-23
     owner: WP-13
-    notes: Existing concepts lab; labs/sdwan-operations is planned for level 4.
+    notes: The level-4 fallback is honestly named orchestrated-wan-overlay after the platform gate; product-specific control-plane workflows remain theory/sandbox work.
   - domain: cloud and hybrid
     topic: transit, private DNS, inspection, and cloud route-table semantics
     level: 4

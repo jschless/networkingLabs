@@ -33,7 +33,7 @@ material is built and validated.
 | Domain | Current position | Planned package targets |
 |---|---|---|
 | Campus LAN | Level 4 switching/access troubleshooting; level 3 enterprise design/services | WP-16 adds assessed cross-domain faults after source labs validate. |
-| WAN and overlay | Level 4 VPN/segmentation; level 3 provider-neutral SD-WAN concepts | WP-13 `sdwan-operations` to level 4. |
+| WAN and overlay | Level 4 VPN/segmentation and orchestrated provider-neutral overlay operations | `orchestrated-wan-overlay` provides controller/PKI, mTLS, two transports, policy, SLA, and certificate-fault recovery; vendor SD-WAN products remain level 1 theory/sandbox work. |
 | Cloud and hybrid | Level 0 | WP-01 `cloud-hybrid-networking` to level 4. |
 | Data center and DCI | Level 4 fabric/EVPN and routed DCI | WP-03 routed DCI is live; WP-11 IP storage remains planned; FC/FCoE/RoCE evidence targets level 1. |
 | Internet edge | Level 4 BGP and prefix security | WP-07 `internet-peering-ixp` to level 4. |
