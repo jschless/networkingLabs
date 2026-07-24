@@ -178,6 +178,7 @@ nav:
       - enterprise-wan-edge-capstone: tracks/enterprise/enterprise-wan-edge-capstone.md
       - enterprise-grand-capstone: tracks/enterprise/enterprise-grand-capstone.md
       - internet-peering-ixp (cross-track): tracks/enterprise/internet-peering-ixp.md
+      - enterprise-dual-stack-capstone: tracks/enterprise/enterprise-dual-stack-capstone.md
     - Layer 2:
       - tracks/layer2/index.md
       - vlan-trunks-switchport-basics: tracks/layer2/vlan-trunks-switchport-basics.md
@@ -212,6 +213,7 @@ nav:
       - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
       - cloud-hybrid-networking: tracks/operations/cloud-hybrid-networking.md
       - carrier-ethernet-handoff: tracks/operations/carrier-ethernet-handoff.md
+      - enterprise-dual-stack-capstone: tracks/operations/enterprise-dual-stack-capstone.md
   - Troubleshooting:
     - Overview: tracks/troubleshooting/index.md
     - Guided Debug Labs:

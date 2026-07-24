@@ -1,0 +1,43 @@
+hostname dist1
+ip routing
+ipv6 unicast-routing
+interface Ethernet1
+   no switchport
+   ip address 10.108.10.2/24
+   ipv6 address 2001:db8:108:10::2/64
+   ip ospf area 0
+   ipv6 ospf 108 area 0
+   ipv6 ospf network point-to-point
+interface Ethernet2
+   no switchport
+   ip address 10.108.30.2/24
+   ipv6 address 2001:db8:108:30::2/64
+   ip ospf area 0
+   ipv6 ospf 108 area 0
+   ipv6 ospf network point-to-point
+interface Ethernet3
+   no switchport
+   ip address 10.108.101.1/30
+   ipv6 address 2001:db8:108:101::1/64
+   ip ospf area 0
+   ip ospf network point-to-point
+   ipv6 ospf 108 area 0
+interface Ethernet4
+   no switchport
+   ip address 10.108.105.1/30
+   ipv6 address 2001:db8:108:105::1/64
+   ip ospf area 0
+   ip ospf network point-to-point
+   ipv6 ospf 108 area 0
+router ospf 108
+   router-id 10.108.255.1
+   passive-interface default
+   no passive-interface Ethernet3
+   no passive-interface Ethernet4
+ipv6 router ospf 108
+   router-id 10.108.255.1
+ip route 0.0.0.0/0 10.108.105.2
+ipv6 route ::/0 2001:db8:108:105::2
+ipv6 route 2001:db8:108:20::/64 2001:db8:108:101::2
+ipv6 route 2001:db8:108:40::/64 2001:db8:108:101::2
+end

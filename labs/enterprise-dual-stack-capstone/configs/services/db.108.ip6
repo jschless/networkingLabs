@@ -1,0 +1,4 @@
+$TTL 60
+@ IN SOA services.corp.example. hostmaster.corp.example. (1 60 60 60 60)
+  IN NS services.corp.example.
+0.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.0.1 IN PTR app.corp.example.

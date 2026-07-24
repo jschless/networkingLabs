@@ -1,0 +1,8 @@
+$TTL 60
+@ IN SOA services.corp.example. hostmaster.corp.example. (1 60 60 60 60)
+  IN NS services.corp.example.
+services IN A 10.108.30.10
+services IN AAAA 2001:db8:108:30::10
+app IN A 10.108.40.10
+app IN AAAA 2001:db8:108:40::10
+v4only IN A 10.108.41.10

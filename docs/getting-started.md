@@ -62,6 +62,7 @@ The two things it can't fetch for you are the **cEOS tarball** (licensed — see
 |-------|-----------------|------|
 | `ghcr.io/nokia/srlinux:latest` | `docker pull ghcr.io/nokia/srlinux:latest` | multi-arch ✅ |
 | `quay.io/frrouting/frr:8.4.2` | pulled automatically as the base of `frr-lab:local` and the DMVPN/`sdwan` labs | multi-arch ✅ |
+| `quay.io/frrouting/frr:10.5.0` | `enterprise-dual-stack-capstone` ISP edge | multi-arch ✅ |
 
 All other registry images the labs use (`grafana`, `prometheus`/`prom/*`, `postgres`, `redis`,
 `nginx`, `netbox`, `keycloak`, `step-ca`, `wazuh`, `opennms`, …) are multi-arch and pulled on
@@ -102,6 +103,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | Image | Used by | Build command |
 |-------|---------|---------------|
 | `frr-lab:local` | the FRR/Linux labs (most non-cEOS labs) | `docker build -t frr-lab:local images/frr/` |
+| `enterprise-dual-stack-tools:local` | `enterprise-dual-stack-capstone` Linux services/endpoints | `docker build -t enterprise-dual-stack-tools:local labs/enterprise-dual-stack-capstone/` |
 | `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | one-time build from a free VyOS ISO — see [VyOS platform notes](platforms/vyos.md) |
 | `ipsec-lab:local` | `ipsec-basics`, `flexvpn-basics` | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
