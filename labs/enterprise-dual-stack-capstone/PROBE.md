@@ -8,9 +8,11 @@
 - **Reason and fidelity statement:** On this host, cEOS 4.35.2F formed IPv4 OSPF and
   IPv6 OSPF adjacencies and exposed IPv6 ND state. Attempts to install IPv6 VRRP,
   RA guard, DHCPv6 guard, and ND-inspection commands did not enter running config or
-  returned `Invalid input`. The lab therefore does not claim container-data-plane
-  ASIC first-hop enforcement or cEOS IPv6 FHRP; those controls are evidence-only or
-  Linux-policy design points. This is the fallback allowed by WP-08.
+  returned `Invalid input`. The image also did not install the defined IPv6 ACL when
+  attached to an interface. The lab therefore does not claim container-data-plane
+  ASIC first-hop enforcement, cEOS IPv6 ACL attachment, or cEOS IPv6 FHRP; those
+  controls are evidence-only or Linux-policy design points. This is the fallback
+  allowed by WP-08.
 - **Owner and date:** WP-08 worker, 2026-07-23.
 
 ## Environment

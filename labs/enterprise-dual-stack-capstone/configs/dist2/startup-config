@@ -9,7 +9,6 @@ interface Ethernet1
    ipv6 ospf 108 area 0
    ipv6 ospf network point-to-point
    ip access-group GUEST-V4 in
-   ipv6 traffic-filter GUEST-V6 in
 interface Ethernet2
    no switchport
    ip address 10.108.40.2/24
@@ -38,9 +37,6 @@ interface Ethernet5
 ip access-list extended GUEST-V4
    10 deny ip 10.108.20.0/24 10.108.0.0/16
    20 permit ip any any
-ipv6 access-list GUEST-V6
-   10 deny ipv6 2001:db8:108:20::/64 2001:db8:108::/48
-   20 permit ipv6 any any
 router ospf 108
    router-id 10.108.255.2
    passive-interface default

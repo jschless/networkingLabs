@@ -194,8 +194,10 @@ application over either IP family.
 </details>
 <details markdown="1"><summary>Solution</summary>
 
-Apply equivalent ingress denies on `dist2` Ethernet1 for guest-to-enterprise prefixes,
-then permit remaining traffic. Do not block ICMPv6 wholesale: ND and PMTUD depend on it.
+Apply the IPv4 ingress ACL on `dist2` Ethernet1. The cEOS image accepts IPv6 ACL
+definition but not its data-plane interface attachment in this probe; use the supplied
+guest Linux nftables output policy as the explicitly labeled IPv6 enforcement fallback.
+Do not block ICMPv6 wholesale: ND and PMTUD depend on it.
 
 </details>
 <details markdown="1"><summary>Check your work</summary>
@@ -261,8 +263,8 @@ that overlap is a deliberately avoided outage risk.
 
 ## Task 9 — Break-It: diagnose IPv6-only application stalls (open)
 
-**Objective:** Keep IPv4, DNS, OSPF adjacencies, and small IPv6 probes healthy while
-withdrawing the ISP IPv6 return advertisement. Diagnose from evidence, restore the
+**Objective:** Keep IPv4, DNS, and OSPF adjacencies healthy while blackholing the
+application segment's IPv6 return route. Diagnose from evidence, restore the
 minimal route, and prove the service again. Do **not** delete the AAAA record.
 
 ```bash
@@ -272,13 +274,13 @@ minimal route, and prove the service again. Do **not** delete the AAAA record.
 
 <details markdown="1"><summary>Hints</summary>
 
-- Compare `show bgp ipv6 unicast` at ISP before changing DNS or endpoint settings.
-- Trace forward and return family paths independently.
+- Compare `show ipv6 route 2001:db8:108:10::/64` at dist2 before changing DNS or endpoint settings.
+- Trace forward and return family paths independently; the broken return affects v6 replies.
 
 </details>
 <details markdown="1"><summary>Solution</summary>
 
-Restore only ISP's `network 2001:db8:ffff:109::/64` under IPv6 BGP, then run
+Remove only dist2's static `2001:db8:108:10::/64 Null0` route, then run
 `./labs/enterprise-dual-stack-capstone/repair-break-it.sh` and recheck. Deleting AAAA
 conceals the fault and fails this task.
 
@@ -286,7 +288,7 @@ conceals the fault and fails this task.
 <details markdown="1"><summary>Check your work</summary>
 
 IPv4 remains healthy during the incident, but the IPv6 return route is absent. After
-the minimal repair the BGP table and v6 application test recover without a DNS edit.
+the minimal repair the route and v6 application test recover without a DNS edit.
 
 </details>
 
@@ -307,7 +309,7 @@ guest isolation, and Break-It state.
 
 | Symptom | Evidence | Minimal correction |
 |---|---|---|
-| v4 works; v6 app stalls | ISP has no IPv6 return prefix | Restore the IPv6 BGP network; retain AAAA |
+| v4 works; v6 app stalls | dist2 blackholes the app return route | Remove the scoped IPv6 Null0 route; retain AAAA |
 | Guest reaches app over one family | ACL tables differ | Add the equivalent family-specific deny |
 | Name resolves but connection fails | `dig` succeeds, route/capture does not | Trace both directions before changing DNS |
 | Large v6 transfer fails | PTB absent/blocked | Permit required ICMPv6 and retest PMTUD |

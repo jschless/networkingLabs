@@ -42,6 +42,9 @@ topology:
         - ip -6 addr add 2001:db8:108:20::10/64 dev eth1
         - ip route replace default via 10.108.20.2 dev eth1
         - ip -6 route replace default via 2001:db8:108:20::2 dev eth1
+        - nft add table ip6 guest
+        - nft 'add chain ip6 guest output { type filter hook output priority 0; policy accept; }'
+        - nft add rule ip6 guest output ip6 daddr 2001:db8:108::/48 reject
     services:
       kind: linux
       image: enterprise-dual-stack-tools:local
@@ -56,7 +59,7 @@ topology:
         - ip -6 addr add 2001:db8:108:30::10/64 dev eth1
         - ip route replace default via 10.108.30.2 dev eth1
         - ip -6 route replace default via 2001:db8:108:30::2 dev eth1
-        - named -c /etc/bind/named.conf
+        - bash -c 'cp /etc/bind/named.conf /tmp/named.conf; cp /etc/bind/db.* /tmp/; sed -i "s#/etc/bind/#/tmp/#g" /tmp/named.conf; nohup named -u root -c /tmp/named.conf >/tmp/named.log 2>&1 &'
     app-v4v6:
       kind: linux
       image: enterprise-dual-stack-tools:local
@@ -65,7 +68,8 @@ topology:
         - ip -6 addr add 2001:db8:108:40::10/64 dev eth1
         - ip route replace default via 10.108.40.2 dev eth1
         - ip -6 route replace default via 2001:db8:108:40::2 dev eth1
-        - bash -c 'mkdir -p /srv/app; printf dual-stack > /srv/app/index.html; nohup python3 -m http.server 8080 -d /srv/app >/tmp/http.log 2>&1 &'
+        - >-
+          bash -c 'mkdir -p /srv/app; printf dual-stack > /srv/app/index.html; nohup python3 -m http.server 8080 --bind :: -d /srv/app >/tmp/http.log 2>&1 &'
     app-v4only:
       kind: linux
       image: enterprise-dual-stack-tools:local

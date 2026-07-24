@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Preserve IPv4 and small IPv6 probes; only remove the ISP's IPv6 return route.
-docker exec clab-enterprise-dual-stack-capstone-isp vtysh -c 'configure terminal' -c 'router bgp 65000' -c 'address-family ipv6 unicast' -c 'no network 2001:db8:ffff:109::/64' -c 'end'
-echo 'Break-It active: IPv6 return advertisement withdrawn at isp. Do not delete the AAAA record.'
+# Preserve IPv4, DNS, and adjacencies while blackholing the app segment's IPv6 return route.
+docker exec clab-enterprise-dual-stack-capstone-dist2 Cli -p 15 \
+  -c $'enable\nconfigure\nno ipv6 route 2001:db8:108:10::/64 2001:db8:108:101::1\nipv6 route 2001:db8:108:10::/64 Null0\nend' >/dev/null
+echo 'Break-It active: app IPv6 return route blackholed at dist2. Do not delete the AAAA record.'

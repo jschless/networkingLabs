@@ -18,11 +18,11 @@ check_ping_linux 'corp reaches dual-stack app over IPv4' corp-client 10.108.40.1
 check_ping_linux 'corp reaches dual-stack app over IPv6' corp-client 2001:db8:108:40::10
 check_contains 'dual-stack HTTP works over IPv4' "$(node corp-client 'curl -4 --max-time 5 -s http://10.108.40.10:8080')" 'dual-stack'
 check_contains 'dual-stack HTTP works over IPv6' "$(node corp-client 'curl -6 --max-time 5 -s http://[2001:db8:108:40::10]:8080')" 'dual-stack'
-check_contains 'IPv4-only behavior remains explicit' "$(node corp-client 'getent ahostsv4 v4only.corp.example')" '10\.108\.41\.10'
+check_contains 'IPv4-only behavior remains explicit' "$(node corp-client 'dig +short @10.108.30.10 v4only.corp.example A')" '10\.108\.41\.10'
 check_ping_linux 'guest reaches public IPv4' guest-client 198.18.109.10
 check_no_ping_linux 'guest cannot reach internal app over IPv4' guest-client 10.108.40.10
 check_no_ping_linux 'guest cannot reach internal app over IPv6' guest-client 2001:db8:108:40::10
 if [[ "${1:-}" == '--break-it' ]]; then
-  check_not_contains 'Break-It removes IPv6 return route at ISP' "$(frr isp 'show bgp ipv6 unicast 2001:db8:ffff:109::/64')" '2001:db8:ffff:109::/64'
+  check_contains 'Break-It blackholes the app IPv6 return route' "$(eos dist2 'show ipv6 route 2001:db8:108:10::/64')" 'Null0'
 fi
 summary
