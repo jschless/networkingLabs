@@ -1,6 +1,6 @@
 # Enterprise Design Track
 
-Twenty-one labs covering campus design patterns, WAN edge, hybrid connectivity, SD-WAN concepts, DMZ architecture, load balancing, access security, multicast, services, wireless architecture/authorization, and systemic dual-stack operations — primarily on Arista cEOS with Linux service nodes where needed.
+Twenty-two labs covering campus design patterns, WAN edge, hybrid connectivity, SD-WAN concepts and operations, DMZ architecture, load balancing, access security, multicast, services, wireless architecture/authorization, and systemic dual-stack operations — primarily on Arista cEOS with Linux service nodes where needed.
 
 ## Reference Designs
 
@@ -26,6 +26,7 @@ Twenty-one labs covering campus design patterns, WAN edge, hybrid connectivity, 
 | [wireless-auth-control-operations](wireless-auth-control-operations.md) | Practice | EAP-TLS/RADIUS authorization, role VLAN policy, and certificate-trust incident; no live RF claim |
 | [cloud-hybrid-networking](cloud-hybrid-networking.md) | Practice | Hybrid eBGP, transit route domains, inspection, private DNS, and asymmetric-return diagnosis |
 | [carrier-ethernet-handoff](carrier-ethernet-handoff.md) | Practice | QinQ E-Line turn-up, MTU acceptance, evidence-only OAM/physical analysis, and wrong-cross-connect diagnosis |
+| [orchestrated-wan-overlay](orchestrated-wan-overlay.md) | Practice | Controller/PKI, mTLS enrollment, encrypted two-transport overlay, segment policy, SLA steering, and certificate-revocation recovery |
 
 ## Capstone Labs
 
@@ -52,6 +53,7 @@ The Security track's [zero-trust-secure-access](../security/zero-trust-secure-ac
 - **DMZ Linux services/firewalls**: `docker build -t dmz-lab:local labs/enterprise-dmz-capstone/`
 - **load-balancer-basics** (no cEOS needed): `docker build -t lb-lab:local labs/load-balancer-basics/`
 - **sdwan-concepts** (no cEOS needed): `docker build -t sdwan-lab:local labs/sdwan-concepts/`
+- **orchestrated-wan-overlay** (no cEOS needed): `docker build -t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/`
 - **cloud-hybrid-networking**: `docker build -t cloud-lab:local labs/cloud-hybrid-networking/` and import cEOS 4.35.2F
 - **wireless-auth-control-operations**: `docker build -t wireless-auth-control:local labs/wireless-auth-control-operations/`
 - **enterprise-dual-stack-capstone**: `docker build -t enterprise-dual-stack-tools:local labs/enterprise-dual-stack-capstone/`, plus cEOS import

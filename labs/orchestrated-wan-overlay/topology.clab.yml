@@ -1,0 +1,83 @@
+name: orchestrated-wan-overlay
+
+# Provider-neutral orchestrated WAN overlay.  The controller and PKI are
+# distinct services; forwarding edges have two independent underlays.
+topology:
+  defaults:
+    kind: linux
+    image: orchestrated-wan-tools:1.0.0
+  nodes:
+    control-lan:
+      binds: [configs/common/control-lan-init.sh:/init.sh]
+      exec: [bash /init.sh]
+    controller:
+      binds: [configs/controller/init.sh:/init.sh, configs/controller/controller.py:/controller.py, configs/controller/controllerctl.py:/controllerctl.py, runtime:/runtime]
+      exec: [bash /init.sh]
+    pki:
+      binds: [configs/pki/init.sh:/init.sh, configs/pki/pki.py:/pki.py, configs/pki/revoke.sh:/revoke.sh, runtime:/runtime]
+      exec: [bash /init.sh]
+    hub:
+      env: {NODE: hub}
+      sysctls: {net.ipv4.ip_forward: "1"}
+      binds: [configs/common/edge-init.sh:/edge-init.sh, configs/common/edge-agent.py:/edge-agent.py, configs/common/enroll.sh:/enroll.sh, runtime:/runtime]
+      exec: [bash /edge-init.sh]
+    branch1:
+      env: {NODE: branch1}
+      sysctls: {net.ipv4.ip_forward: "1"}
+      binds: [configs/common/edge-init.sh:/edge-init.sh, configs/common/edge-agent.py:/edge-agent.py, configs/common/enroll.sh:/enroll.sh, runtime:/runtime]
+      exec: [bash /edge-init.sh]
+    branch2:
+      env: {NODE: branch2}
+      sysctls: {net.ipv4.ip_forward: "1"}
+      binds: [configs/common/edge-init.sh:/edge-init.sh, configs/common/edge-agent.py:/edge-agent.py, configs/common/enroll.sh:/enroll.sh, runtime:/runtime]
+      exec: [bash /edge-init.sh]
+    mpls:
+      sysctls: {net.ipv4.ip_forward: "1"}
+      binds: [configs/mpls/init.sh:/init.sh]
+      exec: [bash /init.sh]
+    internet:
+      sysctls: {net.ipv4.ip_forward: "1"}
+      binds: [configs/internet/init.sh:/init.sh]
+      exec: [bash /init.sh]
+    corp1:
+      env: {IP: 10.113.10.10/24, GW: 10.113.10.1}
+      binds: [configs/common/endpoint-init.sh:/init.sh]
+      exec: [bash /init.sh]
+    corp2:
+      env: {IP: 10.113.20.10/24, GW: 10.113.20.1}
+      binds: [configs/common/endpoint-init.sh:/init.sh]
+      exec: [bash /init.sh]
+    guest1:
+      env: {IP: 10.113.110.10/24, GW: 10.113.110.1}
+      binds: [configs/common/endpoint-init.sh:/init.sh]
+      exec: [bash /init.sh]
+    guest2:
+      env: {IP: 10.113.120.10/24, GW: 10.113.120.1}
+      binds: [configs/common/endpoint-init.sh:/init.sh]
+      exec: [bash /init.sh]
+    private-app:
+      env: {IP: 10.113.30.10/24, GW: 10.113.30.1, SERVICE: private}
+      binds: [configs/common/endpoint-init.sh:/init.sh]
+      exec: [bash /init.sh]
+    saas:
+      env: {IP: 10.113.50.10/24, GW: 10.113.50.1, SERVICE: saas}
+      binds: [configs/common/endpoint-init.sh:/init.sh]
+      exec: [bash /init.sh]
+  links:
+    - endpoints: ["controller:eth1", "control-lan:eth1"] # 10.113.40.10/24 controller management
+    - endpoints: ["pki:eth1", "control-lan:eth2"] # 10.113.40.2/24 PKI management
+    - endpoints: ["hub:eth1", "control-lan:eth3"] # 10.113.40.11/24 hub management
+    - endpoints: ["branch1:eth1", "control-lan:eth4"] # 10.113.40.21/24 branch1 management
+    - endpoints: ["branch2:eth1", "control-lan:eth5"] # 10.113.40.22/24 branch2 management
+    - endpoints: ["branch1:eth2", "mpls:eth1"] # 172.20.113.0/30 branch1 MPLS/private
+    - endpoints: ["hub:eth2", "mpls:eth2"] # 172.20.113.4/30 hub MPLS/private
+    - endpoints: ["branch2:eth2", "mpls:eth3"] # 172.20.113.8/30 branch2 MPLS/private
+    - endpoints: ["branch1:eth3", "internet:eth1"] # 192.0.2.112/30 branch1 internet
+    - endpoints: ["hub:eth3", "internet:eth2"] # 192.0.2.116/30 hub internet
+    - endpoints: ["branch2:eth3", "internet:eth3"] # 192.0.2.120/30 branch2 internet
+    - endpoints: ["internet:eth4", "saas:eth1"] # 10.113.50.0/24 SaaS internet service
+    - endpoints: ["branch1:eth4", "corp1:eth1"] # 10.113.10.0/24 branch1 CORP
+    - endpoints: ["branch2:eth4", "corp2:eth1"] # 10.113.20.0/24 branch2 CORP
+    - endpoints: ["branch1:eth5", "guest1:eth1"] # 10.113.110.0/24 branch1 GUEST
+    - endpoints: ["branch2:eth5", "guest2:eth1"] # 10.113.120.0/24 branch2 GUEST
+    - endpoints: ["hub:eth4", "private-app:eth1"] # 10.113.30.0/24 hub private service

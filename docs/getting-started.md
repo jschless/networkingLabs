@@ -121,6 +121,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `qos-lab:local` | `qos-enterprise` | `docker build -t qos-lab:local labs/qos-enterprise/` |
 | `telemetry-lab:local` | `telemetry-monitoring-hybrid` | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
 | `sdwan-lab:local` | `sdwan-concepts` | `docker build -t sdwan-lab:local labs/sdwan-concepts/` |
+| `orchestrated-wan-tools:1.0.0` | `orchestrated-wan-overlay` | `docker build -t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/` (pinned Debian 12.12 base; mTLS, WireGuard, nftables, and `tc`) |
 | `automation-fundamentals:local` | `automation-fundamentals` | `docker build -t automation-fundamentals:local labs/automation-fundamentals/` |
 | `lb-lab:local` | `load-balancer-basics` | `docker build -t lb-lab:local labs/load-balancer-basics/` |
 | `service-ha:local` | `service-ha` | `docker build -t service-ha:local labs/service-ha/` |
