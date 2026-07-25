@@ -48,4 +48,5 @@ mkdocs serve     # then open http://127.0.0.1:8000
 | Understand lab anatomy & startup | [docs/how-it-works.md](docs/how-it-works.md) |
 | Look up show commands & node naming | [docs/quick-reference.md](docs/quick-reference.md) |
 | Build the full enterprise IT stack | [enterprise-it-101/README.md](enterprise-it-101/README.md) |
+| Test what actually stuck (written exams) | [assessments/README.md](assessments/README.md) |
 | Add a lab | [docs/contributing.md](docs/contributing.md) |
