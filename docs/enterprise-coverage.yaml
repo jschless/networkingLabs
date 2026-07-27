@@ -1,7 +1,7 @@
 # Source inventory for docs/enterprise-coverage-map.md.  Level meanings are
 # defined in that page and in PLAN-enterprise-network-engineering-expansion.md.
 schema_version: 1
-updated: 2026-07-22
+updated: 2026-07-27
 topics:
   - domain: campus LAN
     topic: switching, access control, and campus resilience
@@ -61,20 +61,20 @@ topics:
     notes: Validated practice and RT-import Break-It; optional L2 stretch and mobility are deliberately excluded.
   - domain: data center and DCI
     topic: IP storage networking
-    level: 0
-    labs: []
-    fidelity: Planned live Ethernet/IP storage paths; not Fibre Channel or RoCE hardware emulation.
-    last_live_validation: null
+    level: 4
+    labs: [labs/dc-storage-networking]
+    fidelity: Live file-backed LIO iSCSI/CHAP, isolated KVM initiator, two-path device-mapper, jumbo MTU, Linux scheduling, failure recovery, and symptom-led diagnosis; no host block devices or array-controller claim.
+    last_live_validation: 2026-07-27
     owner: WP-11
-    notes: Planned as labs/dc-storage-networking (target level 4).
+    notes: Validated practice, either-path failure, writable checksum integrity, and intermediate-MTU Break-It.
   - domain: data center and DCI
     topic: Fibre Channel, FCoE, and RoCE hardware evidence
-    level: 0
-    labs: []
-    fidelity: Planned provenance-controlled evidence pack only; no synthetic hardware telemetry.
-    last_live_validation: null
+    level: 1
+    labs: [labs/fixtures/dc-storage-networking]
+    fidelity: Provenance-controlled, prominently synthetic reduced FC zoning and RoCE congestion evidence only; no hardware telemetry or live fabric claim.
+    last_live_validation: 2026-07-27
     owner: WP-11
-    notes: Planned fixture pack alongside the storage lab (target level 1).
+    notes: Evidence deductions and limitations are checked through the lab exercise and fixture manifest.
   - domain: internet edge
     topic: interdomain routing and prefix security
     level: 4

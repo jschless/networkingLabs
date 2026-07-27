@@ -74,14 +74,19 @@ def validate_topic(topic: Any, row: int, errors: list[str]) -> None:
     for lab in labs:
         relative_lab = Path(lab)
         lab_path = REPO / relative_lab
-        if (
-            len(relative_lab.parts) != 2
-            or relative_lab.parts[0] != "labs"
-            or not lab_path.is_dir()
-        ):
+        is_live_lab = (
+            len(relative_lab.parts) == 2
+            and relative_lab.parts[0] == "labs"
+        )
+        is_evidence_pack = (
+            level <= 1
+            and len(relative_lab.parts) == 3
+            and relative_lab.parts[:2] == ("labs", "fixtures")
+        )
+        if not (is_live_lab or is_evidence_pack) or not lab_path.is_dir():
             error(errors, row, f"lab path does not exist: {lab}")
             continue
-        if level >= 3 and not (lab_path / "check.sh").is_file():
+        if level >= 3 and is_live_lab and not (lab_path / "check.sh").is_file():
             error(errors, row, f"level {level} lab lacks check.sh: {lab}")
 
     if level == 5:

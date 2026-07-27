@@ -65,6 +65,7 @@ LOCAL_BUILDS=(
   "-t telemetry-lab:local labs/telemetry-monitoring-hybrid/"
   "-t sdwan-lab:local labs/sdwan-concepts/"
   "-t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/"
+  "-t dc-storage-tools:1.0.0 labs/dc-storage-networking/"
   "-t automation-fundamentals:local labs/automation-fundamentals/"
   "-t lb-lab:local labs/load-balancer-basics/"
   "-t global-delivery:local labs/global-application-delivery/"

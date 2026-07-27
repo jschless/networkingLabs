@@ -141,6 +141,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `gcap-node:local` | `enterprise-grand-capstone` | `labs/enterprise-grand-capstone/gcap.sh build` (also ensures the EIT101 service images exist) |
 | `cloud-lab:local` | `cloud-hybrid-networking` | `docker build -t cloud-lab:local labs/cloud-hybrid-networking/` (pinned FRR 10.5.0 base plus BIND/nftables tools) |
 | `dci-endpoint:local` | `dci-evpn-multisite` | `docker build -t dci-endpoint:local -f labs/dci-evpn-multisite/Dockerfile.endpoint labs/dci-evpn-multisite/` (pinned `alpine:3.22.1` base with iproute2, ping, and tcpdump) |
+| `dc-storage-tools:1.0.0` | `dc-storage-networking` | `docker build -t dc-storage-tools:1.0.0 labs/dc-storage-networking/` (Linux/amd64 + KVM; digest-pinned Ubuntu 24.04 base and SHA-256-pinned Ubuntu Noble 20260725 guest; LIO, open-iscsi, multipath, fio, QEMU) |
 
 ### Images pulled automatically
 
