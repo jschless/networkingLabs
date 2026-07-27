@@ -1,0 +1,17 @@
+flush ruleset
+table inet ot_conduits {
+  counter enterprise_to_jump {}
+  counter historian_to_plc {}
+  counter jump_to_engineering {}
+  counter stateful_return {}
+  counter default_deny {}
+  chain forward {
+    type filter hook forward priority filter; policy drop;
+    ct state invalid counter name default_deny log group 110 prefix "OT-RULE-090 invalid " drop
+    ct state established,related counter name stateful_return accept comment "OT-RULE-101 stateful return"
+    iifname "eth1" oifname "br-idmz" ip saddr 10.110.10.10 ip daddr 10.110.20.10 tcp dport 2222 ct state new counter name enterprise_to_jump log group 110 prefix "OT-RULE-110 enterprise-jump " accept comment "OT-RULE-110"
+    iifname "br-idmz" oifname "eth4" ip saddr 10.110.20.20 ip daddr 10.110.40.0/24 tcp dport 502 ct state new counter name historian_to_plc log group 110 prefix "OT-RULE-210 historian-plc " accept comment "OT-RULE-210"
+    iifname "br-idmz" oifname "eth4" ip saddr 10.110.20.10 ip daddr 10.110.40.20 tcp dport 22 ct state new counter name jump_to_engineering log group 110 prefix "OT-RULE-310 jump-eng " accept comment "OT-RULE-310"
+    counter name default_deny log group 110 prefix "OT-RULE-999 default-deny " drop comment "OT-RULE-999"
+  }
+}

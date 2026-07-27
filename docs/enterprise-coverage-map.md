@@ -44,7 +44,7 @@ material is built and validated.
 | IPv6 | Level 3 protocol/access/transition coverage | WP-08 systemic dual-stack capstone to level 4. |
 | Carrier and physical | Level 0 | WP-04 packet-Ethernet handoff to level 4; physical/legacy evidence to level 1. |
 | Voice and collaboration | Level 4 SIP/RTP/QoS troubleshooting | `enterprise-voice-sip-qos` provides live signaling/media, stateful NAT, measured contention, and one-way-audio diagnosis; PSTN/PoE/vendor clustering remain outside the live claim. |
-| OT and IoT | Level 0 | WP-10 zone-and-conduit to level 4. |
+| OT and IoT | Level 4 zone-and-conduit troubleshooting | `ot-zone-conduit` provides live synthetic Modbus/TCP, stateful policy, jump maintenance, passive DPI, and stale-historian diagnosis; physical process and SIS behavior remain outside the live claim. |
 | Application delivery | Level 0 | WP-15 global application delivery to level 4. |
 | Blind assessment | Level 0 in this program inventory | WP-16 creates three level-5 ranges only after their source labs have passed live validation. |
 

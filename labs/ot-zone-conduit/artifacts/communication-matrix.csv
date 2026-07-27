@@ -1,0 +1,9 @@
+flow_id,source_zone,source_asset,destination_zone,destination_asset,protocol_port,direction,owner,criticality,requirement,default
+F-110,Enterprise,enterprise-user,IDMZ,jump,TCP/2222,initiated Enterprise to IDMZ,Enterprise IAM,medium,Remote maintenance entry only,deny
+F-210,IDMZ,historian,Cell,plc1 and plc2,TCP/502,initiated IDMZ to Cell,OT operations,high,Synthetic process read every 2 seconds,deny
+F-310,IDMZ,jump,Cell,eng-ws,TCP/22,initiated IDMZ to Cell,OT engineering,medium,Second authenticated maintenance hop,deny
+F-410,Cell,hmi,Cell,plc1 and plc2,TCP/502,initiated HMI to PLC,Control-room operations,high,Read registers 0 and 1,deny
+F-450,Cell,eng-ws,Cell,plc1 and plc2,TCP/502,initiated engineering to PLC,Process owner,high,Write only in approved synthetic maintenance window,deny
+D-900,Enterprise,enterprise-user,Cell,plc1 and plc2,TCP/502,any,OT security,critical,No direct enterprise-to-PLC access,deny
+D-910,Cell,plc1 and plc2,Enterprise,enterprise-user,ANY,initiated Cell to Enterprise,OT security,critical,PLCs do not initiate to enterprise,deny
+D-920,Cell,attacker-test,Cell,plc1 and plc2,TCP/502 function 6,initiated test to PLC,OT security,high,Reject and alert on unauthorized write,deny

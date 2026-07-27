@@ -1,0 +1,2 @@
+alert modbus 10.110.40.99 any -> [10.110.40.101,10.110.40.102] 502 (msg:"LAB-OT unauthorized engineering write attempt"; flow:to_server,established; modbus: function 6; sid:1100010; rev:1;)
+alert modbus 10.110.40.20 any -> [10.110.40.101,10.110.40.102] 502 (msg:"LAB-OT authorized maintenance write observed"; flow:to_server,established; modbus: function 6; sid:1100011; rev:1;)

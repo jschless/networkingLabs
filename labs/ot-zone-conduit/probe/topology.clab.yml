@@ -1,0 +1,32 @@
+name: ot-zone-conduit-probe
+
+topology:
+  defaults:
+    kind: linux
+    image: ot-zone-tools:1.0.0
+  nodes:
+    client:
+      binds:
+        - client-setup.sh:/opt/probe/setup.sh:ro
+        - client.py:/opt/probe/client.py:ro
+      exec: ["bash /opt/probe/setup.sh"]
+    fw:
+      binds:
+        - fw-setup.sh:/opt/probe/setup.sh:ro
+        - ulogd.conf:/opt/probe/ulogd.conf:ro
+      exec: ["bash /opt/probe/setup.sh"]
+    plc:
+      binds:
+        - plc-setup.sh:/opt/probe/setup.sh:ro
+        - ../configs/common/modbus_server.py:/opt/ot/modbus_server.py:ro
+      exec: ["bash /opt/probe/setup.sh"]
+    sensor:
+      binds:
+        - sensor-setup.sh:/opt/probe/setup.sh:ro
+        - modbus.rules:/opt/probe/modbus.rules:ro
+      exec: ["bash /opt/probe/setup.sh"]
+
+  links:
+    - endpoints: ["client:eth1", "fw:eth1"] # 10.250.10.0/24
+    - endpoints: ["fw:eth2", "plc:eth1"] # 10.250.20.0/24
+    - endpoints: ["fw:eth3", "sensor:eth1"] # passive mirror, no routed address

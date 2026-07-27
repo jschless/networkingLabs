@@ -1,0 +1,12 @@
+flush ruleset
+table inet plc_guard {
+  counter approved_modbus {}
+  counter denied_input {}
+  chain input {
+    type filter hook input priority filter; policy drop;
+    iifname "lo" accept
+    ct state established,related accept
+    ip saddr { 10.110.20.20, 10.110.40.10, 10.110.40.20, 10.110.40.99 } tcp dport 502 ct state new counter name approved_modbus accept comment "OT-RULE-500 Modbus clients; writes also require maintenance interlock"
+    counter name denied_input drop comment "OT-RULE-599 default deny"
+  }
+}

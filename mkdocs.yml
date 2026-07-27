@@ -182,6 +182,9 @@ nav:
       - enterprise-grand-capstone: tracks/enterprise/enterprise-grand-capstone.md
       - internet-peering-ixp (cross-track): tracks/enterprise/internet-peering-ixp.md
       - enterprise-dual-stack-capstone: tracks/enterprise/enterprise-dual-stack-capstone.md
+    - OT & IoT:
+      - tracks/ot-iot/index.md
+      - ot-zone-conduit: tracks/ot-iot/ot-zone-conduit.md
     - Layer 2:
       - tracks/layer2/index.md
       - vlan-trunks-switchport-basics: tracks/layer2/vlan-trunks-switchport-basics.md
