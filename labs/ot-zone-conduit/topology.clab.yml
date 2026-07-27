@@ -1,0 +1,112 @@
+name: ot-zone-conduit
+
+# All nodes use one digest-pinned Linux tool image. The routers/firewall run real
+# Linux forwarding and nftables; PLCs run a synthetic PyModbus process; the IDS
+# receives only tc-cloned cell traffic and has no routed interface.
+topology:
+  defaults:
+    kind: linux
+    image: ot-zone-tools:1.0.0
+  nodes:
+    enterprise-user:
+      env: {IP_ADDR: 10.110.10.10/24, GATEWAY: 10.110.10.1}
+      binds:
+        - configs/common/setup-node.sh:/opt/ot/setup.sh:ro
+        - configs/common/modbus_client.py:/opt/ot/modbus-client:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    enterprise-rtr:
+      binds: [configs/enterprise-rtr/setup.sh:/opt/ot/setup.sh:ro]
+      exec: ["bash /opt/ot/setup.sh"]
+    idmz-fw:
+      binds:
+        - configs/idmz-fw/setup.sh:/opt/ot/setup.sh:ro
+        - configs/common/ulogd.conf:/opt/ot/ulogd.conf:ro
+        - configs/solution/idmz-fw.nft:/opt/ot/solution.nft:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    jump:
+      env: {IP_ADDR: 10.110.20.10/24, GATEWAY: 10.110.20.1}
+      binds:
+        - configs/common/setup-node.sh:/opt/ot/setup.sh:ro
+        - configs/jump/enable-ssh.sh:/opt/ot/enable-ssh.sh:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    historian:
+      env: {IP_ADDR: 10.110.20.20/24, GATEWAY: 10.110.20.1, POLLER_ROLE: historian}
+      binds:
+        - configs/common/setup-node.sh:/opt/ot/setup.sh:ro
+        - configs/common/modbus_client.py:/opt/ot/modbus-client:ro
+        - configs/common/poller.py:/opt/ot/poller.py:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    site-rtr:
+      binds:
+        - configs/site-rtr/setup.sh:/opt/ot/setup.sh:ro
+        - configs/common/ulogd.conf:/opt/ot/ulogd.conf:ro
+        - configs/solution/site-rtr.nft:/opt/ot/solution.nft:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    cell-switch:
+      binds: [configs/cell-switch/setup.sh:/opt/ot/setup.sh:ro]
+      exec: ["bash /opt/ot/setup.sh"]
+    hmi:
+      env: {IP_ADDR: 10.110.40.10/24, GATEWAY: 10.110.40.1, POLLER_ROLE: hmi}
+      binds:
+        - configs/common/setup-node.sh:/opt/ot/setup.sh:ro
+        - configs/common/modbus_client.py:/opt/ot/modbus-client:ro
+        - configs/common/poller.py:/opt/ot/poller.py:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    eng-ws:
+      env: {IP_ADDR: 10.110.40.20/24, GATEWAY: 10.110.40.1}
+      binds:
+        - configs/common/setup-node.sh:/opt/ot/setup.sh:ro
+        - configs/common/modbus_client.py:/opt/ot/modbus-client:ro
+        - configs/eng-ws/enable-ssh.sh:/opt/ot/enable-ssh.sh:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    plc1:
+      env:
+        IP_ADDR: 10.110.40.101/24
+        GATEWAY: 10.110.40.1
+        PLC_NAME: plc1
+        LINE_SPEED: "420"
+        TANK_LEVEL: "73"
+      binds:
+        - configs/plc/setup.sh:/opt/ot/setup.sh:ro
+        - configs/plc/expire-maintenance.sh:/opt/ot/expire-maintenance.sh:ro
+        - configs/common/modbus_server.py:/opt/ot/modbus-server:ro
+        - configs/solution/plc-input.nft:/opt/ot/solution.nft:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    plc2:
+      env:
+        IP_ADDR: 10.110.40.102/24
+        GATEWAY: 10.110.40.1
+        PLC_NAME: plc2
+        LINE_SPEED: "315"
+        TANK_LEVEL: "61"
+      binds:
+        - configs/plc/setup.sh:/opt/ot/setup.sh:ro
+        - configs/plc/expire-maintenance.sh:/opt/ot/expire-maintenance.sh:ro
+        - configs/common/modbus_server.py:/opt/ot/modbus-server:ro
+        - configs/solution/plc-input.nft:/opt/ot/solution.nft:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    ids:
+      binds:
+        - configs/ids/setup.sh:/opt/ot/setup.sh:ro
+        - configs/solution/ot.rules:/opt/ot/ot.rules:ro
+      exec: ["bash /opt/ot/setup.sh"]
+    attacker-test:
+      env: {IP_ADDR: 10.110.40.99/24, GATEWAY: 10.110.40.1}
+      binds:
+        - configs/common/setup-node.sh:/opt/ot/setup.sh:ro
+        - configs/common/modbus_client.py:/opt/ot/modbus-client:ro
+      exec: ["bash /opt/ot/setup.sh"]
+
+  links:
+    - endpoints: ["enterprise-user:eth1", "enterprise-rtr:eth1"] # Enterprise 10.110.10.0/24
+    - endpoints: ["enterprise-rtr:eth2", "idmz-fw:eth1"] # Enterprise transit 10.110.11.0/30
+    - endpoints: ["idmz-fw:eth2", "jump:eth1"] # IDMZ 10.110.20.0/24
+    - endpoints: ["idmz-fw:eth3", "historian:eth1"] # IDMZ 10.110.20.0/24
+    - endpoints: ["idmz-fw:eth4", "site-rtr:eth1"] # Site operations 10.110.30.0/24
+    - endpoints: ["site-rtr:eth2", "cell-switch:eth1"] # Cell/area 10.110.40.0/24
+    - endpoints: ["cell-switch:eth2", "hmi:eth1"] # Cell/area 10.110.40.0/24
+    - endpoints: ["cell-switch:eth3", "eng-ws:eth1"] # Cell/area 10.110.40.0/24
+    - endpoints: ["cell-switch:eth4", "plc1:eth1"] # Cell/area 10.110.40.0/24
+    - endpoints: ["cell-switch:eth5", "plc2:eth1"] # Cell/area 10.110.40.0/24
+    - endpoints: ["cell-switch:eth6", "attacker-test:eth1"] # Lab-only negative tester
+    - endpoints: ["cell-switch:eth7", "ids:eth1"] # Passive mirror only; not bridged

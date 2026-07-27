@@ -155,6 +155,13 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Enterprise track](tracks/enterprise/index.md)
 
+- :material-factory: **OT & IoT** (1 lab)
+
+    ---
+    Zone-and-conduit policy, synthetic Modbus/TCP, passive IDS, safe maintenance, and stale-data diagnosis
+
+    [:octicons-arrow-right-24: OT & IoT track](tracks/ot-iot/index.md)
+
 - :material-switch: **Layer 2** (4 labs)
 
     ---

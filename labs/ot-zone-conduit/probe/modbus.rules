@@ -1,0 +1,1 @@
+alert modbus any any -> any any (msg:"LAB-OT Modbus single-register write observed"; flow:to_server,established; modbus: function 6; sid:1100001; rev:1;)

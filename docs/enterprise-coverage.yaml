@@ -213,12 +213,12 @@ topics:
     notes: Break-It retains registration and call signaling while a private SDP media target loses one RTP direction; cEOS SVI ACL attachment and hardware scheduling use documented, live-tested Linux fallbacks.
   - domain: OT and IoT
     topic: zone-and-conduit networking
-    level: 0
-    labs: []
-    fidelity: Planned safe protocol and policy practice; no real industrial process control claim.
-    last_live_validation: null
+    level: 4
+    labs: [labs/ot-zone-conduit]
+    fidelity: Live synthetic Modbus/TCP reads and maintenance-gated writes, Linux nftables/conntrack/NFLOG zone policy, two-hop OpenSSH maintenance, tc passive mirroring, and Suricata Modbus detection; no real PLC logic, SIS, deterministic fieldbus, TSN, vendor station, physical process, or plant authorization claim.
+    last_live_validation: 2026-07-27
     owner: WP-10
-    notes: Planned as labs/ot-zone-conduit (target level 4).
+    notes: Clean deploy/check/Break-It/repair/redeploy evidence is recorded in the lab validation file; the Break-It drops only historian return traffic while HMI reads remain current.
   - domain: application delivery
     topic: global application delivery and edge services
     level: 4
