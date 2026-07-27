@@ -164,6 +164,7 @@ nav:
       - enterprise-access-security: tracks/enterprise/enterprise-access-security.md
       - enterprise-edge-nat-firewall: tracks/enterprise/enterprise-edge-nat-firewall.md
       - load-balancer-basics: tracks/enterprise/load-balancer-basics.md
+      - global-application-delivery: tracks/enterprise/global-application-delivery.md
       - enterprise-multicast: tracks/enterprise/enterprise-multicast.md
       - enterprise-services-infra: tracks/enterprise/enterprise-services-infra.md
       - sdwan-concepts: tracks/enterprise/sdwan-concepts.md

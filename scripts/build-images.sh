@@ -67,6 +67,7 @@ LOCAL_BUILDS=(
   "-t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/"
   "-t automation-fundamentals:local labs/automation-fundamentals/"
   "-t lb-lab:local labs/load-balancer-basics/"
+  "-t global-delivery:local labs/global-application-delivery/"
   "-t anycast-dns:local labs/anycast-dns/"
   "-t service-ha:local labs/service-ha/"
   "-t netbox-automation:local labs/network-automation-netbox/"

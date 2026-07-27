@@ -1,6 +1,6 @@
 # Enterprise Design Track
 
-Twenty-two labs covering campus design patterns, WAN edge, hybrid connectivity, SD-WAN concepts and operations, DMZ architecture, load balancing, access security, multicast, services, wireless architecture/authorization, and systemic dual-stack operations — primarily on Arista cEOS with Linux service nodes where needed.
+Twenty-three labs covering campus design patterns, WAN edge, hybrid connectivity, SD-WAN concepts and operations, DMZ architecture, local and global application delivery, access security, multicast, services, wireless architecture/authorization, and systemic dual-stack operations — primarily on Arista cEOS with Linux service nodes where needed.
 
 ## Reference Designs
 
@@ -20,6 +20,7 @@ Twenty-two labs covering campus design patterns, WAN edge, hybrid connectivity, 
 | [enterprise-access-security](enterprise-access-security.md) | Practice | DHCP snooping, dynamic ARP inspection, port security |
 | [enterprise-edge-nat-firewall](enterprise-edge-nat-firewall.md) | Practice | PAT, nftables firewall policy, internet edge |
 | [load-balancer-basics](load-balancer-basics.md) | Practice | HAProxy L4 vs L7, health checks, X-Forwarded-For, NAT-mode balancing, asymmetric-return break-it |
+| [global-application-delivery](global-application-delivery.md) | Practice | Two-site HAProxy, health-driven GSLB, TLS/SNI, persistence/drain, cache/WAF seam, DNS-cache failure timing |
 | [enterprise-multicast](enterprise-multicast.md) | Practice | IGMP, PIM-SM, multicast routing, RP configuration |
 | [enterprise-services-infra](enterprise-services-infra.md) | Practice | DHCP relay, NTP, DNS, syslog, SNMP — supporting services |
 | [enterprise-wireless-architecture](enterprise-wireless-architecture.md) | Practice | Enterprise WLAN design, controller modes, WLC architectures |
@@ -52,6 +53,7 @@ The Security track's [zero-trust-secure-access](../security/zero-trust-secure-ac
 - **Arista cEOS**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 - **DMZ Linux services/firewalls**: `docker build -t dmz-lab:local labs/enterprise-dmz-capstone/`
 - **load-balancer-basics** (no cEOS needed): `docker build -t lb-lab:local labs/load-balancer-basics/`
+- **global-application-delivery** (no cEOS needed): `docker build -t global-delivery:local labs/global-application-delivery/`
 - **sdwan-concepts** (no cEOS needed): `docker build -t sdwan-lab:local labs/sdwan-concepts/`
 - **orchestrated-wan-overlay** (no cEOS needed): `docker build -t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/`
 - **cloud-hybrid-networking**: `docker build -t cloud-lab:local labs/cloud-hybrid-networking/` and import cEOS 4.35.2F

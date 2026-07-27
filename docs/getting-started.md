@@ -124,6 +124,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `orchestrated-wan-tools:1.0.0` | `orchestrated-wan-overlay` | `docker build -t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/` (pinned Debian 12.12 base; mTLS, WireGuard, nftables, and `tc`) |
 | `automation-fundamentals:local` | `automation-fundamentals` | `docker build -t automation-fundamentals:local labs/automation-fundamentals/` |
 | `lb-lab:local` | `load-balancer-basics` | `docker build -t lb-lab:local labs/load-balancer-basics/` |
+| `global-delivery:local` | `global-application-delivery` | `docker build -t global-delivery:local labs/global-application-delivery/` (pinned Alpine 3.22.1 and CoreDNS 1.12.2 bases; HAProxy/nginx/dnsmasq packages pinned) |
 | `service-ha:local` | `service-ha` | `docker build -t service-ha:local labs/service-ha/` |
 | `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
 | `opnsense-tools:local` | `opnsense-ngfw-basics`, `opnsense-ipsec-nat-t` | `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/` |

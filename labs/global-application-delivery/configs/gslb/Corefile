@@ -1,0 +1,9 @@
+.:53 {
+  errors
+  log
+  hosts /run/gslb/hosts {
+    ttl 8
+    reload 1s
+    fallthrough
+  }
+}
