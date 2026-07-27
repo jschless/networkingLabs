@@ -1,0 +1,106 @@
+name: global-application-delivery
+
+topology:
+  defaults:
+    kind: linux
+    image: global-delivery:local
+
+  nodes:
+    client-net:
+      binds:
+        - configs/common/switch.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh"]
+    dns-net:
+      binds:
+        - configs/common/switch.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh"]
+    site-a-net:
+      binds:
+        - configs/common/switch.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh"]
+    site-b-net:
+      binds:
+        - configs/common/switch.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh"]
+
+    gslb:
+      binds:
+        - configs/gslb/init.sh:/opt/gad/init.sh:ro
+        - configs/gslb/Corefile:/opt/gad/Corefile:ro
+        - configs/gslb/health-controller.sh:/opt/gad/health-controller.sh:ro
+      exec: ["sh /opt/gad/init.sh"]
+    resolver:
+      binds:
+        - configs/resolver/init.sh:/opt/gad/init.sh:ro
+        - configs/resolver/dnsmasq.conf:/opt/gad/dnsmasq.conf:ro
+      exec: ["sh /opt/gad/init.sh"]
+    site-a-lb:
+      binds:
+        - configs/site-a-lb/init.sh:/opt/gad/init.sh:ro
+        - configs/site-a-lb/haproxy.cfg:/opt/gad/haproxy.cfg:ro
+        - configs/site-a-lb/haproxy.break.cfg:/opt/gad/haproxy.break.cfg:ro
+      exec: ["sh /opt/gad/init.sh"]
+    site-b-lb:
+      binds:
+        - configs/site-b-lb/init.sh:/opt/gad/init.sh:ro
+        - configs/site-b-lb/haproxy.cfg:/opt/gad/haproxy.cfg:ro
+      exec: ["sh /opt/gad/init.sh"]
+    a-app1:
+      binds:
+        - configs/common/app.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh site-a a-app1 10.115.30.11"]
+    a-app2:
+      binds:
+        - configs/common/app.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh site-a a-app2 10.115.30.12"]
+    b-app1:
+      binds:
+        - configs/common/app.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh site-b b-app1 10.115.40.11"]
+    b-app2:
+      binds:
+        - configs/common/app.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh site-b b-app2 10.115.40.12"]
+    edge-cache:
+      binds:
+        - configs/edge-cache/init.sh:/opt/gad/init.sh:ro
+        - configs/edge-cache/nginx.conf:/opt/gad/nginx.conf:ro
+      exec: ["sh /opt/gad/init.sh"]
+    client-near-a:
+      binds:
+        - configs/common/client.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh 10.115.20.11"]
+    client-near-b:
+      binds:
+        - configs/common/client.sh:/opt/gad/init.sh:ro
+      exec: ["sh /opt/gad/init.sh 10.115.20.12"]
+    observer:
+      binds:
+        - configs/observer/init.sh:/opt/gad/init.sh:ro
+        - configs/observer/timeline.sh:/usr/local/bin/gad-timeline:ro
+      exec: ["sh /opt/gad/init.sh"]
+
+  links:
+    - endpoints: ["client-near-a:eth1", "client-net:eth1"] # 10.115.20.0/24 client access
+    - endpoints: ["client-near-b:eth1", "client-net:eth2"] # 10.115.20.0/24 client access
+    - endpoints: ["resolver:eth1", "client-net:eth3"] # 10.115.20.0/24 resolver client side
+    - endpoints: ["site-a-lb:eth1", "client-net:eth4"] # 10.115.20.0/24 + 192.0.2.10/32 site A VIP
+    - endpoints: ["site-b-lb:eth1", "client-net:eth5"] # 10.115.20.0/24 + 198.51.100.10/32 site B VIP
+    - endpoints: ["edge-cache:eth1", "client-net:eth6"] # 10.115.20.0/24 local edge cache
+    - endpoints: ["observer:eth1", "client-net:eth7"] # 10.115.20.0/24 observer client side
+
+    - endpoints: ["gslb:eth1", "dns-net:eth1"] # 10.115.10.0/24 authoritative DNS/control
+    - endpoints: ["resolver:eth2", "dns-net:eth2"] # 10.115.10.0/24 resolver upstream
+    - endpoints: ["observer:eth2", "dns-net:eth3"] # 10.115.10.0/24 observer DNS side
+
+    - endpoints: ["site-a-lb:eth2", "site-a-net:eth1"] # 10.115.30.0/24 site A origins
+    - endpoints: ["a-app1:eth1", "site-a-net:eth2"] # 10.115.30.0/24 site A origin 1
+    - endpoints: ["a-app2:eth1", "site-a-net:eth3"] # 10.115.30.0/24 site A origin 2
+    - endpoints: ["gslb:eth2", "site-a-net:eth4"] # 10.115.30.0/24 site A application probe
+    - endpoints: ["observer:eth3", "site-a-net:eth5"] # 10.115.30.0/24 observer site A
+
+    - endpoints: ["site-b-lb:eth2", "site-b-net:eth1"] # 10.115.40.0/24 site B origins
+    - endpoints: ["b-app1:eth1", "site-b-net:eth2"] # 10.115.40.0/24 site B origin 1
+    - endpoints: ["b-app2:eth1", "site-b-net:eth3"] # 10.115.40.0/24 site B origin 2
+    - endpoints: ["gslb:eth3", "site-b-net:eth4"] # 10.115.40.0/24 site B application probe
+    - endpoints: ["observer:eth4", "site-b-net:eth5"] # 10.115.40.0/24 observer site B

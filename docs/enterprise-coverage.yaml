@@ -221,12 +221,12 @@ topics:
     notes: Planned as labs/ot-zone-conduit (target level 4).
   - domain: application delivery
     topic: global application delivery and edge services
-    level: 0
-    labs: []
-    fidelity: Planned local DNS/load-balancing/cache behavior; not a global CDN or provider edge.
-    last_live_validation: null
+    level: 4
+    labs: [labs/global-application-delivery]
+    fidelity: Live local HAProxy, CoreDNS, resolver TTL, TLS/SNI, persistence/drain, cache and safe WAF-seam behavior; provider anycast, geography, DDoS scrubbing and Internet-scale CDN remain conceptual.
+    last_live_validation: 2026-07-27
     owner: WP-15
-    notes: Planned as labs/global-application-delivery (target level 4).
+    notes: Symptom-led probe-path ACL Break-It withdraws a locally healthy site and requires scoped diagnosis and repair.
   - domain: blind assessment
     topic: enterprise domain-specific blind assessment ranges
     level: 0
