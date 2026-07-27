@@ -1,6 +1,6 @@
 # Enterprise Design Track
 
-Twenty-three labs covering campus design patterns, WAN edge, hybrid connectivity, SD-WAN concepts and operations, DMZ architecture, local and global application delivery, access security, multicast, services, wireless architecture/authorization, and systemic dual-stack operations — primarily on Arista cEOS with Linux service nodes where needed.
+Twenty-four labs covering campus design patterns, WAN edge, hybrid connectivity, SD-WAN concepts and operations, DMZ architecture, local and global application delivery, access security, multicast, services, enterprise voice, wireless architecture/authorization, and systemic dual-stack operations — primarily on Arista cEOS with Linux service nodes where needed.
 
 ## Reference Designs
 
@@ -23,6 +23,7 @@ Twenty-three labs covering campus design patterns, WAN edge, hybrid connectivity
 | [global-application-delivery](global-application-delivery.md) | Practice | Two-site HAProxy, health-driven GSLB, TLS/SNI, persistence/drain, cache/WAF seam, DNS-cache failure timing |
 | [enterprise-multicast](enterprise-multicast.md) | Practice | IGMP, PIM-SM, multicast routing, RP configuration |
 | [enterprise-services-infra](enterprise-services-infra.md) | Practice | DHCP relay, NTP, DNS, syslog, SNMP — supporting services |
+| [enterprise-voice-sip-qos](enterprise-voice-sip-qos.md) | Practice | SIP registration/calls, RTP observability, stateful media NAT, QoS under contention, and one-way-audio diagnosis |
 | [enterprise-wireless-architecture](enterprise-wireless-architecture.md) | Practice | Enterprise WLAN design, controller modes, WLC architectures |
 | [wireless-auth-control-operations](wireless-auth-control-operations.md) | Practice | EAP-TLS/RADIUS authorization, role VLAN policy, and certificate-trust incident; no live RF claim |
 | [cloud-hybrid-networking](cloud-hybrid-networking.md) | Practice | Hybrid eBGP, transit route domains, inspection, private DNS, and asymmetric-return diagnosis |
@@ -59,3 +60,4 @@ The Security track's [zero-trust-secure-access](../security/zero-trust-secure-ac
 - **cloud-hybrid-networking**: `docker build -t cloud-lab:local labs/cloud-hybrid-networking/` and import cEOS 4.35.2F
 - **wireless-auth-control-operations**: `docker build -t wireless-auth-control:local labs/wireless-auth-control-operations/`
 - **enterprise-dual-stack-capstone**: `docker build -t enterprise-dual-stack-tools:local labs/enterprise-dual-stack-capstone/`, plus cEOS import
+- **enterprise-voice-sip-qos**: `docker build -t enterprise-voice-tools:1.0.0 labs/enterprise-voice-sip-qos/`, plus cEOS 4.35.2F import

@@ -129,6 +129,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
 | `opnsense-tools:local` | `opnsense-ngfw-basics`, `opnsense-ipsec-nat-t` | `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/` |
 | `enterprise-services-infra:local` | `enterprise-services-infra` | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |
+| `enterprise-voice-tools:1.0.0` | `enterprise-voice-sip-qos` | `docker build -t enterprise-voice-tools:1.0.0 labs/enterprise-voice-sip-qos/` (digest-pinned Ubuntu 24.04 base; pinned Asterisk 20.6.0 and SIPp 3.7.7) |
 | `enterprise-tacacs:local` | `aaa-ops-troubleshooting`, `enterprise-services-infra` | `docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/` |
 | `enterprise-access-tools:local` | `enterprise-access-security` | `docker build -t enterprise-access-tools:local labs/enterprise-access-security/` |
 | `enterprise-multicast:local` | `enterprise-multicast` | `docker build -t enterprise-multicast:local labs/enterprise-multicast/` |

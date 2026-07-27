@@ -1,0 +1,22 @@
+hostname access1
+!
+no aaa root
+!
+spanning-tree mode mstp
+!
+interface Ethernet1
+ description phone-a voice access (configure VLAN 20)
+!
+interface Ethernet2
+ description 802.1Q uplink to dist1 (configure VLANs 10,20,30)
+!
+interface Ethernet3
+ description dns-ntp voice-services access (configure VLAN 30)
+!
+interface Ethernet4
+ description untrusted data access (configure VLAN 10)
+!
+interface Ethernet5
+ description observer voice-services access (configure VLAN 30)
+!
+end

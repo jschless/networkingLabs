@@ -205,12 +205,12 @@ topics:
     notes: Pack accompanies the live packet-Ethernet practice lab and cannot claim hardware fidelity.
   - domain: voice and collaboration
     topic: enterprise SIP, RTP, and QoS
-    level: 0
-    labs: []
-    fidelity: Planned live SIP/RTP and IP QoS behavior; no PSTN/provider or handset-DSP claim.
-    last_live_validation: null
+    level: 4
+    labs: [labs/enterprise-voice-sip-qos]
+    fidelity: Live Asterisk/SIPp signaling and RTP, cEOS VLAN/DHCP relay, Linux nftables stateful media edge, capture-derived loss/jitter, and Linux tc contention; no PSTN/provider, PoE/LLDP-MED, vendor clustering, or handset-DSP claim.
+    last_live_validation: 2026-07-27
     owner: WP-09
-    notes: Planned as labs/enterprise-voice-sip-qos (target level 4).
+    notes: Break-It retains registration and call signaling while a private SDP media target loses one RTP direction; cEOS SVI ACL attachment and hardware scheduling use documented, live-tested Linux fallbacks.
   - domain: OT and IoT
     topic: zone-and-conduit networking
     level: 0
