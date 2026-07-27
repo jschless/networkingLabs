@@ -12,6 +12,9 @@ and knowing the answer removes the whole diagnostic value.
 | [exam-d-key.md](exam-d-key.md) | [D — Enterprise IT 101](../exam-d-enterprise-it-101.md) |
 | [exam-e-key.md](exam-e-key.md) | [E — Security Operations (SOC)](../exam-e-security-operations.md) |
 
+Topic-quiz keys live in [`quizzes/`](quizzes/README.md). They follow the same marking and
+remediation conventions as the exam keys.
+
 ## What is in each key
 
 - **Model answers** with the point split for every part.

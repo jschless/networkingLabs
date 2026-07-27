@@ -1,9 +1,20 @@
 # Written Assessments
 
-A written exam bank covering the three tracks in this repo. These are **paper tests**, not
+A written assessment bank covering the three tracks in this repo. These are **paper tests**, not
 labs: no containers, no CLI, no internet. They exist to check whether the understanding
 behind a completed lab actually stuck — the part a green `./scripts/lab.sh check` cannot
 tell you.
+
+The bank has two layers:
+
+- [Topic quizzes](quizzes/README.md) are short, formative checks taken after a small group
+  of related labs.
+- The five exams below are broad, cumulative assessments taken after a study path or
+  major track.
+
+Quiz results are intentionally more diagnostic than exam results: a weak OSPF score, for
+example, points directly back to the OSPF labs instead of being hidden inside a passing
+Core Routing & Switching score.
 
 ## Why a written test at all
 
@@ -91,3 +102,22 @@ the existing ones are built:
   in which packet made this fail" is knowledge.
 - Add the new question to the remediation table in the answer key, or it will not help
   anyone who gets it wrong.
+
+After adding or changing a topic quiz, run:
+
+```bash
+python3 scripts/validate-quizzes.py
+python3 scripts/test-validate-quizzes.py
+```
+
+The validator checks quiz/key pairing, point totals, catalog time and point metadata,
+remediation lab references, local links, and trailing whitespace. To audit how much of
+the lab catalog is directly named by quiz remediation tables, also run:
+
+```bash
+python3 scripts/validate-quizzes.py --coverage
+```
+
+Uncovered labs are reported for review rather than treated as failures because capstones,
+debug variants, shared fixtures, and newly developing labs do not always need their own
+topic quiz.
