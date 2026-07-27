@@ -57,10 +57,39 @@ and **hints** — your job is to produce the command, config, or rule. Then:
 - **Predict before you run.** Commit to an answer first; being wrong and seeing
   why is the point.
 - **Reveal the solution only after you've tried.** Full answers are behind
-  `Solution` toggles. You edit agent configs in-place (`vi` is in the images)
-  and the manager's rule file on `wazuh-manager`.
+  `Solution` toggles. Agent configs you edit in-place on `dc1`/`admin-ws`
+  (`vi` is in those images). The **`wazuh-manager` image ships no text editor** —
+  see *Editing files on the manager* below before Tasks 6–8.
 - **Observe, don't just verify.** The `Check your work` toggles explain the
   mechanism, not just the result.
+
+### Editing files on the manager (no text editor)
+
+The `wazuh-manager` image is minimal — **no `vi`/`nano`**. Tasks 6–8 change the
+manager's `local_rules.xml` and `ossec.conf`. Three editor-free ways:
+
+- **Dashboard** (only if you ran the optional overlay in the appendix): edit
+  `local_rules.xml` under **Server management → Rules → Manage rules files**, and
+  `ossec.conf` under **Server management → Configuration → Edit configuration**.
+  It validates the XML and restarts the manager for you.
+- **Write the whole file from the host** (good for `local_rules.xml`, which is a
+  standalone file):
+  ```bash
+  docker exec -i wazuh-manager tee /var/ossec/etc/rules/local_rules.xml >/dev/null <<'EOF'
+  ...your rules...
+  EOF
+  ```
+- **Targeted insert** (good for `ossec.conf`, which you must NOT overwrite whole):
+  ```bash
+  docker exec wazuh-manager sed -i 's#</ossec_config>#  <active-response>...</active-response>\n</ossec_config>#' /var/ossec/etc/ossec.conf
+  ```
+
+After a host-side write, fix ownership or `analysisd` may silently ignore the
+file (a "my rule won't fire" trap), then reload:
+```bash
+docker exec wazuh-manager chown wazuh:wazuh /var/ossec/etc/rules/local_rules.xml
+docker exec wazuh-manager /var/ossec/bin/wazuh-control restart
+```
 
 ## Prerequisites
 
@@ -692,6 +721,9 @@ No answers provided — these test whether you can transfer what you built.
 | New-user rule silent after `samba-tool user create` | Local edit bypasses the audit module | Create over the network: `-H ldap://dc1.lab.corp -U Administrator%P@ssw0rd1` |
 | Active response never touches iptables | AR block put after `</ossec_config>` / `firewall-drop` missing from agent `ar.conf` | Insert before `</ossec_config>`; restart manager; confirm `ar.conf` lists `firewall-drop` |
 | Manager won't start after editing rules | Malformed `local_rules.xml` | `wazuh-control restart` prints the XML error and line; fix and retry |
+| `kinit: Cannot find KDC for realm` and `docker logs dc1` shows `samba` exit status 1 "misconfigured 'server role'" after a `down`/`up` | Older `samba-ad` image only wrote `smb.conf`/`krb5.conf` at first provision; a plain re-`up` kept the domain volume but reset those files to image defaults | Rebuild the fixed image (`./eit.sh build samba-ad samba-ad-wazuh`) and recreate `dc1`. To recover a running broken container without rebuilding: `docker exec dc1 bash -c 'rm -rf /var/lib/samba/private/* /var/lib/samba/sysvol/*'` then `docker restart dc1` (re-provisions + re-seeds the foundation), then restart its agent |
+| `agent-auth: Duplicate agent name` when enrolling | The manager still holds a key for that hostname from a previous run (its volume survived a plain `down`) | Remove the stale agent on the manager: `docker exec wazuh-manager /var/ossec/bin/manage_agents -r <id>` (get `<id>` from `agent_control -l`), then re-run `agent-auth` |
+| Manager rule/config edits have no effect | File written as `root`, unreadable by `analysisd` | `docker exec wazuh-manager chown wazuh:wazuh <file>` then `wazuh-control restart` |
 
 ## What's next
 
