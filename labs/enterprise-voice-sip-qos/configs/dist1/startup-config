@@ -1,0 +1,23 @@
+hostname dist1
+!
+no aaa root
+!
+ip routing
+!
+spanning-tree mode mstp
+!
+interface Ethernet1
+ description 802.1Q downlink to access1 (configure VLANs 10,20,30)
+!
+interface Ethernet2
+ description PBX voice-services access (configure VLAN 30)
+!
+interface Ethernet4
+ no switchport
+ description Routed WAN to wan-edge
+ ip address 192.0.2.109/30
+!
+ip route 10.109.40.0/24 192.0.2.110
+ip route 198.51.100.108/30 192.0.2.110
+!
+end

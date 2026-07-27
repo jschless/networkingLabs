@@ -1,0 +1,85 @@
+name: enterprise-voice-sip-qos
+
+# The cEOS nodes provide the live campus voice/data VLAN and routed distribution
+# boundary. Linux carries the real Asterisk/SIPp, DHCP/DNS/NTP, stateful edge,
+# RTP capture, congestion, and tc scheduling mechanisms.
+topology:
+  nodes:
+    access1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/access1/startup-config
+    dist1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/dist1/startup-config
+
+    phone-a:
+      kind: linux
+      image: enterprise-voice-tools:1.0.0
+      binds:
+        - configs/phone-a/init.sh:/opt/voice/init.sh:ro
+        - configs/common/register.xml:/opt/voice/register.xml:ro
+        - configs/common/phone-a-uac.xml:/opt/voice/phone-a-uac.xml:ro
+      exec: ["bash /opt/voice/init.sh"]
+    traffic-gen:
+      kind: linux
+      image: enterprise-voice-tools:1.0.0
+      binds:
+        - configs/traffic-gen/init.sh:/opt/voice/init.sh:ro
+      exec: ["bash /opt/voice/init.sh"]
+    dns-ntp:
+      kind: linux
+      image: enterprise-voice-tools:1.0.0
+      binds:
+        - configs/dns-ntp/init.sh:/opt/voice/init.sh:ro
+      exec: ["bash /opt/voice/init.sh"]
+    observer:
+      kind: linux
+      image: enterprise-voice-tools:1.0.0
+      binds:
+        - configs/observer/init.sh:/opt/voice/init.sh:ro
+        - configs/observer/rtp_analyze.py:/usr/local/bin/rtp-analyze:ro
+      exec: ["bash /opt/voice/init.sh"]
+    pbx:
+      kind: linux
+      image: enterprise-voice-tools:1.0.0
+      binds:
+        - configs/pbx/init.sh:/opt/voice/init.sh:ro
+        - configs/pbx/pjsip.conf:/opt/voice/pjsip.conf:ro
+        - configs/pbx/extensions.conf:/opt/voice/extensions.conf:ro
+        - configs/pbx/rtp.conf:/opt/voice/rtp.conf:ro
+        - configs/pbx/logger.conf:/opt/voice/logger.conf:ro
+        - configs/pbx/modules.conf:/opt/voice/modules.conf:ro
+      exec: ["bash /opt/voice/init.sh"]
+    wan-edge:
+      kind: linux
+      image: enterprise-voice-tools:1.0.0
+      binds:
+        - configs/wan-edge/init.sh:/opt/voice/init.sh:ro
+      exec: ["bash /opt/voice/init.sh"]
+    sbc:
+      kind: linux
+      image: enterprise-voice-tools:1.0.0
+      binds:
+        - configs/sbc/init.sh:/opt/voice/init.sh:ro
+      exec: ["bash /opt/voice/init.sh"]
+    phone-b:
+      kind: linux
+      image: enterprise-voice-tools:1.0.0
+      binds:
+        - configs/phone-b/init.sh:/opt/voice/init.sh:ro
+        - configs/common/register.xml:/opt/voice/register.xml:ro
+        - configs/common/phone-b-uas.xml:/opt/voice/phone-b-uas.xml:ro
+      exec: ["bash /opt/voice/init.sh"]
+
+  links:
+    - endpoints: ["phone-a:eth1", "access1:eth1"] # Voice VLAN 20, 10.109.20.0/24
+    - endpoints: ["access1:eth2", "dist1:eth1"] # 802.1Q trunk, VLANs 10/20/30
+    - endpoints: ["dns-ntp:eth1", "access1:eth3"] # Voice services VLAN 30
+    - endpoints: ["traffic-gen:eth1", "access1:eth4"] # Data VLAN 10
+    - endpoints: ["observer:eth1", "access1:eth5"] # Voice services VLAN 30
+    - endpoints: ["pbx:eth1", "dist1:eth2"] # Voice services VLAN 30
+    - endpoints: ["dist1:eth4", "wan-edge:eth1"] # 192.0.2.108/30: dist1 .109, edge .110
+    - endpoints: ["wan-edge:eth2", "sbc:eth1"] # 198.51.100.108/30: edge .109, SBC .110
+    - endpoints: ["sbc:eth2", "phone-b:eth1"] # Remote voice 10.109.40.0/24

@@ -2,6 +2,11 @@
 
 Sixteen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, network automation with NetBox, and streaming telemetry.
 
+The Enterprise track's
+[enterprise-voice-sip-qos](../enterprise/enterprise-voice-sip-qos.md) lab
+extends the QoS practice into live SIP/RTP, stateful media NAT, and
+one-way-audio troubleshooting. It is registered and counted in Enterprise only.
+
 | Lab | Type | What You Learn |
 |-----|------|----------------|
 | [management-access-control](management-access-control.md) | Practice | Restrict SSH/UI access by source subnet and interface, verify with counters |

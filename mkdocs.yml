@@ -167,6 +167,7 @@ nav:
       - global-application-delivery: tracks/enterprise/global-application-delivery.md
       - enterprise-multicast: tracks/enterprise/enterprise-multicast.md
       - enterprise-services-infra: tracks/enterprise/enterprise-services-infra.md
+      - enterprise-voice-sip-qos: tracks/enterprise/enterprise-voice-sip-qos.md
       - sdwan-concepts: tracks/enterprise/sdwan-concepts.md
       - orchestrated-wan-overlay: tracks/enterprise/orchestrated-wan-overlay.md
       - enterprise-wireless-architecture: tracks/enterprise/enterprise-wireless-architecture.md
