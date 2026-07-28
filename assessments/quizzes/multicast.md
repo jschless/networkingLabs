@@ -58,4 +58,6 @@ Starting from a remote receiver that sees no UDP stream, give an ordered five-st
 evidence method that distinguishes missing receiver membership, a broken PIM hop, an RPF
 failure, missing RP state, and an application/source problem. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/multicast-key.md`](../answer-keys/quizzes/multicast-key.md).*

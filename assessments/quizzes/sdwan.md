@@ -54,4 +54,6 @@ one bad sample but sometimes degrades for minutes without going down. Propose th
 measurement window, failure/recovery thresholds, and hold-down behavior. Give evidence
 that proves bounded failover without route oscillation or asymmetric policy. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/sdwan-key.md`](../answer-keys/quizzes/sdwan-key.md).*

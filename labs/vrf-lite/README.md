@@ -10,23 +10,23 @@ understand exactly what isolation you just gave up.
 
 ```mermaid
 flowchart LR
-    cea1["ce-a1\n10.10.0.1/32"]
-    ceb1["ce-b1\n10.20.0.1/32"]
-    pe1["pe1\nVRF-RED + VRF-BLUE"]
-    pe2["pe2\nVRF-RED + VRF-BLUE"]
-    cea2["ce-a2\n10.10.0.2/32"]
-    ceb2["ce-b2\n10.20.0.2/32"]
+    cea1["ce-a1<br/>10.10.0.1/32"]
+    ceb1["ce-b1<br/>10.20.0.1/32"]
+    pe1["pe1<br/>VRF-RED + VRF-BLUE"]
+    pe2["pe2<br/>VRF-RED + VRF-BLUE"]
+    cea2["ce-a2<br/>10.10.0.2/32"]
+    ceb2["ce-b2<br/>10.20.0.2/32"]
 
-    cea1 -- "10.10.12.0/30\nVRF-RED" --- pe1
-    pe1 -- "10.10.99.0/30\nVRF-RED" --- pe2
-    pe2 -- "10.10.34.0/30\nVRF-RED" --- cea2
+    cea1 -- "10.10.12.0/30<br/>VRF-RED" --- pe1
+    pe1 -- "10.10.99.0/30<br/>VRF-RED" --- pe2
+    pe2 -- "10.10.34.0/30<br/>VRF-RED" --- cea2
 
-    ceb1 -- "10.20.12.0/30\nVRF-BLUE" --- pe1
-    pe1 -- "10.20.99.0/30\nVRF-BLUE" --- pe2
-    pe2 -- "10.20.34.0/30\nVRF-BLUE" --- ceb2
+    ceb1 -- "10.20.12.0/30<br/>VRF-BLUE" --- pe1
+    pe1 -- "10.20.99.0/30<br/>VRF-BLUE" --- pe2
+    pe2 -- "10.20.34.0/30<br/>VRF-BLUE" --- ceb2
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef ce     fill:#006400,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef ce stroke:#2eb872,stroke-width:2px
     class pe1,pe2 router
     class cea1,cea2,ceb1,ceb2 ce
 ```

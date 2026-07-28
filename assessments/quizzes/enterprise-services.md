@@ -51,4 +51,6 @@ A user VLAN moves to a new gateway. Clients send DISCOVER but receive no OFFER. 
 ordered evidence method across client, gateway/relay, routed path, server scope, and
 return delivery. Name the relay or scope mistake most likely after the move. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/enterprise-services-key.md`](../answer-keys/quizzes/enterprise-services-key.md).*

@@ -7,15 +7,41 @@ filter incident. The exchange, contacts, and records are synthetic and local.
 
 ## Topology
 
-```text
-                          rs1 -------- rs2
-                            \          /
- enterprise -- transit ---- IXP LAN --- peer-content -- content service
-                            |   \       \
-                         peer-saas  looking-glass  SaaS service
-                            |
-                        RPKI RTR / local IRR HTTP
+```mermaid
+flowchart TB
+    subgraph ixp["IXP peering LAN — 198.18.70.0/24"]
+        rs1["rs1 · .1<br/>AS 65010 route server"]
+        rs2["rs2 · .2<br/>AS 65010 route server"]
+        ent["enterprise · .11<br/>AS 65001<br/>203.0.113.0/24"]
+        content["peer-content · .12<br/>AS 65002<br/>198.51.100.0/24"]
+        saas["peer-saas · .13<br/>AS 65003<br/>192.0.2.0/24"]
+        lg["looking-glass · .14"]
+    end
+
+    transit["transit<br/>192.0.2.4/30"]
+    rpki(["RPKI RTR<br/>10.100.70.2"])
+    irr(["local IRR HTTP<br/>10.100.70.6"])
+    chost(["content-host<br/>198.51.100.10"])
+    shost(["saas-host<br/>192.0.2.10"])
+
+    ent -- "transit customer" --- transit
+    ent --- rpki
+    ent --- irr
+    content --- chost
+    saas --- shost
+
+    classDef rs stroke:#e05252,stroke-width:2px
+    classDef peer stroke:#4778ff,stroke-width:2px
+    classDef transit stroke:#9aa0a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class rs1,rs2 rs
+    class ent,content,saas,lg peer
+    class transit transit
+    class rpki,irr,chost,shost host
 ```
+
+Every node in the IXP subgraph shares the peering LAN; the route servers peer
+with each participant rather than the participants peering with each other.
 
 | Segment | Addressing | Purpose |
 |---|---|---|

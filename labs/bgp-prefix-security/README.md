@@ -11,17 +11,17 @@ shut it down.
 
 ```mermaid
 flowchart TB
-    legitimate["legitimate\nAS65001\n10.0.0.1/32\n192.0.2.0/24"]
-    hijacker["hijacker\nAS65002\n10.0.0.3/32\n192.0.2.128/25"]
-    isp["isp\nAS65100\n10.0.0.2/32"]
-    victim["victim\nAS65003\n10.0.0.4/32"]
+    legitimate["legitimate<br/>AS65001<br/>10.0.0.1/32<br/>192.0.2.0/24"]
+    hijacker["hijacker<br/>AS65002<br/>10.0.0.3/32<br/>192.0.2.128/25"]
+    isp["isp<br/>AS65100<br/>10.0.0.2/32"]
+    victim["victim<br/>AS65003<br/>10.0.0.4/32"]
 
     legitimate -- "10.1.11.0/30" --- isp
     hijacker -- "10.1.12.0/30" --- isp
     isp -- "10.1.13.0/30" --- victim
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
     class legitimate,hijacker,victim router
     class isp isp
 ```

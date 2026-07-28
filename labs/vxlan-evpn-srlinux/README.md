@@ -16,19 +16,19 @@ what changes. The challenge questions are where you reason unaided.
 
 ```mermaid
 flowchart TB
-    spine["spine/RR\nLo:10.0.0.100"]
-    vtep1["vtep1\nLo:10.0.0.1\n10.1.1.0/30"]
-    vtep2["vtep2\nLo:10.0.0.2\n10.1.2.0/30"]
-    host1(["host1\n172.16.0.1/24"])
-    host2(["host2\n172.16.0.2/24"])
+    spine["spine/RR<br/>Lo:10.0.0.100"]
+    vtep1["vtep1<br/>Lo:10.0.0.1<br/>10.1.1.0/30"]
+    vtep2["vtep2<br/>Lo:10.0.0.2<br/>10.1.2.0/30"]
+    host1(["host1<br/>172.16.0.1/24"])
+    host2(["host2<br/>172.16.0.2/24"])
 
     spine --- vtep1 & vtep2
     vtep1 --- host1
     vtep2 --- host2
 
-    classDef spine fill:#1a1aff,color:#fff,stroke:#000
-    classDef vtep  fill:#0077cc,color:#fff,stroke:#000
-    classDef host  fill:#3d7a3d,color:#fff,stroke:#000
+    classDef spine stroke:#4778ff,stroke-width:2px
+    classDef vtep stroke:#2a9fd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class spine spine
     class vtep1,vtep2 vtep
     class host1,host2 host

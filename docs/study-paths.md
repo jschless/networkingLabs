@@ -176,6 +176,14 @@ debug-ospf-multiarea → debug-bgp-basics → debug-eigrp-basics → debug-isis-
 See the [Troubleshooting & Assessment track](tracks/troubleshooting/index.md)
 for the differences between guided debug labs and proctored ranges.
 
+## Checking what stuck
+
+Every path above ends with labs that pass or fail on a running network. The
+[written assessments](assessments/index.md) check the other half: a
+[topic quiz](assessments/quizzes/README.md) after a small group of related labs, and one
+of the five cumulative exams after a whole path. Both are closed-book paper tests on
+unfamiliar topologies, so remembering a lab's solution toggle is not enough.
+
 ## Enterprise IT 101
 
 A cumulative curriculum — each lab extends the previous one. Uses Docker Compose, not
@@ -203,10 +211,19 @@ users authenticate and get services from the *real* EIT-101 stack (AD, RADIUS, K
 802.1X → RADIUS → AD → dynamic VLAN → DHCP → DDNS → Kerberos, plus guest segmentation,
 finished by a four-fault cross-layer troubleshooting drill.
 
-```
-(networking track: collapsed-core, vrrp, dot1x-nac)  ╲
-                                                       ──→  enterprise-grand-capstone
-(EIT-101 track: 01-AD, 06-DHCP/DDNS, 12-RADIUS)       ╱
+```mermaid
+flowchart LR
+    net["Networking track<br/>collapsed-core · vrrp · dot1x-nac"]
+    eit["EIT-101 track<br/>01-AD · 06-DHCP/DDNS · 12-RADIUS"]
+    cap["enterprise-grand-capstone"]
+
+    net --> cap
+    eit --> cap
+
+    classDef track stroke:#4778ff,stroke-width:2px
+    classDef capstone stroke:#a06bd6,stroke-width:2px
+    class net,eit track
+    class cap capstone
 ```
 
 Runs ContainerLab **and** Docker Compose together — drive it with

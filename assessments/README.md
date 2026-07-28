@@ -59,8 +59,11 @@ notes, partial-credit guidance, and a **question → lab** remediation table at 
 you are taking an exam, do not open the key first; the lab list at the bottom of each key
 is the actually useful part afterwards.
 
-Keys are deliberately outside `docs/`, so `mkdocs build` does not publish them to the
-site.
+The exams and quizzes themselves are published to the documentation site under
+**Assessments**; the keys are not. Each published page stops at the `<!-- site-include-end -->`
+marker that sits just above the key link, and points at the key's location in this
+repository instead. Keep that marker in place when adding an assessment, or its key link
+will be published with it.
 
 ## Administering
 
@@ -102,6 +105,9 @@ the existing ones are built:
   in which packet made this fail" is knowledge.
 - Add the new question to the remediation table in the answer key, or it will not help
   anyone who gets it wrong.
+
+A new exam or quiz also needs a wrapper page under `docs/assessments/` and a `nav` entry
+in `mkdocs.yml`, following the pattern of the existing ones.
 
 After adding or changing a topic quiz, run:
 

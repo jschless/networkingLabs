@@ -16,14 +16,14 @@ each verification's result before you run it.
 
 ```mermaid
 flowchart TB
-    isp["isp\ncEOS"]
-    iclient(["internet-client\n203.0.113.2"])
-    fwout["fw-outside\n203.0.114.2"]
-    web(["web-server\n172.16.0.2\nHTTP 80"])
-    mail(["mail-server\n172.16.0.6\nSMTP 25"])
-    fwin["fw-inside\n172.16.1.2"]
-    db(["db-server\n10.0.0.2\nDB 3306"])
-    ws(["workstation\n10.0.0.6"])
+    isp["isp<br/>cEOS"]
+    iclient(["internet-client<br/>203.0.113.2"])
+    fwout["fw-outside<br/>203.0.114.2"]
+    web(["web-server<br/>172.16.0.2<br/>HTTP 80"])
+    mail(["mail-server<br/>172.16.0.6<br/>SMTP 25"])
+    fwin["fw-inside<br/>172.16.1.2"]
+    db(["db-server<br/>10.0.0.2<br/>DB 3306"])
+    ws(["workstation<br/>10.0.0.6"])
 
     isp -- "203.0.113.0/30" --- iclient
     isp -- "203.0.114.0/30" --- fwout

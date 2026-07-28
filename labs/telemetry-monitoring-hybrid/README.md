@@ -38,13 +38,13 @@ questions as the real test.
 
 ```mermaid
 flowchart LR
-    client(["client\ntraffic source"])
-    branch1["branch1\nFRR\nenterprise edge"]
-    campus1["campus1\ncEOS\ncampus/dist\ngNMI + SNMP"]
-    pe1["pe1\nFRR\nprovider edge"]
-    core1["core1\ncEOS\nprovider core\ngNMI + SNMP"]
-    dc1["dc1\nFRR\nDC edge"]
-    server(["server\niperf3"])
+    client(["client<br/>traffic source"])
+    branch1["branch1<br/>FRR<br/>enterprise edge"]
+    campus1["campus1<br/>cEOS<br/>campus/dist<br/>gNMI + SNMP"]
+    pe1["pe1<br/>FRR<br/>provider edge"]
+    core1["core1<br/>cEOS<br/>provider core<br/>gNMI + SNMP"]
+    dc1["dc1<br/>FRR<br/>DC edge"]
+    server(["server<br/>iperf3"])
 
     client --- branch1
     branch1 --- campus1
@@ -53,8 +53,8 @@ flowchart LR
     core1 --- dc1
     dc1 --- server
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class branch1,campus1,pe1,core1,dc1 router
     class client,server host

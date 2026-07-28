@@ -9,11 +9,11 @@ Back in Lab 01 the domain controller was already listening on port **636 (LDAPS)
 ```mermaid
 flowchart LR
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    ca1["ca1\nstep-ca · Root + Intermediate\n10.100.1.30 · HTTPS :9000"]
-    dc1["dc1\nSamba AD DC\n10.100.1.10 · LDAPS :636"]
-    adminws["admin-ws\nWorkstation\n10.100.10.10 · trusts root"]
+    ca1["ca1<br/>step-ca · Root + Intermediate<br/>10.100.1.30 · HTTPS :9000"]
+    dc1["dc1<br/>Samba AD DC<br/>10.100.1.10 · LDAPS :636"]
+    adminws["admin-ws<br/>Workstation<br/>10.100.10.10 · trusts root"]
     ca1 -- "issues certs" --> dc1
-    adminws -- "LDAPS :636\n(bootstrap trust)" --> dc1
+    adminws -- "LDAPS :636<br/>(bootstrap trust)" --> dc1
   end
   %% all three trust the CA's root certificate
 ```

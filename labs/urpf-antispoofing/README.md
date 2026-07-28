@@ -52,15 +52,15 @@ the break-it steps and challenge questions as the real test.
 
 ```mermaid
 flowchart LR
-    attacker(["attacker\nlo: 10.0.0.10/32\neth1: 10.10.1.1/30"])
-    edge["edge\nlo: 10.0.0.1/32\neth1: 10.10.1.2/30\neth2: 10.10.2.1/30\nuRPF on eth1"]
-    internet(["internet\nlo: 10.0.0.100/32\neth1: 10.10.2.2/30"])
+    attacker(["attacker<br/>lo: 10.0.0.10/32<br/>eth1: 10.10.1.1/30"])
+    edge["edge<br/>lo: 10.0.0.1/32<br/>eth1: 10.10.1.2/30<br/>eth2: 10.10.2.1/30<br/>uRPF on eth1"]
+    internet(["internet<br/>lo: 10.0.0.100/32<br/>eth1: 10.10.2.2/30"])
 
     attacker -- "10.10.1.0/30" --- edge
     edge -- "10.10.2.0/30" --- internet
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class edge router
     class attacker,internet host

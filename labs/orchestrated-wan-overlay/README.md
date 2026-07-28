@@ -7,17 +7,57 @@ not Cisco Catalyst SD-WAN, vManage, vSmart, or a vendor product workflow.
 
 ## Topology
 
-```text
-                     [PKI]---[controller]
-                        \     control / mTLS
-                         +---[control LAN]
-                                 | hub |
-corp1--branch1 == MPLS/private ==+     +== MPLS/private == branch2--corp2
-guest1   ||       internet       |     |       internet       ||     guest2
-         +=======================+     +======================+
-                                   | private-app
-                      guest/SaaS local breakout -- internet -- saas
+```mermaid
+flowchart TB
+    subgraph control["Control LAN — 10.113.40.0/24"]
+        pki["pki<br/>CSR signing + revocation<br/>.2"]
+        controller["controller<br/>desired version + audit<br/>.10"]
+    end
+
+    hub["hub<br/>.11"]
+    branch1["branch1<br/>.21"]
+    branch2["branch2<br/>.22"]
+    mpls["mpls<br/>MPLS/private transport<br/>172.20.113.0/24"]
+    internet["internet<br/>public transport<br/>192.0.2.112/28"]
+
+    corp1(["corp1<br/>10.113.10.0/24"])
+    corp2(["corp2<br/>10.113.20.0/24"])
+    guest1(["guest1<br/>10.113.110.0/24"])
+    guest2(["guest2<br/>10.113.120.0/24"])
+    app(["private-app<br/>10.113.30.0/24"])
+    saas(["saas<br/>10.113.50.0/24"])
+
+    pki --- controller
+    controller -- "mTLS API" --- hub
+    controller -- "mTLS API" --- branch1
+    controller -- "mTLS API" --- branch2
+
+    branch1 -- "172.20.113.0/30" --- mpls
+    hub -- "172.20.113.4/30" --- mpls
+    branch2 -- "172.20.113.8/30" --- mpls
+    branch1 -- "192.0.2.112/30" --- internet
+    hub -- "192.0.2.116/30" --- internet
+    branch2 -- "192.0.2.120/30" --- internet
+    internet --- saas
+
+    corp1 --- branch1
+    guest1 --- branch1
+    corp2 --- branch2
+    guest2 --- branch2
+    hub --- app
+
+    classDef ctrl stroke:#a06bd6,stroke-width:2px
+    classDef edge stroke:#4778ff,stroke-width:2px
+    classDef transport stroke:#9aa0a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class pki,controller ctrl
+    class hub,branch1,branch2 edge
+    class mpls,internet transport
+    class corp1,corp2,guest1,guest2,app,saas host
 ```
+
+WireGuard overlay identities (`10.255.113.0/24`) ride over both transports; the
+guest segments break out locally to `internet` and never reach `private-app`.
 
 | Plane | Addresses | Purpose |
 |---|---|---|

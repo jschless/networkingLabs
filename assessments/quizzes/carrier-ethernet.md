@@ -51,4 +51,6 @@ Write the evidence content—not prose boilerplate—for a provider escalation t
 localizes an intermittent one-way Silver fault at or beyond the NID without claiming
 unsupported optical or live CFM results. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/carrier-ethernet-key.md`](../answer-keys/quizzes/carrier-ethernet-key.md).*

@@ -44,4 +44,6 @@ External users reach the published DMZ service, but corporate users resolving th
 public address fail. Diagnose the likely mechanism, describe a hairpin-NAT repair, and
 give evidence distinguishing it from DNS or server failure. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/nat-firewall-key.md`](../answer-keys/quizzes/nat-firewall-key.md).*

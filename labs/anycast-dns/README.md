@@ -15,12 +15,12 @@ see why it — not the daemon — is what makes anycast safe.
 
 ```mermaid
 flowchart TB
-    c1["c1 (client)\n172.16.1.10"]
-    c2["c2 (client)\n172.16.2.10"]
-    r1["r1 — AS 65001\nlo 10.0.0.1/32"]
-    r2["r2 — AS 65002\nlo 10.0.0.2/32"]
-    dns1["dns1 — AS 65101\nlo 10.0.0.11/32\nVIP 10.53.53.53/32"]
-    dns2["dns2 — AS 65102\nlo 10.0.0.12/32\nVIP 10.53.53.53/32"]
+    c1["c1 (client)<br/>172.16.1.10"]
+    c2["c2 (client)<br/>172.16.2.10"]
+    r1["r1 — AS 65001<br/>lo 10.0.0.1/32"]
+    r2["r2 — AS 65002<br/>lo 10.0.0.2/32"]
+    dns1["dns1 — AS 65101<br/>lo 10.0.0.11/32<br/>VIP 10.53.53.53/32"]
+    dns2["dns2 — AS 65102<br/>lo 10.0.0.12/32<br/>VIP 10.53.53.53/32"]
 
     c1 --- |"172.16.1.0/24"| r1
     c2 --- |"172.16.2.0/24"| r2
@@ -28,9 +28,9 @@ flowchart TB
     r1 --- |"10.0.101.0/30"| dns1
     r2 --- |"10.0.102.0/30"| dns2
 
-    classDef rtr fill:#5c2d91,color:#fff,stroke:#000
-    classDef srv fill:#0b6e4f,color:#fff,stroke:#000
-    classDef cli fill:#444,color:#fff,stroke:#000
+    classDef rtr stroke:#a06bd6,stroke-width:2px
+    classDef srv stroke:#17a589,stroke-width:2px
+    classDef cli stroke:#9aa0a6,stroke-width:2px
     class r1,r2 rtr
     class dns1,dns2 srv
     class c1,c2 cli

@@ -6,10 +6,42 @@ DEV within each site; the Break-It is a healthy EVPN session with a bad import R
 
 ## Topology
 
-```text
- a-client -- a-leaf -- a-spine -- a-bgw ===== b-bgw -- b-spine -- b-leaf -- b-app
-                  \                         DCI                         /     \
-                   \-- a-app (shared service)                     b-client PROD/DEV
+```mermaid
+flowchart LR
+    subgraph sitea["Site A — underlay 10.11.0.0/16"]
+        aclient(["a-client<br/>PROD/DEV"])
+        aleaf["a-leaf<br/>VTEP + anycast GW"]
+        aspine["a-spine"]
+        abgw["a-bgw<br/>border gateway"]
+        aapp(["a-app<br/>shared service<br/>172.31.10.10"])
+    end
+
+    subgraph siteb["Site B — underlay 10.21.0.0/16"]
+        bbgw["b-bgw<br/>border gateway"]
+        bspine["b-spine"]
+        bleaf["b-leaf<br/>VTEP + anycast GW"]
+        bclient(["b-client<br/>PROD/DEV"])
+        bapp(["b-app<br/>PROD application"])
+    end
+
+    aclient --- aleaf
+    aleaf --- aspine
+    aspine --- abgw
+    aapp --- abgw
+    abgw == "routed DCI 10.255.10.0/30<br/>eBGP IPv4 + EVPN NLRI" ==> bbgw
+    bbgw --- bspine
+    bspine --- bleaf
+    bleaf --- bclient
+    bapp --- bbgw
+
+    classDef leaf stroke:#2a9fd6,stroke-width:2px
+    classDef spine stroke:#4778ff,stroke-width:2px
+    classDef bgw stroke:#a06bd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class aleaf,bleaf leaf
+    class aspine,bspine spine
+    class abgw,bbgw bgw
+    class aclient,bclient,aapp,bapp host
 ```
 
 | Tenant | VLAN/L2VNI | L3VNI | Site A | Site B | DCI policy |

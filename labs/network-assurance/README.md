@@ -13,25 +13,25 @@ questions as the real test.
 
 ```mermaid
 flowchart LR
-    client(["client\n10.1.0.2/30"])
-    r1["r1\n10.0.0.1/32\nSNMP+syslog+NetFlow"]
-    r2["r2\n10.0.0.2/32\nSPAN src: eth1"]
-    r3["r3\n10.0.0.3/32\nSNMP+syslog+NetFlow"]
-    server(["server\n10.3.0.2/30"])
-    mgmt["management\nSNMP/syslog/NetFlow\ncollector"]
-    analyzer(["analyzer\nSPAN capture"])
+    client(["client<br/>10.1.0.2/30"])
+    r1["r1<br/>10.0.0.1/32<br/>SNMP+syslog+NetFlow"]
+    r2["r2<br/>10.0.0.2/32<br/>SPAN src: eth1"]
+    r3["r3<br/>10.0.0.3/32<br/>SNMP+syslog+NetFlow"]
+    server(["server<br/>10.3.0.2/30"])
+    mgmt["management<br/>SNMP/syslog/NetFlow<br/>collector"]
+    analyzer(["analyzer<br/>SPAN capture"])
 
     client -- "10.1.0.0/30" --- r1
     r1 -- "10.0.12.0/30" --- r2
     r2 -- "10.0.23.0/30" --- r3
     r3 -- "10.3.0.0/30" --- server
     r1 -- "172.16.0.0/30" --- mgmt
-    r2 -- "172.16.0.4/30\nSPAN egress" --- mgmt
+    r2 -- "172.16.0.4/30<br/>SPAN egress" --- mgmt
     r3 -- "172.16.0.8/30" --- mgmt
     mgmt -- "192.168.99.0/30" --- analyzer
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class r1,r2,r3,mgmt router
     class client,server,analyzer host

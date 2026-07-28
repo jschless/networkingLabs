@@ -9,14 +9,36 @@ one-way.
 
 ## Topology
 
-```text
- phone-a──access1──dist1──wan-edge──sbc──phone-b
-              │       │
-          dns-ntp    pbx
-              │
-           observer
-              │
-         traffic-gen
+```mermaid
+flowchart LR
+    phonea(["phone-a<br/>SIPp phone<br/>VLAN 20"])
+    trafgen(["traffic-gen<br/>background load<br/>VLAN 10"])
+    dnsntp(["dns-ntp<br/>DNS + NTP<br/>10.109.30.53"])
+    observer(["observer<br/>SIP/RTP capture<br/>10.109.30.60"])
+    pbx(["pbx<br/>Asterisk<br/>10.109.30.10"])
+    phoneb(["phone-b<br/>remote SIPp phone<br/>10.109.40.20"])
+
+    access1["access1 (cEOS)<br/>access + voice VLANs"]
+    dist1["dist1 (cEOS)<br/>SVIs + DHCP relay"]
+    wanedge["wan-edge<br/>nftables NAT/FW<br/>1 Mb/s tc bottleneck"]
+    sbc["sbc<br/>routed demarcation"]
+
+    phonea --- access1
+    trafgen --- access1
+    dnsntp --- access1
+    observer --- access1
+    access1 -- "802.1Q trunk<br/>VLANs 10/20/30" --- dist1
+    pbx --- dist1
+    dist1 -- "192.0.2.108/30" --- wanedge
+    wanedge -- "198.51.100.108/30" --- sbc
+    sbc -- "10.109.40.0/24" --- phoneb
+
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef edge stroke:#a06bd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class access1,dist1 router
+    class wanedge,sbc edge
+    class phonea,trafgen,dnsntp,observer,pbx,phoneb host
 ```
 
 | Node | Role | Data-plane address |

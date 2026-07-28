@@ -11,11 +11,11 @@ specific the moment two spokes talk.
 
 ```mermaid
 flowchart TB
-    brwan[("br-wan\n10.0.0.0/24\nNBMA WAN")]
-    hub["hub\neth1: 10.0.0.1\ntun0: 172.16.0.1\nsummary 192.168.0.0/16"]
-    spoke1["spoke1\neth1: 10.0.0.11\ntun0: 172.16.0.11\nlo: 192.168.1.1/24"]
-    spoke2["spoke2\neth1: 10.0.0.12\ntun0: 172.16.0.12\nlo: 192.168.2.1/24"]
-    spoke3["spoke3\neth1: 10.0.0.13\ntun0: 172.16.0.13\nlo: 192.168.3.1/24"]
+    brwan[("br-wan<br/>10.0.0.0/24<br/>NBMA WAN")]
+    hub["hub<br/>eth1: 10.0.0.1<br/>tun0: 172.16.0.1<br/>summary 192.168.0.0/16"]
+    spoke1["spoke1<br/>eth1: 10.0.0.11<br/>tun0: 172.16.0.11<br/>lo: 192.168.1.1/24"]
+    spoke2["spoke2<br/>eth1: 10.0.0.12<br/>tun0: 172.16.0.12<br/>lo: 192.168.2.1/24"]
+    spoke3["spoke3<br/>eth1: 10.0.0.13<br/>tun0: 172.16.0.13<br/>lo: 192.168.3.1/24"]
 
     hub --- brwan
     spoke1 --- brwan

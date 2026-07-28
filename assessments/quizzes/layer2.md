@@ -90,5 +90,7 @@ bundle remains up, but monitoring shows the remaining link is saturated.
 
 ---
 
+<!-- site-include-end -->
+
 *End of Layer 2 quiz. Key:
 [`../answer-keys/quizzes/layer2-key.md`](../answer-keys/quizzes/layer2-key.md).*

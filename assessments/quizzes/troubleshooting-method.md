@@ -51,4 +51,6 @@ Small HTTPS responses work but large downloads stall across an edge path. Give t
 hypothesis, packet/control evidence, minimal policy or MTU repair, negative alternatives
 to eliminate, and client-side plus infrastructure verification. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/troubleshooting-method-key.md`](../answer-keys/quizzes/troubleshooting-method-key.md).*

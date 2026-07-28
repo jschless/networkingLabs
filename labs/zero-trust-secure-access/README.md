@@ -4,12 +4,45 @@ Build a resource-centric access path: Keycloak issues OIDC claims, the PEP evalu
 
 ## Topology
 
-```text
-managed / unmanaged clients -- remote 10.90.10.0/24 -- seg-gw -- PEP 10.90.20.10
-                                                        |       \-- protected apps 10.90.40.0/24
-                                                  IdP/PKI/logs 10.90.30.0/24
-                                                        |
-                                                  admin 10.90.50.0/24
+```mermaid
+flowchart TB
+    subgraph remote["Remote / untrusted — 10.90.10.0/24"]
+        managed(["managed-client"])
+        unmanaged(["unmanaged-client"])
+    end
+
+    seggw["seg-gw<br/>segmentation gateway"]
+    pep["pep<br/>policy enforcement point<br/>10.90.20.10"]
+
+    subgraph identity["Identity — 10.90.30.0/24"]
+        idp(["idp"])
+        pkiN(["pki"])
+        logs(["log-viewer"])
+    end
+
+    subgraph origins["Protected origins — 10.90.40.0/24"]
+        publicapp(["public-app"])
+        finapp(["finance-app"])
+        opsapp(["ops-app"])
+    end
+
+    subgraph mgmtlan["Management — 10.90.50.0/24"]
+        admin(["admin-client"])
+    end
+
+    managed --- seggw
+    unmanaged --- seggw
+    seggw --- pep
+    seggw --- identity
+    seggw --- origins
+    seggw --- mgmtlan
+
+    classDef gw stroke:#4778ff,stroke-width:2px
+    classDef policy stroke:#a06bd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class seggw gw
+    class pep policy
+    class managed,unmanaged,idp,pkiN,logs,publicapp,finapp,opsapp,admin host
 ```
 
 | Zone | Prefix | Nodes |

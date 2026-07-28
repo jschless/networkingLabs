@@ -14,17 +14,17 @@ understand exactly what state SR removed.
 
 ```mermaid
 flowchart LR
-    r1["r1 (LER)\n10.0.0.1/32"]
-    r2["r2 (LSR)\n10.0.0.2/32"]
-    r3["r3 (LSR)\n10.0.0.3/32"]
-    r4["r4 (LER)\n10.0.0.4/32"]
+    r1["r1 (LER)<br/>10.0.0.1/32"]
+    r2["r2 (LSR)<br/>10.0.0.2/32"]
+    r3["r3 (LSR)<br/>10.0.0.3/32"]
+    r4["r4 (LER)<br/>10.0.0.4/32"]
 
     r1 --- |"10.1.12.0/30"| r2
     r2 --- |"10.1.23.0/30"| r3
     r3 --- |"10.1.34.0/30"| r4
 
-    classDef ler fill:#5c2d91,color:#fff,stroke:#000
-    classDef lsr fill:#7a3b00,color:#fff,stroke:#000
+    classDef ler stroke:#a06bd6,stroke-width:2px
+    classDef lsr stroke:#c8873c,stroke-width:2px
     class r1,r4 ler
     class r2,r3 lsr
 ```

@@ -62,20 +62,20 @@ backbone. Key points:
 
 ```mermaid
 flowchart TB
-    ce1(["ce1\nfd00:1::1/128\nAS65001 · IPv6-only"])
-    pe1["pe1\n10.0.0.1/32\nSID 1 · label 16001\n6PE ingress/egress"]
-    p1["p1\n10.0.0.2/32\nSID 2 · label 16002\nRR + P router"]
-    pe2["pe2\n10.0.0.3/32\nSID 3 · label 16003\n6PE ingress/egress"]
-    ce2(["ce2\nfd00:2::1/128\nAS65002 · IPv6-only"])
+    ce1(["ce1<br/>fd00:1::1/128<br/>AS65001 · IPv6-only"])
+    pe1["pe1<br/>10.0.0.1/32<br/>SID 1 · label 16001<br/>6PE ingress/egress"]
+    p1["p1<br/>10.0.0.2/32<br/>SID 2 · label 16002<br/>RR + P router"]
+    pe2["pe2<br/>10.0.0.3/32<br/>SID 3 · label 16003<br/>6PE ingress/egress"]
+    ce2(["ce2<br/>fd00:2::1/128<br/>AS65002 · IPv6-only"])
 
-    ce1 --- |"fd00:10::/127\n(IPv6 only)"| pe1
-    pe1 --- |"10.1.0.0/30\n(IPv4 MPLS core)"| p1
-    p1 --- |"10.1.0.4/30\n(IPv4 MPLS core)"| pe2
-    pe2 --- |"fd00:20::/127\n(IPv6 only)"| ce2
+    ce1 --- |"fd00:10::/127<br/>(IPv6 only)"| pe1
+    pe1 --- |"10.1.0.0/30<br/>(IPv4 MPLS core)"| p1
+    p1 --- |"10.1.0.4/30<br/>(IPv4 MPLS core)"| pe2
+    pe2 --- |"fd00:20::/127<br/>(IPv6 only)"| ce2
 
-    classDef pe     fill:#5c2d91,color:#fff,stroke:#000
-    classDef p      fill:#7a3b00,color:#fff,stroke:#000
-    classDef ce     fill:#006400,color:#fff,stroke:#000
+    classDef pe stroke:#a06bd6,stroke-width:2px
+    classDef p stroke:#c8873c,stroke-width:2px
+    classDef ce stroke:#2eb872,stroke-width:2px
 
     class pe1,pe2 pe
     class p1 p
@@ -282,10 +282,18 @@ An IPv4 address `A.B.C.D` is represented as `64:ff9b::A.B.C.D` in IPv6.
 
 ### Topology (conceptual)
 
-```
-[host6 IPv6-only] ──── [nat64/dns64 router] ──── [host4 IPv4-only]
-  fd00:1::2/64               Jool                  192.0.2.2/24
-  DNS: fd00:1::1 (DNS64)
+```mermaid
+flowchart LR
+    host6(["host6 — IPv6-only<br/>fd00:1::2/64<br/>DNS: fd00:1::1 (DNS64)"])
+    nat64["nat64/dns64 router<br/>Jool"]
+    host4(["host4 — IPv4-only<br/>192.0.2.2/24"])
+
+    host6 --- nat64 --- host4
+
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class nat64 router
+    class host6,host4 host
 ```
 
 ### Jool Implementation

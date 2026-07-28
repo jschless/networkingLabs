@@ -11,14 +11,14 @@ question, automatic withdrawal, and selective suppression.
 
 ```mermaid
 flowchart LR
-    originator["originator\nAS65001\n10.0.0.1/32\n10.1.1-4.0/24"]
-    aggregator["aggregator\nAS65002\n10.0.0.2/32\naggregate: 10.1.0.0/21"]
-    receiver["receiver\nAS65003\n10.0.0.3/32"]
+    originator["originator<br/>AS65001<br/>10.0.0.1/32<br/>10.1.1-4.0/24"]
+    aggregator["aggregator<br/>AS65002<br/>10.0.0.2/32<br/>aggregate: 10.1.0.0/21"]
+    receiver["receiver<br/>AS65003<br/>10.0.0.3/32"]
 
     originator -- "10.1.12.0/30" --- aggregator
     aggregator -- "10.1.23.0/30" --- receiver
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
     class originator,aggregator,receiver router
 ```
 

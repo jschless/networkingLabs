@@ -15,9 +15,9 @@ questions as the real test.
 
 ```mermaid
 flowchart LR
-    admin(["admin1\n192.168.99.10/24"])
-    device["device1\n192.168.99.1/24\n192.168.50.1/24\nSSH:22 UI:8443"]
-    guest(["guest1\n192.168.50.10/24"])
+    admin(["admin1<br/>192.168.99.10/24"])
+    device["device1<br/>192.168.99.1/24<br/>192.168.50.1/24<br/>SSH:22 UI:8443"]
+    guest(["guest1<br/>192.168.50.10/24"])
 
     admin --- device
     guest --- device

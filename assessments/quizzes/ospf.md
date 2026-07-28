@@ -108,4 +108,6 @@ proposes an OSPF virtual link through area 20.
 
 ---
 
+<!-- site-include-end -->
+
 *End of OSPF quiz. Key: [`../answer-keys/quizzes/ospf-key.md`](../answer-keys/quizzes/ospf-key.md).*

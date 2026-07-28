@@ -9,9 +9,9 @@ In Labs 01–03 you built the domain and queried it as an outsider — `kinit` a
 ```mermaid
 flowchart LR
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD DC · KDC + LDAP\n10.100.1.10"]
-    ws1["ws1\nWorkstation · sssd → AD\n10.100.10.11 · (WS1$ acct)"]
-    ws2["ws2\nWorkstation · sssd → AD\n10.100.10.12 · (WS2$ acct)"]
+    dc1["dc1<br/>Samba AD DC · KDC + LDAP<br/>10.100.1.10"]
+    ws1["ws1<br/>Workstation · sssd → AD<br/>10.100.10.11 · (WS1$ acct)"]
+    ws2["ws2<br/>Workstation · sssd → AD<br/>10.100.10.12 · (WS2$ acct)"]
     ws1 -- "join · LDAP / Krb5" --> dc1
     ws2 -- "join · LDAP / Krb5" --> dc1
   end

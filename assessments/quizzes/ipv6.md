@@ -77,4 +77,6 @@ overlap, Router Advertisement lifetime, DNS, routing, policy, and application ch
 needed to retire the old prefix without using “disable IPv6” or deleting AAAA records as
 a workaround. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/ipv6-key.md`](../answer-keys/quizzes/ipv6-key.md).*

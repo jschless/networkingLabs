@@ -31,14 +31,14 @@ learning sticks.
 
 ```mermaid
 flowchart TB
-    dist1["dist1\ncEOS\nSVIs + DHCP snooping + DAI"]
-    acc1["acc1\ncEOS\nlegitimate access"]
-    acc2["acc2\ncEOS\nrogue/attacker side"]
-    clienta(["client-a\nDHCP client\nVLAN10"])
-    dhcp(["dhcp-server\n10.10.10.10\nVLAN10"])
-    roguedhcp(["rogue-dhcp\nunauthorized DHCP\nVLAN10"])
-    attacker(["attacker\nARP spoof tester"])
-    clientb(["client-b\nstatic voice\nVLAN20"])
+    dist1["dist1<br/>cEOS<br/>SVIs + DHCP snooping + DAI"]
+    acc1["acc1<br/>cEOS<br/>legitimate access"]
+    acc2["acc2<br/>cEOS<br/>rogue/attacker side"]
+    clienta(["client-a<br/>DHCP client<br/>VLAN10"])
+    dhcp(["dhcp-server<br/>10.10.10.10<br/>VLAN10"])
+    roguedhcp(["rogue-dhcp<br/>unauthorized DHCP<br/>VLAN10"])
+    attacker(["attacker<br/>ARP spoof tester"])
+    clientb(["client-b<br/>static voice<br/>VLAN20"])
 
     dist1 --- acc1
     dist1 --- acc2
@@ -48,9 +48,9 @@ flowchart TB
     acc2 --- attacker
     acc2 --- clientb
 
-    classDef dist   fill:#0077cc,color:#fff,stroke:#000
-    classDef access fill:#00aa88,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef dist stroke:#2a9fd6,stroke-width:2px
+    classDef access stroke:#14b8a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class dist1 dist
     class acc1,acc2 access

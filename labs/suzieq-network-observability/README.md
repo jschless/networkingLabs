@@ -16,19 +16,27 @@ tool into a continuous health checker.
 
 ## Topology
 
-```
-               SuzieQ Observer
-               172.31.42.100
-                    |
-  ╔═════════════════╪══════════════════════════════╗
-  ║   lab mgmt network  172.31.42.0/24             ║
-  ╚════╤══════════════╤═════════════════╤═══════════╝
-       │ Mgmt (.11)   │ Mgmt (.12)      │ Mgmt (.13)
-  ┌────┴──┐      ┌────┴────┐       ┌────┴──┐
-  │  r1   │ Eth1 │   r2    │ Eth2  │  r3   │
-  │ OSPF  ├──────┤ OSPF    ├───────┤ OSPF  │
-  └───────┘      └─────────┘       └───────┘
-  Lo0 10.0.0.1   Lo0 10.0.0.2      Lo0 10.0.0.3
+```mermaid
+flowchart TB
+    sq(["SuzieQ observer<br/>172.31.42.100"])
+
+    subgraph mgmt["lab mgmt network — 172.31.42.0/24"]
+        direction LR
+        r1["r1 (cEOS)<br/>OSPF<br/>Lo0 10.0.0.1<br/>Mgmt .11"]
+        r2["r2 (cEOS)<br/>OSPF<br/>Lo0 10.0.0.2<br/>Mgmt .12"]
+        r3["r3 (cEOS)<br/>OSPF<br/>Lo0 10.0.0.3<br/>Mgmt .13"]
+    end
+
+    sq -- "poll" --> r1
+    sq -- "poll" --> r2
+    sq -- "poll" --> r3
+    r1 -- "Eth1 — 10.1.12.0/30 — Eth1" --- r2
+    r2 -- "Eth2 — 10.1.23.0/30 — Eth1" --- r3
+
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class r1,r2,r3 router
+    class sq host
 ```
 
 ### Link addressing

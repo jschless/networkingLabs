@@ -16,18 +16,18 @@ each verification's result before you run it.
 
 ```mermaid
 flowchart TB
-    isp["isp\nAS65500\n1.1.1.1/32"]
-    edge["edge\nAS65100\n10.0.0.1/32"]
-    core1["core1\n10.0.0.2/32"]
-    core2["core2\n10.0.0.3/32"]
-    dist1["dist1\nABR + VRRP\n10.0.0.4/32"]
-    dist2["dist2\nABR + VRRP\n10.0.0.5/32"]
+    isp["isp<br/>AS65500<br/>1.1.1.1/32"]
+    edge["edge<br/>AS65100<br/>10.0.0.1/32"]
+    core1["core1<br/>10.0.0.2/32"]
+    core2["core2<br/>10.0.0.3/32"]
+    dist1["dist1<br/>ABR + VRRP<br/>10.0.0.4/32"]
+    dist2["dist2<br/>ABR + VRRP<br/>10.0.0.5/32"]
     acc1["acc1"]
     acc2["acc2"]
     acc3["acc3"]
     acc4["acc4"]
-    clienta(["client-a\nVLAN10\n10.10.10.11"])
-    clientb(["client-b\nVLAN20\n10.20.20.11"])
+    clienta(["client-a<br/>VLAN10<br/>10.10.10.11"])
+    clientb(["client-b<br/>VLAN20<br/>10.20.20.11"])
 
     isp -- "203.0.113.0/30" --- edge
     edge -- "10.255.1.0/30" --- core1
@@ -44,11 +44,11 @@ flowchart TB
     acc1 -- "VLAN10" --- clienta
     acc3 -- "VLAN20" --- clientb
 
-    classDef core   fill:#1a1aff,color:#fff,stroke:#000
-    classDef dist   fill:#0077cc,color:#fff,stroke:#000
-    classDef access fill:#00aa88,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef core stroke:#4778ff,stroke-width:2px
+    classDef dist stroke:#2a9fd6,stroke-width:2px
+    classDef access stroke:#14b8a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
 
     class isp isp
     class edge,core1,core2 core

@@ -30,20 +30,20 @@ break-it task and the challenge questions, where nothing is handed to you.
 
 ```mermaid
 flowchart TB
-    ce1(["ce1\n10.100.0.1/24"])
-    pe1["pe1\n10.0.0.1/32\nPE · LDP + pseudowire"]
-    p1["p1\n10.0.0.2/32\nP · IS-IS + LDP"]
-    pe2["pe2\n10.0.0.3/32\nPE · LDP + pseudowire"]
-    ce2(["ce2\n10.100.0.2/24"])
+    ce1(["ce1<br/>10.100.0.1/24"])
+    pe1["pe1<br/>10.0.0.1/32<br/>PE · LDP + pseudowire"]
+    p1["p1<br/>10.0.0.2/32<br/>P · IS-IS + LDP"]
+    pe2["pe2<br/>10.0.0.3/32<br/>PE · LDP + pseudowire"]
+    ce2(["ce2<br/>10.100.0.2/24"])
 
     ce1 --- |"L2 attachment circuit"| pe1
-    pe1 --- |"10.1.0.0/30\n(MPLS core)"| p1
-    p1 --- |"10.1.0.4/30\n(MPLS core)"| pe2
+    pe1 --- |"10.1.0.0/30<br/>(MPLS core)"| p1
+    p1 --- |"10.1.0.4/30<br/>(MPLS core)"| pe2
     pe2 --- |"L2 attachment circuit"| ce2
 
-    classDef pe     fill:#5c2d91,color:#fff,stroke:#000
-    classDef p      fill:#7a3b00,color:#fff,stroke:#000
-    classDef ce     fill:#006400,color:#fff,stroke:#000
+    classDef pe stroke:#a06bd6,stroke-width:2px
+    classDef p stroke:#c8873c,stroke-width:2px
+    classDef ce stroke:#2eb872,stroke-width:2px
 
     class pe1,pe2 pe
     class p1 p
@@ -72,19 +72,21 @@ flowchart TB
 
 ## How the pseudowire works
 
-```
-ce1                pe1                   p1                  pe2              ce2
- |                  |                     |                    |                |
- |  Ethernet frame  |                     |                    |                |
- |─────────────────>|                     |                    |                |
- |                  | Push MPLS labels:   |                    |                |
- |                  | [PW-label|IGP-label]|                    |                |
- |                  |────────────────────>|                    |                |
- |                  |                     | Swap IGP label     |                |
- |                  |                     |───────────────────>|                |
- |                  |                     |                    | Pop labels     |
- |                  |                     |                    | Forward frame  |
- |                  |                     |                    |───────────────>|
+```mermaid
+sequenceDiagram
+    participant ce1
+    participant pe1
+    participant p1
+    participant pe2
+    participant ce2
+
+    ce1->>pe1: Ethernet frame
+    Note over pe1: Push MPLS labels<br/>[PW-label | IGP-label]
+    pe1->>p1: labelled packet
+    Note over p1: Swap IGP label
+    p1->>pe2: labelled packet
+    Note over pe2: Pop labels
+    pe2->>ce2: Ethernet frame
 ```
 
 **Two labels are used (label stacking):**

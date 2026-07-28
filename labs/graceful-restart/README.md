@@ -15,9 +15,9 @@ run**; that prediction is the entire learning. Config is behind toggles.
 
 ```mermaid
 flowchart LR
-    r1["r1\n10.0.12.1/30\nSvc 172.16.1.1/32"]
-    r2["r2\n10.0.12.2/30\n10.0.23.1/30\nSvc 172.16.2.1/32\nRR"]
-    r3["r3\n10.0.23.2/30\nSvc 172.16.3.1/32"]
+    r1["r1<br/>10.0.12.1/30<br/>Svc 172.16.1.1/32"]
+    r2["r2<br/>10.0.12.2/30<br/>10.0.23.1/30<br/>Svc 172.16.2.1/32<br/>RR"]
+    r3["r3<br/>10.0.23.2/30<br/>Svc 172.16.3.1/32"]
 
     r1 ---|"10.0.12.0/30"| r2
     r2 ---|"10.0.23.0/30"| r3

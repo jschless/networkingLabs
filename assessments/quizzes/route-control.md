@@ -97,5 +97,7 @@ OSPF and EIGRP meet at two ASBRs. Use the repository convention:
 
 ---
 
+<!-- site-include-end -->
+
 *End of Route Control & Redistribution quiz. Key:
 [`../answer-keys/quizzes/route-control-key.md`](../answer-keys/quizzes/route-control-key.md).*

@@ -26,16 +26,16 @@ drill is the whole point of catching.
 
 ```mermaid
 flowchart TB
-    hosta(["hosta\n192.168.10.10/24\nLACP Po1"])
-    dist1["dist1\nMLAG + VRRP\n10.255.0.11/32"]
-    dist2["dist2\nMLAG + VRRP\n10.255.0.12/32"]
-    core1["core1\n10.255.0.21/32"]
-    core2["core2\n10.255.0.22/32"]
-    edge1["edge1\nAS65010\n10.255.0.31/32"]
-    edge2["edge2\nAS65020\n10.255.0.32/32"]
-    isp1["isp1\nAS65101\n203.255.1.1/32"]
-    isp2["isp2\nAS65102\n203.255.2.1/32"]
-    app1(["app1\n172.20.20.20/32"])
+    hosta(["hosta<br/>192.168.10.10/24<br/>LACP Po1"])
+    dist1["dist1<br/>MLAG + VRRP<br/>10.255.0.11/32"]
+    dist2["dist2<br/>MLAG + VRRP<br/>10.255.0.12/32"]
+    core1["core1<br/>10.255.0.21/32"]
+    core2["core2<br/>10.255.0.22/32"]
+    edge1["edge1<br/>AS65010<br/>10.255.0.31/32"]
+    edge2["edge2<br/>AS65020<br/>10.255.0.32/32"]
+    isp1["isp1<br/>AS65101<br/>203.255.1.1/32"]
+    isp2["isp2<br/>AS65102<br/>203.255.2.1/32"]
+    app1(["app1<br/>172.20.20.20/32"])
 
     hosta -- "LACP" --- dist1
     hosta -- "LACP" --- dist2
@@ -53,10 +53,10 @@ flowchart TB
     isp1 -- "198.51.100.0/31" --- app1
     isp2 -- "198.51.100.2/31" --- app1
 
-    classDef core   fill:#1a1aff,color:#fff,stroke:#000
-    classDef dist   fill:#0077cc,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef core stroke:#4778ff,stroke-width:2px
+    classDef dist stroke:#2a9fd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
 
     class core1,core2,edge1,edge2 core
     class dist1,dist2 dist

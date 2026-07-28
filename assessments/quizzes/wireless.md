@@ -63,4 +63,6 @@ record shows high channel utilization at one AP. Give a disciplined evidence pla
 distinguishes RF capacity, sticky-client/roaming behavior, controller state, and wired
 policy. State what the containerized policy labs can and cannot prove. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/wireless-key.md`](../answer-keys/quizzes/wireless-key.md).*

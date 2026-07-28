@@ -37,4 +37,6 @@ Explain the roles of topology definition, startup configuration, container namin
 deploy/destroy lifecycle, and saved evidence. Describe how stale runtime state can create
 a false troubleshooting conclusion. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/routing-foundations-key.md`](../answer-keys/quizzes/routing-foundations-key.md).*

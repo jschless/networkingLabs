@@ -14,15 +14,15 @@ the break-it steps and challenge questions as the real test.
 
 ```mermaid
 flowchart LR
-    client(["client\n192.168.10.10"])
-    attacker(["attacker\n192.168.20.10"])
-    router["router\n192.168.10.1 / 192.168.20.1\nHTTP:8080, app:2222"]
+    client(["client<br/>192.168.10.10"])
+    attacker(["attacker<br/>192.168.20.10"])
+    router["router<br/>192.168.10.1 / 192.168.20.1<br/>HTTP:8080, app:2222"]
 
     client --- router
     attacker --- router
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class router router
     class client,attacker host
 ```

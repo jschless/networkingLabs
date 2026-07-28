@@ -23,6 +23,14 @@ and no-restart golden-state reset.
 | [Advanced Edge Troubleshooting Range](troubleshooting-range-advanced.md) | 8 | eBGP, iBGP, containment, redistribution, NAT, and PMTUD | After BGP, route control, and enterprise-edge labs |
 | [Campus Troubleshooting Range](troubleshooting-range-campus.md) | 4 | STP, LACP, VLAN forwarding, and protected access ports | After Layer 2 campus and access-security labs |
 
+## Written Assessments
+
+The ranges test whether you can repair a live network. The
+[written assessment bank](../../assessments/index.md) tests the reasoning behind it —
+five closed-book exams and 44 topic quizzes, on paper, against topologies you have not
+seen. Section 5 of every exam is a troubleshooting narrative graded on method rather
+than on landing the right answer.
+
 ## Recommended Progression
 
 1. Complete guided debug labs in the protocols you are studying.

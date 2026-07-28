@@ -18,16 +18,16 @@ with a misleading error.
 flowchart LR
   browser(["host browser"])
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD\n10.100.1.10"]
-    keycloak["keycloak\nIdP / OIDC\n10.100.2.30 · :8088"]
-    app["sample-app\nFlask + OIDC\n10.100.2.31 · :8089"]
-    pg["postgres-kc\n10.100.2.32"]
-    keycloak <-- "LDAPS 636\n(bind + sync)" --> dc1
+    dc1["dc1<br/>Samba AD<br/>10.100.1.10"]
+    keycloak["keycloak<br/>IdP / OIDC<br/>10.100.2.30 · :8088"]
+    app["sample-app<br/>Flask + OIDC<br/>10.100.2.31 · :8089"]
+    pg["postgres-kc<br/>10.100.2.32"]
+    keycloak <-- "LDAPS 636<br/>(bind + sync)" --> dc1
     keycloak <-- "OIDC discovery + token" --> app
     keycloak -- "JDBC" --> pg
   end
-  browser -- "keycloak.lab.corp:8088\n(admin console)" --> keycloak
-  browser -- "sample-app.lab.corp:8089\n(protected app)" --> app
+  browser -- "keycloak.lab.corp:8088<br/>(admin console)" --> keycloak
+  browser -- "sample-app.lab.corp:8089<br/>(protected app)" --> app
 ```
 
 | Container | Image | IP | Role |

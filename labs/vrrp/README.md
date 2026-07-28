@@ -10,11 +10,11 @@ and reason about *why* the host doesn't notice.
 
 ```mermaid
 flowchart TB
-    host(["host\n192.168.1.10/24\ngw: 192.168.1.254"])
-    brl["br-lan\n192.168.1.0/24"]
-    r1["r1 MASTER\n192.168.1.1/24\nVRRP VIP: 192.168.1.254\npriority 110"]
-    r2["r2 BACKUP\n192.168.1.2/24\nVRRP VIP: 192.168.1.254\npriority 100"]
-    server(["server\nlo: 10.99.0.1/32"])
+    host(["host<br/>192.168.1.10/24<br/>gw: 192.168.1.254"])
+    brl["br-lan<br/>192.168.1.0/24"]
+    r1["r1 MASTER<br/>192.168.1.1/24<br/>VRRP VIP: 192.168.1.254<br/>priority 110"]
+    r2["r2 BACKUP<br/>192.168.1.2/24<br/>VRRP VIP: 192.168.1.254<br/>priority 100"]
+    server(["server<br/>lo: 10.99.0.1/32"])
 
     host --- brl
     brl --- r1
@@ -22,8 +22,8 @@ flowchart TB
     r1 -- "10.0.1.0/30" --- server
     r2 -- "10.0.2.0/30" --- server
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class r1,r2 router
     class host,server host
 ```

@@ -10,16 +10,16 @@ different from OSPF, not just reachability.
 
 ```mermaid
 flowchart LR
-    r1["r1\n10.0.0.1/32\n49.0001"]
-    r2["r2\n10.0.0.2/32\n49.0001"]
-    r3["r3\n10.0.0.3/32\n49.0001"]
-    r4["r4\n10.0.0.4/32\n49.0001"]
+    r1["r1<br/>10.0.0.1/32<br/>49.0001"]
+    r2["r2<br/>10.0.0.2/32<br/>49.0001"]
+    r3["r3<br/>10.0.0.3/32<br/>49.0001"]
+    r4["r4<br/>10.0.0.4/32<br/>49.0001"]
 
     r1 -- "10.1.12.0/30" --- r2
     r2 -- "10.1.23.0/30" --- r3
     r3 -- "10.1.34.0/30" --- r4
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
     class r1,r2,r3,r4 router
 ```
 

@@ -16,8 +16,8 @@ without scaffolding.
 
 ```mermaid
 flowchart LR
-    r1["r1\neth1 -> macsec0: 192.0.2.1/30\neth2: 198.51.100.1/30"]
-    r2["r2\neth1 -> macsec0: 192.0.2.2/30\neth2: 198.51.100.2/30"]
+    r1["r1<br/>eth1 -> macsec0: 192.0.2.1/30<br/>eth2: 198.51.100.1/30"]
+    r2["r2<br/>eth1 -> macsec0: 192.0.2.2/30<br/>eth2: 198.51.100.2/30"]
 
     r1 ==>|eth1 MACsec-protected wire| r2
     r1 -->|eth2 plain Ethernet baseline| r2

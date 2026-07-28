@@ -25,16 +25,16 @@ the skill being trained is *generating* the diagnosis, not reading it.
 
 ```mermaid
 flowchart LR
-    r1["r1\n10.0.0.1/32"]
-    asbr["asbr\nAS65100\n10.0.0.2/32"]
-    bgp1["bgp1\nAS65200\n10.0.0.3/32"]
-    bgp2["bgp2\nAS65200\n10.0.0.4/32"]
+    r1["r1<br/>10.0.0.1/32"]
+    asbr["asbr<br/>AS65100<br/>10.0.0.2/32"]
+    bgp1["bgp1<br/>AS65200<br/>10.0.0.3/32"]
+    bgp2["bgp2<br/>AS65200<br/>10.0.0.4/32"]
 
-    r1 -- "10.0.12.0/30\nOSPF area 0" --- asbr
-    asbr -- "10.0.23.0/30\neBGP" --- bgp1
-    bgp1 -- "10.0.34.0/30\niBGP" --- bgp2
+    r1 -- "10.0.12.0/30<br/>OSPF area 0" --- asbr
+    asbr -- "10.0.23.0/30<br/>eBGP" --- bgp1
+    bgp1 -- "10.0.34.0/30<br/>iBGP" --- bgp2
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
     class r1,asbr,bgp1,bgp2 router
 ```
 

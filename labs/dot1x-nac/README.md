@@ -15,27 +15,27 @@ without scaffolding.
 
 ```mermaid
 flowchart LR
-    stls(["supplicant-tls\nEAP-TLS → VLAN10"])
-    speap(["supplicant-peap\nPEAP → VLAN20"])
-    smab(["supplicant-mab\nMAB → VLAN30"])
-    sfail(["supplicant-fail\nReject → VLAN99"])
-    auth["authenticator\nhostapd + nftables\nbr0"]
-    radius(["radius\nFreeRADIUS\n192.168.100.2"])
-    emp(["employee-server\n10.10.10.1\nVLAN10"])
-    con(["contractor-server\n10.20.20.1\nVLAN20"])
-    iot(["iot-server\n10.30.30.1\nVLAN30"])
+    stls(["supplicant-tls<br/>EAP-TLS → VLAN10"])
+    speap(["supplicant-peap<br/>PEAP → VLAN20"])
+    smab(["supplicant-mab<br/>MAB → VLAN30"])
+    sfail(["supplicant-fail<br/>Reject → VLAN99"])
+    auth["authenticator<br/>hostapd + nftables<br/>br0"]
+    radius(["radius<br/>FreeRADIUS<br/>192.168.100.2"])
+    emp(["employee-server<br/>10.10.10.1<br/>VLAN10"])
+    con(["contractor-server<br/>10.20.20.1<br/>VLAN20"])
+    iot(["iot-server<br/>10.30.30.1<br/>VLAN30"])
 
     stls -- "eth1" --- auth
     speap -- "eth2" --- auth
     smab -- "eth3" --- auth
     sfail -- "eth4" --- auth
-    auth -- "eth5\nRADIUS UDP" --- radius
-    auth -- "eth6\nVLAN10" --- emp
-    auth -- "eth7\nVLAN20" --- con
-    auth -- "eth8\nVLAN30" --- iot
+    auth -- "eth5<br/>RADIUS UDP" --- radius
+    auth -- "eth6<br/>VLAN10" --- emp
+    auth -- "eth7<br/>VLAN20" --- con
+    auth -- "eth8<br/>VLAN30" --- iot
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class auth,radius router
     class stls,speap,smab,sfail,emp,con,iot host
@@ -246,10 +246,17 @@ frame blocking, but enforced in software.
 7. Port is now on the authorized VLAN — supplicant can reach its server
 
 **Certificate chain** (EAP-TLS):
-```
-CA (ca.pem)
-├── server.pem  → FreeRADIUS presents this during TLS handshake
-└── client.pem  → supplicant-tls presents this; CN="alice-tls" becomes RADIUS User-Name
+```mermaid
+flowchart TB
+    ca["CA<br/>ca.pem"]
+    server["server.pem<br/>FreeRADIUS presents this<br/>during the TLS handshake"]
+    client["client.pem<br/>supplicant-tls presents this;<br/>CN=alice-tls becomes RADIUS User-Name"]
+
+    ca --> server
+    ca --> client
+
+    classDef pki stroke:#a06bd6,stroke-width:2px
+    class ca,server,client pki
 ```
 
 **MAB flow** (supplicant-mab):

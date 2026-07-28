@@ -24,29 +24,29 @@ below groups them by role; the table lists them all.
 flowchart TB
   subgraph corp["lab-corp · 10.100.0.0/16"]
     subgraph core["CORE · .1.x"]
-      dc1["dc1\nAD · DNS · KDC\n1.10"]
-      ntp1["ntp1\n1.20"]
-      ca1["ca1\n1.30"]
-      dns1["dns1\n1.40"]
-      radius1["radius1\n1.60"]
+      dc1["dc1<br/>AD · DNS · KDC<br/>1.10"]
+      ntp1["ntp1<br/>1.20"]
+      ca1["ca1<br/>1.30"]
+      dns1["dns1<br/>1.40"]
+      radius1["radius1<br/>1.60"]
     end
     subgraph apps["APPS · .2.x"]
-      fs1["fs1\nshares\n2.10"]
-      mail1["mail1\n2.20"]
-      keycloak["keycloak\n+ db + app\n2.30-32"]
-      proxy1["proxy1\n+ web1/2\n2.40-42"]
+      fs1["fs1<br/>shares<br/>2.10"]
+      mail1["mail1<br/>2.20"]
+      keycloak["keycloak<br/>+ db + app<br/>2.30-32"]
+      proxy1["proxy1<br/>+ web1/2<br/>2.40-42"]
     end
     subgraph ops["OPS · .3.x"]
-      mon["prometheus · grafana\nalertmgr · blackbox\n3.20-24"]
-      wazuh["wazuh-mgr\n3.30"]
-      backup1["backup1\n3.40"]
-      lam["lam\n3.50"]
+      mon["prometheus · grafana<br/>alertmgr · blackbox<br/>3.20-24"]
+      wazuh["wazuh-mgr<br/>3.30"]
+      backup1["backup1<br/>3.40"]
+      lam["lam<br/>3.50"]
     end
     subgraph ws["WORKSTATIONS · .10.x"]
-      adminws["admin-ws\n10.100.10.10"]
-      wsdave["ws-dave\n10.100.10.20\n(Dave's new machine)"]
+      adminws["admin-ws<br/>10.100.10.10"]
+      wsdave["ws-dave<br/>10.100.10.20<br/>(Dave's new machine)"]
     end
-    nas1["nas1 · .20.x\n802.1X client"]
+    nas1["nas1 · .20.x<br/>802.1X client"]
     dc1 <-- "LDAP / Kerb" --> fs1
     nas1 -- "RADIUS" --> radius1
   end

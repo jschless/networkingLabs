@@ -119,5 +119,7 @@ Write a structured response:
 
 ---
 
+<!-- site-include-end -->
+
 *End of IGP Synthesis quiz. Key:
 [`../answer-keys/quizzes/igp-synthesis-key.md`](../answer-keys/quizzes/igp-synthesis-key.md).*

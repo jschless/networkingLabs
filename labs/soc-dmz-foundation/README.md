@@ -14,11 +14,11 @@ you from "find the indicator" to "explain and respond."
 
 ```mermaid
 flowchart LR
-    attacker(["attacker\n10.10.10.10"])
-    fw["router-fw\n10.10.10.1\n172.16.10.1\n172.16.20.1"]
-    web(["dmz-web\n172.16.10.10\nHTTP + SSH"])
-    api(["dmz-api\n172.16.20.10\nHTTP 8080"])
-    sensor(["sensor\nmirror eth1"])
+    attacker(["attacker<br/>10.10.10.10"])
+    fw["router-fw<br/>10.10.10.1<br/>172.16.10.1<br/>172.16.20.1"]
+    web(["dmz-web<br/>172.16.10.10<br/>HTTP + SSH"])
+    api(["dmz-api<br/>172.16.20.10<br/>HTTP 8080"])
+    sensor(["sensor<br/>mirror eth1"])
 
     attacker --- fw
     fw --- web

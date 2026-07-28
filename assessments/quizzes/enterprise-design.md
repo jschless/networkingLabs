@@ -51,4 +51,6 @@ A dual-homed WAN edge advertises `default-information originate always` into the
 Both ISP sessions fail but the OSPF default remains. Explain the failure, propose a
 conditional design, and give control-plane plus user-path verification. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/enterprise-design-key.md`](../answer-keys/quizzes/enterprise-design-key.md).*

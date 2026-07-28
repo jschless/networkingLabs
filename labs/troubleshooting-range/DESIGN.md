@@ -11,18 +11,18 @@ in its metadata once the scenario framework lands.
 
 ```mermaid
 flowchart LR
-    internet((Internet test net)) --- isp["isp\nFRR"]
-    isp --- edge["edge-fw\nFRR + nftables NAT"]
-    edge --- core1["core1\nFRR"]
-    edge --- core2["core2\nFRR"]
-    core1 --- acc1["access1\ncEOS"]
-    core2 --- acc2["access2\ncEOS"]
+    internet((Internet test net)) --- isp["isp<br/>FRR"]
+    isp --- edge["edge-fw<br/>FRR + nftables NAT"]
+    edge --- core1["core1<br/>FRR"]
+    edge --- core2["core2<br/>FRR"]
+    core1 --- acc1["access1<br/>cEOS"]
+    core2 --- acc2["access2<br/>cEOS"]
     acc1 --- acc2
-    core2 --- branch["branch1\nFRR"]
+    core2 --- branch["branch1<br/>FRR"]
     acc1 --- corp["corp-client"]
     acc1 --- voice["voice-client"]
     acc2 --- guest["guest-client"]
-    core1 --- services["reserved services block\nDNS / DHCP / NTP / web / syslog"]
+    core1 --- services["reserved services block<br/>DNS / DHCP / NTP / web / syslog"]
 ```
 
 The core and WAN roles are FRR containers. `access1` and `access2` are the two

@@ -273,6 +273,60 @@ nav:
     - "14 SIEM & Logging": tracks/enterprise-it-101/14-siem-logging.md
     - "15 Backup & Recovery": tracks/enterprise-it-101/15-backup-recovery.md
     - "16 Capstone": tracks/enterprise-it-101/16-capstone.md
+  - Assessments:
+    - assessments/index.md
+    - Exams:
+      - "A — Core Routing & Switching": assessments/exam-a-core-routing-switching.md
+      - "B — Advanced Infrastructure": assessments/exam-b-advanced-infrastructure.md
+      - "C — Enterprise, Security & Operations": assessments/exam-c-enterprise-security-operations.md
+      - "D — Enterprise IT 101": assessments/exam-d-enterprise-it-101.md
+      - "E — Security Operations (SOC)": assessments/exam-e-security-operations.md
+    - Topic Quizzes:
+      - assessments/quizzes/README.md
+      - "OSPF": assessments/quizzes/ospf.md
+      - "EIGRP": assessments/quizzes/eigrp.md
+      - "IS-IS": assessments/quizzes/isis.md
+      - "IGP Synthesis": assessments/quizzes/igp-synthesis.md
+      - "BGP Fundamentals": assessments/quizzes/bgp-fundamentals.md
+      - "BGP Policy & Security": assessments/quizzes/bgp-policy-security.md
+      - "Layer 2": assessments/quizzes/layer2.md
+      - "Route Control & Redistribution": assessments/quizzes/route-control.md
+      - "MPLS Forwarding & VPNs": assessments/quizzes/mpls.md
+      - "Data-Center EVPN": assessments/quizzes/evpn.md
+      - "GRE, IPsec & MTU": assessments/quizzes/tunnel-security.md
+      - "DMVPN": assessments/quizzes/dmvpn.md
+      - "High Availability": assessments/quizzes/high-availability.md
+      - "Enterprise Campus Design": assessments/quizzes/enterprise-design.md
+      - "Enterprise Access Security": assessments/quizzes/access-security.md
+      - "NAT & Stateful Firewalls": assessments/quizzes/nat-firewall.md
+      - "Enterprise QoS": assessments/quizzes/qos.md
+      - "Network Observability & Assurance": assessments/quizzes/observability.md
+      - "Network Automation & Source of Truth": assessments/quizzes/automation.md
+      - "Application Delivery": assessments/quizzes/application-delivery.md
+      - "IPv6 & Dual-Stack Operations": assessments/quizzes/ipv6.md
+      - "Enterprise Multicast": assessments/quizzes/multicast.md
+      - "VRFs & Routed Segmentation": assessments/quizzes/segmentation.md
+      - "Management-Plane Security": assessments/quizzes/management-security.md
+      - "Enterprise Wireless Operations": assessments/quizzes/wireless.md
+      - "SD-WAN & Orchestrated Overlays": assessments/quizzes/sdwan.md
+      - "Hybrid Cloud Networking": assessments/quizzes/hybrid-cloud.md
+      - "Kubernetes Service Networking": assessments/quizzes/kubernetes-networking.md
+      - "Remote Access & Zero Trust": assessments/quizzes/remote-access.md
+      - "MACsec Link Security": assessments/quizzes/macsec.md
+      - "DHCP, DNS & Enterprise Services": assessments/quizzes/enterprise-services.md
+      - "Zero-Touch Provisioning": assessments/quizzes/ztp.md
+      - "Packet Analysis": assessments/quizzes/packet-analysis.md
+      - "Carrier Ethernet Handoffs": assessments/quizzes/carrier-ethernet.md
+      - "Network Detection & PCAP Investigation": assessments/quizzes/network-detection.md
+      - "Threat Intelligence & YARA": assessments/quizzes/threat-intel-yara.md
+      - "SIEM & Incident Response": assessments/quizzes/siem-ir.md
+      - "WireGuard": assessments/quizzes/wireguard.md
+      - "FlexVPN & Route-Based IPsec": assessments/quizzes/flexvpn.md
+      - "BGP Labeled Unicast": assessments/quizzes/bgp-lu.md
+      - "SR Linux SR-MPLS Operations": assessments/quizzes/srlinux-mpls.md
+      - "SR Linux VXLAN-EVPN Operations": assessments/quizzes/srlinux-evpn.md
+      - "Routed Network Foundations": assessments/quizzes/routing-foundations.md
+      - "Troubleshooting Methodology": assessments/quizzes/troubleshooting-method.md
   - Platforms:
     - FRR: platforms/frr.md
     - Arista cEOS: platforms/ceos.md

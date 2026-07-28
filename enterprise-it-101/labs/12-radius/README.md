@@ -17,11 +17,11 @@ work. The NAS (network access server) never sees AD; it only talks RADIUS to
 ```mermaid
 flowchart LR
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD\n10.100.1.10"]
-    radius1["radius1\nFreeRADIUS (joined)\n10.100.20.10"]
-    nas1["nas1\nNAS + supplicant\n10.100.20.11\nradtest / eapol_test"]
-    dc1 <-- "ldaps / winbind\nntlm_auth" --> radius1
-    radius1 <-- "RADIUS 1812/udp\nshared secret" --> nas1
+    dc1["dc1<br/>Samba AD<br/>10.100.1.10"]
+    radius1["radius1<br/>FreeRADIUS (joined)<br/>10.100.20.10"]
+    nas1["nas1<br/>NAS + supplicant<br/>10.100.20.11<br/>radtest / eapol_test"]
+    dc1 <-- "ldaps / winbind<br/>ntlm_auth" --> radius1
+    radius1 <-- "RADIUS 1812/udp<br/>shared secret" --> nas1
   end
 ```
 

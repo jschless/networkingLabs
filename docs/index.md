@@ -199,6 +199,15 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Troubleshooting track](tracks/troubleshooting/index.md)
 
+- :material-file-document-edit: **Written Assessments** (5 exams, 44 topic quizzes)
+
+    ---
+    Closed-book paper tests that check whether the understanding behind a completed lab
+    actually stuck — the part a green `check` cannot tell you. Quizzes are formative and
+    point back at specific labs; the five exams are cumulative.
+
+    [:octicons-arrow-right-24: Written assessments](assessments/index.md)
+
 </div>
 
 ---

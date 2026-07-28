@@ -27,12 +27,12 @@ learning sticks.
 
 ```mermaid
 flowchart TB
-    core1["core1\nRP: 10.0.0.1/32\nPIM-SM"]
-    dist1["dist1\nPIM-SM"]
-    dist2["dist2\nPIM-SM"]
-    src(["source1\n10.20.20.0/24"])
-    recvlocal(["recv-local\n10.20.20.0/24"])
-    recvremote(["recv-remote\n10.20.30.0/24"])
+    core1["core1<br/>RP: 10.0.0.1/32<br/>PIM-SM"]
+    dist1["dist1<br/>PIM-SM"]
+    dist2["dist2<br/>PIM-SM"]
+    src(["source1<br/>10.20.20.0/24"])
+    recvlocal(["recv-local<br/>10.20.20.0/24"])
+    recvremote(["recv-remote<br/>10.20.30.0/24"])
 
     dist1 --- core1
     core1 --- dist2
@@ -40,9 +40,9 @@ flowchart TB
     dist1 --- recvlocal
     dist2 --- recvremote
 
-    classDef core   fill:#1a1aff,color:#fff,stroke:#000
-    classDef dist   fill:#0077cc,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef core stroke:#4778ff,stroke-width:2px
+    classDef dist stroke:#2a9fd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class core1 core
     class dist1,dist2 dist

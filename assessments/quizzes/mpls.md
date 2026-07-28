@@ -86,5 +86,7 @@ both approaches before declaring an LSP healthy. (6 pts)
 
 ---
 
+<!-- site-include-end -->
+
 *End of MPLS quiz. Key:
 [`../answer-keys/quizzes/mpls-key.md`](../answer-keys/quizzes/mpls-key.md).*

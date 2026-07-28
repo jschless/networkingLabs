@@ -35,31 +35,31 @@ the break-it steps and challenge questions as the real test.
 
 ```mermaid
 flowchart LR
-    stls(["supplicant-tls\nEAP-TLS -> VLAN10"])
-    speap(["supplicant-peap\nPEAP -> VLAN20"])
-    smab(["supplicant-mab\nMAB -> VLAN30"])
-    sfail(["supplicant-fail\nReject -> VLAN99"])
-    access1["access1\ncEOS\naccess switch"]
-    radius(["radius\nFreeRADIUS\n192.168.100.2"])
-    tacacs(["tacacs1\nTACACS+\n192.168.199.20"])
-    admin(["admin1\nSSH admin host\n192.168.199.30"])
-    emp(["employee-server\n10.10.10.1\nVLAN10"])
-    con(["contractor-server\n10.20.20.1\nVLAN20"])
-    iot(["iot-server\n10.30.30.1\nVLAN30"])
+    stls(["supplicant-tls<br/>EAP-TLS -> VLAN10"])
+    speap(["supplicant-peap<br/>PEAP -> VLAN20"])
+    smab(["supplicant-mab<br/>MAB -> VLAN30"])
+    sfail(["supplicant-fail<br/>Reject -> VLAN99"])
+    access1["access1<br/>cEOS<br/>access switch"]
+    radius(["radius<br/>FreeRADIUS<br/>192.168.100.2"])
+    tacacs(["tacacs1<br/>TACACS+<br/>192.168.199.20"])
+    admin(["admin1<br/>SSH admin host<br/>192.168.199.30"])
+    emp(["employee-server<br/>10.10.10.1<br/>VLAN10"])
+    con(["contractor-server<br/>10.20.20.1<br/>VLAN20"])
+    iot(["iot-server<br/>10.30.30.1<br/>VLAN30"])
 
     stls -- "Et1" --- access1
     speap -- "Et2" --- access1
     smab -- "Et3" --- access1
     sfail -- "Et4" --- access1
-    access1 -- "Et5\nRADIUS" --- radius
-    access1 -- "Et6\nVLAN10" --- emp
-    access1 -- "Et7\nVLAN20" --- con
-    access1 -- "Et8\nVLAN30" --- iot
-    access1 -- "Et9\nVLAN199" --- tacacs
-    access1 -- "Et10\nVLAN199" --- admin
+    access1 -- "Et5<br/>RADIUS" --- radius
+    access1 -- "Et6<br/>VLAN10" --- emp
+    access1 -- "Et7<br/>VLAN20" --- con
+    access1 -- "Et8<br/>VLAN30" --- iot
+    access1 -- "Et9<br/>VLAN199" --- tacacs
+    access1 -- "Et10<br/>VLAN199" --- admin
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class access1,radius,tacacs router
     class stls,speap,smab,sfail,admin,emp,con,iot host

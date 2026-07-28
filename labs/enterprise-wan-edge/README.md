@@ -16,23 +16,23 @@ rationale sections are reference material for the challenge questions.
 
 ```mermaid
 flowchart TB
-    isp1["isp1\nAS65100\n1.1.1.1/32"]
-    isp2["isp2\nAS65200\n2.2.2.2/32"]
-    edge["edge\nAS65300\n10.0.0.1/32\n198.51.100.0/24"]
-    core1["core1\n10.0.0.2/32"]
-    core2["core2\n10.0.0.3/32"]
-    server(["server\n10.100.0.2/30"])
+    isp1["isp1<br/>AS65100<br/>1.1.1.1/32"]
+    isp2["isp2<br/>AS65200<br/>2.2.2.2/32"]
+    edge["edge<br/>AS65300<br/>10.0.0.1/32<br/>198.51.100.0/24"]
+    core1["core1<br/>10.0.0.2/32"]
+    core2["core2<br/>10.0.0.3/32"]
+    server(["server<br/>10.100.0.2/30"])
 
-    isp1 -- "203.0.113.0/30\nLP-HIGH in (200)" --- edge
-    isp2 -- "203.0.114.0/30\nLP-LOW in (100)" --- edge
+    isp1 -- "203.0.113.0/30<br/>LP-HIGH in (200)" --- edge
+    isp2 -- "203.0.114.0/30<br/>LP-LOW in (100)" --- edge
     edge -- "10.255.1.0/30" --- core1
     edge -- "10.255.2.0/30" --- core2
     core1 -- "10.255.3.0/30" --- core2
     core1 -- "10.100.0.0/30" --- server
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
 
     class isp1,isp2 isp
     class edge,core1,core2 router

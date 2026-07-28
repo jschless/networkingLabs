@@ -21,10 +21,10 @@ the skill being trained is *generating* the diagnosis, not reading it.
 
 ```mermaid
 flowchart TB
-    hub["hub\n10.0.0.1 / 172.16.0.1"]
-    spoke1["spoke1\n10.0.0.11 / 172.16.0.11\n192.168.1.1/24"]
-    spoke2["spoke2\n10.0.0.12 / 172.16.0.12\n192.168.2.1/24"]
-    spoke3["spoke3\n10.0.0.13 / 172.16.0.13\n192.168.3.1/24"]
+    hub["hub<br/>10.0.0.1 / 172.16.0.1"]
+    spoke1["spoke1<br/>10.0.0.11 / 172.16.0.11<br/>192.168.1.1/24"]
+    spoke2["spoke2<br/>10.0.0.12 / 172.16.0.12<br/>192.168.2.1/24"]
+    spoke3["spoke3<br/>10.0.0.13 / 172.16.0.13<br/>192.168.3.1/24"]
 ```
 
 ## Deploy And Access

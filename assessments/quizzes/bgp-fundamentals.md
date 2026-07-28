@@ -98,5 +98,7 @@ Both links must remain usable as backups.
 
 ---
 
+<!-- site-include-end -->
+
 *End of BGP Fundamentals quiz. Key:
 [`../answer-keys/quizzes/bgp-fundamentals-key.md`](../answer-keys/quizzes/bgp-fundamentals-key.md).*

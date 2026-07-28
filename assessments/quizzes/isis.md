@@ -97,4 +97,6 @@ IS-Type: level-1
 
 ---
 
+<!-- site-include-end -->
+
 *End of IS-IS quiz. Key: [`../answer-keys/quizzes/isis-key.md`](../answer-keys/quizzes/isis-key.md).*

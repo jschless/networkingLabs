@@ -15,10 +15,10 @@ revocation.
 
 ```mermaid
 flowchart LR
-    dev["developer\n203.0.113.10"] --> fw["OPNsense concentrator\nWAN 203.0.113.2\nCORP 10.70.10.1"]
-    contractor["contractor\n203.0.113.20"] --> fw
-    fw --> app["corp-app\n10.70.10.10:8443"]
-    fw --> jump["jump-host\n10.70.10.20:22"]
+    dev["developer<br/>203.0.113.10"] --> fw["OPNsense concentrator<br/>WAN 203.0.113.2<br/>CORP 10.70.10.1"]
+    contractor["contractor<br/>203.0.113.20"] --> fw
+    fw --> app["corp-app<br/>10.70.10.10:8443"]
+    fw --> jump["jump-host<br/>10.70.10.20:22"]
 ```
 
 Use `10.250.0.0/24` for the WireGuard tunnel. Give the concentrator

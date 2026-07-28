@@ -30,13 +30,13 @@ learning sticks.
 
 ```mermaid
 flowchart TB
-    dist1["dist1\nVLAN gateways"]
-    acc1["acc1\nAP uplink"]
-    wlc(["wlc\ncontroller\n192.168.99.10\nVLAN99"])
-    radius(["radius\nAAA\nVLAN99"])
-    ap1["ap1\nVLAN99/110/120"]
-    corpsta(["corp-sta\nVLAN110"])
-    gueststa(["guest-sta\nVLAN120"])
+    dist1["dist1<br/>VLAN gateways"]
+    acc1["acc1<br/>AP uplink"]
+    wlc(["wlc<br/>controller<br/>192.168.99.10<br/>VLAN99"])
+    radius(["radius<br/>AAA<br/>VLAN99"])
+    ap1["ap1<br/>VLAN99/110/120"]
+    corpsta(["corp-sta<br/>VLAN110"])
+    gueststa(["guest-sta<br/>VLAN120"])
 
     dist1 --- acc1
     dist1 --- wlc
@@ -45,9 +45,9 @@ flowchart TB
     ap1 --- corpsta
     ap1 --- gueststa
 
-    classDef dist   fill:#0077cc,color:#fff,stroke:#000
-    classDef access fill:#00aa88,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef dist stroke:#2a9fd6,stroke-width:2px
+    classDef access stroke:#14b8a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class dist1 dist
     class acc1,ap1 access

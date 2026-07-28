@@ -10,16 +10,16 @@ design and watch the LSP stitch together label-by-label at the ASBRs.
 
 ```mermaid
 flowchart LR
-    r1["r1\nAS65001\n10.0.0.1/32"]
-    r2["r2 (ASBR)\nAS65001\n10.0.0.2/32"]
-    r3["r3 (ASBR)\nAS65002\n10.0.0.3/32"]
-    r4["r4\nAS65002\n10.0.0.4/32"]
+    r1["r1<br/>AS65001<br/>10.0.0.1/32"]
+    r2["r2 (ASBR)<br/>AS65001<br/>10.0.0.2/32"]
+    r3["r3 (ASBR)<br/>AS65002<br/>10.0.0.3/32"]
+    r4["r4<br/>AS65002<br/>10.0.0.4/32"]
 
-    r1 -- "10.1.12.0/30\niBGP-LU" --- r2
-    r2 -- "10.1.23.0/30\neBGP-LU" --- r3
-    r3 -- "10.1.34.0/30\niBGP-LU" --- r4
+    r1 -- "10.1.12.0/30<br/>iBGP-LU" --- r2
+    r2 -- "10.1.23.0/30<br/>eBGP-LU" --- r3
+    r3 -- "10.1.34.0/30<br/>iBGP-LU" --- r4
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
     class r1,r2,r3,r4 router
 ```
 

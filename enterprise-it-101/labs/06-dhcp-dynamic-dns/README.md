@@ -13,13 +13,13 @@ client that boots becomes resolvable seconds later.
 ```mermaid
 flowchart TB
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nAD DNS\n10.100.1.10"]
-    dns1["dns1\nBIND9 resolver\n10.100.1.40"]
-    dhcp1["dhcp1\nKea DHCP + DDNS\n10.100.1.50"]
-    client1["client1\n10.100.10.5x"]
-    client2["client2\n10.100.10.5x"]
+    dc1["dc1<br/>AD DNS<br/>10.100.1.10"]
+    dns1["dns1<br/>BIND9 resolver<br/>10.100.1.40"]
+    dhcp1["dhcp1<br/>Kea DHCP + DDNS<br/>10.100.1.50"]
+    client1["client1<br/>10.100.10.5x"]
+    client2["client2<br/>10.100.10.5x"]
     dns1 -- "forward lab.corp" --> dc1
-    dhcp1 -- "TSIG DDNS update\n(dhcp.lab.corp zone)" --> dns1
+    dhcp1 -- "TSIG DDNS update<br/>(dhcp.lab.corp zone)" --> dns1
     dhcp1 -- "DORA (broadcast)" --> client1
     dhcp1 -- "DORA (broadcast)" --> client2
     client1 -- "DNS (option 6)" --> dns1

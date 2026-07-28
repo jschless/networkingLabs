@@ -9,9 +9,9 @@ Kerberos — the authentication half of Active Directory you built in Lab 01 —
 ```mermaid
 flowchart LR
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    ntp1["ntp1\nchrony NTP · stratum 10\n10.100.1.20\n(serves the lab)"]
-    dc1["dc1\nSamba AD DC · chrony client\n10.100.1.10 · stratum 11"]
-    adminws["admin-ws\nWorkstation · chrony client\n10.100.10.10 · stratum 11"]
+    ntp1["ntp1<br/>chrony NTP · stratum 10<br/>10.100.1.20<br/>(serves the lab)"]
+    dc1["dc1<br/>Samba AD DC · chrony client<br/>10.100.1.10 · stratum 11"]
+    adminws["admin-ws<br/>Workstation · chrony client<br/>10.100.10.10 · stratum 11"]
     dc1 -- "NTP / 123" --> ntp1
     adminws -- "NTP / 123" --> ntp1
   end

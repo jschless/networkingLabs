@@ -11,27 +11,57 @@ distributed CDN.
 
 ## Topology
 
-```text
-                    DNS/control 10.115.10.0/24
-              +----------+      +----------+
-              | resolver |------|   gslb   |
-              +----+-----+      +----+-----+
-                   |                  | app-layer probes
- client 10.115.20.0/24          +-----+------+
- +---------+  +---------+       |            |
- | near-a  |  | near-b  |   10.115.30/24  10.115.40/24
- +----+----+  +----+----+       |            |
-      +------------+        +---+---+    +---+---+
-                   |        | A LB  |    | B LB  |
-      +------------+        +--+--+-+    +-+--+--+
-      |                        |  |        |  |
- +----+------+              a-app1/2    b-app1/2
- | edge-cache|
- +-----------+
+```mermaid
+flowchart TB
+    subgraph dnsnet["DNS / control — 10.115.10.0/24"]
+        gslb["gslb<br/>CoreDNS + health controller<br/>10.115.10.53"]
+    end
 
- Published documentation VIPs:
- site A = 192.0.2.10/32       site B = 198.51.100.10/32
+    subgraph clientnet["Clients — 10.115.20.0/24"]
+        neara(["client-near-a<br/>.11"])
+        nearb(["client-near-b<br/>.12"])
+        resolver["resolver<br/>dnsmasq cache<br/>.54"]
+        cache["edge-cache<br/>nginx proxy cache<br/>.80"]
+    end
+
+    subgraph sitea["Site A origins — 10.115.30.0/24"]
+        alb["site-a-lb<br/>HAProxy<br/>VIP 192.0.2.10/32"]
+        aapp1(["a-app1"])
+        aapp2(["a-app2"])
+    end
+
+    subgraph siteb["Site B origins — 10.115.40.0/24"]
+        blb["site-b-lb<br/>HAProxy<br/>VIP 198.51.100.10/32"]
+        bapp1(["b-app1"])
+        bapp2(["b-app2"])
+    end
+
+    neara --> resolver
+    nearb --> resolver
+    neara --> cache
+    nearb --> cache
+    resolver -- "upstream queries" --> gslb
+    cache --> alb
+    cache --> blb
+    neara --> alb
+    nearb --> blb
+    gslb -. "app-layer probes" .-> alb
+    gslb -. "app-layer probes" .-> blb
+    alb --> aapp1
+    alb --> aapp2
+    blb --> bapp1
+    blb --> bapp2
+
+    classDef lb stroke:#4778ff,stroke-width:2px
+    classDef ctrl stroke:#a06bd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class alb,blb,cache lb
+    class gslb,resolver ctrl
+    class neara,nearb,aapp1,aapp2,bapp1,bapp2 host
 ```
+
+`observer` is multi-homed into all four segments for DNS/TLS/timeline capture and
+is omitted above for readability.
 
 The four `*-net` nodes are lightweight Linux bridges. They create the separate
 client, DNS/control, and origin failure domains without adding routers to an

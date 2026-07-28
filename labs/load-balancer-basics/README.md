@@ -12,15 +12,34 @@ failure you'll diagnose from a packet capture.
 
 ## Topology
 
-```
-                        OUTSIDE  203.0.113.0/29
-        client (.2) ────────┬───────────┬──────────────
-                            │  (outsw)  │
-                       edge (.1)    edge2 (.3)
-                            │  (dmzsw)  │
-        ────────────────────┴───────────┴──────────────
-                        DMZ  172.16.0.0/24
-                edge=.1   edge2=.2   lb=.10   web1=.11   web2=.12
+```mermaid
+flowchart TB
+    subgraph outside["OUTSIDE — 203.0.113.0/29 (outsw)"]
+        client(["client<br/>.2"])
+    end
+
+    edge["edge<br/>outside .1 / DMZ .1<br/>primary router"]
+    edge2["edge2<br/>outside .3 / DMZ .2<br/>idle by design"]
+
+    subgraph dmz["DMZ — 172.16.0.0/24 (dmzsw)"]
+        lb["lb<br/>.10"]
+        web1(["web1<br/>.11"])
+        web2(["web2<br/>.12"])
+    end
+
+    client --- edge
+    client --- edge2
+    edge --- lb
+    edge2 -. "no traffic in the<br/>normal design" .- lb
+    lb --- web1
+    lb --- web2
+
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef lbnode stroke:#a06bd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class edge,edge2 router
+    class lb lbnode
+    class client,web1,web2 host
 ```
 
 This is the `enterprise-dmz` placement with the firewall policy stripped out

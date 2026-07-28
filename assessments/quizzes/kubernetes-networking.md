@@ -59,4 +59,6 @@ Give an ordered evidence chain from client routing and ToR FIB through BGP speak
 service endpoints, node forwarding, and pod health. State why “the /32 exists” is not a
 complete service check. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/kubernetes-networking-key.md`](../answer-keys/quizzes/kubernetes-networking-key.md).*

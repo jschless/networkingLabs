@@ -11,11 +11,11 @@ exposed on the wire, then wrap it in ESP and prove the exposure is gone.
 
 ```mermaid
 flowchart LR
-    ha(["host-a\n192.168.1.10"])
-    gwa["gw-a\n203.0.113.1\ntun0: 172.16.0.1"]
-    inet["internet\n203.0.113.2 / .5"]
-    gwb["gw-b\n203.0.113.6\ntun0: 172.16.0.2"]
-    hb(["host-b\n192.168.2.10"])
+    ha(["host-a<br/>192.168.1.10"])
+    gwa["gw-a<br/>203.0.113.1<br/>tun0: 172.16.0.1"]
+    inet["internet<br/>203.0.113.2 / .5"]
+    gwb["gw-b<br/>203.0.113.6<br/>tun0: 172.16.0.2"]
+    hb(["host-b<br/>192.168.2.10"])
 
     ha -- "192.168.1.0/24" --- gwa
     gwa -- "203.0.113.0/30" --- inet

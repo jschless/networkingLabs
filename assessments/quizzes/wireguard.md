@@ -41,4 +41,6 @@ Design a key rotation for one spoke without exposing private keys or disrupting 
 peer. Include identity mapping, overlap/cutover, handshake and traffic verification, and
 rollback. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/wireguard-key.md`](../answer-keys/quizzes/wireguard-key.md).*

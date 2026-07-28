@@ -18,19 +18,19 @@ questions as the real test.
 
 ```mermaid
 flowchart LR
-    client(["client\n10.1.0.2/30"])
-    r1["r1\nOSPF + mirror"]
-    r2["r2\nOSPF"]
-    services(["services\n10.2.0.2/30\nHTTP:8080"])
-    analyzer(["analyzer\npcap capture"])
+    client(["client<br/>10.1.0.2/30"])
+    r1["r1<br/>OSPF + mirror"]
+    r2["r2<br/>OSPF"]
+    services(["services<br/>10.2.0.2/30<br/>HTTP:8080"])
+    analyzer(["analyzer<br/>pcap capture"])
 
     client --- r1
     r1 --- r2
     r2 --- services
     r1 -. mirror .- analyzer
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class r1,r2 router
     class client,services,analyzer host
 ```

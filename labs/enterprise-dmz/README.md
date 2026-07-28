@@ -14,27 +14,27 @@ rationale sections are reference material for the challenge questions.
 
 ```mermaid
 flowchart TB
-    isp["isp\ncEOS"]
-    iclient(["internet-client\n203.0.113.2"])
-    fwout["fw-outside\nperimeter firewall\n203.0.114.2"]
-    web(["web-server\n172.16.0.2\nDMZ-web"])
-    mail(["mail-server\n172.16.0.6\nDMZ-mail"])
-    fwin["fw-inside\ninternal firewall\n172.16.1.2"]
-    db(["db-server\n10.0.0.2\nLAN-db"])
-    ws(["workstation\n10.0.0.6\nLAN-ws"])
+    isp["isp<br/>cEOS"]
+    iclient(["internet-client<br/>203.0.113.2"])
+    fwout["fw-outside<br/>perimeter firewall<br/>203.0.114.2"]
+    web(["web-server<br/>172.16.0.2<br/>DMZ-web"])
+    mail(["mail-server<br/>172.16.0.6<br/>DMZ-mail"])
+    fwin["fw-inside<br/>internal firewall<br/>172.16.1.2"]
+    db(["db-server<br/>10.0.0.2<br/>LAN-db"])
+    ws(["workstation<br/>10.0.0.6<br/>LAN-ws"])
 
     isp -- "203.0.113.0/30" --- iclient
     isp -- "203.0.114.0/30" --- fwout
-    fwout -- "172.16.0.0/30\nDMZ-web" --- web
-    fwout -- "172.16.0.4/30\nDMZ-mail" --- mail
-    fwout -- "172.16.1.0/30\nDMZ-inner" --- fwin
-    fwin -- "10.0.0.0/30\nLAN-db" --- db
-    fwin -- "10.0.0.4/30\nLAN-ws" --- ws
+    fwout -- "172.16.0.0/30<br/>DMZ-web" --- web
+    fwout -- "172.16.0.4/30<br/>DMZ-mail" --- mail
+    fwout -- "172.16.1.0/30<br/>DMZ-inner" --- fwin
+    fwin -- "10.0.0.0/30<br/>LAN-db" --- db
+    fwin -- "10.0.0.4/30<br/>LAN-ws" --- ws
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
-    classDef wan    fill:#ccc,color:#000,stroke:#666,stroke-dasharray:5
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
+    classDef wan stroke:#b0b6bc,stroke-width:2px,stroke-dasharray:5
 
     class isp isp
     class fwout,fwin router
@@ -55,23 +55,36 @@ flowchart TB
 
 ## Security Zones
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  ZONE: INTERNET (untrusted)                                     │
-│  Hosts: internet-client (203.0.113.2), isp                     │
-├─────────────────────────────────────────────────────────────────┤
-│  FIREWALL: fw-outside  (perimeter — nftables, stateful)        │
-├─────────────────────────────────────────────────────────────────┤
-│  ZONE: DMZ (semi-trusted)                                       │
-│  Hosts: web-server (172.16.0.2), mail-server (172.16.0.6)      │
-│  Rule: internet can ONLY reach specific TCP ports here         │
-├─────────────────────────────────────────────────────────────────┤
-│  FIREWALL: fw-inside  (internal — nftables, stateful)          │
-├─────────────────────────────────────────────────────────────────┤
-│  ZONE: LAN (trusted)                                            │
-│  Hosts: db-server (10.0.0.2), workstation (10.0.0.6)           │
-│  Rule: only specific DMZ→LAN and LAN→internet flows allowed    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph internet["ZONE: INTERNET (untrusted)"]
+        iclient(["internet-client<br/>203.0.113.2"])
+        isp(["isp"])
+    end
+
+    fwout["FIREWALL: fw-outside<br/>perimeter — nftables, stateful"]
+
+    subgraph dmz["ZONE: DMZ (semi-trusted)"]
+        web(["web-server<br/>172.16.0.2"])
+        mail(["mail-server<br/>172.16.0.6"])
+    end
+
+    fwin["FIREWALL: fw-inside<br/>internal — nftables, stateful"]
+
+    subgraph lan["ZONE: LAN (trusted)"]
+        db(["db-server<br/>10.0.0.2"])
+        ws(["workstation<br/>10.0.0.6"])
+    end
+
+    internet --- fwout
+    fwout -- "internet can reach ONLY<br/>specific TCP ports here" --- dmz
+    dmz --- fwin
+    fwin -- "only specific DMZ&rarr;LAN and<br/>LAN&rarr;internet flows allowed" --- lan
+
+    classDef fw stroke:#e05252,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class fwout,fwin fw
+    class iclient,isp,web,mail,db,ws host
 ```
 
 ## Firewall Policy Tables

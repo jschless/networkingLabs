@@ -10,18 +10,18 @@ dual-ASBR sandwich, *create the loop on purpose*, then kill it with tags.
 
 ```mermaid
 flowchart LR
-    r1["r1\n10.0.0.1/32"]
-    asbr1["asbr1\n10.0.0.2/32"]
-    r2["r2\n10.0.0.3/32"]
-    asbr2["asbr2\n10.0.0.4/32"]
-    r3["r3\n10.0.0.5/32"]
+    r1["r1<br/>10.0.0.1/32"]
+    asbr1["asbr1<br/>10.0.0.2/32"]
+    r2["r2<br/>10.0.0.3/32"]
+    asbr2["asbr2<br/>10.0.0.4/32"]
+    r3["r3<br/>10.0.0.5/32"]
 
-    r1 -- "10.1.10.0/30\nOSPF area 0" --- asbr1
-    asbr1 -- "10.2.10.0/30\nEIGRP AS100" --- r2
-    r2 -- "10.2.20.0/30\nEIGRP AS100" --- asbr2
-    asbr2 -- "10.1.30.0/30\nOSPF area 0" --- r3
+    r1 -- "10.1.10.0/30<br/>OSPF area 0" --- asbr1
+    asbr1 -- "10.2.10.0/30<br/>EIGRP AS100" --- r2
+    r2 -- "10.2.20.0/30<br/>EIGRP AS100" --- asbr2
+    asbr2 -- "10.1.30.0/30<br/>OSPF area 0" --- r3
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
     class r1,asbr1,r2,asbr2,r3 router
 ```
 

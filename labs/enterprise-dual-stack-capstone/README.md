@@ -6,11 +6,37 @@ does not prove a usable IPv6 application path.
 
 ## Topology
 
-```text
-corp-client -- dist1 ==== dist2 -- guest-client
-                  \\       \\-- app-v4v6 / app-v4only
-                   edge -- isp -- internet-test
-                     \\\-- services (BIND + Kea configuration)
+```mermaid
+flowchart TB
+    corp(["corp-client<br/>10.108.10.0/24<br/>2001:db8:108:10::/64"])
+    services(["services<br/>BIND + Kea<br/>10.108.30.0/24"])
+    guest(["guest-client<br/>10.108.20.0/24<br/>2001:db8:108:20::/64"])
+    appdual(["app-v4v6<br/>10.108.40.0/24"])
+    appv4(["app-v4only<br/>10.108.41.0/24"])
+    test(["internet-test<br/>public test segment"])
+
+    dist1["dist1 (cEOS)"]
+    dist2["dist2 (cEOS)"]
+    edge["edge (cEOS)"]
+    isp["isp (FRR 10.5.0)"]
+
+    corp --- dist1
+    services --- dist1
+    guest --- dist2
+    appdual --- dist2
+    appv4 --- dist2
+    dist1 -- "10.108.101.0/30<br/>2001:db8:108:101::/64" --- dist2
+    dist1 -- "10.108.105.0/30" --- edge
+    dist2 -- "10.108.102.0/30" --- edge
+    edge -- "198.18.108.0/24<br/>2001:db8:ffff:108::/64" --- isp
+    isp --- test
+
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class dist1,dist2,edge router
+    class isp isp
+    class corp,services,guest,appdual,appv4,test host
 ```
 
 | Segment | IPv4 | IPv6 |

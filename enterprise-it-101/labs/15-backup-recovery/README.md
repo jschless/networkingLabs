@@ -17,13 +17,13 @@ hope**. The disasters in this lab are scripted; the next ones won't be.
 ```mermaid
 flowchart LR
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD DC\n10.100.1.10"]
-    ca1["ca1\nstep-ca\n10.100.1.30"]
-    adminws["admin-ws\n10.100.10.10\nkinit / step ca certificate\n(proves recovery worked)"]
-    backup1["backup1\n10.100.3.40\nBorg repos under /srv/backups\n/mnt/ca1 (ca1-data volume)"]
-    dc1 -- "borg create (push over SSH)\nssh://borg@backup1/..." --> backup1
+    dc1["dc1<br/>Samba AD DC<br/>10.100.1.10"]
+    ca1["ca1<br/>step-ca<br/>10.100.1.30"]
+    adminws["admin-ws<br/>10.100.10.10<br/>kinit / step ca certificate<br/>(proves recovery worked)"]
+    backup1["backup1<br/>10.100.3.40<br/>Borg repos under /srv/backups<br/>/mnt/ca1 (ca1-data volume)"]
+    dc1 -- "borg create (push over SSH)<br/>ssh://borg@backup1/..." --> backup1
     backup1 -- "borg extract (restore)" --> dc1
-    ca1 -- "ca1-data volume mounted\n(agent-less, volume-style)" --> backup1
+    ca1 -- "ca1-data volume mounted<br/>(agent-less, volume-style)" --> backup1
   end
 ```
 

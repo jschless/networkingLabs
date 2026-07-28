@@ -52,4 +52,6 @@ network. Describe how to distinguish incomplete delivered configuration from a f
 ZTP-state problem, give the minimum correction workflow, and define rollback or rescue
 access for a dark branch. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/ztp-key.md`](../answer-keys/quizzes/ztp-key.md).*

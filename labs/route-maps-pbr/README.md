@@ -10,20 +10,20 @@ table never changed.
 
 ```mermaid
 flowchart TB
-    ha(["host-a\n192.168.1.1/30"])
-    hb(["host-b\n192.168.2.1/30"])
+    ha(["host-a<br/>192.168.1.1/30"])
+    hb(["host-b<br/>192.168.2.1/30"])
     router["router"]
-    isp1["isp1\n10.99.1.1/32"]
-    isp2["isp2\n10.99.2.1/32"]
+    isp1["isp1<br/>10.99.1.1/32"]
+    isp2["isp2<br/>10.99.2.1/32"]
 
     ha -- "192.168.1.0/30" --- router
     hb -- "192.168.2.0/30" --- router
     router -- "10.0.1.0/30" --- isp1
     router -- "10.0.2.0/30" --- isp2
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
     class router router
     class ha,hb host
     class isp1,isp2 isp

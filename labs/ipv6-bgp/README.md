@@ -10,16 +10,16 @@ next-hop behavior of both — which is where the real understanding lives.
 
 ```mermaid
 flowchart LR
-    r1["r1\nAS65001\n10.0.0.1/32\n2001:db8::1/128"]
-    r2["r2\nAS65002\n10.0.0.2/32\n2001:db8::2/128"]
-    r3["r3\nAS65002\n10.0.0.3/32\n2001:db8::3/128"]
-    r4["r4\nAS65003\n10.0.0.4/32\n2001:db8::4/128"]
+    r1["r1<br/>AS65001<br/>10.0.0.1/32<br/>2001:db8::1/128"]
+    r2["r2<br/>AS65002<br/>10.0.0.2/32<br/>2001:db8::2/128"]
+    r3["r3<br/>AS65002<br/>10.0.0.3/32<br/>2001:db8::3/128"]
+    r4["r4<br/>AS65003<br/>10.0.0.4/32<br/>2001:db8::4/128"]
 
-    r1 -- "10.1.12.0/30\n2001:db8:12::/64\neBGP" --- r2
-    r2 -- "10.1.23.0/30\n2001:db8:23::/64\niBGP" --- r3
-    r3 -- "10.1.34.0/30\n2001:db8:34::/64\neBGP" --- r4
+    r1 -- "10.1.12.0/30<br/>2001:db8:12::/64<br/>eBGP" --- r2
+    r2 -- "10.1.23.0/30<br/>2001:db8:23::/64<br/>iBGP" --- r3
+    r3 -- "10.1.34.0/30<br/>2001:db8:34::/64<br/>eBGP" --- r4
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
     class r1,r2,r3,r4 router
 ```
 

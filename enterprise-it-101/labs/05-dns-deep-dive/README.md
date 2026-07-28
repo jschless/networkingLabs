@@ -13,10 +13,10 @@ it so a single server answers every kind of query.
 flowchart LR
   internet(["internet"])
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD\nDNS authoritative for lab.corp\n10.100.1.10"]
-    dns1["dns1\nBIND9 resolver + forwarder\nsplit-horizon\n10.100.1.40"]
-    adminws["admin-ws\ninternal client\n10.100.10.10"]
-    extclient["ext-client (outside)\n10.100.20.50"]
+    dc1["dc1<br/>Samba AD<br/>DNS authoritative for lab.corp<br/>10.100.1.10"]
+    dns1["dns1<br/>BIND9 resolver + forwarder<br/>split-horizon<br/>10.100.1.40"]
+    adminws["admin-ws<br/>internal client<br/>10.100.10.10"]
+    extclient["ext-client (outside)<br/>10.100.20.50"]
     adminws -- "query" --> dns1
     extclient -- "query" --> dns1
     dns1 -- "forward lab.corp" --> dc1
