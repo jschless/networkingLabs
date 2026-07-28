@@ -1,0 +1,84 @@
+name: advanced-security-architecture
+
+topology:
+  defaults:
+    kind: linux
+    image: advanced-security-tools:1.0.0
+
+  nodes:
+    internet-test:
+      binds:
+        - configs/internet-test/setup.sh:/setup.sh:ro
+        - configs/common/http_service.py:/opt/lab/http_service.py:ro
+      exec: [bash /setup.sh]
+
+    edge:
+      binds:
+        - configs/edge/setup.sh:/setup.sh:ro
+        - configs/edge/rtbh_api.py:/opt/lab/rtbh_api.py:ro
+      exec: [bash /setup.sh]
+
+    ngfw:
+      image: advanced-security-fw:1.0.0
+      cap-add: [NET_ADMIN, NET_RAW, SYS_NICE]
+      binds:
+        - configs/ngfw/setup.sh:/setup.sh:ro
+        - configs/common/http_service.py:/opt/lab/http_service.py:ro
+      exec: [bash /setup.sh]
+
+    core:
+      binds: [configs/core/setup.sh:/setup.sh:ro]
+      exec: [bash /setup.sh]
+
+    user:
+      binds: [configs/user/setup.sh:/setup.sh:ro]
+      exec: [bash /setup.sh]
+
+    protected-app:
+      binds:
+        - configs/protected-app/setup.sh:/setup.sh:ro
+        - configs/common/http_service.py:/opt/lab/http_service.py:ro
+      exec: [bash /setup.sh]
+
+    waf-pep:
+      binds:
+        - configs/waf-pep/setup.sh:/setup.sh:ro
+        - configs/waf-pep/nginx.conf:/opt/lab/nginx.conf:ro
+        - configs/waf-pep/pep.py:/opt/lab/pep.py:ro
+      exec: [bash /setup.sh]
+
+    partner:
+      binds:
+        - configs/partner/setup.sh:/setup.sh:ro
+        - configs/partner/issue_token.py:/opt/lab/issue_token.py:ro
+      exec: [bash /setup.sh]
+
+    security-services:
+      binds: [configs/security-services/setup.sh:/setup.sh:ro]
+      exec: [bash /setup.sh]
+
+    management-lan:
+      binds: [configs/common/bridge.sh:/setup.sh:ro]
+      env: {PORTS: "eth1 eth2 eth3"}
+      exec: [bash /setup.sh]
+
+    admin:
+      binds: [configs/admin/setup.sh:/setup.sh:ro]
+      exec: [bash /setup.sh]
+
+    break-glass:
+      binds: [configs/break-glass/setup.sh:/setup.sh:ro]
+      exec: [bash /setup.sh]
+
+  links:
+    - endpoints: ["internet-test:eth1", "edge:eth1"]       # Internet test LAN 192.0.2.0/24
+    - endpoints: ["edge:eth2", "ngfw:eth1"]                # WAN transit 198.51.100.0/30
+    - endpoints: ["ngfw:eth2", "core:eth1"]                # USER/SERVER VRF transits 10.114.254.0/29 (802.1Q 110/120)
+    - endpoints: ["core:eth2", "user:eth1"]                # User zone 10.114.10.0/24
+    - endpoints: ["core:eth3", "protected-app:eth1"]       # Server zone 10.114.20.0/24
+    - endpoints: ["ngfw:eth3", "waf-pep:eth1"]             # DMZ zone 10.114.30.0/24
+    - endpoints: ["ngfw:eth4", "partner:eth1"]             # Partner zone 10.114.40.0/24
+    - endpoints: ["ngfw:eth5", "security-services:eth1"]   # Security services 10.114.60.0/24
+    - endpoints: ["ngfw:eth6", "management-lan:eth1"]      # OOB management 10.114.50.0/24
+    - endpoints: ["admin:eth1", "management-lan:eth2"]     # OOB management 10.114.50.0/24
+    - endpoints: ["break-glass:eth1", "management-lan:eth3"] # OOB management 10.114.50.0/24

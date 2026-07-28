@@ -1,0 +1,16 @@
+FROM jasonish/suricata@sha256:f8e7d04babeaab8bfac7e327b09e8f7471f144b0b205bfc503f7dd3130a6d2e7
+
+RUN dnf install -y \
+        conntrack-tools \
+        iproute \
+        iputils \
+        jq \
+        nftables \
+        procps-ng \
+        python3 \
+        rsyslog \
+        tcpdump \
+    && dnf clean all
+
+ENTRYPOINT []
+CMD ["sleep", "infinity"]

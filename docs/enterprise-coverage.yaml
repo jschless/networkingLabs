@@ -149,12 +149,12 @@ topics:
     notes: ZTNA is live. SSE/SASE PoP, CASB, SWG, DLP, continuous risk, and global-service availability are explicitly conceptual mappings only.
   - domain: security
     topic: advanced security architecture
-    level: 0
-    labs: []
-    fidelity: Planned Linux/NGFW-capability-dependent architecture; application identification and product feeds require evidence.
-    last_live_validation: null
+    level: 4
+    labs: [labs/advanced-security-architecture]
+    fidelity: Live Linux VRF and zone separation, nftables state/NAT/rate policy, Suricata NFQUEUE alert/drop, nginx/ModSecurity WAF, controlled DNS/proxy, signed-assertion resource PEP, OOB management, scoped expiring RTBH, and correlated logs; no commercial NGFW, application-ID, production-feed, TLS-decryption, CASB/DLP, sandbox, or SSE claim.
+    last_live_validation: 2026-07-28
     owner: WP-14
-    notes: Planned as labs/advanced-security-architecture (target level 4).
+    notes: Break-It inserts a broad partner-to-origin rule that leaves normal public service healthy while bypassing PEP/WAF; live counters and log gaps lead to minimal handle deletion.
   - domain: operations
     topic: assurance, telemetry, and network automation
     level: 3

@@ -170,10 +170,10 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Layer 2 track](tracks/layer2/index.md)
 
-- :material-shield-lock: **Security** (9 labs)
+- :material-shield-lock: **Security** (10 labs)
 
     ---
-    ACLs, zero-trust access, black-core routing, OPNsense NGFW policy and IPS, MACsec, 802.1X/NAC, uRPF, CoPP, dot1x on EOS
+    ACLs, zero-trust access, advanced security architecture, black-core routing, OPNsense NGFW policy and IPS, MACsec, 802.1X/NAC, uRPF, CoPP, dot1x on EOS
 
     [:octicons-arrow-right-24: Security track](tracks/security/index.md)
 

@@ -65,6 +65,8 @@ LOCAL_BUILDS=(
   "-t telemetry-lab:local labs/telemetry-monitoring-hybrid/"
   "-t sdwan-lab:local labs/sdwan-concepts/"
   "-t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/"
+  "-t advanced-security-tools:1.0.0 labs/advanced-security-architecture/"
+  "-f labs/advanced-security-architecture/Dockerfile.fw -t advanced-security-fw:1.0.0 labs/advanced-security-architecture/"
   "-t dc-storage-tools:1.0.0 labs/dc-storage-networking/"
   "-t automation-fundamentals:local labs/automation-fundamentals/"
   "-t lb-lab:local labs/load-balancer-basics/"

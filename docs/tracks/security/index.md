@@ -1,6 +1,6 @@
 # Security Track
 
-Nine labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, MACsec encryption, 802.1X NAC, uRPF anti-spoofing, Control Plane Policing, wired dot1x on Arista EOS, and zero-trust access.
+Ten labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, MACsec encryption, 802.1X NAC, uRPF anti-spoofing, Control Plane Policing, wired dot1x on Arista EOS, zero-trust access, and an integrated advanced-security architecture capstone.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
@@ -13,6 +13,7 @@ Nine labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, M
 | [copp-basics](copp-basics.md) | Practice | FRR | Control Plane Policing, traffic classification, rate limiting |
 | [dot1x-ceos-practice](dot1x-ceos-practice.md) | Practice | cEOS | 802.1X wired NAC on Arista EOS, RADIUS, MAB |
 | [zero-trust-secure-access](zero-trust-secure-access.md) | Practice | Keycloak + Linux | OIDC claims, mTLS device signal, resource policy, origin isolation, decision logs |
+| [advanced-security-architecture](advanced-security-architecture.md) | Capstone | Linux + Suricata + ModSecurity | VRF/zone policy, state/NAT, IDS/IPS, WAF/PEP, controlled egress, OOB, RTBH, evidence correlation |
 
 ## Platform Notes
 
@@ -21,5 +22,6 @@ Nine labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, M
 - **OPNsense NGFW**: local QEMU/KVM base image (see [OPNsense platform notes](../../platforms/opnsense.md)) and `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/`
 - **dot1x-nac**: `docker build -t nac-lab:local labs/dot1x-nac/`
 - **zero-trust-secure-access**: `docker build -t zt-access-tools:local labs/zero-trust-secure-access/` and `docker build -f labs/zero-trust-secure-access/Dockerfile.keycloak -t zt-keycloak:local labs/zero-trust-secure-access/`
+- **advanced-security-architecture**: `docker build -t advanced-security-tools:1.0.0 labs/advanced-security-architecture/` and `docker build -f labs/advanced-security-architecture/Dockerfile.fw -t advanced-security-fw:1.0.0 labs/advanced-security-architecture/`
 - **FRR labs**: `docker build -t frr-lab:local images/frr/`
 - **cEOS**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`

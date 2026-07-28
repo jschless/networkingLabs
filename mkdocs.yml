@@ -203,6 +203,7 @@ nav:
       - copp-basics: tracks/security/copp-basics.md
       - dot1x-ceos-practice: tracks/security/dot1x-ceos-practice.md
       - zero-trust-secure-access: tracks/security/zero-trust-secure-access.md
+      - advanced-security-architecture: tracks/security/advanced-security-architecture.md
     - Network Operations:
       - tracks/operations/index.md
       - management-access-control: tracks/operations/management-access-control.md

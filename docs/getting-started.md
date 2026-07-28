@@ -104,6 +104,8 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 |-------|---------|---------------|
 | `frr-lab:local` | the FRR/Linux labs (most non-cEOS labs) | `docker build -t frr-lab:local images/frr/` |
 | `enterprise-dual-stack-tools:local` | `enterprise-dual-stack-capstone` Linux services/endpoints | `docker build -t enterprise-dual-stack-tools:local labs/enterprise-dual-stack-capstone/` |
+| `advanced-security-tools:1.0.0` | `advanced-security-architecture` endpoints, WAF/PEP, DNS/proxy/logs | `docker build -t advanced-security-tools:1.0.0 labs/advanced-security-architecture/` (pinned Debian 12.12 digest; pinned nginx/ModSecurity CRS, dnsmasq, Squid, nftables, and rsyslog packages) |
+| `advanced-security-fw:1.0.0` | `advanced-security-architecture` stateful gateway and inline IDS/IPS | `docker build -f labs/advanced-security-architecture/Dockerfile.fw -t advanced-security-fw:1.0.0 labs/advanced-security-architecture/` (pinned Suricata 7.0.10 image digest; nftables NFQUEUE) |
 | `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | one-time build from a free VyOS ISO — see [VyOS platform notes](platforms/vyos.md) |
 | `ipsec-lab:local` | `ipsec-basics`, `flexvpn-basics` | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
