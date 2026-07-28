@@ -1,0 +1,13 @@
+version: 1
+transaction:
+  snapshot: running-config
+  candidate: eos-config-session
+  commit: staged-stop-on-first-error
+  rollback: configure-replace
+verification:
+  state: structured-eapi
+  service: independent-client-positive-negative
+  rollback_on_failure: true
+reconciliation:
+  drift: explicit-adopt-or-revert
+  require_clean_git_for_break: true

@@ -1,0 +1,7 @@
+evidence/
+rendered/
+.pytest_cache/
+__pycache__/
+pipeline/__pycache__/
+tests/__pycache__/
+intent/adopted.yml

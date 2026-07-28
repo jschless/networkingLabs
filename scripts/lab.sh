@@ -14,7 +14,7 @@ Usage:
   lab.sh status [lab]
   lab.sh up|deploy [lab]
   lab.sh down|destroy [lab]
-  lab.sh check [lab]
+  lab.sh check [lab] [check-args...]
   lab.sh cli [lab] <node>
   lab.sh sh|shell|bash [lab] <node>
   lab.sh exec|cmd [lab] <node> [--] <command...>
@@ -409,9 +409,10 @@ main() {
         check)
             local lab
             lab="$(resolve_lab "${1:-}")"
+            [[ $# -gt 0 ]] && shift
             local check_script="$LABS_DIR/$lab/check.sh"
             [[ -f "$check_script" ]] || die "no check.sh found for lab $lab"
-            bash "$check_script"
+            bash "$check_script" "$@"
             ;;
         up|deploy)
             cmd_up "${1:-}"

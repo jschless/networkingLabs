@@ -1,0 +1,13 @@
+change_id: baseline
+owner: network-platform
+allowed_prefixes:
+  - 203.0.113.12/32
+canary_distance: 250
+force_postcheck_failure: false
+devices:
+  leaf1:
+    desired_description: gitops-baseline
+  leaf2:
+    desired_description: gitops-baseline
+  edge1:
+    desired_description: gitops-baseline

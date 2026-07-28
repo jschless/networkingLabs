@@ -1,0 +1,67 @@
+name: network-gitops-change-pipeline
+
+mgmt:
+  network: network-gitops-mgmt
+  ipv4-subnet: 172.31.112.0/24
+
+topology:
+  nodes:
+    leaf1:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.112.11
+      startup-config: configs/leaf1/startup-config
+    leaf2:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.112.12
+      startup-config: configs/leaf2/startup-config
+    edge1:
+      kind: ceos
+      image: ceos:4.35.2F
+      mgmt-ipv4: 172.31.112.13
+      startup-config: configs/edge1/startup-config
+
+    client:
+      kind: linux
+      image: network-gitops:local
+      mgmt-ipv4: 172.31.112.21
+      binds:
+        - configs/client/setup.sh:/setup.sh:ro
+        - configs/client/path_agent.py:/opt/gitops/path_agent.py:ro
+      exec: [bash /setup.sh]
+    app:
+      kind: linux
+      image: network-gitops:local
+      mgmt-ipv4: 172.31.112.22
+      binds:
+        - configs/app/setup.sh:/setup.sh:ro
+      exec: [bash /setup.sh]
+    observer:
+      kind: linux
+      image: network-gitops:local
+      mgmt-ipv4: 172.31.112.23
+      binds:
+        - configs/observer/setup.sh:/setup.sh:ro
+      exec: [bash /setup.sh]
+    automation:
+      kind: linux
+      image: network-gitops:local
+      mgmt-ipv4: 172.31.112.10
+      env:
+        LAB_REPO: /workspace/lab-repo
+      binds:
+        - configs/automation/setup.sh:/setup.sh:ro
+        - configs/automation/seed:/opt/gitops-seed:ro
+        - configs/automation/solutions:/opt/gitops-solutions:ro
+        - configs/automation/eapi.env:/run/secrets/eapi.env:ro
+      exec: [bash /setup.sh]
+
+  links:
+    - endpoints: ["client:eth1", "leaf1:eth1"]    # Client LAN 10.112.10.0/24
+    - endpoints: ["leaf1:eth2", "leaf2:eth1"]     # Primary routed link 10.112.12.0/30
+    - endpoints: ["leaf1:eth3", "leaf2:eth2"]     # Backup routed link 10.112.12.4/30
+    - endpoints: ["leaf2:eth3", "edge1:eth1"]     # Edge transit 10.112.23.0/30
+    - endpoints: ["edge1:eth2", "app:eth1"]       # Application LAN 10.112.20.0/24
+    - endpoints: ["observer:eth1", "leaf1:eth4"]  # Observer A 10.112.31.0/30
+    - endpoints: ["observer:eth2", "leaf2:eth4"]  # Observer B 10.112.32.0/30

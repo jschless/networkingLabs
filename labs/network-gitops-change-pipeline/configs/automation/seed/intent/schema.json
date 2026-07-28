@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "change_id",
+    "owner",
+    "allowed_prefixes",
+    "canary_distance",
+    "force_postcheck_failure",
+    "devices"
+  ],
+  "properties": {
+    "change_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,39}$"
+    },
+    "owner": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,39}$"
+    },
+    "allowed_prefixes": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "canary_distance": {
+      "type": "integer",
+      "minimum": 200,
+      "maximum": 254
+    },
+    "force_postcheck_failure": {
+      "type": "boolean"
+    },
+    "devices": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "desired_description"
+        ],
+        "properties": {
+          "desired_description": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{2,39}$"
+          },
+          "candidate_pre_commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

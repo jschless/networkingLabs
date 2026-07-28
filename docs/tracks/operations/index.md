@@ -1,6 +1,6 @@
 # Network Operations Track
 
-Sixteen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, network automation with NetBox, and streaming telemetry.
+Seventeen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, NetBox, GitOps change safety, and streaming telemetry.
 
 The Enterprise track's
 [enterprise-voice-sip-qos](../enterprise/enterprise-voice-sip-qos.md) lab
@@ -22,6 +22,7 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 | [automation-fundamentals](automation-fundamentals.md) | Practice | eAPI from curl up to Python: structured state, idempotent change, verify-from-the-other-end, drift report |
 | [network-automation-netbox](network-automation-netbox.md) | Practice | NetBox capstone: DCIM, IPAM, native config templates, discovery sync, and drift validation |
 | [suzieq-network-observability](suzieq-network-observability.md) | Reference | SuzieQ: agentless polling, fleet-wide queries, LLDP topology mapping, path tracing, health assertions |
+| [network-gitops-change-pipeline](network-gitops-change-pipeline.md) | Practice / Troubleshooting | Versioned intent, semantic review, pre-checks, bounded cEOS sessions, service verification, drift, partial-push rollback |
 | [telemetry-monitoring-hybrid](telemetry-monitoring-hybrid.md) | Practice | gNMI telemetry, Prometheus, Grafana, classic NMS |
 | [cloud-hybrid-networking](cloud-hybrid-networking.md) | Practice | Route-table, conntrack, DNS-view, and capture evidence for a hybrid outage |
 | [carrier-ethernet-handoff](carrier-ethernet-handoff.md) | Practice | Demarc capture, MTU/SLA acceptance, evidence packet, and wrong S-VLAN diagnosis |
@@ -38,5 +39,6 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 - **automation-fundamentals**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t automation-fundamentals:local labs/automation-fundamentals/`
 - **network-automation-netbox**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t netbox-automation:local labs/network-automation-netbox/`
 - **suzieq-network-observability**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t suzieq-lab:local labs/suzieq-network-observability/`
+- **network-gitops-change-pipeline**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t network-gitops:local labs/network-gitops-change-pipeline/`
 - **telemetry-monitoring-hybrid**: `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/`
 - **cloud-hybrid-networking**: `docker build -t cloud-lab:local labs/cloud-hybrid-networking/` and import cEOS 4.35.2F

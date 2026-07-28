@@ -1,0 +1,51 @@
+hostname leaf2
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret admin
+!
+management api http-commands
+   protocol http
+   no shutdown
+!
+ip routing
+!
+interface Loopback0
+   description gitops-baseline
+   ip address 10.0.12.2/32
+!
+interface Ethernet1
+   description leaf1-primary
+   no switchport
+   ip address 10.112.12.2/30
+   ip ospf area 0
+   ip ospf cost 20
+   no shutdown
+!
+interface Ethernet2
+   description leaf1-backup
+   no switchport
+   ip address 10.112.12.6/30
+   ip ospf area 0
+   ip ospf cost 40
+   no shutdown
+!
+interface Ethernet3
+   description edge1
+   no switchport
+   ip address 10.112.23.1/30
+   ip ospf area 0
+   no shutdown
+!
+interface Ethernet4
+   description observer-b
+   no switchport
+   ip address 10.112.32.1/30
+   no shutdown
+!
+router ospf 12
+   router-id 10.0.12.2
+   passive-interface Loopback0
+   network 10.0.12.2/32 area 0
+!
+end

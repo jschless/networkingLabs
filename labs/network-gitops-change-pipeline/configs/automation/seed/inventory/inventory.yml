@@ -1,0 +1,21 @@
+version: 1
+deploy_order:
+  - leaf1
+  - leaf2
+  - edge1
+devices:
+  leaf1:
+    address: 172.31.112.11
+    loopback: 10.0.12.1
+    role: client-ingress
+    candidate_pre_commands: []
+  leaf2:
+    address: 172.31.112.12
+    loopback: 10.0.12.2
+    role: transit
+    candidate_pre_commands: []
+  edge1:
+    address: 172.31.112.13
+    loopback: 10.0.12.3
+    role: application-edge
+    candidate_pre_commands: []

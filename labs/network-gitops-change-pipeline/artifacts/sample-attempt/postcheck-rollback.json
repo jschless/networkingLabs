@@ -1,0 +1,19 @@
+{
+  "status": "failed_rolled_back",
+  "applied": [
+    "leaf1",
+    "leaf2",
+    "edge1"
+  ],
+  "changed": [
+    "leaf1",
+    "leaf2",
+    "edge1"
+  ],
+  "rollback": [
+    "edge1",
+    "leaf2",
+    "leaf1"
+  ],
+  "error": "post-change structured or service-path assertion failed"
+}

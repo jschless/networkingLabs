@@ -1,0 +1,19 @@
+{
+  "status": "success",
+  "changed": [],
+  "applied": [],
+  "idempotent": true,
+  "device_access_count": 12,
+  "service": {
+    "corp": {
+      "code": "200",
+      "exit": 0
+    },
+    "corp_allowed": true,
+    "guest": {
+      "code": "000",
+      "exit": 28
+    },
+    "guest_denied": true
+  }
+}

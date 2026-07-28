@@ -1,0 +1,32 @@
+{
+  "edge1": {
+    "canary_present": {
+      "current": false,
+      "desired": true
+    },
+    "description": {
+      "current": "gitops-baseline",
+      "desired": "gitops-v2"
+    }
+  },
+  "leaf1": {
+    "canary_present": {
+      "current": false,
+      "desired": true
+    },
+    "description": {
+      "current": "gitops-baseline",
+      "desired": "gitops-v2"
+    }
+  },
+  "leaf2": {
+    "canary_present": {
+      "current": false,
+      "desired": true
+    },
+    "description": {
+      "current": "gitops-baseline",
+      "desired": "gitops-v2"
+    }
+  }
+}
