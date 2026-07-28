@@ -1,0 +1,9 @@
+SYNTHETIC REDUCED TEACHING EVIDENCE — NOT ASIC OR RNIC OUTPUT
+interval_s,queue_depth,ecn_marks,pfc_pause_ms,receiver_cnp,storage_p99_us
+0,4,0,0,0,180
+1,18,42,0,3,420
+2,37,188,12,14,1200
+3,61,410,86,31,3900
+4,58,455,140,35,5200
+5,22,201,34,18,1600
+interpretation_boundary=ordering_only; counter precision and hardware causality not claimed

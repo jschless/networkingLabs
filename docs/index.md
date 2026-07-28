@@ -134,10 +134,11 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: MPLS & SP track](tracks/mpls-sp/index.md)
 
-- :material-server-network: **Data Center** (6 labs)
+- :material-server-network: **Data Center** (7 labs)
 
     ---
-    BGP CLOS, VXLAN, BGP EVPN, border leaf, routed DCI, symmetric IRB, k8s LoadBalancer/BGP
+    BGP CLOS, VXLAN, BGP EVPN, border leaf, routed DCI, symmetric IRB,
+    k8s LoadBalancer/BGP, redundant iSCSI/multipath
 
     [:octicons-arrow-right-24: Data Center track](tracks/data-center/index.md)
 

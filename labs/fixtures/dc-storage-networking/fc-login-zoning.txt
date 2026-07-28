@@ -1,0 +1,9 @@
+SYNTHETIC REDUCED TEACHING EVIDENCE — NOT HARDWARE OUTPUT
+fabric=A  vsan=111  active_zoneset=PROD_STORAGE_A
+10:00:00:aa:00:00:01:11 FLOGI accepted  FCID=0x6f0100
+10:00:00:aa:00:00:01:11 PLOGI name-server accepted
+50:00:00:bb:00:00:10:11 target registered FC4=SCSI FCID=0x6f0200
+zone=APP01_A members=50:00:00:bb:00:00:10:11
+zoneset=PROD_STORAGE_A members=APP01_A status=active
+initiator inquiry result=reject reason=zone-membership
+cross-check hint: initiator WWPN is absent from APP01_A

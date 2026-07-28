@@ -1,5 +1,14 @@
 topics:
   - domain: test
+    topic: validated evidence-pack registration
+    level: 1
+    labs:
+      - labs/fixtures/wireless-core-operations
+    fidelity: test fixture only
+    last_live_validation: null
+    owner: test
+    notes: Uses an existing fixture pack to exercise the level 1 evidence-path rule.
+  - domain: test
     topic: validated practice registration
     level: 3
     labs:

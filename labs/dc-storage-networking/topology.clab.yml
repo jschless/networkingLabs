@@ -1,0 +1,57 @@
+name: dc-storage-networking
+
+# Linux bridges are the plan-authorized fallback for the cEOSLab hardware
+# scheduler boundary. initiator1 embeds a pinned KVM guest so kernel iSCSI and
+# device-mapper are isolated from every host block device.
+topology:
+  defaults:
+    kind: linux
+    image: dc-storage-tools:1.0.0
+  nodes:
+    tor1:
+      binds:
+        - configs/tor1/setup.sh:/opt/storage/setup.sh:ro
+      exec: ["bash /opt/storage/setup.sh"]
+    tor2:
+      binds:
+        - configs/tor2/setup.sh:/opt/storage/setup.sh:ro
+      exec: ["bash /opt/storage/setup.sh"]
+    initiator1:
+      env: {STORAGE_LAB_MODE: practice}
+      binds:
+        - probe/initiator-init.sh:/opt/storage/init.sh:ro
+        - probe/vm-exec.sh:/usr/local/bin/vm-exec:ro
+        - configs/initiator/multipath.conf:/etc/multipath.conf:ro
+      exec:
+        - bash /opt/storage/init.sh
+        - bash -c "ip addr add 10.111.40.254/24 dev br-a; iperf3 -s -D"
+    target1:
+      env: {STORAGE_ROLE: target}
+      binds:
+        - /lib/modules:/lib/modules:ro
+        - configs/target1/init.sh:/opt/storage/init.sh:ro
+      exec: ["bash /opt/storage/init.sh"]
+    target2:
+      binds:
+        - configs/target2/init.sh:/opt/storage/init.sh:ro
+      exec: ["bash /opt/storage/init.sh"]
+    observer:
+      binds:
+        - configs/observer/init.sh:/opt/storage/init.sh:ro
+      exec: ["bash /opt/storage/init.sh"]
+    traffic-gen:
+      binds:
+        - configs/traffic-gen/init.sh:/opt/storage/init.sh:ro
+      exec: ["bash /opt/storage/init.sh"]
+
+  links:
+    - endpoints: ["initiator1:eth1", "tor1:eth1"] # Storage A 10.111.10.0/24
+    - endpoints: ["target1:eth1", "tor1:eth2"] # Storage A + background target
+    - endpoints: ["traffic-gen:eth1", "tor1:eth3"] # Background 10.111.40.0/24
+    - endpoints: ["target2:eth1", "tor1:eth4"] # Storage A standby endpoint
+    - endpoints: ["initiator1:eth2", "tor2:eth1"] # Storage B 10.111.20.0/24
+    - endpoints: ["target1:eth2", "tor2:eth2"] # Storage B
+    - endpoints: ["target2:eth2", "tor2:eth3"] # Storage B standby endpoint
+    - endpoints: ["initiator1:eth3", "observer:eth1"] # Management 10.111.30.0/24
+    - endpoints: ["target1:eth3", "observer:eth2"] # Management 10.111.30.0/24
+    - endpoints: ["target2:eth3", "observer:eth3"] # Management 10.111.30.0/24

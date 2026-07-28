@@ -35,7 +35,7 @@ material is built and validated.
 | Campus LAN | Level 4 switching/access troubleshooting; level 3 enterprise design/services | WP-16 adds assessed cross-domain faults after source labs validate. |
 | WAN and overlay | Level 4 VPN/segmentation and orchestrated provider-neutral overlay operations | `orchestrated-wan-overlay` provides controller/PKI, mTLS, two transports, policy, SLA, and certificate-fault recovery; vendor SD-WAN products remain level 1 theory/sandbox work. |
 | Cloud and hybrid | Level 0 | WP-01 `cloud-hybrid-networking` to level 4. |
-| Data center and DCI | Level 4 fabric/EVPN and routed DCI | WP-03 routed DCI is live; WP-11 IP storage remains planned; FC/FCoE/RoCE evidence targets level 1. |
+| Data center and DCI | Level 4 fabric/EVPN, routed DCI, and IP storage; level 1 FC/FCoE/RoCE evidence | WP-03 routed DCI and WP-11 authenticated multipath IP storage are live; hardware SAN/RoCE mechanisms remain evidence-only. |
 | Internet edge | Level 4 BGP and prefix security | WP-07 `internet-peering-ixp` to level 4. |
 | Wireless | Level 1 architecture/policy only | WP-02 live control/auth operations to level 4 when the radio probe passes; RF evidence to level 1. |
 | Mobile | Level 0 | WP-05 private 5G to level 4 and mobile transport/timing to level 3. |
