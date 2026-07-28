@@ -18,10 +18,10 @@ questions as the real test.
 
 ```mermaid
 flowchart LR
-    router(["router1\n2001:db8:10::1/64\nRA source"])
+    router(["router1<br/>2001:db8:10::1/64<br/>RA source"])
     sw1["sw1"]
-    client(["client1\nIPv6 host"])
-    dns(["dns1\n2001:db8:10::53\nDNS"])
+    client(["client1<br/>IPv6 host"])
+    dns(["dns1<br/>2001:db8:10::53<br/>DNS"])
 
     router --- sw1
     client --- sw1

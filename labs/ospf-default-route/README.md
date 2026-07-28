@@ -11,15 +11,15 @@ default — the production pattern.
 
 ```mermaid
 flowchart LR
-    core["core\n10.0.0.1/32"]
-    asbr["asbr\n10.0.0.2/32"]
-    internet(["internet\n10.99.0.1/32"])
+    core["core<br/>10.0.0.1/32"]
+    asbr["asbr<br/>10.0.0.2/32"]
+    internet(["internet<br/>10.99.0.1/32"])
 
-    core -- "10.1.12.0/30\nArea 0" --- asbr
-    asbr -- "203.0.113.0/30\n(no OSPF)" --- internet
+    core -- "10.1.12.0/30<br/>Area 0" --- asbr
+    asbr -- "203.0.113.0/30<br/>(no OSPF)" --- internet
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class core,asbr router
     class internet host
 ```

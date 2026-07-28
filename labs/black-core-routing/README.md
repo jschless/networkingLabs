@@ -19,14 +19,14 @@ the break-it steps and challenge questions as the real test.
 
 ```mermaid
 flowchart LR
-    client(["client-a\n10.10.10.10"])
-    reda["red-a\nLAN 10.10.10.1\ntransit 10.255.0.1"]
-    enca["enc-a\nred 10.255.0.2\nblack 203.0.113.1"]
-    core1["core1\n203.0.113.2\n198.51.100.1"]
-    core2["core2\n198.51.100.2\n203.0.113.5"]
-    encb["enc-b\nblack 203.0.113.6\nred 10.255.0.6"]
-    redb["red-b\ntransit 10.255.0.5\nLAN 10.20.20.1"]
-    svc(["service-b\n10.20.20.10\nHTTP + DNS"])
+    client(["client-a<br/>10.10.10.10"])
+    reda["red-a<br/>LAN 10.10.10.1<br/>transit 10.255.0.1"]
+    enca["enc-a<br/>red 10.255.0.2<br/>black 203.0.113.1"]
+    core1["core1<br/>203.0.113.2<br/>198.51.100.1"]
+    core2["core2<br/>198.51.100.2<br/>203.0.113.5"]
+    encb["enc-b<br/>black 203.0.113.6<br/>red 10.255.0.6"]
+    redb["red-b<br/>transit 10.255.0.5<br/>LAN 10.20.20.1"]
+    svc(["service-b<br/>10.20.20.10<br/>HTTP + DNS"])
 
     client --- reda
     reda --- enca

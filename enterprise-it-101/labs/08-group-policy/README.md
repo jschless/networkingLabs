@@ -13,10 +13,10 @@ run from a control node to enforce NTP, an SSH banner, and SSH hardening across
 ```mermaid
 flowchart TB
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD DC\n10.100.1.10\nPart A: GPO create / link / SYSVOL"]
-    ansible1["ansible1\ncontrol node\n10.100.3.10\nPart B: ansible-playbook"]
-    ws1["ws1\n10.100.10.11"]
-    ws2["ws2\n10.100.10.12"]
+    dc1["dc1<br/>Samba AD DC<br/>10.100.1.10<br/>Part A: GPO create / link / SYSVOL"]
+    ansible1["ansible1<br/>control node<br/>10.100.3.10<br/>Part B: ansible-playbook"]
+    ws1["ws1<br/>10.100.10.11"]
+    ws2["ws2<br/>10.100.10.12"]
     ansible1 -- "SSH (key)" --> ws1
     ansible1 -- "SSH (key)" --> ws2
   end

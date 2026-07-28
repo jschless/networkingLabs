@@ -15,17 +15,17 @@ the skill being trained is *generating* the diagnosis, not reading it.
 
 ```mermaid
 flowchart LR
-    ext(["ext\n192.168.100.2"])
-    r1["r1 ASBR\n10.0.0.1/32"]
-    r2["r2 ABR\n10.0.0.2/32"]
-    r3["r3\n10.0.0.3/32"]
+    ext(["ext<br/>192.168.100.2"])
+    r1["r1 ASBR<br/>10.0.0.1/32"]
+    r2["r2 ABR<br/>10.0.0.2/32"]
+    r3["r3<br/>10.0.0.3/32"]
 
-    ext -- "192.168.100.0/30\n(external)" --- r1
-    r1 -- "10.1.12.0/30\nArea 1 (NSSA)" --- r2
-    r2 -- "10.1.23.0/30\nArea 0" --- r3
+    ext -- "192.168.100.0/30<br/>(external)" --- r1
+    r1 -- "10.1.12.0/30<br/>Area 1 (NSSA)" --- r2
+    r2 -- "10.1.23.0/30<br/>Area 0" --- r3
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class r1,r2,r3 router
     class ext host
 ```

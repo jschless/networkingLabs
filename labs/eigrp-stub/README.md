@@ -11,19 +11,19 @@ leak-map to keep a legitimately-downstream prefix reachable.
 
 ```mermaid
 flowchart TB
-    hub["hub\n10.0.0.1/32"]
-    spoke1["spoke1\n10.0.0.2/32"]
-    spoke2["spoke2\n10.0.0.3/32"]
-    spoke3["spoke3\n10.0.0.4/32"]
-    ce(["ce\n10.0.0.5/32"])
+    hub["hub<br/>10.0.0.1/32"]
+    spoke1["spoke1<br/>10.0.0.2/32"]
+    spoke2["spoke2<br/>10.0.0.3/32"]
+    spoke3["spoke3<br/>10.0.0.4/32"]
+    ce(["ce<br/>10.0.0.5/32"])
 
     hub -- "10.1.11.0/30" --- spoke1
     hub -- "10.1.12.0/30" --- spoke2
     hub -- "10.1.13.0/30" --- spoke3
     spoke3 -- "10.1.30.0/30" --- ce
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef ce     fill:#006400,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef ce stroke:#2eb872,stroke-width:2px
     class hub,spoke1,spoke2,spoke3 router
     class ce ce
 ```

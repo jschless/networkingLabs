@@ -13,12 +13,12 @@ the difference between a firewall permit and an IPS decision.
 
 ```mermaid
 flowchart LR
-    internet["internet-client\n198.51.100.10"] --- isp["isp\n203.0.113.1"]
-    isp --- fw["OPNsense NGFW\nWAN 203.0.113.2"]
-    fw --- corp["corp-client\n10.10.10.10"]
-    fw --- guest["guest-client\n10.20.20.10"]
-    fw --- dmz["dmz-web\n172.16.10.10"]
-    fw --- db["db-server\n10.30.30.10"]
+    internet["internet-client<br/>198.51.100.10"] --- isp["isp<br/>203.0.113.1"]
+    isp --- fw["OPNsense NGFW<br/>WAN 203.0.113.2"]
+    fw --- corp["corp-client<br/>10.10.10.10"]
+    fw --- guest["guest-client<br/>10.20.20.10"]
+    fw --- dmz["dmz-web<br/>172.16.10.10"]
+    fw --- db["db-server<br/>10.30.30.10"]
 ```
 
 | OPNsense NIC | Role | Address |

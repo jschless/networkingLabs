@@ -51,4 +51,6 @@ Describe how to distinguish expected non-alerting telemetry from a true detectio
 record coverage, prioritize remediation, and retest without attacking live targets.
 (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/siem-ir-key.md`](../answer-keys/quizzes/siem-ir-key.md).*

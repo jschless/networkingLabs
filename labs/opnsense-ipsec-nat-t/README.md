@@ -12,10 +12,10 @@ that encrypted data crosses the public side in UDP/4500 rather than native ESP.
 
 ```mermaid
 flowchart LR
-    hqhost["hq-host\n10.10.1.10"] --- hq["HQ OPNsense\nWAN 198.51.100.2"]
-    hq --- nat["nat-cpe\npublic 198.51.100.1\nprivate 10.200.0.1"]
-    nat --- branch["Branch OPNsense\nWAN 10.200.0.2"]
-    branch --- branchhost["branch-host\n10.20.1.10"]
+    hqhost["hq-host<br/>10.10.1.10"] --- hq["HQ OPNsense<br/>WAN 198.51.100.2"]
+    hq --- nat["nat-cpe<br/>public 198.51.100.1<br/>private 10.200.0.1"]
+    nat --- branch["Branch OPNsense<br/>WAN 10.200.0.2"]
+    branch --- branchhost["branch-host<br/>10.20.1.10"]
 ```
 
 | Firewall | WAN | Protected LAN | IKE identity |

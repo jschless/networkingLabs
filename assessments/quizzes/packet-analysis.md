@@ -46,4 +46,6 @@ Describe what a packet capture can and cannot establish about a slow TLS applica
 Include handshake timing, retransmissions, duplicate ACKs, TLS metadata, and the
 endpoint/application evidence needed beyond the capture. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/packet-analysis-key.md`](../answer-keys/quizzes/packet-analysis-key.md).*

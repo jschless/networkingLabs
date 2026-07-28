@@ -20,13 +20,13 @@ to point at it.
 flowchart TB
   subgraph corp["lab-corp · 10.100.0.0/16"]
     subgraph hosts["monitored hosts (Wazuh agent installed)"]
-      dc1["dc1\nSamba AD\n10.100.1.10"]
-      adminws["admin-ws\nyour seat\n10.100.10.10"]
+      dc1["dc1<br/>Samba AD<br/>10.100.1.10"]
+      adminws["admin-ws<br/>your seat<br/>10.100.10.10"]
     end
-    wazuh["wazuh-manager\n10.100.3.30\nrules · decoders\nalerts.json · :55000\nactive response"]
-    intruder["intruder\n10.100.10.66\n(no agent)"]
-    dc1 -- "AD authn audit (JSON)\nagent" --> wazuh
-    adminws -- "sshd / auth.log\nagent" --> wazuh
+    wazuh["wazuh-manager<br/>10.100.3.30<br/>rules · decoders<br/>alerts.json · :55000<br/>active response"]
+    intruder["intruder<br/>10.100.10.66<br/>(no agent)"]
+    dc1 -- "AD authn audit (JSON)<br/>agent" --> wazuh
+    adminws -- "sshd / auth.log<br/>agent" --> wazuh
     intruder -- "ssh brute force" --> adminws
     wazuh -- "active response: DROP" --> intruder
   end

@@ -57,4 +57,6 @@ A customer's packets enter link A, but policy makes the best return route use li
 Explain the strict-mode drop, select a safer validation design, and state what protection
 is lost plus how you would verify it. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/access-security-key.md`](../answer-keys/quizzes/access-security-key.md).*

@@ -18,15 +18,15 @@ hide config behind solution toggles.
 
 ```mermaid
 flowchart TB
-    r1["r1\n10.0.0.1/32"]
-    r2["r2\n10.0.0.2/32"]
-    r3["r3\n10.0.0.3/32"]
+    r1["r1<br/>10.0.0.1/32"]
+    r2["r2<br/>10.0.0.2/32"]
+    r3["r3<br/>10.0.0.3/32"]
 
     r1 -- "10.1.12.0/30" --- r2
     r2 -- "10.1.23.0/30" --- r3
     r1 -- "10.1.13.0/30" --- r3
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
     class r1,r2,r3 router
 ```
 
@@ -217,18 +217,33 @@ BFD solves this:
 
 ### BFD Architecture
 
-```
-+---Router A---+                +---Router B---+
-| OSPF         |                | OSPF         |
-| (registers   |                | (registers   |
-|  neighbor)   |                |  neighbor)   |
-|      |       |                |      |       |
-|   BFD daemon |<-BFD hellos -> | BFD daemon   |
-|      |       |                |      |       |
-| zebra/kernel |                | zebra/kernel |
-+------+-------+                +------+-------+
-       |                               |
-       +------- physical link ---------+
+```mermaid
+flowchart TB
+    subgraph a["Router A"]
+        direction TB
+        ospfa["OSPF<br/>(registers neighbor)"]
+        bfda["BFD daemon"]
+        zebraa["zebra / kernel"]
+        ospfa --- bfda --- zebraa
+    end
+
+    subgraph b["Router B"]
+        direction TB
+        ospfb["OSPF<br/>(registers neighbor)"]
+        bfdb["BFD daemon"]
+        zebrab["zebra / kernel"]
+        ospfb --- bfdb --- zebrab
+    end
+
+    bfda <-- "BFD hellos" --> bfdb
+    zebraa -- "physical link" --- zebrab
+
+    classDef proto stroke:#4778ff,stroke-width:2px
+    classDef bfd stroke:#e05252,stroke-width:2px
+    classDef kernel stroke:#9aa0a6,stroke-width:2px
+    class ospfa,ospfb proto
+    class bfda,bfdb bfd
+    class zebraa,zebrab kernel
 ```
 
 BFD is independent of OSPF — it operates at the forwarding plane level. When BFD

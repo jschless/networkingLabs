@@ -19,15 +19,15 @@ breaks and nobody pages at all.
 flowchart TB
   subgraph corp["lab-corp · 10.100.0.0/16"]
     subgraph hosts["monitored hosts (node-exporter :9100)"]
-      dc1["dc1\nSamba AD\n10.100.1.10"]
-      mail1["mail1\nSMTP gateway\n10.100.2.20"]
-      adminws["admin-ws\n10.100.10.10"]
+      dc1["dc1<br/>Samba AD<br/>10.100.1.10"]
+      mail1["mail1<br/>SMTP gateway<br/>10.100.2.20"]
+      adminws["admin-ws<br/>10.100.10.10"]
     end
-    blackbox["blackbox\n10.100.3.23"]
-    prometheus["prometheus\n10.100.3.20"]
-    alertmanager["alertmanager\n10.100.3.22"]
-    grafana["grafana\n10.100.3.21"]
-    hook1["hook1\n10.100.3.24"]
+    blackbox["blackbox<br/>10.100.3.23"]
+    prometheus["prometheus<br/>10.100.3.20"]
+    alertmanager["alertmanager<br/>10.100.3.22"]
+    grafana["grafana<br/>10.100.3.21"]
+    hook1["hook1<br/>10.100.3.24"]
     blackbox -- "probe: dns / ldap / ldaps" --> dc1
     blackbox -- "probe: smtp" --> mail1
     prometheus -- "scrape /probe" --> blackbox

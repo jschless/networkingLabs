@@ -48,4 +48,6 @@ Defend or reject BGP-LU/Option C for two providers exchanging many VPN reachabil
 endpoints. Compare scalability, ASBR state, trust/policy exposure, failure blast radius,
 and verification with simpler per-VRF handoffs. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/bgp-lu-key.md`](../answer-keys/quizzes/bgp-lu-key.md).*

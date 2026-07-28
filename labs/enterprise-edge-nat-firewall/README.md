@@ -28,28 +28,28 @@ learning sticks.
 
 ```mermaid
 flowchart TB
-    isp["isp\ncEOS"]
-    iclient(["internet-client\n203.0.113.2"])
-    fwout["fw-outside\nperimeter FW + NAT\n203.0.114.2"]
-    web(["web-server\n172.16.0.2\nDMZ-web"])
-    mail(["mail-server\n172.16.0.6\nDMZ-mail"])
-    fwin["fw-inside\ninternal FW\n172.16.1.2"]
-    db(["db-server\n10.0.0.2"])
-    ws(["workstation\n10.0.0.6"])
-    guest(["guest-laptop\n10.0.0.10"])
+    isp["isp<br/>cEOS"]
+    iclient(["internet-client<br/>203.0.113.2"])
+    fwout["fw-outside<br/>perimeter FW + NAT<br/>203.0.114.2"]
+    web(["web-server<br/>172.16.0.2<br/>DMZ-web"])
+    mail(["mail-server<br/>172.16.0.6<br/>DMZ-mail"])
+    fwin["fw-inside<br/>internal FW<br/>172.16.1.2"]
+    db(["db-server<br/>10.0.0.2"])
+    ws(["workstation<br/>10.0.0.6"])
+    guest(["guest-laptop<br/>10.0.0.10"])
 
     isp -- "203.0.113.0/30" --- iclient
     isp -- "203.0.114.0/30" --- fwout
-    fwout -- "172.16.0.0/30\nDMZ-web" --- web
-    fwout -- "172.16.0.4/30\nDMZ-mail" --- mail
-    fwout -- "172.16.1.0/30\nDMZ-inner" --- fwin
-    fwin -- "10.0.0.0/30\nLAN-db" --- db
-    fwin -- "10.0.0.4/30\nLAN-ws" --- ws
-    fwin -- "10.0.0.8/30\nGUEST" --- guest
+    fwout -- "172.16.0.0/30<br/>DMZ-web" --- web
+    fwout -- "172.16.0.4/30<br/>DMZ-mail" --- mail
+    fwout -- "172.16.1.0/30<br/>DMZ-inner" --- fwin
+    fwin -- "10.0.0.0/30<br/>LAN-db" --- db
+    fwin -- "10.0.0.4/30<br/>LAN-ws" --- ws
+    fwin -- "10.0.0.8/30<br/>GUEST" --- guest
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
 
     class isp isp
     class fwout,fwin router

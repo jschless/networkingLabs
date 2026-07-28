@@ -19,14 +19,14 @@ the break-it steps and challenge questions as the real test.
 
 ```mermaid
 flowchart TB
-    isp["isp\nAS65500"]
-    edge["edge\nAS65100"]
-    cc1["cc1\nSTP root VLAN10,30"]
-    cc2["cc2\nSTP root VLAN20"]
-    acc1["acc1\ndual-homed"]
-    acc2["acc2\ndual-homed"]
-    clienta(["client-a\nVLAN10"])
-    rogue["rogue-switch\nhostile edge"]
+    isp["isp<br/>AS65500"]
+    edge["edge<br/>AS65100"]
+    cc1["cc1<br/>STP root VLAN10,30"]
+    cc2["cc2<br/>STP root VLAN20"]
+    acc1["acc1<br/>dual-homed"]
+    acc2["acc2<br/>dual-homed"]
+    clienta(["client-a<br/>VLAN10"])
+    rogue["rogue-switch<br/>hostile edge"]
 
     isp -- "203.0.113.0/30" --- edge
     edge -- "10.0.12.0/30" --- cc1
@@ -39,10 +39,10 @@ flowchart TB
     acc1 -- "VLAN10" --- clienta
     acc2 --- rogue
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef access fill:#00aa88,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef access stroke:#14b8a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
 
     class isp isp
     class edge,cc1,cc2 router

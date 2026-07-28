@@ -11,14 +11,47 @@ device, process value, request, and credential is lab-only.
 
 ## Topology
 
-```text
- enterprise-user -- enterprise-rtr -- idmz-fw -- site-rtr -- cell-switch
-                                      |                         |
-                                 jump / historian       hmi / eng-ws
-                                                       plc1 / plc2
-                                                       attacker-test
-                                                            |
-                                                     passive IDS mirror
+```mermaid
+flowchart TB
+    euser(["enterprise-user<br/>10.110.10.10"])
+    ertr["enterprise-rtr<br/>Enterprise 10.110.10.0/24"]
+    fw["idmz-fw<br/>IT / IDMZ / site conduit"]
+    srtr["site-rtr<br/>site-to-cell conduit"]
+    cell["cell-switch<br/>L2 cell + tc mirror source"]
+
+    subgraph idmz["IDMZ — 10.110.20.0/24"]
+        jump(["jump<br/>.10 · TCP/2222"])
+        historian(["historian<br/>.20"])
+    end
+
+    subgraph cellarea["Cell / area — 10.110.40.0/24"]
+        hmi(["hmi · .10<br/>read-only operator"])
+        engws(["eng-ws · .20<br/>authorized maintenance"])
+        plc1(["plc1 · .101"])
+        plc2(["plc2 · .102"])
+        attacker(["attacker-test · .99<br/>lab-only"])
+    end
+
+    ids(["ids<br/>passive Suricata mirror<br/>never in the route"])
+
+    euser --- ertr
+    ertr -- "10.110.11.0/30" --- fw
+    fw --- idmz
+    fw -- "10.110.30.0/24" --- srtr
+    srtr --- cell
+    cell --- cellarea
+    cell -. "port mirror" .-> ids
+
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef fw stroke:#a06bd6,stroke-width:2px
+    classDef switch stroke:#2a9fd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef sensor stroke:#c8873c,stroke-width:2px
+    class ertr,srtr router
+    class fw fw
+    class cell switch
+    class euser,jump,historian,hmi,engws,plc1,plc2,attacker host
+    class ids sensor
 ```
 
 | Zone/link | Prefix | Assets and purpose |

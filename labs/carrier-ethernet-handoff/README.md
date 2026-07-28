@@ -4,8 +4,29 @@ Turn up two synthetic E-Line services across a provider NID/core, prove QinQ tag
 
 ## Topology
 
-```text
-tester-a -- ce-a -- nid-a === p-core === nid-b -- ce-b -- tester-b
+```mermaid
+flowchart LR
+    testera(["tester-a"])
+    cea["ce-a<br/>customer edge"]
+    nida["nid-a<br/>UNI demarcation"]
+    pcore["p-core<br/>provider core<br/>802.1ad, MTU 1608"]
+    nidb["nid-b<br/>UNI demarcation"]
+    ceb["ce-b<br/>customer edge"]
+    testerb(["tester-b"])
+
+    testera --- cea
+    cea -- "UNI<br/>C-VLAN 110 / 120" --- nida
+    nida == "S-VLAN 3100 / 3120" ==> pcore
+    pcore == "S-VLAN 3100 / 3120" ==> nidb
+    nidb -- "UNI<br/>C-VLAN 110 / 120" --- ceb
+    ceb --- testerb
+
+    classDef ce stroke:#2eb872,stroke-width:2px
+    classDef provider stroke:#9aa0a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class cea,ceb ce
+    class nida,nidb,pcore provider
+    class testera,testerb host
 ```
 
 | Service | Customer VLAN | Provider S-VLAN | Addresses | PCP policy |

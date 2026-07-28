@@ -41,4 +41,6 @@ Explain the state, CPU, latency, and configuration implications of per-spoke VTI
 hub hairpinning. Compare when FlexVPN's model remains defensible and when a dynamic
 shortcut or different architecture is preferable. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/flexvpn-key.md`](../answer-keys/quizzes/flexvpn-key.md).*

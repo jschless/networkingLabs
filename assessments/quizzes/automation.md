@@ -63,4 +63,6 @@ Give a decision method for choosing the reconciliation direction, the evidence t
 be preserved, and one safeguard that prevents an automatic sync from silently turning
 an emergency change into intended state. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/automation-key.md`](../answer-keys/quizzes/automation-key.md).*

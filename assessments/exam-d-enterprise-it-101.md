@@ -256,4 +256,6 @@ Structure your answer:
 
 ---
 
+<!-- site-include-end -->
+
 *End of Exam D. Key: [`answer-keys/exam-d-key.md`](answer-keys/exam-d-key.md).*

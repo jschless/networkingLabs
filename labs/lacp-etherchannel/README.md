@@ -29,18 +29,18 @@ without scaffolding.
 
 ```mermaid
 flowchart LR
-    host1(["host1\n10.0.1.1/24"])
-    sw1["sw1\nLo0: 10.0.0.1/32\nEt3: 10.0.1.253/24"]
-    sw2["sw2\nLo0: 10.0.0.2/32\nEt3: 10.0.1.254/24"]
-    host2(["host2\n10.0.1.2/24"])
+    host1(["host1<br/>10.0.1.1/24"])
+    sw1["sw1<br/>Lo0: 10.0.0.1/32<br/>Et3: 10.0.1.253/24"]
+    sw2["sw2<br/>Lo0: 10.0.0.2/32<br/>Et3: 10.0.1.254/24"]
+    host2(["host2<br/>10.0.1.2/24"])
 
     host1 -- "Et1" --- sw1
     sw1 -- "Et1 (Po1 member)" --- sw2
     sw1 -- "Et2 (Po1 member)" --- sw2
     sw2 -- "Et3" --- host2
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class sw1,sw2 router
     class host1,host2 host

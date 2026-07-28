@@ -44,4 +44,6 @@ Design a CAK rotation and replay-protection verification that avoids an avoidabl
 Include overlap/coordination, MKA state, live-traffic observation, replay counters, and a
 rollback condition. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/macsec-key.md`](../answer-keys/quizzes/macsec-key.md).*

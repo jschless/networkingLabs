@@ -16,10 +16,10 @@ looks like, and only then run it. The challenge questions test transfer.
 
 ```mermaid
 flowchart LR
-    services["services1\n10.10.10.53\nDHCP + DNS"]
+    services["services1<br/>10.10.10.53<br/>DHCP + DNS"]
     sw1["sw1"]
-    client(["client1\nDHCP client"])
-    app(["app1\n10.10.10.80\nHTTP"])
+    client(["client1<br/>DHCP client"])
+    app(["app1<br/>10.10.10.80<br/>HTTP"])
 
     services --- sw1
     client --- sw1

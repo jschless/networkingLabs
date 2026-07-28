@@ -21,18 +21,18 @@ hide the configuration behind solution toggles.
 
 ```mermaid
 flowchart TB
-    spine1["spine1\nAS65100\nLo:10.0.0.101"]
-    spine2["spine2\nAS65200\nLo:10.0.0.102"]
-    leaf1["leaf1\nAS65001\nLo:10.0.0.1"]
-    leaf2["leaf2\nAS65002\nLo:10.0.0.2"]
-    leaf3["leaf3\nAS65003\nLo:10.0.0.3"]
-    leaf4["leaf4\nAS65004\nLo:10.0.0.4"]
+    spine1["spine1<br/>AS65100<br/>Lo:10.0.0.101"]
+    spine2["spine2<br/>AS65200<br/>Lo:10.0.0.102"]
+    leaf1["leaf1<br/>AS65001<br/>Lo:10.0.0.1"]
+    leaf2["leaf2<br/>AS65002<br/>Lo:10.0.0.2"]
+    leaf3["leaf3<br/>AS65003<br/>Lo:10.0.0.3"]
+    leaf4["leaf4<br/>AS65004<br/>Lo:10.0.0.4"]
 
     spine1 --- leaf1 & leaf2 & leaf3 & leaf4
     spine2 --- leaf1 & leaf2 & leaf3 & leaf4
 
-    classDef spine fill:#1a1aff,color:#fff,stroke:#000
-    classDef leaf  fill:#0077cc,color:#fff,stroke:#000
+    classDef spine stroke:#4778ff,stroke-width:2px
+    classDef leaf stroke:#2a9fd6,stroke-width:2px
     class spine1,spine2 spine
     class leaf1,leaf2,leaf3,leaf4 leaf
 ```

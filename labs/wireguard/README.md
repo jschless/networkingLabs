@@ -11,21 +11,21 @@ misunderstood field (`AllowedIPs`) is what makes or breaks it.
 
 ```mermaid
 flowchart TB
-    brwan[("br-wan\n10.0.0.0/24")]
-    hub["hub\nWAN: 10.0.0.1\nwg0: 192.168.100.1/24\nListenPort: 51820"]
-    gwa["gw-a\nWAN: 10.0.0.10\nwg0: 192.168.100.10/32"]
-    gwb["gw-b\nWAN: 10.0.0.20\nwg0: 192.168.100.20/32"]
+    brwan[("br-wan<br/>10.0.0.0/24")]
+    hub["hub<br/>WAN: 10.0.0.1<br/>wg0: 192.168.100.1/24<br/>ListenPort: 51820"]
+    gwa["gw-a<br/>WAN: 10.0.0.10<br/>wg0: 192.168.100.10/32"]
+    gwb["gw-b<br/>WAN: 10.0.0.20<br/>wg0: 192.168.100.20/32"]
 
     hub --- brwan
     gwa --- brwan
     gwb --- brwan
 
-    gwa -. "WireGuard\n192.168.100.x" .- hub
-    gwb -. "WireGuard\n192.168.100.x" .- hub
+    gwa -. "WireGuard<br/>192.168.100.x" .- hub
+    gwb -. "WireGuard<br/>192.168.100.x" .- hub
 
-    classDef hub    fill:#8b4513,color:#fff,stroke:#000
-    classDef spoke  fill:#4682b4,color:#fff,stroke:#000
-    classDef wan    fill:#ccc,color:#000,stroke:#666,stroke-dasharray:5
+    classDef hub stroke:#d2762c,stroke-width:2px
+    classDef spoke stroke:#5b9bd5,stroke-width:2px
+    classDef wan stroke:#b0b6bc,stroke-width:2px,stroke-dasharray:5
     class hub hub
     class gwa,gwb spoke
     class brwan wan

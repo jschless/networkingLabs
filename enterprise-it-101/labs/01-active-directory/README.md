@@ -7,9 +7,9 @@ Build the foundation of the `lab.corp` domain: a Samba AD Domain Controller prov
 ```mermaid
 flowchart LR
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD DC\n10.100.1.10\nLDAP :389 · Kerberos :88\nDNS :53 · LDAPS :636"]
-    adminws["admin-ws\nWorkstation\n10.100.10.10"]
-    lam["lam\nLDAP Account Manager\n10.100.1.11 · HTTP :80"]
+    dc1["dc1<br/>Samba AD DC<br/>10.100.1.10<br/>LDAP :389 · Kerberos :88<br/>DNS :53 · LDAPS :636"]
+    adminws["admin-ws<br/>Workstation<br/>10.100.10.10"]
+    lam["lam<br/>LDAP Account Manager<br/>10.100.1.11 · HTTP :80"]
     adminws -- "DNS" --> dc1
     lam -- "LDAP" --> dc1
   end

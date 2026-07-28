@@ -22,30 +22,52 @@ return routes. You never run `containerlab deploy` directly here.
 
 ## Topology
 
+```mermaid
+flowchart TB
+    net(["Internet"])
+    isp["isp (cEOS)<br/>AS 65500"]
+    edge["edge (cEOS)<br/>AS 65100<br/>eBGP + OSPF default"]
+    cc1["cc1 (cEOS)<br/>collapsed core<br/>L3 + VRRP + DHCP relay"]
+    cc2["cc2 (cEOS)<br/>collapsed core<br/>L3 + VRRP + DHCP relay"]
+    sw1["access-sw1 (Linux)<br/>hostapd — 802.1X"]
+    sw2["access-sw2 (Linux)<br/>open guest access"]
+    corppc(["corp-pc<br/>802.1X supplicant<br/>VLAN 10"])
+    voip(["voip-phone<br/>VLAN 20"])
+    guest(["guest-pc<br/>VLAN 30"])
+
+    subgraph corp["lab-corp 10.100.0.0/16 — Docker Compose (EIT-101)"]
+        dc1(["dc1 · 10.100.1.10<br/>Samba AD + DNS"])
+        dns1(["dns1 · 10.100.1.40<br/>BIND resolver + DDNS"])
+        radius1(["radius1 · 10.100.20.10<br/>FreeRADIUS to AD"])
+        dhcp1(["dhcp1 · 10.100.30.10<br/>Kea DHCP4 + DDNS"])
+    end
+
+    net --- isp
+    isp -- "203.0.113.0/30" --- edge
+    edge -- "10.0.12.0/30" --- cc1
+    edge -- "10.0.22.0/30" --- cc2
+    cc1 -- "routed interlink<br/>10.0.99.0/30 (OSPF)" --- cc2
+    cc1 -- "Et4 — L2 peer-link trunk<br/>VRRP adverts" --- cc2
+    cc1 -- "802.1Q trunk" --- sw1
+    cc2 -- "802.1Q trunk" --- sw2
+    cc1 -- "Et5 seam" --- corp
+    cc2 -- "Et5 seam" --- corp
+    sw1 --- corppc
+    sw1 --- voip
+    sw2 --- guest
+
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef switch stroke:#2a9fd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
+    class edge,cc1,cc2 router
+    class sw1,sw2 switch
+    class corppc,voip,guest,dc1,dns1,radius1,dhcp1 host
+    class isp,net isp
 ```
-              ( Internet )
-                  │ 203.0.113.0/30
-              ┌───┴───┐
-              │  isp  │ AS65500 (cEOS)
-              └───┬───┘
-              ┌───┴───┐
-              │ edge  │ AS65100 (cEOS) — eBGP + OSPF default
-              └─┬───┬─┘
-       10.0.12 │   │ 10.0.22
-            ┌──┴─┐ ┌┴───┐
-            │cc1 ├─┤cc2 │  collapsed core (cEOS): L3 + VRRP + DHCP relay
-            └─┬──┘ └──┬─┘   ├ routed interlink 10.0.99.0/30 (OSPF)
-              │  ╲ ╱  │     └ L2 peer-link trunk (Et4) — VRRP adverts + reachability
-       trunk  │   ╳   │ trunk          │ Et5 seam
-        ┌─────┴─┐ ┌─┴─────┐            │
-        │acc-sw1│ │acc-sw2│ (Linux,    ▼
-        │hostapd│ │ open  │  802.1X)  br-eitcorp ═══ lab-corp 10.100.0.0/16
-        └─┬───┬─┘ └───┬───┘             (Docker Compose services)
-   corp-pc│ │voip   guest-pc             dc1     10.100.1.10   Samba AD + DNS
-   (8021X)│ │(V20)  (V30)                dns1    10.100.1.40   BIND resolver + DDNS
-   VLAN10 ┘ └                            radius1 10.100.20.10  FreeRADIUS → AD
-                                         dhcp1   10.100.30.10  Kea DHCP4 + DDNS
-```
+
+The two `Et5 seam` links land on the `br-eitcorp` Linux bridge, which is what
+bonds the ContainerLab campus to the Docker Compose service stack.
 
 ### Nodes
 

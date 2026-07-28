@@ -16,15 +16,15 @@ with a misleading "auth required" symptom.
 ```mermaid
 flowchart LR
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD\n10.100.1.10"]
-    proxy1["proxy1\nSquid + krb5\n10.100.2.40 · :3128"]
-    web1["webserver1 (allowed)\n10.100.2.41"]
-    web2["webserver2 (blocked for finance)\n10.100.2.42"]
-    ws1["ws1\n10.100.10.11"]
+    dc1["dc1<br/>Samba AD<br/>10.100.1.10"]
+    proxy1["proxy1<br/>Squid + krb5<br/>10.100.2.40 · :3128"]
+    web1["webserver1 (allowed)<br/>10.100.2.41"]
+    web2["webserver2 (blocked for finance)<br/>10.100.2.42"]
+    ws1["ws1<br/>10.100.10.11"]
     dc1 <-- "krb / ldap" --> proxy1
     proxy1 <-- "HTTP" --> web1
     proxy1 <-- "HTTP" --> web2
-    ws1 -- "proxy auth (Negotiate / SPNEGO)\ncurl --proxy-negotiate" --> proxy1
+    ws1 -- "proxy auth (Negotiate / SPNEGO)<br/>curl --proxy-negotiate" --> proxy1
     ws1 -- "kinit (TGT)" --> dc1
   end
 ```

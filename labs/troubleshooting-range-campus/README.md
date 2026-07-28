@@ -9,11 +9,11 @@ separately from the enterprise and advanced-edge ranges.
 
 ```mermaid
 flowchart LR
-    dist["dist1\nSTP root + SVIs"] ===|"LACP trunk: VLANs 10,20"| acc["acc1\naccess switch"]
-    dhcp["dhcp1\nVLAN 10"] --- dist
-    corp["campus1\n10.252.10.10"] --- acc
-    voice["voice1\n10.252.20.10"] --- acc
-    rogue["rogue1\ncontrolled BPDU source"] --- acc
+    dist["dist1<br/>STP root + SVIs"] ===|"LACP trunk: VLANs 10,20"| acc["acc1<br/>access switch"]
+    dhcp["dhcp1<br/>VLAN 10"] --- dist
+    corp["campus1<br/>10.252.10.10"] --- acc
+    voice["voice1<br/>10.252.20.10"] --- acc
+    rogue["rogue1<br/>controlled BPDU source"] --- acc
 ```
 
 `dist1` is the RSTP root for corporate VLAN 10 and voice VLAN 20. Its SVI

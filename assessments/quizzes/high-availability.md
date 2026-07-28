@@ -82,5 +82,7 @@ Graceful Restart and aggressive BFD.
 
 ---
 
+<!-- site-include-end -->
+
 *End of High Availability quiz. Key:
 [`../answer-keys/quizzes/high-availability-key.md`](../answer-keys/quizzes/high-availability-key.md).*

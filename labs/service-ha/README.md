@@ -19,19 +19,19 @@ handoff between them.
 
 ```mermaid
 flowchart TB
-    client["client\n10.10.0.10"]
+    client["client<br/>10.10.0.10"]
     subgraph pair [firewall pair]
-      fw1["fw1 — MASTER\n.2 each side"]
-      fw2["fw2 — BACKUP\n.3 each side"]
+      fw1["fw1 — MASTER<br/>.2 each side"]
+      fw2["fw2 — BACKUP<br/>.3 each side"]
     end
-    backend["backend\n10.10.20.10\n(echo + iperf3)"]
+    backend["backend<br/>10.10.20.10<br/>(echo + iperf3)"]
 
-    client --- |"OUTSIDE 10.10.0.0/24\nVIP 10.10.0.1"| pair
-    pair --- |"INSIDE 10.10.20.0/24\nVIP 10.10.20.1"| backend
-    fw1 <-.->|"sync 10.10.99.0/30\n(conntrackd)"| fw2
+    client --- |"OUTSIDE 10.10.0.0/24<br/>VIP 10.10.0.1"| pair
+    pair --- |"INSIDE 10.10.20.0/24<br/>VIP 10.10.20.1"| backend
+    fw1 <-.->|"sync 10.10.99.0/30<br/>(conntrackd)"| fw2
 
-    classDef fw fill:#5c2d91,color:#fff,stroke:#000
-    classDef host fill:#0b6e4f,color:#fff,stroke:#000
+    classDef fw stroke:#a06bd6,stroke-width:2px
+    classDef host stroke:#17a589,stroke-width:2px
     class fw1,fw2 fw
     class client,backend host
 ```

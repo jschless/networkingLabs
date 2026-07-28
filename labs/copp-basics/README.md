@@ -15,14 +15,14 @@ the break-it steps and challenge questions as the real test.
 
 ```mermaid
 flowchart LR
-    r1["r1\nAS65001\n10.0.0.1/32"]
-    r2["r2 (DUT)\nAS65002\n10.0.0.2/32\nCoPP policy"]
-    r3["r3\nOSPF area 0\n10.0.0.3/32"]
+    r1["r1<br/>AS65001<br/>10.0.0.1/32"]
+    r2["r2 (DUT)<br/>AS65002<br/>10.0.0.2/32<br/>CoPP policy"]
+    r3["r3<br/>OSPF area 0<br/>10.0.0.3/32"]
 
-    r1 -- "10.1.12.0/30\neBGP" --- r2
-    r2 -- "10.1.23.0/30\nOSPF" --- r3
+    r1 -- "10.1.12.0/30<br/>eBGP" --- r2
+    r2 -- "10.1.23.0/30<br/>OSPF" --- r3
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
 
     class r1,r2,r3 router
 ```

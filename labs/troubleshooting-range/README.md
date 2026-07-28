@@ -13,20 +13,20 @@ materials. The normal tools deliberately show you the ticket, not the cause.
 
 ```mermaid
 flowchart LR
-    corp["corp1\n10.250.10.10"] --- acc1["acc1\ncEOS"]
-    voice["voice1\n10.250.20.10"] --- acc1
-    guest["guest1\n10.250.30.10"] --- acc2["acc2\ncEOS"]
-    acc1 --- core1["core1\nFRR"]
-    acc1 --- core2["core2\nFRR"]
+    corp["corp1<br/>10.250.10.10"] --- acc1["acc1<br/>cEOS"]
+    voice["voice1<br/>10.250.20.10"] --- acc1
+    guest["guest1<br/>10.250.30.10"] --- acc2["acc2<br/>cEOS"]
+    acc1 --- core1["core1<br/>FRR"]
+    acc1 --- core2["core2<br/>FRR"]
     acc2 --- core1
     acc2 --- core2
     core1 --- core2
-    core1 --- svc["services1\nDNS + web"]
-    core1 --- edge["edge\nFRR"]
+    core1 --- svc["services1<br/>DNS + web"]
+    core1 --- edge["edge<br/>FRR"]
     core2 --- edge
-    core2 --- branch["branch1\nFRR"]
-    branch --- branchclient["branch-client\n10.250.50.10"]
-    edge --- internet["internet1\n198.18.0.10"]
+    core2 --- branch["branch1<br/>FRR"]
+    branch --- branchclient["branch-client<br/>10.250.50.10"]
+    edge --- internet["internet1<br/>198.18.0.10"]
 ```
 
 All routing adjacencies use OSPF area 0. `acc1` and `acc2` are retained as

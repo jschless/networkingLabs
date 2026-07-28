@@ -11,15 +11,15 @@ that a plain floating static would miss.
 
 ```mermaid
 flowchart LR
-    router["router\n10.0.1.1 / 10.0.2.1"]
-    isp1["isp1\n10.99.0.1/32"]
-    isp2["isp2\n10.99.0.1/32"]
+    router["router<br/>10.0.1.1 / 10.0.2.1"]
+    isp1["isp1<br/>10.99.0.1/32"]
+    isp2["isp2<br/>10.99.0.1/32"]
 
-    router -- "10.0.1.0/30\nprimary AD=5" --- isp1
-    router -- "10.0.2.0/30\nbackup AD=10" --- isp2
+    router -- "10.0.1.0/30<br/>primary AD=5" --- isp1
+    router -- "10.0.2.0/30<br/>backup AD=10" --- isp2
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
     class router router
     class isp1,isp2 isp
 ```

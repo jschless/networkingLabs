@@ -98,5 +98,7 @@ someone else's traffic. Include how the exception is removed and audited. (6 pts
 
 ---
 
+<!-- site-include-end -->
+
 *End of BGP Policy & Security quiz. Key:
 [`../answer-keys/quizzes/bgp-policy-security-key.md`](../answer-keys/quizzes/bgp-policy-security-key.md).*

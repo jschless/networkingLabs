@@ -56,12 +56,12 @@ questions as the real test.
 
 ```mermaid
 flowchart TB
-    spine1["spine1\nAS65100\nLo0 10.255.0.11/32\nMgmt 172.31.40.11"]
-    spine2["spine2\nAS65101\nLo0 10.255.0.12/32\nMgmt 172.31.40.12"]
-    leaf1["leaf1\nAS65111\nLo0 10.255.0.13/32\nMgmt 172.31.40.13"]
-    leaf2["leaf2\nAS65112\nLo0 10.255.0.14/32\nMgmt 172.31.40.14"]
-    netbox(["netbox\nUI :8001\n172.31.40.23"])
-    automation(["automation\nAnsible + Python\n172.31.40.24"])
+    spine1["spine1<br/>AS65100<br/>Lo0 10.255.0.11/32<br/>Mgmt 172.31.40.11"]
+    spine2["spine2<br/>AS65101<br/>Lo0 10.255.0.12/32<br/>Mgmt 172.31.40.12"]
+    leaf1["leaf1<br/>AS65111<br/>Lo0 10.255.0.13/32<br/>Mgmt 172.31.40.13"]
+    leaf2["leaf2<br/>AS65112<br/>Lo0 10.255.0.14/32<br/>Mgmt 172.31.40.14"]
+    netbox(["netbox<br/>UI :8001<br/>172.31.40.23"])
+    automation(["automation<br/>Ansible + Python<br/>172.31.40.24"])
 
     spine1 ---|"10.0.0.0/31"| leaf1
     spine1 ---|"10.0.0.2/31"| leaf2

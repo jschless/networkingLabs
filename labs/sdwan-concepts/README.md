@@ -15,22 +15,29 @@ challenge questions.
 
 ## Topology
 
-```
-                    ┌─────────────┐
-            ┌── eth2┤  mpls-core  ├eth2 ──┐         "MPLS" transport
-            │       │ 172.16.x.x  │       │          (premium, SLA)
-  h1        │       └─────────────┘       │        h2
-   │        │                             │         │
-10.1.0.10   │                             │     10.2.0.10
-   │     branch1                       branch2       │
-   └─eth1───┤                             ├───eth1───┘
- LAN1       │       ┌─────────────┐       │       LAN2
-10.1.0.0/24 └── eth3┤  inet-core  ├eth3 ──┘    10.2.0.0/24
-                    │198.51.100.x │                "internet" transport
-                    └─────────────┘                 (cheap, best-effort)
+```mermaid
+flowchart LR
+    h1(["h1<br/>10.1.0.10<br/>LAN1 10.1.0.0/24"])
+    h2(["h2<br/>10.2.0.10<br/>LAN2 10.2.0.0/24"])
+    branch1["branch1<br/>CE / SD-WAN edge"]
+    branch2["branch2<br/>CE / SD-WAN edge"]
+    mpls["mpls-core<br/>172.16.x.x<br/>premium, SLA"]
+    inet["inet-core<br/>198.51.100.x<br/>cheap, best-effort"]
 
-  Overlay:  tun-mpls 10.255.1.0/30   (GRE over the MPLS transport)
-            tun-inet 10.255.2.0/30   (GRE over the internet)
+    h1 -- "eth1" --- branch1
+    branch1 -- "eth2 — 172.16.1.0/30" --- mpls
+    mpls -- "172.16.2.0/30 — eth2" --- branch2
+    branch1 -- "eth3 — 198.51.100.0/30" --- inet
+    inet -- "198.51.100.4/30 — eth3" --- branch2
+    branch2 -- "eth1" --- h2
+    branch1 -. "tun-mpls 10.255.1.0/30 (GRE over MPLS)<br/>tun-inet 10.255.2.0/30 (GRE over internet)" .- branch2
+
+    classDef ce stroke:#2eb872,stroke-width:2px
+    classDef transport stroke:#9aa0a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class branch1,branch2 ce
+    class mpls,inet transport
+    class h1,h2 host
 ```
 
 | Segment | Subnet | Hosts |

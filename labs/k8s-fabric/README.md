@@ -18,21 +18,21 @@ right, and it's pure BGP underneath the Kubernetes vocabulary.
 
 ```mermaid
 flowchart TB
-    client["client\n172.16.9.10"]
-    tor["tor — FRR, AS 65000\nToR / default gw\nlo 10.0.0.254"]
-    racksw{{"racksw\n(L2 rack segment\n10.1.0.0/24)"}}
-    k3s1["k3s1 — server\nnode-ip 10.1.0.11\nMetalLB speaker"]
-    k3s2["k3s2 — agent\nnode-ip 10.1.0.12\nMetalLB speaker"]
+    client["client<br/>172.16.9.10"]
+    tor["tor — FRR, AS 65000<br/>ToR / default gw<br/>lo 10.0.0.254"]
+    racksw{{"racksw<br/>(L2 rack segment<br/>10.1.0.0/24)"}}
+    k3s1["k3s1 — server<br/>node-ip 10.1.0.11<br/>MetalLB speaker"]
+    k3s2["k3s2 — agent<br/>node-ip 10.1.0.12<br/>MetalLB speaker"]
 
     client --- |"172.16.9.0/24"| tor
     tor --- |"eth1 10.1.0.1"| racksw
     racksw --- k3s1
     racksw --- k3s2
 
-    classDef rtr fill:#5c2d91,color:#fff,stroke:#000
-    classDef k8s fill:#0b6e4f,color:#fff,stroke:#000
-    classDef cli fill:#444,color:#fff,stroke:#000
-    classDef sw fill:#7a3b00,color:#fff,stroke:#000
+    classDef rtr stroke:#a06bd6,stroke-width:2px
+    classDef k8s stroke:#17a589,stroke-width:2px
+    classDef cli stroke:#9aa0a6,stroke-width:2px
+    classDef sw stroke:#c8873c,stroke-width:2px
     class tor rtr
     class k3s1,k3s2 k8s
     class client cli

@@ -68,4 +68,6 @@ interface is operational. Customers still cannot complete an HTTPS checkout. Bui
 four-step evidence plan using at least three assurance mechanisms, and explain why
 device-up and interface-up signals are insufficient. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/observability-key.md`](../answer-keys/quizzes/observability-key.md).*

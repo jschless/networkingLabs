@@ -9,12 +9,12 @@ every other lab in this collection builds on these mechanics.
 
 ```mermaid
 flowchart LR
-    r1["r1\n10.0.0.1"]
-    r2["r2\n10.0.0.2"]
+    r1["r1<br/>10.0.0.1"]
+    r2["r2<br/>10.0.0.2"]
 
     r1 -- "10.0.0.0/30" --- r2
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
     class r1,r2 router
 ```
 

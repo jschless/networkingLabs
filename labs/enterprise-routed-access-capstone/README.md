@@ -16,14 +16,14 @@ each verification's result before you run it.
 
 ```mermaid
 flowchart TB
-    core1["core1\n10.0.0.1/32\nOSPF area 0"]
-    core2["core2\n10.0.0.2/32\nOSPF area 0"]
-    dist1["dist1\n10.0.1.1/32\nABR"]
-    dist2["dist2\n10.0.1.2/32\nABR"]
-    dist3["dist3\n10.0.1.3/32\nABR"]
-    dist4["dist4\n10.0.1.4/32\nABR"]
-    acc1["acc1\n10.0.2.1/32\nstub"]
-    acc2["acc2\n10.0.2.2/32\nstub"]
+    core1["core1<br/>10.0.0.1/32<br/>OSPF area 0"]
+    core2["core2<br/>10.0.0.2/32<br/>OSPF area 0"]
+    dist1["dist1<br/>10.0.1.1/32<br/>ABR"]
+    dist2["dist2<br/>10.0.1.2/32<br/>ABR"]
+    dist3["dist3<br/>10.0.1.3/32<br/>ABR"]
+    dist4["dist4<br/>10.0.1.4/32<br/>ABR"]
+    acc1["acc1<br/>10.0.2.1/32<br/>stub"]
+    acc2["acc2<br/>10.0.2.2/32<br/>stub"]
     h1(["h1"])
     h2(["h2"])
     h3(["h3"])
@@ -43,10 +43,10 @@ flowchart TB
     acc2 --- h3
     acc2 --- h4
 
-    classDef core   fill:#1a1aff,color:#fff,stroke:#000
-    classDef dist   fill:#0077cc,color:#fff,stroke:#000
-    classDef access fill:#00aa88,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef core stroke:#4778ff,stroke-width:2px
+    classDef dist stroke:#2a9fd6,stroke-width:2px
+    classDef access stroke:#14b8a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class core1,core2 core
     class dist1,dist2,dist3,dist4 dist

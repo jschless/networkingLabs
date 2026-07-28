@@ -70,5 +70,7 @@ Each step must name evidence and what it rules out. (6 pts)
 
 ---
 
+<!-- site-include-end -->
+
 *End of GRE, IPsec & MTU quiz. Key:
 [`../answer-keys/quizzes/tunnel-security-key.md`](../answer-keys/quizzes/tunnel-security-key.md).*

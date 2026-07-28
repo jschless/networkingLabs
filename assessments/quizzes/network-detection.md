@@ -51,4 +51,6 @@ Design metadata and full-packet retention for a busy DMZ under a fixed storage b
 Explain tiering, selective capture, privacy/access controls, and which investigations
 become impossible after packet expiry. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/network-detection-key.md`](../answer-keys/quizzes/network-detection-key.md).*

@@ -18,17 +18,17 @@ the break-it steps and challenge questions as the real test.
 
 ```mermaid
 flowchart LR
-    dist1["dist1\nVLAN10 gateway\nintended root"]
-    acc1["acc1\naccess switch"]
-    clienta(["client-a\n10.10.10.10/24"])
-    rogue["rogue-switch\nclaims root"]
+    dist1["dist1<br/>VLAN10 gateway<br/>intended root"]
+    acc1["acc1<br/>access switch"]
+    clienta(["client-a<br/>10.10.10.10/24"])
+    rogue["rogue-switch<br/>claims root"]
 
     dist1 --- acc1
     acc1 --- clienta
     acc1 --- rogue
 
-    classDef switch fill:#1a1aff,color:#fff,stroke:#000
-    classDef host fill:#3d7a3d,color:#fff,stroke:#000
+    classDef switch stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class dist1,acc1,rogue switch
     class clienta host
 ```

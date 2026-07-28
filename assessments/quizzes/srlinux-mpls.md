@@ -39,4 +39,6 @@ remote VRF, and end-to-end return traffic. (5 pts)
 Explain candidate configuration, validation/diff, explicit BGP policy, commit, operational
 verification, and rollback. Contrast one risk with a default-accept CLI workflow. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/srlinux-mpls-key.md`](../answer-keys/quizzes/srlinux-mpls-key.md).*

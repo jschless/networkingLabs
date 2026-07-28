@@ -19,16 +19,16 @@ fabric, Tenant-B hosts can reach each other, and that no cross-tenant traffic is
 
 ```mermaid
 flowchart TB
-    spine1["spine1\nAS65100\nLo:10.0.0.101"]
-    spine2["spine2\nAS65200\nLo:10.0.0.102"]
-    leaf1["leaf1\nAS65001\nLo:10.0.0.1"]
-    leaf2["leaf2\nAS65002\nLo:10.0.0.2"]
-    leaf3["leaf3\nAS65003\nLo:10.0.0.3"]
-    leaf4["leaf4\nAS65004\nLo:10.0.0.4"]
-    ha1(["host-a1\nTENANT-A\n10.10.10.11"])
-    hb1(["host-b1\nTENANT-B\n10.20.20.11"])
-    ha2(["host-a2\nTENANT-A\n10.10.10.12"])
-    hb2(["host-b2\nTENANT-B\n10.20.20.12"])
+    spine1["spine1<br/>AS65100<br/>Lo:10.0.0.101"]
+    spine2["spine2<br/>AS65200<br/>Lo:10.0.0.102"]
+    leaf1["leaf1<br/>AS65001<br/>Lo:10.0.0.1"]
+    leaf2["leaf2<br/>AS65002<br/>Lo:10.0.0.2"]
+    leaf3["leaf3<br/>AS65003<br/>Lo:10.0.0.3"]
+    leaf4["leaf4<br/>AS65004<br/>Lo:10.0.0.4"]
+    ha1(["host-a1<br/>TENANT-A<br/>10.10.10.11"])
+    hb1(["host-b1<br/>TENANT-B<br/>10.20.20.11"])
+    ha2(["host-a2<br/>TENANT-A<br/>10.10.10.12"])
+    hb2(["host-b2<br/>TENANT-B<br/>10.20.20.12"])
 
     spine1 --- leaf1 & leaf2 & leaf3 & leaf4
     spine2 --- leaf1 & leaf2 & leaf3 & leaf4
@@ -37,9 +37,9 @@ flowchart TB
     leaf3 --- ha2
     leaf4 --- hb2
 
-    classDef spine fill:#1a1aff,color:#fff,stroke:#000
-    classDef vtep  fill:#0077cc,color:#fff,stroke:#000
-    classDef host  fill:#3d7a3d,color:#fff,stroke:#000
+    classDef spine stroke:#4778ff,stroke-width:2px
+    classDef vtep stroke:#2a9fd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class spine1,spine2 spine
     class leaf1,leaf2,leaf3,leaf4 vtep
     class ha1,hb1,ha2,hb2 host
@@ -369,18 +369,20 @@ show interfaces Vxlan1 counters
 
 ### Three-layer model
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Application layer: host-a1 ←→ host-a2             │
-│  10.10.10.11                      10.10.10.12       │
-├─────────────────────────────────────────────────────┤
-│  Overlay (VXLAN): VNI 10010 tunnel                  │
-│  leaf1 VTEP 10.0.0.1 ←→ leaf3 VTEP 10.0.0.3        │
-│  BGP EVPN distributes MAC/IP and prefix routes      │
-├─────────────────────────────────────────────────────┤
-│  Underlay (eBGP): loopback reachability             │
-│  leaf1 → spine1/spine2 → leaf3 (ECMP)              │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    app["<b>Application layer</b><br/>host-a1 10.10.10.11 &harr; host-a2 10.10.10.12"]
+    overlay["<b>Overlay (VXLAN)</b> — VNI 10010 tunnel<br/>leaf1 VTEP 10.0.0.1 &harr; leaf3 VTEP 10.0.0.3<br/>BGP EVPN distributes MAC/IP and prefix routes"]
+    underlay["<b>Underlay (eBGP)</b> — loopback reachability<br/>leaf1 &rarr; spine1/spine2 &rarr; leaf3 (ECMP)"]
+
+    app --- overlay --- underlay
+
+    classDef appl stroke:#6aa84f,stroke-width:2px
+    classDef ovl stroke:#a06bd6,stroke-width:2px
+    classDef und stroke:#4778ff,stroke-width:2px
+    class app appl
+    class overlay ovl
+    class underlay und
 ```
 
 ### EVPN route types in this lab

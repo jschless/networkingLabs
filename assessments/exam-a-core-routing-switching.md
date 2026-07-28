@@ -243,4 +243,6 @@ the fault:
 
 ---
 
+<!-- site-include-end -->
+
 *End of Exam A. Key: [`answer-keys/exam-a-key.md`](answer-keys/exam-a-key.md).*

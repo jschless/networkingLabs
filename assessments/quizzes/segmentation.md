@@ -68,4 +68,6 @@ underlay IGP. Explain the separation failure, give the minimum policy repair, an
 route-table plus packet-capture evidence that proves the core is black again without
 breaking the overlay. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/segmentation-key.md`](../answer-keys/quizzes/segmentation-key.md).*

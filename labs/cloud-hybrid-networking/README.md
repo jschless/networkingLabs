@@ -10,16 +10,16 @@ billing, or private-circuit provisioning.
 
 ```mermaid
 flowchart LR
-    corp_client(["corp-client\n10.60.10.10"])
-    corp_switch["corp-switch\ncorporate LAN"]
-    edge1["onprem-edge1\ncEOS"]
-    edge2["onprem-edge2\ncEOS"]
-    transit["cloud-transit\nFRR transit hub"]
-    inspection["inspection\nstateful policy"]
-    app_a(["app-a-rtr\n10.61.10.10 · HTTPS"])
-    app_b(["app-b-rtr\n10.62.10.10 · restricted"])
-    dns(["dns\nprivate resolver"])
-    public_client(["public-client\n198.18.60.2"])
+    corp_client(["corp-client<br/>10.60.10.10"])
+    corp_switch["corp-switch<br/>corporate LAN"]
+    edge1["onprem-edge1<br/>cEOS"]
+    edge2["onprem-edge2<br/>cEOS"]
+    transit["cloud-transit<br/>FRR transit hub"]
+    inspection["inspection<br/>stateful policy"]
+    app_a(["app-a-rtr<br/>10.61.10.10 · HTTPS"])
+    app_b(["app-b-rtr<br/>10.62.10.10 · restricted"])
+    dns(["dns<br/>private resolver"])
+    public_client(["public-client<br/>198.18.60.2"])
 
     corp_client --- corp_switch
     corp_switch --- edge1
@@ -34,10 +34,10 @@ flowchart LR
     inspection -- "10.63.10.0/24" --- dns
     transit -- "198.18.60.0/30" --- public_client
 
-    classDef edge fill:#1a1aff,color:#fff,stroke:#000
-    classDef service fill:#3d7a3d,color:#fff,stroke:#000
-    classDef transit fill:#555,color:#fff,stroke:#000
-    classDef client fill:#ccc,color:#000,stroke:#666
+    classDef edge stroke:#4778ff,stroke-width:2px
+    classDef service stroke:#6aa84f,stroke-width:2px
+    classDef transit stroke:#9aa0a6,stroke-width:2px
+    classDef client stroke:#b0b6bc,stroke-width:2px
 
     class edge1,edge2 edge
     class transit,inspection transit

@@ -71,4 +71,6 @@ Give two plausible classification or policing faults, a safe recovery method, an
 counters/control-plane checks that prove the repaired policy protects the CPU without
 dropping legitimate routing traffic. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/management-security-key.md`](../answer-keys/quizzes/management-security-key.md).*

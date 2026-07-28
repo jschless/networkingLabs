@@ -13,10 +13,10 @@ prove TLS matters by reading a password off the wire, sign outbound mail with
 ```mermaid
 flowchart LR
   subgraph corp["lab-corp · 10.100.0.0/16"]
-    dc1["dc1\nSamba AD · DNS + LDAP\n10.100.1.10"]
-    mail1["mail1\nPostfix + Dovecot\n10.100.2.20\nSMTP 25/587 · IMAP 143/993"]
-    adminws["admin-ws\n10.100.10.10"]
-    mail1 -- "LDAPS (auth + lookup)\nMX → mail1.lab.corp" --> dc1
+    dc1["dc1<br/>Samba AD · DNS + LDAP<br/>10.100.1.10"]
+    mail1["mail1<br/>Postfix + Dovecot<br/>10.100.2.20<br/>SMTP 25/587 · IMAP 143/993"]
+    adminws["admin-ws<br/>10.100.10.10"]
+    mail1 -- "LDAPS (auth + lookup)<br/>MX → mail1.lab.corp" --> dc1
     adminws -- "kinit / dig" --> dc1
     adminws -- "swaks / curl imaps" --> mail1
   end

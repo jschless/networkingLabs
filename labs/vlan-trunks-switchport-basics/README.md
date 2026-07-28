@@ -19,12 +19,12 @@ the break-it steps and challenge questions as the real test.
 
 ```mermaid
 flowchart LR
-    ha(["host-a\nVLAN10\n10.10.10.11/24"])
-    va(["voice-a\nVLAN20\n10.20.20.11/24"])
+    ha(["host-a<br/>VLAN10<br/>10.10.10.11/24"])
+    va(["voice-a<br/>VLAN20<br/>10.20.20.11/24"])
     sw1["sw1"]
     sw2["sw2"]
-    hb(["host-b\nVLAN10\n10.10.10.12/24"])
-    vb(["voice-b\nVLAN20\n10.20.20.12/24"])
+    hb(["host-b<br/>VLAN10<br/>10.10.10.12/24"])
+    vb(["voice-b<br/>VLAN20<br/>10.20.20.12/24"])
 
     ha --- sw1
     va --- sw1
@@ -32,8 +32,8 @@ flowchart LR
     sw2 --- hb
     sw2 --- vb
 
-    classDef switch fill:#1a1aff,color:#fff,stroke:#000
-    classDef host fill:#3d7a3d,color:#fff,stroke:#000
+    classDef switch stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class sw1,sw2 switch
     class ha,va,hb,vb host
 ```

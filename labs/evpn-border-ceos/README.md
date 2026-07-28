@@ -8,18 +8,18 @@ Tenant-B remains completely isolated.
 
 ```mermaid
 flowchart TB
-    spine1["spine1\nAS65100\nLo:10.0.0.101"]
-    spine2["spine2\nAS65200\nLo:10.0.0.102"]
-    leaf1["leaf1\nAS65001\nLo:10.0.0.1"]
-    leaf2["leaf2\nAS65002\nLo:10.0.0.2"]
-    leaf3["leaf3\nAS65003\nLo:10.0.0.3"]
-    leaf4["leaf4\nAS65004\nLo:10.0.0.4"]
-    bleaf1["bleaf1\nAS65005\nLo:10.0.0.5"]
-    ext["ext-router\nAS65500\n100.64.0.0/24"]
-    ha1(["host-a1\nTENANT-A\n10.10.10.11"])
-    hb1(["host-b1\nTENANT-B\n10.20.20.11"])
-    ha2(["host-a2\nTENANT-A\n10.10.10.12"])
-    hb2(["host-b2\nTENANT-B\n10.20.20.12"])
+    spine1["spine1<br/>AS65100<br/>Lo:10.0.0.101"]
+    spine2["spine2<br/>AS65200<br/>Lo:10.0.0.102"]
+    leaf1["leaf1<br/>AS65001<br/>Lo:10.0.0.1"]
+    leaf2["leaf2<br/>AS65002<br/>Lo:10.0.0.2"]
+    leaf3["leaf3<br/>AS65003<br/>Lo:10.0.0.3"]
+    leaf4["leaf4<br/>AS65004<br/>Lo:10.0.0.4"]
+    bleaf1["bleaf1<br/>AS65005<br/>Lo:10.0.0.5"]
+    ext["ext-router<br/>AS65500<br/>100.64.0.0/24"]
+    ha1(["host-a1<br/>TENANT-A<br/>10.10.10.11"])
+    hb1(["host-b1<br/>TENANT-B<br/>10.20.20.11"])
+    ha2(["host-a2<br/>TENANT-A<br/>10.10.10.12"])
+    hb2(["host-b2<br/>TENANT-B<br/>10.20.20.12"])
 
     spine1 --- leaf1 & leaf2 & leaf3 & leaf4 & bleaf1
     spine2 --- leaf1 & leaf2 & leaf3 & leaf4 & bleaf1
@@ -29,10 +29,10 @@ flowchart TB
     leaf4 --- hb2
     bleaf1 -- "203.0.113.0/30" --- ext
 
-    classDef spine fill:#1a1aff,color:#fff,stroke:#000
-    classDef vtep  fill:#0077cc,color:#fff,stroke:#000
-    classDef host  fill:#3d7a3d,color:#fff,stroke:#000
-    classDef ce    fill:#006400,color:#fff,stroke:#000
+    classDef spine stroke:#4778ff,stroke-width:2px
+    classDef vtep stroke:#2a9fd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    classDef ce stroke:#2eb872,stroke-width:2px
     class spine1,spine2 spine
     class leaf1,leaf2,leaf3,leaf4,bleaf1 vtep
     class ha1,hb1,ha2,hb2 host

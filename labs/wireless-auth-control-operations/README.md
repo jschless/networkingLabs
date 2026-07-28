@@ -9,11 +9,33 @@ production WLC.
 
 ## Topology
 
-```text
- corp-client --EAPOL--\                 /-- corp-service (VLAN 110)
- guest-client ---------- [authenticator] -- guest-service (VLAN 120)
- quarantine-client -EAPOL/       |       \-- quarantine-service (VLAN 130)
-                                radius
+```mermaid
+flowchart LR
+    corpc(["corp-client<br/>EAP-TLS"])
+    guestc(["guest-client<br/>VLAN 120 fixture"])
+    quarc(["quarantine-client<br/>EAP-TLS"])
+
+    auth["authenticator<br/>hostapd EAPOL<br/>bridge policy + inventory API"]
+    radius["radius<br/>FreeRADIUS 3.2.1<br/>192.168.99.0/24"]
+
+    corps(["corp-service<br/>VLAN 110 — 10.110.0.0/24"])
+    guests(["guest-service<br/>VLAN 120 — 10.120.0.0/24"])
+    quars(["quarantine-service<br/>VLAN 130 — 10.130.0.0/24"])
+
+    corpc -- "EAPOL" --- auth
+    guestc --- auth
+    quarc -- "EAPOL" --- auth
+    auth -- "RADIUS" --- radius
+    auth --- corps
+    auth --- guests
+    auth --- quars
+
+    classDef switch stroke:#2a9fd6,stroke-width:2px
+    classDef aaa stroke:#a06bd6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class auth switch
+    class radius aaa
+    class corpc,guestc,quarc,corps,guests,quars host
 ```
 
 | Segment | Prefix | Purpose |

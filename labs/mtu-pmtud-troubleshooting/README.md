@@ -20,19 +20,19 @@ looks like, and only then run it. The challenge questions test transfer.
 
 ```mermaid
 flowchart LR
-    hosta(["host-a\n192.168.1.10/24"])
-    edgea["edge-a\nGRE 172.16.0.1"]
-    internet["internet\nWAN MTU 1400"]
-    edgeb["edge-b\nGRE 172.16.0.2"]
-    hostb(["host-b\n192.168.2.10/24\nHTTP:8080"])
+    hosta(["host-a<br/>192.168.1.10/24"])
+    edgea["edge-a<br/>GRE 172.16.0.1"]
+    internet["internet<br/>WAN MTU 1400"]
+    edgeb["edge-b<br/>GRE 172.16.0.2"]
+    hostb(["host-b<br/>192.168.2.10/24<br/>HTTP:8080"])
 
     hosta --- edgea
     edgea --- internet
     internet --- edgeb
     edgeb --- hostb
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class edgea,internet,edgeb router
     class hosta,hostb host
 ```

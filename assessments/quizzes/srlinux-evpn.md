@@ -41,4 +41,6 @@ Compare native SR Linux VXLAN/EVPN with a Linux/FRR implementation. Address nati
 tunnel/MAC-VRF state, control-plane learning preference, configuration model, and the
 platform-independent evidence that must agree. (5 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/srlinux-evpn-key.md`](../answer-keys/quizzes/srlinux-evpn-key.md).*

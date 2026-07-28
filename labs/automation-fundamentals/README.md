@@ -16,20 +16,24 @@ where they differ from NETCONF/RESTCONF.
 
 ## Topology
 
-```
-              automation container
-               172.31.41.21  (Python, curl, jq)
-                     │
-   ╔═════════════════╧══════════════════════╗
-   ║   containerlab mgmt network            ║
-   ║   172.31.41.0/24                       ║
-   ╚════╤═══════════════════════════╤═══════╝
-        │ Management0 (.11)         │ Management0 (.12)
-   ┌────┴─────┐               ┌─────┴────┐
-   │    r1    │ Eth1     Eth1 │    r2    │
-   │ AS 65001 ├───────────────┤ AS 65002 │
-   └──────────┘  10.1.12.0/30 └──────────┘
-   Lo0 10.0.0.1/32            Lo0 10.0.0.2/32
+```mermaid
+flowchart TB
+    auto(["automation<br/>Python, curl, jq<br/>172.31.41.21"])
+
+    subgraph mgmt["containerlab mgmt network — 172.31.41.0/24"]
+        direction LR
+        r1["r1 (cEOS)<br/>AS 65001<br/>Lo0 10.0.0.1/32<br/>Management0 .11"]
+        r2["r2 (cEOS)<br/>AS 65002<br/>Lo0 10.0.0.2/32<br/>Management0 .12"]
+    end
+
+    auto -- "eAPI" --> r1
+    auto -- "eAPI" --> r2
+    r1 -- "Eth1 — 10.1.12.0/30 — Eth1<br/>eBGP" --- r2
+
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
+    class r1,r2 router
+    class auto host
 ```
 
 | Link | Subnet | Purpose |

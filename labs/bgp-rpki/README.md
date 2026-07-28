@@ -23,18 +23,18 @@ to *observe, predict, and tune* the policy.
 
 ```mermaid
 flowchart TB
-    isp1["isp1\nAS65100\n10.0.0.10/32\n10.100.0.0/24 (VALID)"]
-    hijacker["hijacker\nAS65999\n10.0.0.99/32\n10.100.0.0/24 (INVALID)"]
-    edge["edge\nAS65000\n10.0.0.1/32"]
-    rpki["rpki-server\nRTR :3323"]
+    isp1["isp1<br/>AS65100<br/>10.0.0.10/32<br/>10.100.0.0/24 (VALID)"]
+    hijacker["hijacker<br/>AS65999<br/>10.0.0.99/32<br/>10.100.0.0/24 (INVALID)"]
+    edge["edge<br/>AS65000<br/>10.0.0.1/32"]
+    rpki["rpki-server<br/>RTR :3323"]
 
     isp1 -- "10.0.1.0/30" --- edge
     hijacker -- "10.0.2.0/30" --- edge
     edge -- "10.0.3.0/30" --- rpki
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef isp    fill:#555,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef isp stroke:#9aa0a6,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
     class edge router
     class isp1,hijacker isp
     class rpki host

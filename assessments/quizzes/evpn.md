@@ -84,5 +84,7 @@ that distinguishes a wrong import RT from an unreachable remote VTEP. (6 pts)
 
 ---
 
+<!-- site-include-end -->
+
 *End of Data-Center EVPN quiz. Key:
 [`../answer-keys/quizzes/evpn-key.md`](../answer-keys/quizzes/evpn-key.md).*

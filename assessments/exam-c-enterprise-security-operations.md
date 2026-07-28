@@ -262,4 +262,6 @@ Structure your answer:
 
 ---
 
+<!-- site-include-end -->
+
 *End of Exam C. Key: [`answer-keys/exam-c-key.md`](answer-keys/exam-c-key.md).*

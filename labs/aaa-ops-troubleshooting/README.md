@@ -18,10 +18,10 @@ looks like, and only then run it. The challenge questions test transfer.
 
 ```mermaid
 flowchart LR
-    admin(["admin1\n192.168.99.10"])
-    sw1["sw1\nmgmt access switch"]
-    device["device1\ncEOS\n192.168.99.1"]
-    tacacs(["tacacs1\n192.168.99.20"])
+    admin(["admin1<br/>192.168.99.10"])
+    sw1["sw1<br/>mgmt access switch"]
+    device["device1<br/>cEOS<br/>192.168.99.1"]
+    tacacs(["tacacs1<br/>192.168.99.20"])
 
     admin --- sw1
     device --- sw1

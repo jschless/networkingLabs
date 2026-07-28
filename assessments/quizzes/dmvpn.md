@@ -69,5 +69,7 @@ your explanation. (5 pts)
 
 ---
 
+<!-- site-include-end -->
+
 *End of DMVPN quiz. Key:
 [`../answer-keys/quizzes/dmvpn-key.md`](../answer-keys/quizzes/dmvpn-key.md).*

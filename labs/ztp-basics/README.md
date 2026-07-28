@@ -20,20 +20,20 @@ mgmt VLAN carries day-0; the config then brings up production ports).
 ```mermaid
 flowchart TB
     subgraph mgmt ["mgmt network 172.20.20.0/24 — where ZTP happens"]
-      ztp1m["ztp1 .111\nDHCP + HTTP"]
-      sw1m["sw1 Ma0\n(ZTP client)"]
+      ztp1m["ztp1 .111<br/>DHCP + HTTP"]
+      sw1m["sw1 Ma0<br/>(ZTP client)"]
     end
-    ztp1["ztp1 eth1\n10.0.99.10/24"]
-    sw1["sw1 (cEOS)\nEt1: 10.0.99.1/24 †\nEt2: 10.0.2.1/24 †"]
-    h1["h1\nuser host\n10.0.2.100/24"]
+    ztp1["ztp1 eth1<br/>10.0.99.10/24"]
+    sw1["sw1 (cEOS)<br/>Et1: 10.0.99.1/24 †<br/>Et2: 10.0.2.1/24 †"]
+    h1["h1<br/>user host<br/>10.0.2.100/24"]
 
     ztp1m -.-> sw1m
-    ztp1 --- |"10.0.99.0/24\nserver segment"| sw1
-    sw1 --- |"10.0.2.0/24\nuser segment"| h1
+    ztp1 --- |"10.0.99.0/24<br/>server segment"| sw1
+    sw1 --- |"10.0.2.0/24<br/>user segment"| h1
 
-    classDef srv fill:#5c2d91,color:#fff,stroke:#000
-    classDef sw  fill:#7a3b00,color:#fff,stroke:#000
-    classDef hst fill:#006400,color:#fff,stroke:#000
+    classDef srv stroke:#a06bd6,stroke-width:2px
+    classDef sw stroke:#c8873c,stroke-width:2px
+    classDef hst stroke:#2eb872,stroke-width:2px
     class ztp1,ztp1m srv
     class sw1,sw1m sw
     class h1 hst

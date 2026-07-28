@@ -60,4 +60,6 @@ why advertising it into shared transit is unsafe, compare renumbering, non-trans
 isolation, and scoped translation, and give a verification plan for the selected
 response. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/hybrid-cloud-key.md`](../answer-keys/quizzes/hybrid-cloud-key.md).*

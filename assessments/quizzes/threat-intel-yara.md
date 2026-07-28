@@ -52,4 +52,6 @@ A newly deployed IOC/YARA rule produces thousands of alerts on approved software
 shared infrastructure. Give a tuning method that reduces noise without deleting the
 evidence trail or globally suppressing future malicious use. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/threat-intel-yara-key.md`](../answer-keys/quizzes/threat-intel-yara-key.md).*

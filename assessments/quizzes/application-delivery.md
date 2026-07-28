@@ -61,4 +61,6 @@ authoritative DNS, the recursive answer, and new client connections change. Incl
 fate of an already-established TCP session and the evidence needed to measure each
 boundary. (6 pts)
 
+<!-- site-include-end -->
+
 *Key: [`../answer-keys/quizzes/application-delivery-key.md`](../answer-keys/quizzes/application-delivery-key.md).*

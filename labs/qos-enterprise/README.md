@@ -21,19 +21,19 @@ questions as the real test.
 
 ```mermaid
 flowchart LR
-    voice(["client-voice\n10.1.1.1/30\nDSCP EF 0xb8"])
-    video(["client-video\n10.1.2.1/30\nDSCP AF41 0x88"])
-    data(["client-data\n10.1.3.1/30\nDSCP BE 0x00"])
-    router["router\nHTB QoS on eth4\n2Mbps WAN bottleneck"]
-    server(["server\n10.2.0.2/30\niperf3"])
+    voice(["client-voice<br/>10.1.1.1/30<br/>DSCP EF 0xb8"])
+    video(["client-video<br/>10.1.2.1/30<br/>DSCP AF41 0x88"])
+    data(["client-data<br/>10.1.3.1/30<br/>DSCP BE 0x00"])
+    router["router<br/>HTB QoS on eth4<br/>2Mbps WAN bottleneck"]
+    server(["server<br/>10.2.0.2/30<br/>iperf3"])
 
     voice -- "10.1.1.0/30" --- router
     video -- "10.1.2.0/30" --- router
     data -- "10.1.3.0/30" --- router
-    router -- "10.2.0.0/30\nWAN bottleneck" --- server
+    router -- "10.2.0.0/30<br/>WAN bottleneck" --- server
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class router router
     class voice,video,data,server host
@@ -58,18 +58,27 @@ classification (`mask 0xfc`).
 
 ## HTB Class Hierarchy on router eth4
 
-```
-root (1:) HTB — default class 1:30 (unclassified → data)
-└── 1:1   total 2Mbps ceiling
-    ├── 1:10  Voice  EF   DSCP 46  rate 800kbps  ceil 2Mbps  prio 1
-    │         leaf: prio (single-band FIFO, lowest latency)
-    │
-    ├── 1:20  Video  AF41 DSCP 34  rate 600kbps  ceil 2Mbps  prio 2
-    │         leaf: GRED (WRED AQM — early drop before queue fills)
-    │           min=5000B  max=40000B  prob=10%  limit=50000B
-    │
-    └── 1:30  Data   BE   DSCP  0  rate 600kbps  ceil 2Mbps  prio 3
-              leaf: SFQ  (stochastic fair queuing between flows)
+```mermaid
+flowchart TB
+    root["root (1:) HTB<br/>default class 1:30 — unclassified &rarr; data"]
+    total["1:1<br/>total 2Mbps ceiling"]
+    voice["1:10 Voice — EF, DSCP 46<br/>rate 800kbps · ceil 2Mbps · prio 1<br/>leaf: prio (single-band FIFO, lowest latency)"]
+    video["1:20 Video — AF41, DSCP 34<br/>rate 600kbps · ceil 2Mbps · prio 2<br/>leaf: GRED (WRED AQM — early drop)<br/>min=5000B max=40000B prob=10% limit=50000B"]
+    data["1:30 Data — BE, DSCP 0<br/>rate 600kbps · ceil 2Mbps · prio 3<br/>leaf: SFQ (stochastic fair queuing between flows)"]
+
+    root --> total
+    total --> voice
+    total --> video
+    total --> data
+
+    classDef qroot stroke:#9aa0a6,stroke-width:2px
+    classDef ef stroke:#e05252,stroke-width:2px
+    classDef af stroke:#c8873c,stroke-width:2px
+    classDef be stroke:#4778ff,stroke-width:2px
+    class root,total qroot
+    class voice ef
+    class video af
+    class data be
 ```
 
 Borrowing: each class can borrow bandwidth up to 2Mbps (its `ceil`). HTB

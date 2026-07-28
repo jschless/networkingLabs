@@ -30,12 +30,12 @@ learning sticks.
 
 ```mermaid
 flowchart TB
-    edge1["edge1\nupstream router"]
-    campus1["campus1\ncEOS\nVLAN10 + VLAN99"]
-    client1(["client1\nDHCP client\nVLAN10"])
-    services1(["services1\nDHCP/DNS/NTP/syslog\n192.168.99.10\nVLAN99"])
-    mgmt1(["mgmt1\nadmin WS\n192.168.99.30\nVLAN99"])
-    tacacs1(["tacacs1\nTACACS+\n192.168.99.20\nVLAN99"])
+    edge1["edge1<br/>upstream router"]
+    campus1["campus1<br/>cEOS<br/>VLAN10 + VLAN99"]
+    client1(["client1<br/>DHCP client<br/>VLAN10"])
+    services1(["services1<br/>DHCP/DNS/NTP/syslog<br/>192.168.99.10<br/>VLAN99"])
+    mgmt1(["mgmt1<br/>admin WS<br/>192.168.99.30<br/>VLAN99"])
+    tacacs1(["tacacs1<br/>TACACS+<br/>192.168.99.20<br/>VLAN99"])
 
     edge1 --- campus1
     campus1 --- client1
@@ -43,8 +43,8 @@ flowchart TB
     campus1 --- mgmt1
     campus1 --- tacacs1
 
-    classDef router fill:#1a1aff,color:#fff,stroke:#000
-    classDef host   fill:#3d7a3d,color:#fff,stroke:#000
+    classDef router stroke:#4778ff,stroke-width:2px
+    classDef host stroke:#6aa84f,stroke-width:2px
 
     class edge1,campus1 router
     class client1,services1,mgmt1,tacacs1 host
