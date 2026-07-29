@@ -274,6 +274,7 @@ nav:
       - Enterprise Troubleshooting Range: tracks/troubleshooting/troubleshooting-range.md
       - Advanced Edge Troubleshooting Range: tracks/troubleshooting/troubleshooting-range-advanced.md
       - Campus Troubleshooting Range: tracks/troubleshooting/troubleshooting-range-campus.md
+      - troubleshooting-range-hybrid-access: tracks/troubleshooting/troubleshooting-range-hybrid-access.md
   - Assessments:
     - assessments/index.md
     - Exams:

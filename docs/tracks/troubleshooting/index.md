@@ -22,6 +22,7 @@ and no-restart golden-state reset.
 | [Enterprise Troubleshooting Range](troubleshooting-range.md) | 24 | Access, addressing, OSPF, forwarding, DNS, TCP, and service policy | After the core routing and Operations labs |
 | [Advanced Edge Troubleshooting Range](troubleshooting-range-advanced.md) | 8 | eBGP, iBGP, containment, redistribution, NAT, and PMTUD | After BGP, route control, and enterprise-edge labs |
 | [Campus Troubleshooting Range](troubleshooting-range-campus.md) | 4 | STP, LACP, VLAN forwarding, and protected access ports | After Layer 2 campus and access-security labs |
+| [Hybrid Access Troubleshooting Range](troubleshooting-range-hybrid-access.md) | 2 installed / 12 planned | Dual stack, hybrid transit, cloud policy, identity PEP, DNS, and application delivery | After cloud, zero-trust, dual-stack, WAN-overlay, and application-delivery labs |
 
 ## Written Assessments
 
@@ -37,6 +38,9 @@ than on landing the right answer.
 2. Attempt the enterprise range without reading scenario rubrics.
 3. Review evidence quality and repeat weak diagnostic domains.
 4. Attempt the advanced edge range under the published time limits.
+5. Attempt the hybrid access reference tickets; its remaining catalog rows are
+   not yet implemented.
 
-The three ranges currently provide 36 blind tickets across T1, T2, and T3
-diagnostic-distance tiers.
+The four ranges currently provide 38 installed blind tickets across T1, T2,
+and T3 diagnostic-distance tiers. The hybrid access range lists ten additional
+planned tickets explicitly as incomplete.
