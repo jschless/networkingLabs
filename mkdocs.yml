@@ -68,161 +68,189 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - How It Works: how-it-works.md
-  - Study Paths: study-paths.md
-  - CCNP Coverage Map: coverage-map.md
-  - Enterprise Coverage Map: enterprise-coverage-map.md
-  - Image Pinning Policy: image-policy.md
-  - Quick Reference: quick-reference.md
-  - Networking Labs:
-    - OSPF:
-      - tracks/ospf/index.md
-      - two-routers: tracks/ospf/two-routers.md
-      - ospf-multiarea: tracks/ospf/ospf-multiarea.md
-      - ospf-auth: tracks/ospf/ospf-auth.md
-      - ospf-summarization: tracks/ospf/ospf-summarization.md
-      - ospf-default-route: tracks/ospf/ospf-default-route.md
-      - ospf-nssa: tracks/ospf/ospf-nssa.md
-      - ospf-virtual-link: tracks/ospf/ospf-virtual-link.md
-      - ospf-bgp-redist: tracks/ospf/ospf-bgp-redist.md
-      - ipv6-ospf3: tracks/ospf/ipv6-ospf3.md
-    - EIGRP:
-      - tracks/eigrp/index.md
-      - eigrp-basics: tracks/eigrp/eigrp-basics.md
-      - eigrp-variance: tracks/eigrp/eigrp-variance.md
-      - eigrp-stub: tracks/eigrp/eigrp-stub.md
-    - BGP:
-      - tracks/bgp/index.md
-      - bgp-basics: tracks/bgp/bgp-basics.md
-      - bgp-path-selection: tracks/bgp/bgp-path-selection.md
-      - bgp-filtering: tracks/bgp/bgp-filtering.md
-      - bgp-communities: tracks/bgp/bgp-communities.md
-      - bgp-aggregation: tracks/bgp/bgp-aggregation.md
-      - bgp-prefix-security: tracks/bgp/bgp-prefix-security.md
-      - bgp-rpki: tracks/bgp/bgp-rpki.md
-      - internet-peering-ixp: tracks/bgp/internet-peering-ixp.md
-      - bgp-labeled-unicast: tracks/bgp/bgp-labeled-unicast.md
-      - ipv6-bgp: tracks/bgp/ipv6-bgp.md
-    - IS-IS:
-      - tracks/isis/index.md
-      - isis-basics: tracks/isis/isis-basics.md
-      - isis-multiarea: tracks/isis/isis-multiarea.md
-    - Route Control:
-      - tracks/route-control/index.md
-      - redistribution-tags: tracks/route-control/redistribution-tags.md
-      - route-maps-pbr: tracks/route-control/route-maps-pbr.md
-      - ip-sla-tracking: tracks/route-control/ip-sla-tracking.md
-    - Tunnels & VPN:
-      - tracks/tunnels-vpn/index.md
-      - gre-basics: tracks/tunnels-vpn/gre-basics.md
-      - gre-ipsec: tracks/tunnels-vpn/gre-ipsec.md
-      - ipsec-basics: tracks/tunnels-vpn/ipsec-basics.md
-      - dmvpn-phase1: tracks/tunnels-vpn/dmvpn-phase1.md
-      - dmvpn-phase2: tracks/tunnels-vpn/dmvpn-phase2.md
-      - dmvpn-phase3: tracks/tunnels-vpn/dmvpn-phase3.md
-      - dmvpn-phase3-ipsec-capstone: tracks/tunnels-vpn/dmvpn-phase3-ipsec-capstone.md
-      - flexvpn-basics: tracks/tunnels-vpn/flexvpn-basics.md
-      - wireguard: tracks/tunnels-vpn/wireguard.md
-      - opnsense-ipsec-nat-t: tracks/tunnels-vpn/opnsense-ipsec-nat-t.md
-      - opnsense-remote-access-concentrator: tracks/tunnels-vpn/opnsense-remote-access-concentrator.md
-      - vrf-lite: tracks/tunnels-vpn/vrf-lite.md
-    - MPLS & SP:
-      - tracks/mpls-sp/index.md
-      - mpls-ldp: tracks/mpls-sp/mpls-ldp.md
-      - mpls-sr-blank: tracks/mpls-sp/mpls-sr-blank.md
-      - mpls-sr-isis-bgp: tracks/mpls-sp/mpls-sr-isis-bgp.md
-      - mpls-sr-srlinux: tracks/mpls-sp/mpls-sr-srlinux.md
-      - mpls-l2vpn: tracks/mpls-sp/mpls-l2vpn.md
-      - ipv6-transition: tracks/mpls-sp/ipv6-transition.md
-      - carrier-ethernet-handoff (UNI follow-on): tracks/mpls-sp/carrier-ethernet-handoff.md
-      - internet-peering-ixp (BGP cross-track): tracks/mpls-sp/internet-peering-ixp.md
-    - Data Center:
-      - tracks/data-center/index.md
-      - spine-leaf: tracks/data-center/spine-leaf.md
-      - vxlan-evpn: tracks/data-center/vxlan-evpn.md
-      - vxlan-evpn-srlinux: tracks/data-center/vxlan-evpn-srlinux.md
-      - evpn-border-ceos: tracks/data-center/evpn-border-ceos.md
-      - dci-evpn-multisite: tracks/data-center/dci-evpn-multisite.md
-      - k8s-fabric: tracks/data-center/k8s-fabric.md
-      - dc-storage-networking: tracks/data-center/dc-storage-networking.md
-    - High Availability:
-      - tracks/high-availability/index.md
-      - bfd-ospf: tracks/high-availability/bfd-ospf.md
-      - bfd-bgp: tracks/high-availability/bfd-bgp.md
-      - vrrp: tracks/high-availability/vrrp.md
-      - anycast-dns: tracks/high-availability/anycast-dns.md
-      - service-ha: tracks/high-availability/service-ha.md
-      - ha-network-design-ceos: tracks/high-availability/ha-network-design-ceos.md
-      - graceful-restart: tracks/high-availability/graceful-restart.md
-    - Enterprise Design:
-      - tracks/enterprise/index.md
-      - enterprise-collapsed-core: tracks/enterprise/enterprise-collapsed-core.md
-      - enterprise-campus: tracks/enterprise/enterprise-campus.md
-      - enterprise-routed-access: tracks/enterprise/enterprise-routed-access.md
-      - enterprise-dmz: tracks/enterprise/enterprise-dmz.md
-      - enterprise-wan-edge: tracks/enterprise/enterprise-wan-edge.md
-      - enterprise-access-security: tracks/enterprise/enterprise-access-security.md
-      - enterprise-edge-nat-firewall: tracks/enterprise/enterprise-edge-nat-firewall.md
-      - load-balancer-basics: tracks/enterprise/load-balancer-basics.md
-      - global-application-delivery: tracks/enterprise/global-application-delivery.md
-      - enterprise-multicast: tracks/enterprise/enterprise-multicast.md
-      - enterprise-services-infra: tracks/enterprise/enterprise-services-infra.md
-      - enterprise-voice-sip-qos: tracks/enterprise/enterprise-voice-sip-qos.md
-      - sdwan-concepts: tracks/enterprise/sdwan-concepts.md
-      - orchestrated-wan-overlay: tracks/enterprise/orchestrated-wan-overlay.md
-      - enterprise-wireless-architecture: tracks/enterprise/enterprise-wireless-architecture.md
-      - wireless-auth-control-operations: tracks/enterprise/wireless-auth-control-operations.md
-      - cloud-hybrid-networking: tracks/enterprise/cloud-hybrid-networking.md
-      - carrier-ethernet-handoff: tracks/enterprise/carrier-ethernet-handoff.md
-      - enterprise-campus-capstone: tracks/enterprise/enterprise-campus-capstone.md
-      - enterprise-collapsed-core-capstone: tracks/enterprise/enterprise-collapsed-core-capstone.md
-      - enterprise-dmz-capstone: tracks/enterprise/enterprise-dmz-capstone.md
-      - enterprise-routed-access-capstone: tracks/enterprise/enterprise-routed-access-capstone.md
-      - enterprise-wan-edge-capstone: tracks/enterprise/enterprise-wan-edge-capstone.md
-      - enterprise-grand-capstone: tracks/enterprise/enterprise-grand-capstone.md
-      - internet-peering-ixp (cross-track): tracks/enterprise/internet-peering-ixp.md
-      - enterprise-dual-stack-capstone: tracks/enterprise/enterprise-dual-stack-capstone.md
-    - OT & IoT:
-      - tracks/ot-iot/index.md
-      - ot-zone-conduit: tracks/ot-iot/ot-zone-conduit.md
-    - Layer 2:
-      - tracks/layer2/index.md
-      - vlan-trunks-switchport-basics: tracks/layer2/vlan-trunks-switchport-basics.md
-      - campus-l2-hardening: tracks/layer2/campus-l2-hardening.md
-      - stp-operations: tracks/layer2/stp-operations.md
-      - lacp-etherchannel: tracks/layer2/lacp-etherchannel.md
-    - Security:
-      - tracks/security/index.md
-      - acl-basics: tracks/security/acl-basics.md
-      - macsec-basics: tracks/security/macsec-basics.md
-      - black-core-routing: tracks/security/black-core-routing.md
-      - opnsense-ngfw-basics: tracks/security/opnsense-ngfw-basics.md
-      - dot1x-nac: tracks/security/dot1x-nac.md
-      - urpf-antispoofing: tracks/security/urpf-antispoofing.md
-      - copp-basics: tracks/security/copp-basics.md
-      - dot1x-ceos-practice: tracks/security/dot1x-ceos-practice.md
-      - zero-trust-secure-access: tracks/security/zero-trust-secure-access.md
-      - advanced-security-architecture: tracks/security/advanced-security-architecture.md
-    - Network Operations:
-      - tracks/operations/index.md
-      - management-access-control: tracks/operations/management-access-control.md
-      - dhcp-dns-troubleshooting: tracks/operations/dhcp-dns-troubleshooting.md
-      - aaa-ops-troubleshooting: tracks/operations/aaa-ops-troubleshooting.md
-      - ipv6-access-services: tracks/operations/ipv6-access-services.md
-      - packet-analysis-basics: tracks/operations/packet-analysis-basics.md
-      - mtu-pmtud-troubleshooting: tracks/operations/mtu-pmtud-troubleshooting.md
-      - network-assurance: tracks/operations/network-assurance.md
-      - qos-enterprise: tracks/operations/qos-enterprise.md
-      - ztp-basics: tracks/operations/ztp-basics.md
-      - automation-fundamentals: tracks/operations/automation-fundamentals.md
-      - network-automation-netbox: tracks/operations/network-automation-netbox.md
-      - suzieq-network-observability: tracks/operations/suzieq-network-observability.md
-      - network-gitops-change-pipeline: tracks/operations/network-gitops-change-pipeline.md
-      - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
-      - cloud-hybrid-networking: tracks/operations/cloud-hybrid-networking.md
-      - carrier-ethernet-handoff: tracks/operations/carrier-ethernet-handoff.md
-      - enterprise-dual-stack-capstone: tracks/operations/enterprise-dual-stack-capstone.md
+  - Start Here:
+    - Getting Started: getting-started.md
+    - How It Works: how-it-works.md
+    - Study Paths: study-paths.md
+  - Labs:
+    - Networking:
+      - OSPF:
+        - tracks/ospf/index.md
+        - two-routers: tracks/ospf/two-routers.md
+        - ospf-multiarea: tracks/ospf/ospf-multiarea.md
+        - ospf-auth: tracks/ospf/ospf-auth.md
+        - ospf-summarization: tracks/ospf/ospf-summarization.md
+        - ospf-default-route: tracks/ospf/ospf-default-route.md
+        - ospf-nssa: tracks/ospf/ospf-nssa.md
+        - ospf-virtual-link: tracks/ospf/ospf-virtual-link.md
+        - ospf-bgp-redist: tracks/ospf/ospf-bgp-redist.md
+        - ipv6-ospf3: tracks/ospf/ipv6-ospf3.md
+      - EIGRP:
+        - tracks/eigrp/index.md
+        - eigrp-basics: tracks/eigrp/eigrp-basics.md
+        - eigrp-variance: tracks/eigrp/eigrp-variance.md
+        - eigrp-stub: tracks/eigrp/eigrp-stub.md
+      - BGP:
+        - tracks/bgp/index.md
+        - bgp-basics: tracks/bgp/bgp-basics.md
+        - bgp-path-selection: tracks/bgp/bgp-path-selection.md
+        - bgp-filtering: tracks/bgp/bgp-filtering.md
+        - bgp-communities: tracks/bgp/bgp-communities.md
+        - bgp-aggregation: tracks/bgp/bgp-aggregation.md
+        - bgp-prefix-security: tracks/bgp/bgp-prefix-security.md
+        - bgp-rpki: tracks/bgp/bgp-rpki.md
+        - internet-peering-ixp: tracks/bgp/internet-peering-ixp.md
+        - bgp-labeled-unicast: tracks/bgp/bgp-labeled-unicast.md
+        - ipv6-bgp: tracks/bgp/ipv6-bgp.md
+      - IS-IS:
+        - tracks/isis/index.md
+        - isis-basics: tracks/isis/isis-basics.md
+        - isis-multiarea: tracks/isis/isis-multiarea.md
+      - Route Control:
+        - tracks/route-control/index.md
+        - redistribution-tags: tracks/route-control/redistribution-tags.md
+        - route-maps-pbr: tracks/route-control/route-maps-pbr.md
+        - ip-sla-tracking: tracks/route-control/ip-sla-tracking.md
+      - Tunnels & VPN:
+        - tracks/tunnels-vpn/index.md
+        - gre-basics: tracks/tunnels-vpn/gre-basics.md
+        - gre-ipsec: tracks/tunnels-vpn/gre-ipsec.md
+        - ipsec-basics: tracks/tunnels-vpn/ipsec-basics.md
+        - dmvpn-phase1: tracks/tunnels-vpn/dmvpn-phase1.md
+        - dmvpn-phase2: tracks/tunnels-vpn/dmvpn-phase2.md
+        - dmvpn-phase3: tracks/tunnels-vpn/dmvpn-phase3.md
+        - dmvpn-phase3-ipsec-capstone: tracks/tunnels-vpn/dmvpn-phase3-ipsec-capstone.md
+        - flexvpn-basics: tracks/tunnels-vpn/flexvpn-basics.md
+        - wireguard: tracks/tunnels-vpn/wireguard.md
+        - opnsense-ipsec-nat-t: tracks/tunnels-vpn/opnsense-ipsec-nat-t.md
+        - opnsense-remote-access-concentrator: tracks/tunnels-vpn/opnsense-remote-access-concentrator.md
+        - vrf-lite: tracks/tunnels-vpn/vrf-lite.md
+      - MPLS & SP:
+        - tracks/mpls-sp/index.md
+        - mpls-ldp: tracks/mpls-sp/mpls-ldp.md
+        - mpls-sr-blank: tracks/mpls-sp/mpls-sr-blank.md
+        - mpls-sr-isis-bgp: tracks/mpls-sp/mpls-sr-isis-bgp.md
+        - mpls-sr-srlinux: tracks/mpls-sp/mpls-sr-srlinux.md
+        - mpls-l2vpn: tracks/mpls-sp/mpls-l2vpn.md
+        - ipv6-transition: tracks/mpls-sp/ipv6-transition.md
+        - carrier-ethernet-handoff (UNI follow-on): tracks/mpls-sp/carrier-ethernet-handoff.md
+        - internet-peering-ixp (BGP cross-track): tracks/mpls-sp/internet-peering-ixp.md
+      - Data Center:
+        - tracks/data-center/index.md
+        - spine-leaf: tracks/data-center/spine-leaf.md
+        - vxlan-evpn: tracks/data-center/vxlan-evpn.md
+        - vxlan-evpn-srlinux: tracks/data-center/vxlan-evpn-srlinux.md
+        - evpn-border-ceos: tracks/data-center/evpn-border-ceos.md
+        - dci-evpn-multisite: tracks/data-center/dci-evpn-multisite.md
+        - k8s-fabric: tracks/data-center/k8s-fabric.md
+        - dc-storage-networking: tracks/data-center/dc-storage-networking.md
+      - High Availability:
+        - tracks/high-availability/index.md
+        - bfd-ospf: tracks/high-availability/bfd-ospf.md
+        - bfd-bgp: tracks/high-availability/bfd-bgp.md
+        - vrrp: tracks/high-availability/vrrp.md
+        - anycast-dns: tracks/high-availability/anycast-dns.md
+        - service-ha: tracks/high-availability/service-ha.md
+        - ha-network-design-ceos: tracks/high-availability/ha-network-design-ceos.md
+        - graceful-restart: tracks/high-availability/graceful-restart.md
+      - Enterprise Design:
+        - tracks/enterprise/index.md
+        - enterprise-collapsed-core: tracks/enterprise/enterprise-collapsed-core.md
+        - enterprise-campus: tracks/enterprise/enterprise-campus.md
+        - enterprise-routed-access: tracks/enterprise/enterprise-routed-access.md
+        - enterprise-dmz: tracks/enterprise/enterprise-dmz.md
+        - enterprise-wan-edge: tracks/enterprise/enterprise-wan-edge.md
+        - enterprise-access-security: tracks/enterprise/enterprise-access-security.md
+        - enterprise-edge-nat-firewall: tracks/enterprise/enterprise-edge-nat-firewall.md
+        - load-balancer-basics: tracks/enterprise/load-balancer-basics.md
+        - global-application-delivery: tracks/enterprise/global-application-delivery.md
+        - enterprise-multicast: tracks/enterprise/enterprise-multicast.md
+        - enterprise-services-infra: tracks/enterprise/enterprise-services-infra.md
+        - enterprise-voice-sip-qos: tracks/enterprise/enterprise-voice-sip-qos.md
+        - sdwan-concepts: tracks/enterprise/sdwan-concepts.md
+        - orchestrated-wan-overlay: tracks/enterprise/orchestrated-wan-overlay.md
+        - enterprise-wireless-architecture: tracks/enterprise/enterprise-wireless-architecture.md
+        - wireless-auth-control-operations: tracks/enterprise/wireless-auth-control-operations.md
+        - cloud-hybrid-networking: tracks/enterprise/cloud-hybrid-networking.md
+        - carrier-ethernet-handoff: tracks/enterprise/carrier-ethernet-handoff.md
+        - enterprise-campus-capstone: tracks/enterprise/enterprise-campus-capstone.md
+        - enterprise-collapsed-core-capstone: tracks/enterprise/enterprise-collapsed-core-capstone.md
+        - enterprise-dmz-capstone: tracks/enterprise/enterprise-dmz-capstone.md
+        - enterprise-routed-access-capstone: tracks/enterprise/enterprise-routed-access-capstone.md
+        - enterprise-wan-edge-capstone: tracks/enterprise/enterprise-wan-edge-capstone.md
+        - enterprise-grand-capstone: tracks/enterprise/enterprise-grand-capstone.md
+        - internet-peering-ixp (cross-track): tracks/enterprise/internet-peering-ixp.md
+        - enterprise-dual-stack-capstone: tracks/enterprise/enterprise-dual-stack-capstone.md
+      - OT & IoT:
+        - tracks/ot-iot/index.md
+        - ot-zone-conduit: tracks/ot-iot/ot-zone-conduit.md
+      - Layer 2:
+        - tracks/layer2/index.md
+        - vlan-trunks-switchport-basics: tracks/layer2/vlan-trunks-switchport-basics.md
+        - campus-l2-hardening: tracks/layer2/campus-l2-hardening.md
+        - stp-operations: tracks/layer2/stp-operations.md
+        - lacp-etherchannel: tracks/layer2/lacp-etherchannel.md
+      - Security:
+        - tracks/security/index.md
+        - acl-basics: tracks/security/acl-basics.md
+        - macsec-basics: tracks/security/macsec-basics.md
+        - black-core-routing: tracks/security/black-core-routing.md
+        - opnsense-ngfw-basics: tracks/security/opnsense-ngfw-basics.md
+        - dot1x-nac: tracks/security/dot1x-nac.md
+        - urpf-antispoofing: tracks/security/urpf-antispoofing.md
+        - copp-basics: tracks/security/copp-basics.md
+        - dot1x-ceos-practice: tracks/security/dot1x-ceos-practice.md
+        - zero-trust-secure-access: tracks/security/zero-trust-secure-access.md
+        - advanced-security-architecture: tracks/security/advanced-security-architecture.md
+      - Network Operations:
+        - tracks/operations/index.md
+        - management-access-control: tracks/operations/management-access-control.md
+        - dhcp-dns-troubleshooting: tracks/operations/dhcp-dns-troubleshooting.md
+        - aaa-ops-troubleshooting: tracks/operations/aaa-ops-troubleshooting.md
+        - ipv6-access-services: tracks/operations/ipv6-access-services.md
+        - packet-analysis-basics: tracks/operations/packet-analysis-basics.md
+        - mtu-pmtud-troubleshooting: tracks/operations/mtu-pmtud-troubleshooting.md
+        - network-assurance: tracks/operations/network-assurance.md
+        - qos-enterprise: tracks/operations/qos-enterprise.md
+        - ztp-basics: tracks/operations/ztp-basics.md
+        - automation-fundamentals: tracks/operations/automation-fundamentals.md
+        - network-automation-netbox: tracks/operations/network-automation-netbox.md
+        - suzieq-network-observability: tracks/operations/suzieq-network-observability.md
+        - network-gitops-change-pipeline: tracks/operations/network-gitops-change-pipeline.md
+        - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
+        - cloud-hybrid-networking: tracks/operations/cloud-hybrid-networking.md
+        - carrier-ethernet-handoff: tracks/operations/carrier-ethernet-handoff.md
+        - enterprise-dual-stack-capstone: tracks/operations/enterprise-dual-stack-capstone.md
+    - Security Operations (SOC):
+      - tracks/security-infrastructure/index.md
+      - soc-dmz-foundation: tracks/security-infrastructure/soc-dmz-foundation.md
+      - soc-zeek-analysis: tracks/security-infrastructure/soc-zeek-analysis.md
+      - soc-suricata-ids: tracks/security-infrastructure/soc-suricata-ids.md
+      - soc-yara-file-pipeline: tracks/security-infrastructure/soc-yara-file-pipeline.md
+      - soc-elk-ingest: tracks/security-infrastructure/soc-elk-ingest.md
+      - soc-kibana-hvt-dashboard: tracks/security-infrastructure/soc-kibana-hvt-dashboard.md
+      - soc-arkime-pcap: tracks/security-infrastructure/soc-arkime-pcap.md
+      - soc-adversary-simulation: tracks/security-infrastructure/soc-adversary-simulation.md
+      - soc-threat-intel-misp: tracks/security-infrastructure/soc-threat-intel-misp.md
+      - soc-ir-case-management: tracks/security-infrastructure/soc-ir-case-management.md
+    - Enterprise IT 101:
+      - tracks/enterprise-it-101/index.md
+      - "01 Active Directory": tracks/enterprise-it-101/01-active-directory.md
+      - "02 NTP & Time": tracks/enterprise-it-101/02-ntp-time-services.md
+      - "03 Certificate Authority": tracks/enterprise-it-101/03-certificate-authority.md
+      - "04 Domain Join": tracks/enterprise-it-101/04-domain-join.md
+      - "05 DNS Deep Dive": tracks/enterprise-it-101/05-dns-deep-dive.md
+      - "06 DHCP & DDNS": tracks/enterprise-it-101/06-dhcp-dynamic-dns.md
+      - "07 File Shares": tracks/enterprise-it-101/07-file-shares.md
+      - "08 Group Policy & Config Mgmt": tracks/enterprise-it-101/08-group-policy.md
+      - "09 Email Gateway": tracks/enterprise-it-101/09-email-gateway.md
+      - "10 SSO & Federation": tracks/enterprise-it-101/10-sso-federation.md
+      - "11 Web Proxy": tracks/enterprise-it-101/11-web-proxy.md
+      - "12 RADIUS": tracks/enterprise-it-101/12-radius.md
+      - "13 Monitoring": tracks/enterprise-it-101/13-monitoring.md
+      - "14 SIEM & Logging": tracks/enterprise-it-101/14-siem-logging.md
+      - "15 Backup & Recovery": tracks/enterprise-it-101/15-backup-recovery.md
+      - "16 Capstone": tracks/enterprise-it-101/16-capstone.md
   - Troubleshooting:
     - Overview: tracks/troubleshooting/index.md
     - Guided Debug Labs:
@@ -246,36 +274,6 @@ nav:
       - Enterprise Troubleshooting Range: tracks/troubleshooting/troubleshooting-range.md
       - Advanced Edge Troubleshooting Range: tracks/troubleshooting/troubleshooting-range-advanced.md
       - Campus Troubleshooting Range: tracks/troubleshooting/troubleshooting-range-campus.md
-  - Security Operations (SOC):
-    - tracks/security-infrastructure/index.md
-    - soc-dmz-foundation: tracks/security-infrastructure/soc-dmz-foundation.md
-    - soc-zeek-analysis: tracks/security-infrastructure/soc-zeek-analysis.md
-    - soc-suricata-ids: tracks/security-infrastructure/soc-suricata-ids.md
-    - soc-yara-file-pipeline: tracks/security-infrastructure/soc-yara-file-pipeline.md
-    - soc-elk-ingest: tracks/security-infrastructure/soc-elk-ingest.md
-    - soc-kibana-hvt-dashboard: tracks/security-infrastructure/soc-kibana-hvt-dashboard.md
-    - soc-arkime-pcap: tracks/security-infrastructure/soc-arkime-pcap.md
-    - soc-adversary-simulation: tracks/security-infrastructure/soc-adversary-simulation.md
-    - soc-threat-intel-misp: tracks/security-infrastructure/soc-threat-intel-misp.md
-    - soc-ir-case-management: tracks/security-infrastructure/soc-ir-case-management.md
-  - Enterprise IT 101:
-    - tracks/enterprise-it-101/index.md
-    - "01 Active Directory": tracks/enterprise-it-101/01-active-directory.md
-    - "02 NTP & Time": tracks/enterprise-it-101/02-ntp-time-services.md
-    - "03 Certificate Authority": tracks/enterprise-it-101/03-certificate-authority.md
-    - "04 Domain Join": tracks/enterprise-it-101/04-domain-join.md
-    - "05 DNS Deep Dive": tracks/enterprise-it-101/05-dns-deep-dive.md
-    - "06 DHCP & DDNS": tracks/enterprise-it-101/06-dhcp-dynamic-dns.md
-    - "07 File Shares": tracks/enterprise-it-101/07-file-shares.md
-    - "08 Group Policy & Config Mgmt": tracks/enterprise-it-101/08-group-policy.md
-    - "09 Email Gateway": tracks/enterprise-it-101/09-email-gateway.md
-    - "10 SSO & Federation": tracks/enterprise-it-101/10-sso-federation.md
-    - "11 Web Proxy": tracks/enterprise-it-101/11-web-proxy.md
-    - "12 RADIUS": tracks/enterprise-it-101/12-radius.md
-    - "13 Monitoring": tracks/enterprise-it-101/13-monitoring.md
-    - "14 SIEM & Logging": tracks/enterprise-it-101/14-siem-logging.md
-    - "15 Backup & Recovery": tracks/enterprise-it-101/15-backup-recovery.md
-    - "16 Capstone": tracks/enterprise-it-101/16-capstone.md
   - Assessments:
     - assessments/index.md
     - Exams:
@@ -330,10 +328,16 @@ nav:
       - "SR Linux VXLAN-EVPN Operations": assessments/quizzes/srlinux-evpn.md
       - "Routed Network Foundations": assessments/quizzes/routing-foundations.md
       - "Troubleshooting Methodology": assessments/quizzes/troubleshooting-method.md
-  - Platforms:
-    - FRR: platforms/frr.md
-    - Arista cEOS: platforms/ceos.md
-    - OPNsense: platforms/opnsense.md
-    - VyOS: platforms/vyos.md
-    - Nokia SR-Linux: platforms/srlinux.md
-  - Contributing: contributing.md
+  - Reference:
+    - Quick Reference: quick-reference.md
+    - Coverage Maps:
+      - CCNP Coverage Map: coverage-map.md
+      - Enterprise Coverage Map: enterprise-coverage-map.md
+    - Platforms:
+      - FRR: platforms/frr.md
+      - Arista cEOS: platforms/ceos.md
+      - OPNsense: platforms/opnsense.md
+      - VyOS: platforms/vyos.md
+      - Nokia SR-Linux: platforms/srlinux.md
+    - Image Pinning Policy: image-policy.md
+    - Contributing: contributing.md
