@@ -23,6 +23,7 @@ and no-restart golden-state reset.
 | [Advanced Edge Troubleshooting Range](troubleshooting-range-advanced.md) | 8 | eBGP, iBGP, containment, redistribution, NAT, and PMTUD | After BGP, route control, and enterprise-edge labs |
 | [Campus Troubleshooting Range](troubleshooting-range-campus.md) | 4 | STP, LACP, VLAN forwarding, and protected access ports | After Layer 2 campus and access-security labs |
 | [Hybrid Access Troubleshooting Range](troubleshooting-range-hybrid-access.md) | 2 installed / 12 planned | Dual stack, hybrid transit, cloud policy, identity PEP, DNS, and application delivery | After cloud, zero-trust, dual-stack, WAN-overlay, and application-delivery labs |
+| [DCI Edge Troubleshooting Range](troubleshooting-range-dci-edge.md) | 2 installed / 12 planned | Routed EVPN DCI, carrier QinQ, peering, storage paths, and inspected edge | After DCI, carrier, peering, storage, and advanced-security labs |
 
 ## Written Assessments
 
@@ -40,7 +41,9 @@ than on landing the right answer.
 4. Attempt the advanced edge range under the published time limits.
 5. Attempt the hybrid access reference tickets; its remaining catalog rows are
    not yet implemented.
+6. Attempt the DCI edge reference tickets; its remaining catalog rows are also
+   explicit placeholders.
 
-The four ranges currently provide 38 installed blind tickets across T1, T2,
-and T3 diagnostic-distance tiers. The hybrid access range lists ten additional
-planned tickets explicitly as incomplete.
+The five ranges currently provide 40 installed blind tickets across T1, T2,
+and T3 diagnostic-distance tiers. The hybrid access and DCI edge ranges each
+list ten additional planned tickets explicitly as incomplete.

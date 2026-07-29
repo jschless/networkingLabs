@@ -1,0 +1,155 @@
+name: troubleshooting-range-dci-edge
+
+mgmt:
+  network: clab-troubleshooting-range-dci-edge-mgmt
+  ipv4-subnet: 172.30.252.0/24
+
+topology:
+  nodes:
+    a-leaf:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/a-leaf/startup-config
+    a-bgw:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/a-bgw/startup-config
+    b-bgw:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/b-bgw/startup-config
+    b-leaf:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/b-leaf/startup-config
+    peer:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/peer/startup-config
+
+    a-prod:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/linux-reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/app_server.py:/opt/range/app_server.py:ro
+        - configs/http_probe.py:/opt/range/http_probe.py:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+    b-prod:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/linux-reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/app_server.py:/opt/range/app_server.py:ro
+        - configs/http_probe.py:/opt/range/http_probe.py:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+    shared-app:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/linux-reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/app_server.py:/opt/range/app_server.py:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+    edge-client:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/linux-reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/http_probe.py:/opt/range/http_probe.py:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+
+    internet-client:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/linux-reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/http_probe.py:/opt/range/http_probe.py:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+    inspection:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/linux-reset.sh:/opt/range/golden/reset.sh:ro"]
+      sysctls: { net.ipv4.ip_forward: "1" }
+      exec: ["sh /opt/range/golden/reset.sh"]
+    public-origin:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/linux-reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/app_server.py:/opt/range/app_server.py:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+
+    carrier-test-a:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      binds: ["configs/carrier-reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["bash /opt/range/golden/reset.sh"]
+    carrier-nid-a:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      env: {ROLE: nid}
+      binds: ["configs/carrier-reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["bash /opt/range/golden/reset.sh"]
+    carrier-core:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      env: {ROLE: core}
+      binds: ["configs/carrier-reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["bash /opt/range/golden/reset.sh"]
+    carrier-nid-b:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      env: {ROLE: nid}
+      binds: ["configs/carrier-reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["bash /opt/range/golden/reset.sh"]
+    carrier-test-b:
+      kind: linux
+      image: carrier-ethernet-tools:1.0.0
+      binds: ["configs/carrier-reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["bash /opt/range/golden/reset.sh"]
+
+    storage-init:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/linux-reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/http_probe.py:/opt/range/http_probe.py:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+    storage-path-a:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/linux-reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    storage-path-b:
+      kind: linux
+      image: ops-lab:local
+      binds: ["configs/linux-reset.sh:/opt/range/golden/reset.sh:ro"]
+      exec: ["sh /opt/range/golden/reset.sh"]
+    storage-target:
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/linux-reset.sh:/opt/range/golden/reset.sh:ro
+        - configs/app_server.py:/opt/range/app_server.py:ro
+      exec: ["sh /opt/range/golden/reset.sh"]
+
+  links:
+    - endpoints: ["a-leaf:eth1", "a-bgw:eth1"]                 # Site A underlay 10.11.0.0/30
+    - endpoints: ["a-bgw:eth2", "b-bgw:eth2"]                  # Routed DCI 10.255.10.0/30
+    - endpoints: ["b-bgw:eth1", "b-leaf:eth1"]                 # Site B underlay 10.21.0.0/30
+    - endpoints: ["a-prod:eth1", "a-leaf:eth3"]                # Site A PROD 172.16.10.0/24
+    - endpoints: ["b-prod:eth1", "b-leaf:eth3"]                # Site B PROD 172.17.10.0/24
+    - endpoints: ["shared-app:eth1", "a-bgw:eth3"]             # Shared service 172.31.10.0/24
+    - endpoints: ["edge-client:eth1", "a-bgw:eth4"]            # Edge client 10.80.10.0/24
+    - endpoints: ["a-bgw:eth5", "peer:eth1"]                   # External peer 203.0.113.0/30
+    - endpoints: ["internet-client:eth1", "inspection:eth1"]   # Inspected outside 192.0.2.0/24
+    - endpoints: ["inspection:eth2", "public-origin:eth1"]     # Inspected origin 10.90.20.0/24
+    - endpoints: ["internet-client:eth2", "public-origin:eth2"] # Direct-origin test 203.0.113.0/24
+    - endpoints: ["carrier-test-a:eth1", "carrier-nid-a:eth1"] # Customer VLANs 110/120
+    - endpoints: ["carrier-nid-a:eth2", "carrier-core:eth1"]   # S-VLANs 3100/3120
+    - endpoints: ["carrier-core:eth2", "carrier-nid-b:eth2"]   # S-VLANs 3100/3120
+    - endpoints: ["carrier-nid-b:eth1", "carrier-test-b:eth1"] # Customer VLANs 110/120
+    - endpoints: ["storage-init:eth1", "storage-path-a:eth1"]  # Storage path A 10.92.10.0/24
+    - endpoints: ["storage-path-a:eth2", "storage-target:eth1"] # Storage path A 10.92.10.0/24
+    - endpoints: ["storage-init:eth2", "storage-path-b:eth1"]  # Storage path B 10.92.20.0/24
+    - endpoints: ["storage-path-b:eth2", "storage-target:eth2"] # Storage path B 10.92.20.0/24
