@@ -192,11 +192,11 @@ No cloud account. No license fees. Deploy, break things, learn.
 
 <div class="grid cards" markdown>
 
-- :material-stethoscope: **Troubleshooting & Assessment** (4 ranges, 38 installed tickets)
+- :material-stethoscope: **Troubleshooting & Assessment** (5 ranges, 40 installed tickets)
 
     ---
     Progress from 15 guided debug labs with hints and solutions to blind,
-    proctored enterprise, edge-routing, campus, and hybrid-access assessment ranges.
+    proctored enterprise, edge-routing, campus, hybrid-access, and DCI-edge assessment ranges.
 
     [:octicons-arrow-right-24: Troubleshooting track](tracks/troubleshooting/index.md)
 

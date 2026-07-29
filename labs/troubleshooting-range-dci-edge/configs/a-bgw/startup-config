@@ -1,0 +1,82 @@
+hostname a-bgw
+no aaa root
+ip routing
+vrf instance PROD
+ip routing vrf PROD
+vlan 10
+vlan 30
+interface Loopback0
+ ip address 10.10.0.3/32
+interface Ethernet1
+ no switchport
+ description to a-leaf 10.11.0.0/30
+ ip address 10.11.0.2/30
+interface Ethernet2
+ no switchport
+ description routed DCI to b-bgw
+ ip address 10.255.10.1/30
+interface Ethernet3
+ description shared application
+ switchport access vlan 30
+interface Ethernet4
+ no switchport
+ description edge client
+ ip address 10.80.10.1/24
+interface Ethernet5
+ no switchport
+ description external peer
+ ip address 203.0.113.1/30
+interface Vlan10
+ vrf PROD
+ ip address virtual 172.16.10.1/24
+ no autostate
+interface Vlan30
+ vrf PROD
+ ip address virtual 172.31.10.1/24
+ no autostate
+interface Vxlan1
+ vxlan source-interface Loopback0
+ vxlan udp-port 4789
+ vxlan vlan 10 vni 10010
+ vxlan vrf PROD vni 50010
+ip virtual-router mac-address 00:1c:73:dc:10:01
+ip route 10.20.0.0/24 10.255.10.2
+ip prefix-list APPROVED-PEER seq 10 permit 198.51.100.10/32
+ip prefix-list APPROVED-PEER seq 20 permit 198.51.100.20/32
+ip extcommunity-list DCI-PROD permit rt 65010:50010
+route-map PEER-IN permit 10
+ match ip address prefix-list APPROVED-PEER
+route-map PEER-IN deny 100
+route-map DCI-PROD permit 10
+ match extcommunity DCI-PROD
+route-map DCI-PROD deny 100
+router bgp 65012
+ router-id 10.10.0.3
+ neighbor 10.11.0.1 remote-as 65011
+ neighbor 10.11.0.1 send-community extended
+ neighbor 10.255.10.2 remote-as 65022
+ neighbor 10.255.10.2 send-community extended
+ neighbor 203.0.113.2 remote-as 65501
+ address-family ipv4
+  neighbor 10.11.0.1 activate
+  neighbor 10.255.10.2 activate
+  neighbor 203.0.113.2 activate
+  neighbor 203.0.113.2 route-map PEER-IN in
+  network 10.10.0.3/32
+  network 10.80.10.0/24
+ address-family evpn
+  neighbor 10.11.0.1 activate
+  neighbor 10.11.0.1 next-hop-unchanged
+  neighbor 10.255.10.2 activate
+  neighbor 10.255.10.2 route-map DCI-PROD out
+ vlan 10
+  rd auto
+  route-target both 65010:10010
+  redistribute learned
+ vrf PROD
+  rd 10.10.0.3:50010
+  route-target import evpn 65010:50010
+  route-target import evpn 65020:50010
+  route-target export evpn 65010:50010
+  redistribute connected
+end
