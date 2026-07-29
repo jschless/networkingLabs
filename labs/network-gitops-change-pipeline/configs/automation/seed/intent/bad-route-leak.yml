@@ -1,0 +1,13 @@
+change_id: rejected-route-leak
+owner: network-platform
+allowed_prefixes:
+  - 0.0.0.0/0
+canary_distance: 1
+force_postcheck_failure: false
+devices:
+  leaf1:
+    desired_description: unsafe-default
+  leaf2:
+    desired_description: unsafe-default
+  edge1:
+    desired_description: unsafe-default

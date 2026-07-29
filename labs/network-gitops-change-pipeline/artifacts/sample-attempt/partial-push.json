@@ -1,0 +1,17 @@
+{
+  "status": "partial_rolled_back",
+  "applied": [
+    "leaf1"
+  ],
+  "changed": [
+    "leaf1"
+  ],
+  "failed_device": "leaf2",
+  "stopped_before": [
+    "edge1"
+  ],
+  "rollback": [
+    "leaf1"
+  ],
+  "error": "CLI command 'ip address 10.999.1.1/30' failed: invalid command"
+}

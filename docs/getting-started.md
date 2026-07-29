@@ -125,6 +125,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `sdwan-lab:local` | `sdwan-concepts` | `docker build -t sdwan-lab:local labs/sdwan-concepts/` |
 | `orchestrated-wan-tools:1.0.0` | `orchestrated-wan-overlay` | `docker build -t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/` (pinned Debian 12.12 base; mTLS, WireGuard, nftables, and `tc`) |
 | `automation-fundamentals:local` | `automation-fundamentals` | `docker build -t automation-fundamentals:local labs/automation-fundamentals/` |
+| `network-gitops:local` | `network-gitops-change-pipeline` automation, endpoints, and observer | `docker build -t network-gitops:local labs/network-gitops-change-pipeline/` (digest-pinned Python 3.12.7/Alpine 3.20 base; pinned Jinja2, JSON Schema, pytest, and PyYAML) |
 | `lb-lab:local` | `load-balancer-basics` | `docker build -t lb-lab:local labs/load-balancer-basics/` |
 | `global-delivery:local` | `global-application-delivery` | `docker build -t global-delivery:local labs/global-application-delivery/` (pinned Alpine 3.22.1 and CoreDNS 1.12.2 bases; HAProxy/nginx/dnsmasq packages pinned) |
 | `service-ha:local` | `service-ha` | `docker build -t service-ha:local labs/service-ha/` |

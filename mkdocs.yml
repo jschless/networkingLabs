@@ -218,6 +218,7 @@ nav:
       - automation-fundamentals: tracks/operations/automation-fundamentals.md
       - network-automation-netbox: tracks/operations/network-automation-netbox.md
       - suzieq-network-observability: tracks/operations/suzieq-network-observability.md
+      - network-gitops-change-pipeline: tracks/operations/network-gitops-change-pipeline.md
       - telemetry-monitoring-hybrid: tracks/operations/telemetry-monitoring-hybrid.md
       - cloud-hybrid-networking: tracks/operations/cloud-hybrid-networking.md
       - carrier-ethernet-handoff: tracks/operations/carrier-ethernet-handoff.md

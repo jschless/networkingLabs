@@ -165,12 +165,12 @@ topics:
     notes: Existing checked labs.
   - domain: operations
     topic: GitOps change validation and rollback
-    level: 0
-    labs: []
-    fidelity: Planned local repository/pipeline practice; no hosted CI service claim.
-    last_live_validation: null
+    level: 4
+    labs: [labs/network-gitops-change-pipeline]
+    fidelity: Live local Git, schema/Jinja/pytest gates, structured cEOS eAPI state and configuration sessions, explicit snapshot/replace rollback, real corp/guest service tests, drift reconciliation, and partial-push diagnosis; no hosted CI, Batfish, production secret store, or encrypted-management claim.
+    last_live_validation: 2026-07-28
     owner: WP-12
-    notes: Planned as labs/network-gitops-change-pipeline (target level 4).
+    notes: The symptom-led stale-capability Break-It commits on leaf1, rejects on leaf2, blocks edge1, then requires scoped snapshot rollback and an authoritative Git revert before a clean rerun.
   - domain: IPv6
     topic: IPv6 routing, access services, and transition mechanisms
     level: 3

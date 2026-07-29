@@ -1,0 +1,21 @@
+hostname probe2
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret admin
+!
+management api http-commands
+   protocol http
+   no shutdown
+!
+ip routing
+!
+interface Loopback0
+   ip address 10.0.12.2/32
+!
+interface Ethernet1
+   no switchport
+   ip address 10.212.12.2/30
+   no shutdown
+!
+end

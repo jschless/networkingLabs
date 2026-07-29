@@ -40,7 +40,7 @@ material is built and validated.
 | Wireless | Level 1 architecture/policy only | WP-02 live control/auth operations to level 4 when the radio probe passes; RF evidence to level 1. |
 | Mobile | Level 0 | WP-05 private 5G to level 4 and mobile transport/timing to level 3. |
 | Security | Level 4 access, policy, detection, identity-aware zero trust, and integrated architecture troubleshooting | WP-06 `zero-trust-secure-access` and WP-14 `advanced-security-architecture` are live; product-only TLS inspection, CASB/DLP, sandbox, SSE, application databases, and production feeds remain explicit evidence/design mappings. |
-| Operations | Level 3 assurance, telemetry, and automation | WP-12 GitOps change pipeline to level 4. |
+| Operations | Level 4 GitOps change validation/rollback; level 3 assurance, telemetry, and introductory automation | `network-gitops-change-pipeline` adds reviewed intent, structured pre/post checks, drift and partial-push recovery; hosted CI and Batfish remain outside the live claim. |
 | IPv6 | Level 3 protocol/access/transition coverage | WP-08 systemic dual-stack capstone to level 4. |
 | Carrier and physical | Level 0 | WP-04 packet-Ethernet handoff to level 4; physical/legacy evidence to level 1. |
 | Voice and collaboration | Level 4 SIP/RTP/QoS troubleshooting | `enterprise-voice-sip-qos` provides live signaling/media, stateful NAT, measured contention, and one-way-audio diagnosis; PSTN/PoE/vendor clustering remain outside the live claim. |

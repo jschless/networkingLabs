@@ -1,0 +1,56 @@
+hostname leaf1
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret admin
+!
+management api http-commands
+   protocol http
+   no shutdown
+!
+ip routing
+!
+ip access-list GUEST-IN
+   10 deny tcp host 10.112.10.20 host 10.112.20.10 eq 8080
+   20 permit ip any any
+!
+interface Loopback0
+   description gitops-baseline
+   ip address 10.0.12.1/32
+!
+interface Ethernet1
+   description client-lan
+   no switchport
+   ip address 10.112.10.1/24
+   ip access-group GUEST-IN in
+   ip ospf area 0
+   no shutdown
+!
+interface Ethernet2
+   description leaf2-primary
+   no switchport
+   ip address 10.112.12.1/30
+   ip ospf area 0
+   ip ospf cost 20
+   no shutdown
+!
+interface Ethernet3
+   description leaf2-backup
+   no switchport
+   ip address 10.112.12.5/30
+   ip ospf area 0
+   ip ospf cost 40
+   no shutdown
+!
+interface Ethernet4
+   description observer-a
+   no switchport
+   ip address 10.112.31.1/30
+   no shutdown
+!
+router ospf 12
+   router-id 10.0.12.1
+   passive-interface Loopback0
+   network 10.0.12.1/32 area 0
+!
+end

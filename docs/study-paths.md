@@ -151,8 +151,9 @@ Ops:      soc-adversary-simulation → soc-threat-intel-misp → soc-ir-case-man
 ```
 management-access-control → dhcp-dns-troubleshooting → aaa-ops-troubleshooting
 → packet-analysis-basics → mtu-pmtud-troubleshooting → ipv6-access-services
-→ cloud-hybrid-networking → telemetry-monitoring-hybrid → network-automation-netbox
-→ wireless-auth-control-operations
+→ cloud-hybrid-networking → automation-fundamentals → network-automation-netbox
+→ suzieq-network-observability → network-gitops-change-pipeline
+→ telemetry-monitoring-hybrid → wireless-auth-control-operations
 ```
 
 ## DMVPN Progression

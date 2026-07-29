@@ -1,0 +1,36 @@
+hostname edge1
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret admin
+!
+management api http-commands
+   protocol http
+   no shutdown
+!
+ip routing
+!
+interface Loopback0
+   description gitops-baseline
+   ip address 10.0.12.3/32
+!
+interface Ethernet1
+   description leaf2
+   no switchport
+   ip address 10.112.23.2/30
+   ip ospf area 0
+   no shutdown
+!
+interface Ethernet2
+   description app-lan
+   no switchport
+   ip address 10.112.20.1/24
+   ip ospf area 0
+   no shutdown
+!
+router ospf 12
+   router-id 10.0.12.3
+   passive-interface Loopback0
+   network 10.0.12.3/32 area 0
+!
+end
