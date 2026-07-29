@@ -78,14 +78,14 @@ the repository under the user's XDG state directory.
 
 ## Catalog
 
-This first range PR installs exactly one T1 and one T3 reference ticket. The
-remaining ten WP-16 rows are catalog placeholders, not completed assessments.
+This range installs three tickets. The remaining nine WP-16 rows are catalog
+placeholders, not completed assessments.
 
 | Tier | Ticket symptom | Root-cause family | Status |
 |---:|---|---|---|
 | T1 | One cloud app denied, routing healthy | Workload policy / service port | **Installed:** `t1-workload-policy-port` |
 | T1 | Managed user denied protected route | Client certificate lifecycle | **Installed:** `t1-client-cert-expired` |
-| T1 | IPv6 client lacks DNS/default | RA/RDNSS or DHCPv6 flag | Planned; not implemented |
+| T1 | IPv6 client lacks DNS/default | RA/RDNSS or DHCPv6 flag | **Installed:** `t1-ipv6-dns-default` |
 | T1 | GSLB marks one site down | Probe-source policy | Planned; not implemented |
 | T2 | Hybrid route present, replies absent | Transit association / return table | Planned; not implemented |
 | T2 | Corp access visible, EAP fails | RADIUS/EAP trust chain | Planned; not implemented |
@@ -96,9 +96,9 @@ remaining ten WP-16 rows are catalog placeholders, not completed assessments.
 | T3 | Underlays green, branch routes absent | Edge certificate / control lifecycle | Planned; not implemented |
 | T3 | Cloud app works but inspection sees one direction | Asymmetric policy propagation | Planned; not implemented |
 
-Time bands in the two proctor rubrics are provisional. They must be adjusted
-after a real human blind pilot; this foundation does not claim that pilot or
-promote source topics to coverage level 5.
+Time bands in the three installed proctor rubrics are provisional. They must
+be adjusted after a real human blind pilot; this foundation does not claim
+that pilot or promote source topics to coverage level 5.
 
 ## Scope and limitations
 
