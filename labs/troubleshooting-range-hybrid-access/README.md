@@ -84,7 +84,7 @@ remaining ten WP-16 rows are catalog placeholders, not completed assessments.
 | Tier | Ticket symptom | Root-cause family | Status |
 |---:|---|---|---|
 | T1 | One cloud app denied, routing healthy | Workload policy / service port | **Installed:** `t1-workload-policy-port` |
-| T1 | Managed user denied protected route | Client certificate lifecycle | Planned; not implemented |
+| T1 | Managed user denied protected route | Client certificate lifecycle | **Installed:** `t1-client-cert-expired` |
 | T1 | IPv6 client lacks DNS/default | RA/RDNSS or DHCPv6 flag | Planned; not implemented |
 | T1 | GSLB marks one site down | Probe-source policy | Planned; not implemented |
 | T2 | Hybrid route present, replies absent | Transit association / return table | Planned; not implemented |
