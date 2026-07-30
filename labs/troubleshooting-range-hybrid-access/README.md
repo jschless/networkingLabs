@@ -78,7 +78,7 @@ the repository under the user's XDG state directory.
 
 ## Catalog
 
-This range installs five tickets. The remaining seven WP-16 rows are catalog
+This range installs six tickets. The remaining six WP-16 rows are catalog
 placeholders, not completed assessments.
 
 | Tier | Ticket symptom | Root-cause family | Status |
@@ -87,7 +87,7 @@ placeholders, not completed assessments.
 | T1 | Managed user denied protected route | Client certificate lifecycle | **Installed:** `t1-client-cert-expired` |
 | T1 | IPv6 client lacks DNS/default | RA/RDNSS or DHCPv6 flag | **Installed:** `t1-ipv6-dns-default` |
 | T1 | GSLB marks one site down | Probe-source policy | **Installed:** `t1-gslb-probe-source-acl` |
-| T2 | Hybrid route present, replies absent | Transit association / return table | Planned; not implemented |
+| T2 | Hybrid route present, replies absent | Transit association / return table | **Installed:** `t2-transit-return-table` |
 | T2 | Corp access visible, EAP fails | RADIUS/EAP trust chain | Planned; not implemented |
 | T2 | Guest breakout works, private segment leaks | WAN segment policy | Planned; not implemented |
 | T2 | AAAA clients stall, A clients work | IPv6 PMTUD / return path | Planned; not implemented |
@@ -96,7 +96,7 @@ placeholders, not completed assessments.
 | T3 | Underlays green, branch routes absent | Edge certificate / control lifecycle | Planned; not implemented |
 | T3 | Cloud app works but inspection sees one direction | Asymmetric policy propagation | Planned; not implemented |
 
-Time bands in the five installed proctor rubrics are provisional. They must
+Time bands in the six installed proctor rubrics are provisional. They must
 be adjusted after a real human blind pilot; this foundation does not claim
 that pilot or promote source topics to coverage level 5.
 
