@@ -1,0 +1,27 @@
+hostname router
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret admin
+!
+ip routing
+!
+interface Ethernet1
+   description trusted-client subnet
+   no switchport
+   ip address 192.168.10.1/24
+   no shutdown
+!
+interface Ethernet2
+   description untrusted-attacker subnet
+   no switchport
+   ip address 192.168.20.1/24
+   no shutdown
+!
+interface Ethernet3
+   description downstream-server subnet
+   no switchport
+   ip address 192.168.30.1/24
+   no shutdown
+!
+end
