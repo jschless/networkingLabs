@@ -1,0 +1,25 @@
+hostname device1
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret admin
+!
+ip routing
+!
+interface Ethernet1
+   description administration subnet
+   no switchport
+   ip address 192.168.99.1/24
+   no shutdown
+!
+interface Ethernet2
+   description guest subnet
+   no switchport
+   ip address 192.168.50.1/24
+   no shutdown
+!
+management api http-commands
+   protocol https
+   no shutdown
+!
+end
