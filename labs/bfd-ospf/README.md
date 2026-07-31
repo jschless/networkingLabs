@@ -1,6 +1,7 @@
 # Lab: bfd-ospf
 
 ## Purpose
+
 Learn BFD (Bidirectional Forwarding Detection) integrated with OSPF. See how BFD enables
 sub-second failure detection — dramatically faster than OSPF's default 40-second dead timer.
 
@@ -204,6 +205,7 @@ show ip ospf interface Ethernet1  # interface-level OSPF state
 ### Why BFD?
 
 OSPF's failure detection relies on Hello/Dead timers:
+
 - Hello interval: 10 seconds (default)
 - Dead interval: 40 seconds (default, = 4 × hello)
 
@@ -211,6 +213,7 @@ That means a link failure won't be detected for up to **40 seconds**, during whi
 traffic is blackholed.
 
 BFD solves this:
+
 - BFD sends lightweight hello packets at very short intervals (as low as 50ms)
 - BFD failure detection: `detect-multiplier × min-rx` = 3 × 300ms = **900ms** by default
 - With aggressive timers (3 × 100ms): failure detection in **300ms**

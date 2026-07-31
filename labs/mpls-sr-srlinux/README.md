@@ -190,6 +190,7 @@ No answers provided — reason them through.
 | `ping A.B.C.D` | `ping A.B.C.D network-instance default` |
 
 To make configuration changes interactively:
+
 ```
 enter candidate
     /network-instance default

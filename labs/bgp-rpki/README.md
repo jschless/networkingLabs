@@ -50,6 +50,7 @@ The RTR server (`rpki-server`) serves these Route Origin Authorizations:
 | 10.200.0.0/24   | 24         | AS65200              | not announced → NOT-FOUND   |
 
 **What this means in the lab:**
+
 - `isp1` announces `10.100.0.0/24` with origin AS65100 → **VALID** (matches ROA)
 - `hijacker` announces `10.100.0.0/24` with origin AS65999 → **INVALID** (wrong origin)
 - `10.200.0.0/24` appears in the ROA table but nobody announces it → **NOT-FOUND** as a received route
@@ -57,11 +58,13 @@ The RTR server (`rpki-server`) serves these Route Origin Authorizations:
 ## Key Concepts
 
 ### Route Origin Authorization (ROA)
+
 A ROA is a cryptographically signed object created by an address space holder that
 states: *"Prefix X, up to max-length Y, may be originated by AS Z."*  ROAs are
 stored in the global RPKI repository and fetched by RPKI validator software.
 
 ### RTR Protocol (RFC 8210)
+
 Routers do not speak RPKI directly. Instead, an RPKI validator (Routinator, FORT,
 etc.) fetches and validates ROAs, then serves the validated prefix-origin pairs to
 routers using the lightweight RTR (RPKI-to-Router) protocol over TCP port 3323.
@@ -70,6 +73,7 @@ FRR's `rpkid` daemon connects to the RTR server, downloads the ROA table, and
 makes it available to `bgpd` for validation decisions.
 
 ### Route States
+
 | State     | Meaning                                                        |
 |-----------|----------------------------------------------------------------|
 | valid     | A matching ROA exists; origin AS and prefix length both match  |
@@ -78,8 +82,10 @@ makes it available to `bgpd` for validation decisions.
 | notfound  | No ROA covers this prefix at all                               |
 
 ### Route Origin Validation (ROV) Policy
+
 ROV is enforced through BGP route-maps using `match rpki valid|invalid|notfound`.
 A common policy:
+
 - **VALID** → accept, raise local-preference (prefer validated routes)
 - **NOT-FOUND** → accept at normal preference (most internet prefixes today)
 - **INVALID** → drop (hijack protection)
@@ -112,6 +118,7 @@ edge# show rpki as-number 65999
 ```
 
 Expected output for `show rpki cache-connection`:
+
 ```
 Connected to group 1
   Cache 10.0.3.2:3323 (connected)
@@ -119,6 +126,7 @@ Connected to group 1
 ```
 
 Expected output for `show rpki prefix-table` (partial):
+
 ```
 Prefix                                   Prefix Length  Origin-AS
 10.100.0.0                               24 - 24        65100
@@ -132,6 +140,7 @@ edge# show bgp ipv4 unicast
 ```
 
 Look for the `rpki` column in the output flags. The flags characters include:
+
 - `V` = VALID
 - `I` = INVALID
 - `N` = NOTFOUND
@@ -150,6 +159,7 @@ edge# show bgp ipv4 unicast
 ```
 
 With the default `RPKI-POLICY` route-map applied:
+
 - Route from isp1 (10.0.1.1) for `10.100.0.0/24` should be **accepted** (VALID, LP=200)
 - Route from hijacker (10.0.2.2) for `10.100.0.0/24` should be **absent** (INVALID, denied by seq 30)
 
@@ -233,6 +243,7 @@ edge(config)# route-map RPKI-POLICY permit 30
 edge(config-route-map)# match rpki invalid
 edge(config-route-map)# end
 ```
+
 </details>
 
 Then soft-clear BGP to re-evaluate:
@@ -243,6 +254,7 @@ edge# show bgp ipv4 unicast 10.100.0.0/24
 ```
 
 You should now see **two paths** for `10.100.0.0/24`. Observe:
+
 - The `rpki` state column on each path
 - The local-preference values (200 for VALID from isp1, 100 for INVALID from hijacker)
 - Which path is selected as best (BGP uses LP in best-path selection)
@@ -261,6 +273,7 @@ edge(config-route-map)# match rpki invalid
 edge(config-route-map)# end
 edge# clear bgp * soft in
 ```
+
 </details>
 
 ---
@@ -288,6 +301,7 @@ edge(config-route-map)# end
 edge# clear bgp * soft in
 edge# show bgp ipv4 unicast 10.100.0.0/24
 ```
+
 </details>
 
 **Observation:** Without the explicit LP difference, which path does FRR select?
@@ -309,6 +323,7 @@ edge(config-route-map)# match rpki invalid
 edge(config-route-map)# end
 edge# clear bgp * soft in
 ```
+
 </details>
 
 ---
@@ -332,6 +347,7 @@ isp1(config-router)# address-family ipv4 unicast
 isp1(config-router-af)# network 10.50.0.0/24
 isp1(config-router-af)# end
 ```
+
 </details>
 
 On `edge`:
@@ -341,6 +357,7 @@ edge# show bgp ipv4 unicast 10.50.0.0/24
 ```
 
 **Questions:**
+
 - What is the RPKI state of `10.50.0.0/24`?
 - Is it accepted or rejected by the route-map?
 - Why does the current policy accept NOT-FOUND routes?
@@ -363,9 +380,11 @@ edge(config-route-map)# end
 edge# clear bgp * soft in
 edge# show bgp ipv4 unicast
 ```
+
 </details>
 
 **Questions:**
+
 - What prefixes remain in the BGP table?
 - What is the practical drawback of strict ROV today (2024)?
   (Hint: what fraction of internet prefixes have ROAs?)
@@ -383,6 +402,7 @@ edge(config-route-map)# set local-preference 100
 edge(config-route-map)# end
 edge# clear bgp * soft in
 ```
+
 </details>
 
 ---

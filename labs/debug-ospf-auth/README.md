@@ -72,6 +72,7 @@ Wait ~15 seconds after deploy for OSPF to attempt adjacency formation.
 ## Observed symptoms
 
 **On r2:**
+
 ```
 r2# show ip ospf neighbor
 Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
@@ -81,12 +82,14 @@ Neighbor ID Instance VRF      Pri State                  Dead Time   Address    
 Only r3 is present. r1 is completely absent.
 
 **On r1:**
+
 ```
 r1# show ip ospf neighbor
 (no output)
 ```
 
 **End-to-end:**
+
 ```
 r1# ping 10.0.0.3 source 10.0.0.1
 PING 10.0.0.3 (10.0.0.3): 56 data bytes
@@ -107,6 +110,7 @@ should have matching key configurations on their shared link. Something
 differs between what r1 has and what r2 has on that link.
 
 Work through the diagnostic questions:
+
 1. What does `show ip ospf interface Ethernet1` say about auth type and key IDs on r1?
 2. What does `show ip ospf interface Ethernet1` say on r2?
 3. The auth type and key ID look the same — so what else could cause the failure?
@@ -133,6 +137,7 @@ show ip ospf interface Ethernet1
 
 Run `show ip ospf interface Ethernet1` on both r1 and r2. Compare the output.
 Pay attention to:
+
 - Authentication type (should say `MD5`)
 - Key ID in use (should match on both sides)
 
@@ -206,6 +211,7 @@ r1# ping 10.0.0.3 source 10.0.0.1
 ```
 
 Expected:
+
 ```
 r2# show ip ospf neighbor
 Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface

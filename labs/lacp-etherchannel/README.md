@@ -121,6 +121,7 @@ interface Ethernet2
 
 end
 ```
+
 </details>
 
 ### On sw2
@@ -144,6 +145,7 @@ interface Ethernet2
 
 end
 ```
+
 </details>
 
 ### What happens when you add `channel-group 1 mode active`
@@ -259,6 +261,7 @@ ip route 10.0.1.2/32 10.12.0.2
 ! On sw2:
 ip route 10.0.1.1/32 10.12.0.1
 ```
+
 </details>
 
 Then from host1:
@@ -344,6 +347,7 @@ interface Ethernet2
    shutdown
 end
 ```
+
 </details>
 
 ### Verify the bundle is still up
@@ -371,6 +375,7 @@ interface Ethernet2
    no shutdown
 end
 ```
+
 </details>
 
 LACP will re-negotiate and Ethernet2 will rejoin the bundle within a few seconds (or within 1 second with fast timers).
@@ -398,6 +403,7 @@ interface Ethernet2
    channel-group 1 mode on
 end
 ```
+
 </details>
 
 ### Switch to static mode on sw2
@@ -413,6 +419,7 @@ interface Ethernet2
    channel-group 1 mode on
 end
 ```
+
 </details>
 
 ### Verify
@@ -444,6 +451,7 @@ interface Ethernet2
    channel-group 1 mode active
 end
 ```
+
 </details>
 
 ---
@@ -481,6 +489,7 @@ interface Ethernet2
    shutdown
 end
 ```
+
 </details>
 
 Now check:
@@ -505,6 +514,7 @@ interface Port-Channel1
    no port-channel min-links
 end
 ```
+
 </details>
 
 Then restore the shut interface:
@@ -518,6 +528,7 @@ interface Ethernet2
    no shutdown
 end
 ```
+
 </details>
 
 ---
@@ -546,6 +557,7 @@ interface Ethernet2
    lacp timer fast
 end
 ```
+
 </details>
 
 ### Enable fast LACP timers on sw2
@@ -561,6 +573,7 @@ interface Ethernet2
    lacp timer fast
 end
 ```
+
 </details>
 
 ### Verify timer mode
@@ -587,6 +600,7 @@ configure
 interface Ethernet2
    shutdown
 ```
+
 </details>
 
 With slow timers the bundle degrades almost immediately (the physical link drops, which EOS detects instantly via carrier loss — LACP timers matter more when the physical layer stays up but LACP PDUs stop arriving, for example in a unidirectional fiber failure).
@@ -604,6 +618,7 @@ interface Ethernet2
    no lacp timer fast
 end
 ```
+
 </details>
 
 ---

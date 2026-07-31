@@ -120,6 +120,7 @@ what would break if you swapped them?
 <summary>Solution</summary>
 
 Hub:
+
 ```ini
 [Interface]
 PrivateKey = <hub.key>
@@ -136,6 +137,7 @@ AllowedIPs = 192.168.100.20/32
 ```
 
 gw-a (gw-b mirrors with its own address):
+
 ```ini
 [Interface]
 PrivateKey = <gwa.key>

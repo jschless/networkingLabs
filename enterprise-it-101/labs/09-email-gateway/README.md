@@ -372,6 +372,7 @@ repair. This is the single most common real-world mail-LDAP outage.
     **log in**? What single root cause explains both?
 
 **Break it:**
+
 ```bash
 perl -i -pe 's/^LDAP_BIND_PW=.*/LDAP_BIND_PW=WrongPassword/' labs/09-email-gateway/configs/mailserver.env
 docker compose -f base/docker-compose.yml \
@@ -380,6 +381,7 @@ sleep 25
 ```
 
 **Diagnose** — try to send and to log in, then read the log:
+
 ```bash
 docker exec admin-ws swaks --to bob@lab.corp --from alice@lab.corp --server mail1.lab.corp --body x
 docker exec admin-ws curl -k --url "imaps://mail1.lab.corp/INBOX" --user "bob@lab.corp:P@ssw0rd1" -X "STATUS INBOX (MESSAGES)"
@@ -406,6 +408,7 @@ docker exec mail1 grep -iE "ldap.*bind|Invalid cred" /var/log/mail/mail.log | ta
     the mail log names the exact LDAP error.
 
 **Repair it:**
+
 ```bash
 perl -i -pe 's/^LDAP_BIND_PW=.*/LDAP_BIND_PW=P@ssw0rd1/' labs/09-email-gateway/configs/mailserver.env
 docker compose -f base/docker-compose.yml \

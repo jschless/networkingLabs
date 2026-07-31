@@ -236,6 +236,7 @@ logging local-interface Management0
 end
 copy running-config startup-config
 ```
+
 </details>
 
 ### Configure `core1`
@@ -296,6 +297,7 @@ In OpenNMS:
 
 1. Go to the discovery configuration area.
 2. Add the routed management addresses:
+
    - `172.31.30.11`
    - `172.31.30.12`
    - `172.31.30.13`
@@ -381,6 +383,7 @@ Then in Grafana:
 1. Open `Traffic Investigation`.
 2. Set the time range to `Last 15 minutes`.
 3. Compare:
+
    - `Campus1 Per-Interface Ingress`
    - `Core1 Per-Interface Ingress`
    - `Aggregate Path Rate By Telemetry Target`

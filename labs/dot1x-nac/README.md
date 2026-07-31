@@ -104,6 +104,7 @@ You will see the full RADIUS exchange: Access-Request → EAP challenge → Acce
 ```
 
 Expected output after all auth:
+
 ```
 port    vlan ids
 eth1    10  PVID Egress Untagged   ← supplicant-tls authenticated
@@ -148,6 +149,7 @@ Capture 802.1X frames on the wire between supplicant-tls and the authenticator:
 ```
 
 Copy the pcap out and open in Wireshark:
+
 ```bash
 docker cp clab-dot1x-nac-authenticator:/tmp/eap-tls.pcap ./eap-tls.pcap
 ```
@@ -207,7 +209,9 @@ de-authorization):
 ## Experiment: break things
 
 ### Change the client cert CN
+
 Modify the wpa_supplicant.conf on supplicant-tls to use a non-existent identity:
+
 ```bash
 ./scripts/lab.sh bash dot1x-nac supplicant-tls
 # Edit /etc/wpa_supplicant/wpa_supplicant.conf: change identity to "bob-unknown"
@@ -215,12 +219,15 @@ Modify the wpa_supplicant.conf on supplicant-tls to use a non-existent identity:
 ```
 
 ### Change to wrong RADIUS secret
+
 Edit `/etc/hostapd/hostapd-eth1.conf` inside the authenticator container and change
 `auth_server_shared_secret` to something wrong. Restart hostapd. RADIUS will reject
 the authenticator as an unknown NAS (Access-Reject at the protocol level before EAP).
 
 ### Force MAB manually with radtest
+
 Simulate what the authenticator sends during MAB:
+
 ```bash
 # From radius node — simulate MAB with a specific MAC
 ./scripts/lab.sh cmd dot1x-nac radius -- \
@@ -236,6 +243,7 @@ DROP all non-EAPOL frames on unauthenticated ports — functionally equivalent f
 frame blocking, but enforced in software.
 
 **VLAN assignment flow**:
+
 1. Supplicant sends EAPOL-Start
 2. hostapd sends RADIUS Access-Request (EAP Identity)
 3. RADIUS challenges (EAP-TLS or PEAP tunnel)
@@ -246,6 +254,7 @@ frame blocking, but enforced in software.
 7. Port is now on the authorized VLAN — supplicant can reach its server
 
 **Certificate chain** (EAP-TLS):
+
 ```mermaid
 flowchart TB
     ca["CA<br/>ca.pem"]
@@ -260,6 +269,7 @@ flowchart TB
 ```
 
 **MAB flow** (supplicant-mab):
+
 1. hostapd sends EAPOL-Request/Identity to supplicant-mab's MAC
 2. No response (no wpa_supplicant running)
 3. After 10s timeout, hostapd sends RADIUS Access-Request with MAC as User-Name/Password

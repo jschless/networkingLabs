@@ -7,12 +7,14 @@ This lab demonstrates the **L3-everywhere** (also called "routed access") campus
 ### Why L3-Everywhere?
 
 **Traditional 3-tier campus problems:**
+
 - Spanning Tree Protocol (STP) has unpredictable failure domains. A topology change at the access layer can trigger a 30-second convergence event that affects every device in the broadcast domain.
 - VLANs that span multiple switches create "L2 blast radius" — a broadcast storm or MAC table overflow on one switch can propagate to all switches carrying that VLAN.
 - VLAN trunks and STP require complex planning and create operational fragility (accidental trunk mismatches, superior BPDU attacks, etc.).
 - Adding or moving hosts requires VLAN provisioning across multiple switches.
 
 **L3-everywhere advantages:**
+
 - Every link is a point-to-point routed link — failure is isolated to that link, not a broadcast domain.
 - OSPF convergence with BFD is sub-second (50–300 ms) versus STP's 30-second worst case.
 - ECMP load-balancing is automatic via OSPF equal-cost paths — no need for port-channel/bonding complexity.
@@ -172,6 +174,7 @@ core1# show ip route ospf
 ```
 
 You should see:
+
 - All dist loopbacks (10.0.1.x/32) as intra-area O routes
 - All acc loopbacks (10.0.2.x/32) as inter-area O IA routes (from area 1 via ABRs)
 - All host subnets (10.10.1.0/30, 10.10.1.4/30, 10.10.2.0/30, 10.10.2.4/30) as O IA
@@ -186,6 +189,7 @@ core1# show ip route 10.10.1.0/30
 ```
 
 Expected output shows two next-hops:
+
 - via 10.1.0.1 (dist1)
 - via 10.1.0.3 (dist2)
 
@@ -244,16 +248,19 @@ The stub area configuration means acc1 receives only a default route (0.0.0.0/0)
 Simulate an uplink failure on dist1 and observe sub-second reconvergence:
 
 **Terminal 1 — watch routes on core1:**
+
 ```
 core1# watch 1 show ip route 10.10.1.0/30
 ```
 
 **Terminal 2 — watch convergence time on acc1:**
+
 ```
 acc1# watch 1 show ip ospf neighbor
 ```
 
 **Terminal 3 — continuous ping from h1:**
+
 ```bash
 ./scripts/lab.sh bash enterprise-routed-access h1
 ping -i 0.1 10.10.2.2
@@ -268,9 +275,11 @@ dist1# configure
 dist1(config)# interface Ethernet1
 dist1(config-if-Et1)# shutdown
 ```
+
 </details>
 
 Observe:
+
 - BFD detects the failure in ~50–300 ms (vs OSPF dead interval of 40 s without BFD)
 - Ping loss is 0–3 packets
 - Traffic immediately shifts to the dist1 ↔ core2 path (dist1 still has Ethernet2 to core2)
@@ -281,6 +290,7 @@ Observe:
 Simulate complete loss of dist1:
 
 **Continuous ping from h1:**
+
 ```bash
 ./scripts/lab.sh bash enterprise-routed-access h1
 ping -i 0.1 10.10.2.2
@@ -297,6 +307,7 @@ dist1(config-if-Et1)# shutdown
 dist1(config)# interface Ethernet2
 dist1(config-if-Et2)# shutdown
 ```
+
 </details>
 
 Result: acc1 still has adjacency to dist2, so h1/h2 maintain full connectivity through dist2 → core. This is the key benefit of dual-homing at the access layer.
@@ -306,6 +317,7 @@ Result: acc1 still has adjacency to dist2, so h1/h2 maintain full connectivity t
 Demonstrate that moving h1 to a different access switch requires ZERO switch reconfiguration.
 
 In a traditional VLAN-based campus, moving h1 from acc1 to acc2 would require:
+
 - Adding VLAN to acc2's trunk
 - Verifying VLAN pruning on dist switches
 - Updating STP root settings if needed
@@ -324,6 +336,7 @@ ip route del default
 ip addr add 10.10.2.10/30 dev eth1
 ip route add default via 10.10.2.9   # hypothetical new gateway
 ```
+
 </details>
 
 No switch needs to be reconfigured. The host announces its new subnet to the network simply by being connected, and OSPF propagates the new reachability automatically.

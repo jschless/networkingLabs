@@ -99,6 +99,7 @@ choice when GRE is already providing the encapsulation?
 <summary>Solution</summary>
 
 On **gw-a** (gw-b mirrors with addresses/IDs swapped):
+
 ```vyos
 configure
 set vpn ipsec ike-group GRE-IPSEC key-exchange 'ikev2'

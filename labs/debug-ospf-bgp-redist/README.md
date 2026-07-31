@@ -83,6 +83,7 @@ Wait ~25 seconds after deploy for OSPF and BGP to converge.
 ## Observed symptoms
 
 **On bgp2 — r1's prefix is present:**
+
 ```
 bgp2# show bgp ipv4 unicast
    Network          Next Hop            Metric LocPrf Weight Path
@@ -96,6 +97,7 @@ bgp2 can see OSPF-originated prefixes (10.0.0.1/32, 10.0.0.2/32) — the
 OSPF→BGP direction is working.
 
 **On r1 — no BGP routes in the routing table:**
+
 ```
 r1# show ip route bgp
 (no output)
@@ -112,6 +114,7 @@ r1 knows only about the OSPF domain. bgp2's loopback (10.0.0.4/32) is
 completely absent.
 
 **End-to-end ping:**
+
 ```
 r1# ping 10.0.0.4 source 10.0.0.1
 5 packets transmitted, 0 received, 100% packet loss
@@ -126,6 +129,7 @@ direction is broken (r1 has no BGP-derived routes). The redistribution is
 configured on the asbr, but only half of it survived the "cleanup."
 
 Work through the diagnostic questions:
+
 1. On asbr, what does `show ip bgp` show? Does asbr have BGP routes?
 2. On asbr, what does `show ip route bgp` show? Are BGP routes in the RIB?
 3. On r1, what does `show ip ospf database external` show? Any Type-5 LSAs?
@@ -168,6 +172,7 @@ into OSPF?
 <summary>Hint 2 — Narrowing it down</summary>
 
 On r1, run:
+
 ```
 show ip ospf database external
 ```
@@ -236,6 +241,7 @@ bgp2# ping 10.0.0.1 source 10.0.0.4
 ```
 
 Expected on r1 after fix:
+
 ```
 r1# show ip route ospf
 O>* 10.0.0.2/32  [110/2] via 10.0.12.2, eth1

@@ -136,6 +136,7 @@ receiver have — 1, 4, or 5? And what AS-path will the /21 carry?
 <summary>Solution</summary>
 
 On **aggregator**:
+
 ```text
 router bgp 65002
    address-family ipv4
@@ -170,6 +171,7 @@ the **aggregator's** own BGP table? If yes, in what state?
 <summary>Solution</summary>
 
 On **aggregator**:
+
 ```text
 router bgp 65002
    address-family ipv4
@@ -213,6 +215,7 @@ attribute should *disappear* compared to Task 2's plain aggregate?
 <summary>Solution</summary>
 
 On **aggregator**:
+
 ```text
 router bgp 65002
    address-family ipv4
@@ -297,6 +300,7 @@ summary for the rest" pattern.
 <summary>Solution</summary>
 
 On **aggregator**:
+
 ```text
 ip prefix-list SUPPRESS-4 seq 5 permit 10.1.4.0/24
 route-map SUPPRESS-MAP permit 10
@@ -363,17 +367,21 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **Aggregate does not appear**
+
 - It requires at least one more-specific in the BGP table — check the
   /24s are present on the aggregator
 
 **Specifics still showing after summary-only**
+
 - Verify with `show running-config | grep aggregate`
 - `clear bgp * soft-outbound` to force re-advertisement
 
 **as-set not showing in AS-path**
+
 - On cEOS 4.35.2F it never will — the option is a silent no-op (see
   Task 4). On RFC-compliant platforms it appears as `{65001}` in braces.
 
 **Aggregate not withdrawn after removing all components**
+
 - Propagation can take a few seconds; force with
   `clear bgp * soft-outbound` on the aggregator

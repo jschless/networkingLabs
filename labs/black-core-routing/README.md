@@ -76,6 +76,7 @@ Access examples:
 - `client-a` and `service-b` have IP addressing, default routes, and basic services.
 - `red-a` and `red-b` already have static routes to the opposite transport subnet through their local encryptor.
 - `service-b` runs:
+
   - HTTP on `10.20.20.10:80`
   - DNS on `10.20.20.10:53`, serving `red-service.lab -> 10.20.20.10`
 
@@ -337,12 +338,15 @@ Configure site-to-site IPsec on `enc-a` and `enc-b`.
 Design:
 
 - IKE peer addresses:
+
   - `enc-a` black IP `203.0.113.1`
   - `enc-b` black IP `203.0.113.6`
 - protected prefixes:
+
   - Site A red transit `10.255.0.0/30`
   - Site B red transit `10.255.0.4/30`
 - authentication:
+
   - IKEv2
   - PSK `BlackCoreLab123`
 

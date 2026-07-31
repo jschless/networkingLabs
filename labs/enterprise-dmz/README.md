@@ -160,6 +160,7 @@ nc -zv 172.16.0.2 80        # Times out — private DMZ address is unreachable
 > To exercise the internet→web path, we test using the isp as the source.
 
 From **isp** (cEOS), try to reach across:
+
 ```bash
 ./scripts/lab.sh cli enterprise-dmz isp
 ping 203.0.114.2       ! Should reach fw-outside WAN — success
@@ -170,12 +171,14 @@ ping 203.0.114.2       ! Should reach fw-outside WAN — success
 To test that fw-outside correctly forwards HTTP (the policy is for traffic transiting the firewall), open two shells:
 
 **Shell 1** — Watch firewall logs on fw-outside:
+
 ```bash
 ./scripts/lab.sh bash enterprise-dmz fw-outside
 nft monitor          # Live log of all nft events
 ```
 
 **Shell 2** — Send traffic from internet-client toward fw-outside:
+
 ```bash
 ./scripts/lab.sh bash enterprise-dmz internet-client
 
@@ -199,6 +202,7 @@ nc -zv 10.0.0.6 22          # Times out (workstation — correct!)
 ```
 
 Watch the drop logs on fw-outside:
+
 ```bash
 ./scripts/lab.sh bash enterprise-dmz fw-outside
 # The kernel log messages from nft log rules appear in dmesg
@@ -252,18 +256,21 @@ nft list chain inet fw_inside forward
 Open three shells simultaneously:
 
 **Shell 1 — fw-outside forward chain log monitor:**
+
 ```bash
 ./scripts/lab.sh bash enterprise-dmz fw-outside
 dmesg -w | grep "fw-outside"
 ```
 
 **Shell 2 — fw-inside forward chain log monitor:**
+
 ```bash
 ./scripts/lab.sh bash enterprise-dmz fw-inside
 dmesg -w | grep "fw-inside"
 ```
 
 **Shell 3 — Generate traffic from internet-client:**
+
 ```bash
 ./scripts/lab.sh bash enterprise-dmz internet-client
 # Legitimate: HTTP to web-server
@@ -313,6 +320,7 @@ The dual-firewall design adds a **second independent security boundary**.
 ### Single-Firewall Three-Leg Variant (for comparison)
 
 In the simpler (but less secure) three-leg design, one firewall has three interfaces:
+
 - Leg 1: WAN (internet)
 - Leg 2: DMZ
 - Leg 3: LAN (internal)
@@ -320,6 +328,7 @@ In the simpler (but less secure) three-leg design, one firewall has three interf
 **Advantages:** Fewer devices, simpler management.
 
 **Disadvantages:**
+
 - A single firewall misconfiguration can expose the LAN to the DMZ or internet.
 - No independent audit/inspection point between DMZ and LAN.
 - Vendor compromise of the firewall itself exposes all three zones simultaneously.
@@ -331,6 +340,7 @@ devices. In this lab, the two nftables firewall nodes are independent Linux cont
 
 This lab uses `nft` (nftables), the Linux kernel firewall framework that replaced
 iptables in modern distributions. Key differences:
+
 - Single `nft` binary instead of separate `iptables`/`ip6tables`/`arptables` tools
 - Tables can be `inet` (IPv4+IPv6), `ip`, `ip6`, `arp`, `bridge`
 - More expressive syntax: port sets `{ 80, 443 }`, verdict maps, etc.
@@ -340,6 +350,7 @@ iptables in modern distributions. Key differences:
 
 Both firewalls in this lab are **stateful** (`ct state established,related accept`).
 The connection tracking module (`nf_conntrack`) tracks the state of TCP sessions:
+
 - `new` — first packet of a new connection (SYN)
 - `established` — connection is established (data transfer)
 - `related` — related to an existing connection (e.g., FTP data channel)

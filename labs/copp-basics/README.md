@@ -87,6 +87,7 @@ show policy-map type copp
 ```
 
 You should see:
+
 - BGP peer 10.1.12.1 (r1) in `Estab` state
 - OSPF neighbor 10.1.23.2 (r3) in `FULL` state
 - `show policy-map type copp` may show `copp-system-policy` (EOS default) or nothing
@@ -119,9 +120,11 @@ ip access-list CoPP-SSH
 ip access-list CoPP-ARP
    permit arp any any
 ```
+
 </details>
 
 Verify:
+
 ```
 show ip access-lists
 ```
@@ -153,9 +156,11 @@ class-map type copp match-any CLASS-SSH
 class-map type copp match-any CLASS-ARP
    match arp access-group CoPP-ARP
 ```
+
 </details>
 
 Verify:
+
 ```
 show class-map type copp
 ```
@@ -192,6 +197,7 @@ policy-map type copp COPP-POLICY
 ```
 
 Verify:
+
 ```
 show policy-map type copp COPP-POLICY
 ```
@@ -208,6 +214,7 @@ control-plane
 ```
 
 Verify the policy is active:
+
 ```
 show policy-map type copp
 ```
@@ -278,6 +285,7 @@ policy-map type copp COPP-POLICY
 ```
 
 Then flood pings from r3:
+
 ```
 ping 10.1.23.1 repeat 1000 interval 0
 ```
@@ -320,23 +328,28 @@ Watch `CLASS-BGP` counters — does the legitimate BGP session survive?
 ## Troubleshooting
 
 **BGP session dropped after applying CoPP**
+
 - The `CLASS-BGP` rate is too low, or the ACL doesn't match TCP 179 in both directions
 - Verify: `show ip access-lists CoPP-BGP` — check both `permit tcp any any eq bgp` AND `permit tcp any eq bgp any` are present
 - Temporarily remove CoPP (`no service-policy input` under `control-plane`) to restore the session, then fix the rate
 
 **OSPF neighbor dropped to INIT or DOWN**
+
 - `CLASS-OSPF` rate too low — OSPF hello interval is 10s but hellos must get through reliably
 - Increase the OSPF class rate: `police rate 1 mbps burst-size 64 kb`
 
 **`show policy-map type copp` shows no matched packets**
+
 - CoPP ACLs may not be matching — verify ACL syntax and that `match ip access-group` references the correct ACL name
 - Send test traffic (ping) and recheck counters
 
 **`class-map type copp` — `match arp` syntax error**
+
 - ARP is not IP, so use `match arp access-group` (not `match ip access-group`) for the ARP class
 - Alternatively, skip ARP classification and rely on `class-default` for ARP
 
 **Policy-map changes not taking effect**
+
 - After modifying an active policy-map, the changes apply immediately in EOS — no need to re-apply under `control-plane`
 - Confirm with `show policy-map type copp`
 

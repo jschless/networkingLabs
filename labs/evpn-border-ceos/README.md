@@ -40,12 +40,14 @@ flowchart TB
 ```
 
 **Underlay addresses (bleaf1)**
+
 | Link             | bleaf1      | Spine       |
 |------------------|-------------|-------------|
 | bleaf1 ↔ spine1  | 10.1.0.8/31 | 10.1.0.9/31 |
 | bleaf1 ↔ spine2  | 10.2.0.8/31 | 10.2.0.9/31 |
 
 **External link (VRF TENANT-A)**
+
 | Link               | bleaf1         | ext-router      |
 |--------------------|----------------|-----------------|
 | bleaf1 ↔ ext-router | 203.0.113.1/30 | 203.0.113.2/30 |
@@ -229,6 +231,7 @@ Without it, the internet prefix never propagates into the fabric.
 ### Why does the external interface go inside VRF TENANT-A?
 
 Because EOS routes packets in per-VRF tables. Placing `Ethernet3` in VRF TENANT-A means:
+
 - The eBGP session with ext-router runs in TENANT-A's routing context
 - Routes learned from ext-router land in TENANT-A's table
 - TENANT-B's routing table never sees them — VRF isolation enforced
@@ -236,6 +239,7 @@ Because EOS routes packets in per-VRF tables. Placing `Ethernet3` in VRF TENANT-
 ### What are EVPN type-5 routes?
 
 Type-5 routes carry IP prefixes (not individual MAC+IP pairs). They are used for:
+
 - **Intra-fabric L3 routing**: leaves advertise their SVIs' subnets as type-5 (from `redistribute connected`)
 - **External prefixes**: border leaves advertise external routes as type-5 (from `redistribute bgp`)
 

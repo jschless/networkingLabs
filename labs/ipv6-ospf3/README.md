@@ -296,14 +296,17 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **No neighbors forming:**
+
 - Check that both ends have `ipv6 ospf6 area 0` on the connecting interface
 - Verify IPv6 link-local addresses are assigned: `show interface Ethernet1`
 - Check that ospf6 is running: `show ipv6 ospf6`
 
 **Routes missing:**
+
 - Check if loopback has `ipv6 ospf6 area 0`
 - Check for passive flag: loopback should be passive, transit interfaces should not
 
 **Router-id not set:**
+
 - OSPFv3 will not start without a router-id; set `ospf6 router-id X.X.X.X`
   explicitly when no IPv4 address exists

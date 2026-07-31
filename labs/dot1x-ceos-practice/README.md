@@ -6,6 +6,7 @@ This lab is for learning two different AAA roles on the same Arista cEOS switch:
 - administrator device access with `TACACS+`
 
 You get:
+
 - a prebuilt FreeRADIUS backend for endpoint auth
 - a prebuilt TACACS+ backend for device admin AAA
 - prebuilt supplicant/client behaviors
@@ -13,6 +14,7 @@ You get:
 - clear checkpoints and failure drills
 
 You configure on the switch:
+
 - RADIUS reachability and dot1x AAA
 - global `802.1X` enablement
 - EAP-based port authentication
@@ -113,6 +115,7 @@ TACACS+ logs:
 ## What is already configured
 
 On `access1`:
+
 - local fallback user `admin / admin`
 - VLANs `10`, `20`, `30`, `99`, and `199`
 - `Et5` is a routed link to RADIUS: `192.168.100.1/24`
@@ -122,11 +125,14 @@ On `access1`:
 - `Vlan199` exists on the switch as `192.168.199.1/24`
 
 On Linux nodes:
+
 - `radius` is preconfigured with:
+
   - `alice-tls` -> VLAN `10`
   - `alice` / `password123` -> VLAN `20`
   - unknown MAC/user fallback -> VLAN `30`
 - `tacacs1` is preconfigured with:
+
   - user `neteng`
   - password `labpass`
   - shared key `labkey`
@@ -153,6 +159,7 @@ show ip interface brief
 ```
 
 Expected:
+
 - Et5 up/up with `192.168.100.1/24`
 - Vlan199 up/up with `192.168.199.1/24`
 - Et1-Et4 up/up as access ports in VLAN `99`
@@ -234,6 +241,7 @@ show mac address-table dynamic interface Ethernet2
 ```
 
 Expected:
+
 - Et1 authenticates `alice-tls` and reaches VLAN `10`
 - Et2 authenticates `alice` and reaches VLAN `20`
 
@@ -279,6 +287,7 @@ Traffic test:
 </details>
 
 Note:
+
 - MAB is slower than the EAP cases; allow roughly 30-60 seconds before deciding it failed.
 
 ## Task 6 — Handle rejected auth on Et4
@@ -313,6 +322,7 @@ Traffic test:
 ```
 
 Expected:
+
 - auth should reject
 - endpoint should not get employee or contractor access
 
@@ -377,6 +387,7 @@ show privilege
 ```
 
 Expected:
+
 - `neteng` login succeeds
 - exec privilege is `15`
 
@@ -398,6 +409,7 @@ Then inspect the TACACS+ server:
 ```
 
 Expected:
+
 - exec session accounting entries appear
 - command accounting entries appear
 
@@ -418,6 +430,7 @@ Now test from `admin1`:
 Use password `admin`.
 
 Expected:
+
 - TACACS+ user `neteng` no longer authenticates
 - local fallback user `admin` still works
 
@@ -472,6 +485,7 @@ On supplicants:
 ## Learning checkpoints
 
 After working through the lab, you should be able to explain:
+
 - why the switch needs both `radius-server` configuration and `aaa authentication dot1x`
 - the difference between EAP-based dot1x and MAB
 - how RADIUS returns VLAN authorization

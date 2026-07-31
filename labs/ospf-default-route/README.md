@@ -55,6 +55,7 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ```
 
 Connect to a router:
+
 ```bash
 sudo ./scripts/lab.sh cli ospf-default-route asbr
 ```
@@ -82,6 +83,7 @@ loopback — but no default.
 <summary>Solution</summary>
 
 On **core**:
+
 ```text
 configure terminal
 router ospf
@@ -92,6 +94,7 @@ router ospf
 ```
 
 On **asbr** (Ethernet2 deliberately absent):
+
 ```text
 configure terminal
 router ospf
@@ -136,6 +139,7 @@ table change at all? Why or why not?
 <summary>Solution</summary>
 
 On **asbr**:
+
 ```text
 configure terminal
 ip route 0.0.0.0/0 203.0.113.2
@@ -176,6 +180,7 @@ will core display for it?
 <summary>Solution</summary>
 
 On **asbr**:
+
 ```text
 configure terminal
 router ospf
@@ -287,6 +292,7 @@ shell.
 <summary>Solution</summary>
 
 On **asbr**:
+
 ```text
 configure terminal
 ip prefix-list INTERNET-UP seq 5 permit 203.0.113.0/30
@@ -298,6 +304,7 @@ router ospf
 ```
 
 Test:
+
 ```bash
 sudo ./scripts/lab.sh cmd ospf-default-route asbr -- ip link set eth2 down
 # watch core's table, then:
@@ -336,6 +343,7 @@ ip route 10.0.0.0/8 203.0.113.1
 </details>
 
 Then from **core**:
+
 ```text
 ping 10.99.0.1 source 10.0.0.1
 ```

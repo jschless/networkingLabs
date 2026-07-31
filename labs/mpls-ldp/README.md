@@ -182,6 +182,7 @@ For the r1–r2 pair, which router opens that TCP connection?
 
 - Two separate things to enable, and forgetting the first is this lab's
   classic silent failure:
+
   1. Per interface: `mpls enable` (under `interface ethN`) — this turns
      on kernel MPLS input for the interface.
   2. Globally: the `mpls ldp` block → `router-id`, then

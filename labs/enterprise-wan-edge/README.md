@@ -91,6 +91,7 @@ artificially lengthens the AS path, making your prefix look farther away through
 peer and steering remote traffic toward the shorter path (isp1).
 
 The `PREPEND-ISP2 out` route-map on the edge-to-isp2 session:
+
 - Matches `198.51.100.0/24` (the enterprise public block)
 - Prepends AS 65300 three additional times: `65300 65300 65300 65300`
 - isp2 now sees AS path length 4; isp1 sees AS path length 1
@@ -132,23 +133,28 @@ docker build -t frr-lab:local images/frr/
 ```
 edge# show ip bgp summary
 ```
+
 Expect: two eBGP neighbors (203.0.113.1 and 203.0.114.1), both in state Established.
 
 ```
 edge# show ip bgp
 ```
+
 Look for 0.0.0.0/0 appearing twice — once from each ISP. The isp1 entry should show
 `localpref 200` and be marked `>` (best); the isp2 entry should show `localpref 100`.
 
 ```
 edge# show ip bgp 0.0.0.0/0 detail
 ```
+
 Inspect local-preference values per path. Confirm isp1's path is selected.
 
 ```
 edge# show ip route
 ```
+
 You should see:
+
 - `B E  0.0.0.0/0` via 203.0.113.1 (isp1 — best due to LP 200)
 - `O E2 0.0.0.0/0` is NOT expected here — edge originates OSPF default, not receives it
 - `S    198.51.100.0/24 Null0` (static black-hole backing the BGP network statement)
@@ -163,6 +169,7 @@ edge# show route-map LP-HIGH
 edge# show route-map LP-LOW
 edge# show route-map PREPEND-ISP2
 ```
+
 Confirm match counts increment as routes are processed (match count should be > 0 once
 BGP sessions are established and routes are received/advertised).
 
@@ -170,11 +177,13 @@ BGP sessions are established and routes are received/advertised).
 edge# show ip bgp neighbors 203.0.113.1 received-routes
 edge# show ip bgp neighbors 203.0.114.1 received-routes
 ```
+
 Both ISPs should send 0.0.0.0/0 and their loopback. Check that local-pref differs.
 
 ```
 edge# show ip bgp neighbors 203.0.114.1 advertised-routes
 ```
+
 Verify 198.51.100.0/24 is being sent to isp2 with AS path `65300 65300 65300 65300`.
 
 ### ISP-side verification (inbound path)
@@ -182,11 +191,13 @@ Verify 198.51.100.0/24 is being sent to isp2 with AS path `65300 65300 65300 653
 ```
 isp2# show ip bgp 198.51.100.0/24
 ```
+
 The AS path should show `65300 65300 65300 65300` (four hops due to 3x prepend).
 
 ```
 isp1# show ip bgp 198.51.100.0/24
 ```
+
 The AS path should show `65300` (one hop — short path, preferred by remote peers).
 
 ### OSPF on internal routers
@@ -194,17 +205,20 @@ The AS path should show `65300` (one hop — short path, preferred by remote pee
 ```
 core1# show ip ospf neighbor
 ```
+
 Expect: edge (10.255.1.1) and core2 (10.255.3.2) in FULL state.
 
 ```
 core1# show ip route
 ```
+
 You should see `O E2 0.0.0.0/0` (OSPF external default learned from edge).
 Also expect `O 10.0.0.1/32` (edge loopback), `O 10.255.2.0/30`, `O 10.0.0.3/32`.
 
 ```
 core2# show ip route
 ```
+
 Similar to core1; no 10.100.0.0/30 since server is not attached to core2.
 
 ### Server reachability
@@ -251,15 +265,18 @@ edge(config-if-Et1)# end
 # Alternatively, clear the BGP session for immediate failover:
 edge# clear ip bgp 203.0.113.1
 ```
+
 </details>
 
 After failover:
+
 ```
 edge# show ip bgp summary         # isp1 neighbor goes Idle/Active
 edge# show ip route 0.0.0.0/0     # now via 203.0.114.1 (isp2)
 ```
 
 Test that the server still has internet connectivity:
+
 ```bash
 # On server
 ping -c 3 2.2.2.2    # isp2 loopback reachable via new default path
@@ -275,6 +292,7 @@ edge(config)# interface Ethernet1
 edge(config-if-Et1)# no shutdown
 edge(config-if-Et1)# end
 ```
+
 </details>
 
 ### Task 2 — Observe Inbound Path Control (AS-Path Prepend)
@@ -285,12 +303,14 @@ Compare the AS path that isp1 and isp2 see for 198.51.100.0/24.
 # On isp1 (short path — preferred inbound)
 isp1# show ip bgp 198.51.100.0/24
 ```
+
 Expected AS path: `65300`
 
 ```
 # On isp2 (prepended — longer path)
 isp2# show ip bgp 198.51.100.0/24
 ```
+
 Expected AS path: `65300 65300 65300 65300`
 
 This demonstrates how you can bias inbound traffic without touching the remote ISP's config.
@@ -315,6 +335,7 @@ edge# clear ip bgp 203.0.114.1 soft out
 
 isp2# show ip bgp 198.51.100.0/24
 ```
+
 </details>
 AS path should now be `65300 65300 65300` (3 total: 1 original + 2 prepended).
 

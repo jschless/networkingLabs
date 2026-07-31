@@ -57,6 +57,7 @@ each edit, reload with `docker exec proxy1 squid -k reconfigure`.
 - Lab 01 concepts (Kerberos tickets, AD groups). The foundation (`dc1`, the
   `engineering`/`finance` groups, alice/bob) is auto-provisioned here.
 - Build the custom image (first deploy does this automatically):
+
   ```bash
   docker build -t squid-ad:local images/squid-ad/
   ```
@@ -158,6 +159,7 @@ browse through it **without ever typing a password at the proxy**.
 
 ??? note "Solution"
     In `configs/squid.conf`:
+
     ```squid
     http_port 3128
 
@@ -175,7 +177,9 @@ browse through it **without ever typing a password at the proxy**.
     access_log /var/log/squid/access.log
     visible_hostname proxy1.lab.corp
     ```
+
     Reload and test from the client:
+
     ```bash
     docker exec proxy1 squid -k reconfigure
     docker exec -it ws1 bash
@@ -217,6 +221,7 @@ browse through it **without ever typing a password at the proxy**.
 
 ??? note "Solution"
     Replace the policy section of `configs/squid.conf` with:
+
     ```squid
     external_acl_type ad_engineering ttl=300 %LOGIN /usr/lib/squid/ext_kerberos_ldap_group_acl -g engineering
 
@@ -230,7 +235,9 @@ browse through it **without ever typing a password at the proxy**.
     http_access allow authenticated
     http_access deny all
     ```
+
     Reload and test both users:
+
     ```bash
     docker exec proxy1 squid -k reconfigure
     docker exec -it ws1 bash
@@ -243,6 +250,7 @@ browse through it **without ever typing a password at the proxy**.
     ```
 
 ??? success "Check your work"
+
     | user | webserver1 | webserver2 |
     |------|-----------|-----------|
     | alice (engineering) | 200 | **200** |
@@ -298,10 +306,13 @@ service principal. Watch authentication collapse with a symptom that blames the
     like the *client* failed to authenticate?
 
 **Break it** — in `configs/squid.conf`, change the auth helper's service principal:
+
 ```
 -s HTTP/proxy1.lab.corp@LAB.CORP   →   -s HTTP/wrong.lab.corp@LAB.CORP
 ```
+
 then `docker exec proxy1 squid -k reconfigure`. Now, as alice (with a valid TGT):
+
 ```bash
 docker exec ws1 bash -c 'kinit alice@LAB.CORP <<<P@ssw0rd1 >/dev/null 2>&1
   curl -s -o /dev/null -w "%{http_code}\n" --proxy-negotiate -U : \
@@ -317,10 +328,12 @@ docker exec ws1 bash -c 'kinit alice@LAB.CORP <<<P@ssw0rd1 >/dev/null 2>&1
     alice — *with a valid ticket* — gets **407 Proxy Authentication Required**, exactly
     as if she'd never authenticated. But the cause is entirely server-side; the proxy's
     `cache.log` says it plainly:
+
     ```
     ERROR: Negotiate Authentication ... gss_acquire_cred() failed:
     ... No principal in keytab matches desired name
     ```
+
     Squid can't load a key for `HTTP/wrong.lab.corp`, so it can't accept *any* ticket and
     challenges every request anew. The symptom (407, "authenticate please") points at the
     client; the cause is the proxy's acceptor identity. This mismatch is why "users can't

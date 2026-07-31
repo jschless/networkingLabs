@@ -90,6 +90,7 @@ and passive. Success: `Full` adjacency and asbr can ping 10.0.0.1.
 <summary>Solution</summary>
 
 r1:
+
 ```text
 configure
 router ospf 1
@@ -100,6 +101,7 @@ router ospf 1
 ```
 
 asbr:
+
 ```text
 configure
 router ospf 1
@@ -146,6 +148,7 @@ you add one command on bgp1 — and why does eBGP not have this problem?
 <summary>Solution</summary>
 
 asbr:
+
 ```text
 configure
 router bgp 65100
@@ -156,6 +159,7 @@ router bgp 65100
 ```
 
 bgp1:
+
 ```text
 configure
 router bgp 65200
@@ -169,6 +173,7 @@ router bgp 65200
 ```
 
 bgp2:
+
 ```text
 configure
 router bgp 65200
@@ -216,6 +221,7 @@ next-hop.
 <summary>Solution</summary>
 
 asbr:
+
 ```text
 configure
 router bgp 65100
@@ -261,6 +267,7 @@ carry inside the OSPF domain, and will their metric grow as they cross it?
 <summary>Solution</summary>
 
 asbr:
+
 ```text
 configure
 router ospf 1
@@ -306,6 +313,7 @@ community `65100:100`.
 <summary>Solution</summary>
 
 asbr:
+
 ```text
 configure
 ip prefix-list NO-TRANSIT seq 5 deny 10.0.12.0/30
@@ -382,24 +390,29 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **OSPF neighbours not forming**
+
 - `show ip ospf interface Ethernet1` — confirm OSPF is enabled and area matches
 - `show ip ospf neighbor` — check state; Init means hellos arriving but not bidirectional
 
 **BGP session stuck in Active**
+
 - `show bgp ipv4 unicast summary` — Active means TCP not established
 - Confirm the peer IP and remote-as are correct on both sides
 - `ping 10.0.23.2` from asbr to confirm L3 reachability
 
 **Prefixes not appearing after redistribution**
+
 - `show bgp ipv4 unicast` on asbr — if no OSPF prefixes, check `redistribute ospf` is under `address-family ipv4`
 - `show ip route bgp` on r1 — if empty, check `redistribute bgp` is in the OSPF process
 - `show ip ospf database external` on r1 — Type-5 LSAs from asbr should appear
 
 **bgp2 has routes but next-hop is unreachable**
+
 - This is the `next-hop-self` issue — add `neighbor 10.0.34.2 next-hop-self` on bgp1
 - Without it, bgp2 tries to reach 10.0.23.1 (asbr) which is not in bgp2's routing table
 
 **Routes show in table but ping fails**
+
 - Check return path: does bgp2 have a route back to 10.0.0.1?
 - Verify `redistribute bgp` is configured in OSPF on asbr
 - Use `traceroute` to isolate where packets are dropped

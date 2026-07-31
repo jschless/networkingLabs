@@ -70,6 +70,7 @@ that election?
 <summary>Solution</summary>
 
 On **spoke1** (spoke2/spoke3 mirror with their router-id, LAN):
+
 ```vyos
 configure
 set protocols nhrp tunnel tun0 network-id '1'

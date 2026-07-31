@@ -372,19 +372,23 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **Neighbours stuck in Init or 2-Way**
+
 - Confirm both ends of the link are in the same area (`show ip ospf interface`)
 - Check that neither side has a mismatched hello/dead timer
 
 **No adjacency forming at all**
+
 - Verify the IP addresses are correct: `show interface Ethernet1`
 - Check that OSPF is enabled on the interface: `show ip ospf interface Ethernet1`
 - Stub/area mismatches prevent hellos from being accepted at all
 
 **r4 does not have a default route**
+
 - Confirm `area 2 stub` is configured on both r3 and r4
 - A mismatch (one side stub, the other not) prevents adjacency entirely
 
 **Routes missing from r1 or r4**
+
 - Check the OSPF database on each router: `show ip ospf database`
 - Type-3 summary LSAs carry inter-area routes; confirm they appear on r2 and r3
 - If totally-stub is configured, Type-3 LSAs will not reach r4 — that is expected

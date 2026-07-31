@@ -138,6 +138,7 @@ dynamic VLAN. On success the access port moves from quarantine (VLAN 99) to VLAN
 # access-sw1: the port is now in VLAN 10
 ./scripts/lab.sh cmd enterprise-grand-capstone access-sw1 -- bridge vlan show dev eth2
 ```
+
 *Predict: which VLAN is eth2 in before vs after auth? What does radius1 return that the
 switch acts on?*
 

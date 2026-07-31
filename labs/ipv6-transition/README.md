@@ -269,12 +269,15 @@ legacy IPv4 internet.
 An IPv4 address `A.B.C.D` is represented as `64:ff9b::A.B.C.D` in IPv6.
 
 **DNS64**: When an IPv6-only host resolves `example.com`:
+
 1. DNS64 resolver receives the query.
 2. If no AAAA record exists but an A record does (e.g., `93.184.216.34`):
+
 3. DNS64 synthesizes: `64:ff9b::93.184.216.34` = `64:ff9b::5db8:d822`
 4. Host sends IPv6 packets to `64:ff9b::5db8:d822`.
 
 **NAT64 router**: When the NAT64 router sees a packet destined for `64:ff9b::/96`:
+
 1. Extracts the IPv4 address from bits 96-128: `93.184.216.34`
 2. Translates the IPv6 source to an IPv4 address from its NAT pool
 3. Sends a normal IPv4 packet to `93.184.216.34`
@@ -335,6 +338,7 @@ module-config: "dns64 validator iterator"
 ### Why NAT64 is not included as a running topology
 
 NAT64 via Jool requires:
+
 1. The `jool.ko` kernel module (must be built for the host kernel)
 2. A custom Docker image with Jool installed and the module loaded
 
@@ -370,6 +374,7 @@ No answers provided — reason them through.
 ## Useful FRR Commands Reference
 
 ### IS-IS / SR-MPLS
+
 ```
 show isis neighbor                    # IS-IS adjacency state
 show isis route                       # IS-IS IPv4 RIB
@@ -379,6 +384,7 @@ show mpls fec                         # BGP/LDP FEC to label bindings
 ```
 
 ### BGP 6PE
+
 ```
 show bgp summary                                   # All BGP sessions
 show bgp ipv6 labeled-unicast                      # IPv6 BGP-LU RIB
@@ -388,6 +394,7 @@ show bgp ipv6 labeled-unicast neighbors <peer> advertised-routes
 ```
 
 ### IPv6 Routing
+
 ```
 show ipv6 route                       # IPv6 FIB
 show ipv6 route fd00:1::/48           # Specific prefix
@@ -395,6 +402,7 @@ show interface eth1                   # Interface stats + IPv6 addresses
 ```
 
 ### Connectivity
+
 ```
 ping fd00:2::1 source fd00:1::1       # Ping with source (on ce1)
 traceroute fd00:2::1                  # Traceroute (IPv6)
@@ -405,16 +413,19 @@ traceroute fd00:2::1                  # Traceroute (IPv6)
 ## Troubleshooting
 
 **IS-IS not forming adjacency**
+
 - Check both ends have `isis network point-to-point` on the same interface
 - Verify `mpls enable` is set on core interfaces
 - Check `show isis neighbor` — look for Init or 2-Way state
 
 **BGP sessions not establishing (iBGP)**
+
 - Ensure `update-source lo` is set — iBGP uses loopback as source
 - Loopback must be reachable via IS-IS: `show isis route | include 10.0.0`
 - Check `show bgp summary` for the error state
 
 **6PE routes not appearing on remote PE**
+
 - Verify `address-family ipv6 labeled-unicast` is activated on both iBGP neighbors
 - Verify `send-community both` is set (needed for extended communities)
 - Check p1 has `route-reflector-client` under the ipv6 labeled-unicast AF
@@ -422,6 +433,7 @@ traceroute fd00:2::1                  # Traceroute (IPv6)
   with a label assigned
 
 **IPv6 ping fails despite routes present**
+
 - Verify `net.ipv6.conf.all.forwarding=1` is set (topology sysctls handle this)
 - Check `set ipv6 next-hop prefer-global` route-map is applied to CE peers
   (link-local next-hops cannot be resolved for 6PE forwarding)
@@ -429,6 +441,7 @@ traceroute fd00:2::1                  # Traceroute (IPv6)
 - Verify `mpls enable` on core interfaces; `show mpls table` should show SR SIDs
 
 **PHP (penultimate hop popping)**
+
 - FRR SR-MPLS uses PHP by default: the node before the destination pops the
   outer label. This is correct behavior.
 - With a 3-node core (pe1-p1-pe2), p1 is the penultimate hop for both pe1 and

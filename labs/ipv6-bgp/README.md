@@ -91,6 +91,7 @@ IPv4-transport session even express an IPv6 next-hop?
 <summary>Solution</summary>
 
 On **r1** (r4 mirrors; r2/r3 add their iBGP neighbor + next-hop-self):
+
 ```text
 router bgp 65001
    bgp router-id 10.0.0.1
@@ -104,6 +105,7 @@ router bgp 65001
 ```
 
 On **r2** (the iBGP next-hop handling, both families):
+
 ```text
 router bgp 65002
    bgp router-id 10.0.0.2

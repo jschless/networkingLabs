@@ -71,6 +71,7 @@ which router answers ARP for it?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 interface Ethernet1
  vrrp 1 ip 192.168.1.254
@@ -79,6 +80,7 @@ interface Ethernet1
 ```
 
 On **r2**:
+
 ```text
 interface Ethernet1
  vrrp 1 ip 192.168.1.254

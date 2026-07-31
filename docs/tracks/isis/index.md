@@ -10,6 +10,7 @@ Two labs covering IS-IS fundamentals and multi-area design — essential prerequ
 ## Platform
 
 Both labs use **Arista cEOS**:
+
 ```bash
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```

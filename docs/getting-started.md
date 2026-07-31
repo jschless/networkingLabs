@@ -84,6 +84,7 @@ demand — nothing to do.
 1. Create a free account at [arista.com](https://www.arista.com/en/user-registration) and log in.
 2. Go to **Support → Software Download → cEOS-lab**.
 3. Download the tarball for **your host's architecture**:
+
    - **Intel/Linux (amd64):** `cEOS-lab-4.35.2F.tar` (or `cEOS64-lab-*.tar`)
    - **Apple Silicon (arm64):** `cEOSarm-lab-4.36.1F.tar`
 4. Leave it in `~/Downloads` (or set `CEOS_TARBALL_DIR=/path`) and run `scripts/build-images.sh ceos`.

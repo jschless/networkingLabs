@@ -72,6 +72,7 @@ Wait ~15 seconds after deploy for EIGRP hello timers to expire.
 ## Observed symptoms
 
 **On r1 — only one of two expected neighbors:**
+
 ```
 r1# show ip eigrp neighbors
 EIGRP neighbors for AS(100)
@@ -83,12 +84,14 @@ H   Address         Interface       Hold Uptime   SRTT   RTO  Q  Seq
 r1 sees r2 (eth1) but r3 (eth2) is absent.
 
 **On r3 — no neighbors at all:**
+
 ```
 r3# show ip eigrp neighbors
 (no output)
 ```
 
 **On r4 — only r2, not r3:**
+
 ```
 r4# show ip eigrp neighbors
 EIGRP neighbors for AS(100)
@@ -100,6 +103,7 @@ H   Address         Interface       Hold Uptime   SRTT   RTO  Q  Seq
 r4 sees r2 but not r3.
 
 **Routing impact:**
+
 ```
 r1# show ip route eigrp
 D>* 10.0.0.2/32 [90/10880] via 10.1.12.2, eth1
@@ -118,6 +122,7 @@ When EIGRP hellos are sent, neighbors will only respond if they share the same
 Autonomous System number.
 
 Work through the diagnostic questions:
+
 1. On r3, what does `show ip eigrp neighbors` show?
 2. On r1 and r4, are r3's interface addresses visible as neighbors?
 3. On r3, what does `show ip eigrp topology` show?
@@ -149,6 +154,7 @@ show ip eigrp neighbors detail
 <summary>Hint 1 — Where to start</summary>
 
 On r3, run:
+
 ```
 show ip eigrp neighbors
 ```
@@ -169,6 +175,7 @@ When router A sends a hello with AS 100 and router B is configured for AS 101,
 B will silently ignore the hello. No error is logged; the hello simply doesn't match.
 
 On r3, run:
+
 ```
 show ip eigrp
 ```
@@ -230,6 +237,7 @@ r1# ping 10.0.0.4 source 10.0.0.1
 ```
 
 Expected on r1 after fix:
+
 ```
 r1# show ip route eigrp
 D>* 10.0.0.2/32 [90/10880] via 10.1.12.2, eth1

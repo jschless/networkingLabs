@@ -3,6 +3,7 @@
 ## Adding a New Lab
 
 1. Create `labs/<name>/` with:
+
    - `topology.clab.yml` — ContainerLab topology
    - `README.md` — lab guide written to the [authoring contract](https://github.com/jschless/networkingLabs/blob/main/labs/AUTHORING.md)
    - `configs/<node>/frr.conf` (or `startup-config`) per node
@@ -13,6 +14,7 @@
    track card count in `docs/index.md`
 
 3. Add a thin wrapper page in `docs/tracks/<track>/<name>.md`:
+
    ```markdown
    ---
    title: <lab-name>
@@ -69,6 +71,7 @@ Before migrating a lab from FRR to a router image:
 1. Identify the exact behaviors the lab needs, not just the protocol name.
 2. Spin up the target image locally in a minimal probe topology.
 3. Validate the feature on the running image:
+
    - single-node CLI acceptance for pure syntax/control-plane features
    - multi-node validation for adjacency or signaling features such as DMVPN, EVPN, LDP pseudowires, or 6PE
 4. Only rebuild the lab after the live probe passes.
@@ -78,6 +81,7 @@ If the local image lacks the feature or only supports part of it, keep the lab o
 ## Debug Lab Pattern
 
 Debug labs always have:
+
 - One intentional bug in exactly one file (`frr.conf` or `startup-config`)
 - README sections: Scenario → Symptoms → Hint 1 → Hint 2 → Hint 3 → Solution
 
@@ -101,6 +105,7 @@ CI also runs three linters on every push and PR — run them locally before push
 
 ```bash
 ./scripts/check-docs-admonitions.sh   # malformed !!! admonitions
+python3 scripts/check-markdown-spacing.py  # malformed lists, tables, and fenced blocks
 python3 scripts/lint-labs.py          # topology parse, image docs, nav consistency
 shellcheck -S warning scripts/*.sh labs/*/check.sh enterprise-it-101/eit.sh
 ```

@@ -166,6 +166,7 @@ restart, and get your first **Access-Accept** — authenticated against AD.
         secret = testing123
     }
     ```
+
     ```bash
     docker compose -f base/docker-compose.yml \
                    -f labs/12-radius/docker-compose.override.yml restart radius1
@@ -272,6 +273,7 @@ VLAN, enforced by the switch from attributes the server returns.
         }
     }
     ```
+
     ```bash
     docker compose -f base/docker-compose.yml \
                    -f labs/12-radius/docker-compose.override.yml restart radius1
@@ -282,12 +284,14 @@ VLAN, enforced by the switch from attributes the server returns.
 ??? success "Check your work"
     alice's Access-Accept now carries `Tunnel-Private-Group-Id:0 = "10"`, bob's
     `"20"`:
+
     ```
     Received Access-Accept Id 65 from 10.100.20.10:1812 ...
         Tunnel-Type:0 = VLAN
         Tunnel-Medium-Type:0 = IEEE-802
         Tunnel-Private-Group-Id:0 = "10"
     ```
+
     charlie (in neither group) gets a plain **Access-Accept with no `Tunnel-*`** — he
     authenticates fine but matches no policy, so the switch drops him onto its default
     (often unassigned/quarantine) VLAN. "Authenticated" and "authorized onto VLAN X"
@@ -312,6 +316,7 @@ deliberately unhelpful.
 
 **Break it** — send a request with the wrong secret from `nas1` (the server's entry
 for `nas1` still says `testing123`):
+
 ```bash
 docker exec nas1 radtest alice P@ssw0rd1 10.100.20.10 0 WRONGSECRET
 ```
@@ -331,6 +336,7 @@ docker exec nas1 radtest alice P@ssw0rd1 10.100.20.10 0 WRONGSECRET
 
 **Repair** by using the correct secret again (no config change needed — `nas1`'s
 server-side entry was never wrong):
+
 ```bash
 docker exec nas1 radtest alice P@ssw0rd1 10.100.20.10 0 testing123   # Access-Accept
 ```

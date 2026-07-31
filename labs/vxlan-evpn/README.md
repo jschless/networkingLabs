@@ -7,6 +7,7 @@ that must be **completely isolated** from each other at all times, even though t
 the same physical switching infrastructure.
 
 You'll build the full data center overlay fabric from scratch:
+
 - **Underlay**: eBGP CLOS fabric for loopback (VTEP) reachability
 - **Overlay**: BGP EVPN control plane distributing MAC/IP and prefix routes
 - **Data plane**: VXLAN tunnels carrying tenant traffic between leaf VTEPs
@@ -135,6 +136,7 @@ vrf instance TENANT-B
 ip routing vrf TENANT-A
 ip routing vrf TENANT-B
 ```
+
 </details>
 
 ### Task 2 — Set the anycast gateway MAC
@@ -189,11 +191,13 @@ interface Vlan20
    ip address virtual 10.20.20.1/24
    no autostate
 ```
+
 </details>
 
 ### Task 6 — Configure BGP (underlay + EVPN overlay)
 
 This is the heart of the lab. One `router bgp` process handles both:
+
 - **IPv4 unicast** AF: eBGP underlay, advertises loopback for VTEP reachability
 - **EVPN** AF: eBGP EVPN overlay, exchanges type-2/3/5 routes with spines
 
@@ -250,6 +254,7 @@ router bgp 65001                           ! 65001/65002/65003/65004
       route-target export evpn 65000:50002
       redistribute connected
 ```
+
 </details>
 
 ---
@@ -409,6 +414,7 @@ a traditional iBGP route-reflector design.
 `ip address virtual 10.10.10.1/24` on every leaf's Vlan10 SVI creates an anycast
 IRB gateway. Every leaf responds to ARP for 10.10.10.1 with the same virtual MAC
 (`00:1c:73:aa:aa:aa`). This means:
+
 - Hosts always use the local leaf as their L3 gateway (optimal routing)
 - No GARP storms when a VM migrates — the MAC is the same everywhere
 - Type-5 routes for 10.10.10.0/24 are advertised by every leaf (same prefix)
@@ -431,6 +437,7 @@ carries the inter-VTEP routed traffic.
 
 VRF TENANT-A and TENANT-B are completely separate routing domains. The EVPN
 route-targets ensure:
+
 - `65000:10010` routes (Tenant-A MACs) are only imported into Tenant-A VRFs
 - `65000:10020` routes (Tenant-B MACs) are only imported into Tenant-B VRFs
 - The VRFs have no routes to each other — there is no route leak configured

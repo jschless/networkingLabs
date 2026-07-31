@@ -306,6 +306,7 @@ List them before running the command.
 <summary>Check your work</summary>
 
 r1 should have three OSPF routes:
+
 - `10.0.0.2/32` — r2's loopback, direct OSPF neighbor
 - `10.0.0.3/32` — r3's loopback, via r2
 - `10.1.23.0/30` — the r2↔r3 link, via r2
@@ -409,6 +410,7 @@ Restore the interface when done:
 ```bash
 ./scripts/lab.sh vtysh suzieq-network-observability r1
 ```
+
 ```
 r1# configure
 r1(config)# interface Ethernet1
@@ -435,6 +437,7 @@ POLLER_PID=$!
 # in another terminal, add a loopback to r2
 ./scripts/lab.sh vtysh suzieq-network-observability r2
 ```
+
 ```
 r2# configure
 r2(config)# interface Loopback1

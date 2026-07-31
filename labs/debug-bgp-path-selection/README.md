@@ -87,6 +87,7 @@ Wait ~20 seconds after deploy for BGP sessions to establish.
 ## Observed symptoms
 
 **On isp2 — two paths for ce1's prefix:**
+
 ```
 isp2# show bgp ipv4 unicast 10.0.0.1/32
 BGP routing table entry for 10.0.0.1/32
@@ -104,6 +105,7 @@ effect. The eBGP path (direct from ce1) is winning because eBGP > iBGP when
 local-preference is equal.
 
 **On isp1 — ce1's prefix has default LP:**
+
 ```
 isp1# show bgp ipv4 unicast 10.0.0.1/32
 BGP routing table entry for 10.0.0.1/32
@@ -124,6 +126,7 @@ A route-map named `LP-CE1-HIGH` exists on isp1 and is supposed to set
 the correct neighbor but the local-preference is not being applied.
 
 Work through the diagnostic questions:
+
 1. Verify the route-map exists and its set clause is correct
 2. Check which direction it's applied to the ce1 neighbor on isp1
 3. Local-preference is meaningful in which direction — inbound or outbound?
@@ -155,6 +158,7 @@ clear bgp neighbors 10.1.11.1 soft-inbound
 <summary>Hint 1 — Where to start</summary>
 
 On isp1, run:
+
 ```
 show bgp neighbors 10.1.11.1
 ```
@@ -210,6 +214,7 @@ isp1# write memory
 ```
 
 Then re-process inbound routes from ce1:
+
 ```
 isp1# clear bgp neighbors 10.1.11.1 soft-inbound
 ```
@@ -231,6 +236,7 @@ show bgp ipv4 unicast 10.0.0.1/32
 ```
 
 Expected on isp2 after fix:
+
 ```
 isp2# show bgp ipv4 unicast 10.0.0.1/32
 BGP routing table entry for 10.0.0.1/32

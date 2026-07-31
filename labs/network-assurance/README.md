@@ -73,6 +73,7 @@ docker build -t assurance-lab:local labs/network-assurance/
 ### 1. SNMP
 
 All three routers run `snmpd` with:
+
 - **SNMPv2c**: community `public`, accessible from `172.16.0.0/16`
 - **SNMPv3**: user `snmpv3user`, authProtocol=SHA, privProtocol=AES
 

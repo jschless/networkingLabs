@@ -96,6 +96,7 @@ predict.)
 <summary>Solution</summary>
 
 Example for **r1** (substitute NET / interfaces per node):
+
 ```text
 configure terminal
 interface lo

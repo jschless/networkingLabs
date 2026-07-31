@@ -1,8 +1,8 @@
 ---
-title: ha-network-design-ceos
+title: High-Availability Network Design
 ---
 
-!!! tip "Practice Lab"
+!!! tip "Capstone Practice Lab"
     MLAG, VRRP tracking, OSPF+BFD+ECMP, dual-ISP BGP combined
 
 !!! note "Image"

@@ -122,6 +122,7 @@ WAN reachability works fine. Compare `show running-config section interface Tunn
 <details markdown="1"><summary>Hint 2 — Narrowing it down</summary>
 
 Look at `tunnel destination` under `interface Tunnel0` on each gateway:
+
 - gw-a should show `remote 203.0.113.6` (gw-b's WAN IP)
 - gw-b should show `remote 203.0.113.1` (gw-a's WAN IP)
 
@@ -146,6 +147,7 @@ configure
 interface Tunnel0
    tunnel destination 203.0.113.1
 ```
+
 </details>
 
 The correct remote for gw-b's tunnel is gw-a's **WAN** IP: `203.0.113.1`.

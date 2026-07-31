@@ -82,12 +82,14 @@ flowchart TB
 ## IP Addressing Summary
 
 ### WAN
+
 | Segment          | Subnet           | Node   | IP            |
 |------------------|------------------|--------|---------------|
 | ISP — Edge       | 203.0.113.0/30   | isp    | 203.0.113.1   |
 |                  |                  | edge   | 203.0.113.2   |
 
 ### Core P2P Links (OSPF Area 0)
+
 | Segment          | Subnet           | Node A  | IP A      | Node B  | IP B      |
 |------------------|------------------|---------|-----------|---------|-----------|
 | edge — core1     | 10.255.1.0/30    | edge    | 10.255.1.1| core1   | 10.255.1.2|
@@ -95,6 +97,7 @@ flowchart TB
 | core1 — core2    | 10.255.3.0/30    | core1   | 10.255.3.1| core2   | 10.255.3.2|
 
 ### Core-Distribution Links (OSPF Area 1)
+
 | Segment          | Subnet           | Core   | Core IP    | Dist   | Dist IP    |
 |------------------|------------------|--------|------------|--------|------------|
 | core1 — dist1    | 10.0.13.0/30     | core1  | 10.0.13.1  | dist1  | 10.0.13.2  |
@@ -103,6 +106,7 @@ flowchart TB
 | core2 — dist2    | 10.0.24.0/30     | core2  | 10.0.24.1  | dist2  | 10.0.24.2  |
 
 ### VLAN SVIs (OSPF Area 1, VRRP)
+
 | VLAN | Name      | Subnet           | VIP          | dist1 IP       | dist2 IP       |
 |------|-----------|------------------|--------------|----------------|----------------|
 | 10   | corporate | 10.10.10.0/24    | 10.10.10.1   | 10.10.10.2     | 10.10.10.3     |
@@ -117,6 +121,7 @@ flowchart TB
 ### 3-Tier vs 2-Tier vs Routed-Access
 
 **3-Tier Hierarchical (this lab)**
+
 - Classic Cisco campus design, proven for buildings of 500-5000 users
 - Clear functional separation: core = speed, distribution = policy, access = connectivity
 - Distribution layer provides first-hop redundancy (VRRP) and STP root without burdening core
@@ -124,12 +129,14 @@ flowchart TB
 - Scales by adding distribution/access pairs without touching core
 
 **2-Tier (Collapsed Core)**
+
 - Distribution and core functions merged into one tier (typically used in `spine-leaf`)
 - Suitable for medium campus or small branch (100-500 users)
 - Fewer hops, simpler management
 - Distribution switches ARE the highest routing layer — they peer directly with edge
 
 **Routed-Access**
+
 - Every access switch is a Layer 3 router — no more STP, no more VRRP
 - Each access-to-distribution link is a /30 or /31 routed link
 - Used in modern DC fabric designs and greenfield campus builds
@@ -137,6 +144,7 @@ flowchart TB
 - More complex to configure but faster convergence and easier troubleshooting
 
 **This lab teaches:**
+
 - Why VRRP + STP are required in L2 access designs (no ECMP at L2)
 - How OSPF multi-area reduces LSA flooding (area 1 VLAN subnets don't flood into area 0)
 - ABR summarization opportunities (dist1/dist2 can summarize area 1 prefixes)
@@ -164,6 +172,7 @@ ensuring traffic doesn't hairpin across the distribution-core-distribution path.
 ## Verification Commands
 
 ### Deploy
+
 ```bash
 # Build required image first (if not already built)
 docker build -t frr-lab:local images/frr/
@@ -175,6 +184,7 @@ docker build -t frr-lab:local images/frr/
 ```
 
 ### Access Nodes
+
 ```bash
 # cEOS nodes
 ./scripts/lab.sh cli enterprise-campus edge
@@ -191,6 +201,7 @@ docker build -t frr-lab:local images/frr/
 ```
 
 ### BGP Verification (edge, isp)
+
 ```bash
 # On edge: check eBGP session with ISP
 show bgp summary
@@ -205,6 +216,7 @@ show ip route
 ```
 
 ### OSPF Verification (all L3 nodes)
+
 ```bash
 # Check OSPF neighbors on edge
 show ip ospf neighbor
@@ -223,6 +235,7 @@ show ip route ospf
 ```
 
 ### VRRP Verification (dist1, dist2)
+
 ```bash
 # On dist1 — check active/backup state for each VLAN
 show vrrp
@@ -237,6 +250,7 @@ show vrrp
 ```
 
 ### STP Verification (access + distribution)
+
 ```bash
 # On dist1 — should be root for VLAN 10 and 30
 show spanning-tree
@@ -250,6 +264,7 @@ show spanning-tree vlan 20
 ```
 
 ### End-to-End Connectivity Tests
+
 ```bash
 # From client-a (VLAN 10):
 ./scripts/lab.sh bash enterprise-campus client-a
@@ -285,6 +300,7 @@ show ip ospf database
 ```
 
 ### Task 2: VRRP + STP Failover (Simulate dist1 failure)
+
 Test that VLAN 10 traffic fails over to dist2 when dist1 goes down.
 
 ```bash
@@ -304,11 +320,13 @@ Test that VLAN 10 traffic fails over to dist2 when dist1 goes down.
 ```
 
 Expected behavior:
+
 - dist2 takes over as VRRP master for VLAN 10 (highest remaining priority)
 - STP reconverges if dist1 was the STP root for VLAN 10 (dist2 promotes to root)
 - Traffic interruption: ~3 seconds VRRP dead interval + STP convergence
 
 ### Task 3: OSPF Reconvergence (Simulate core1 failure)
+
 With core1 down, traffic should reroute through core2.
 
 ```bash
@@ -336,9 +354,11 @@ router ospf 1
    timers lsa arrival 100
    timers spf delay initial 100 200 5000
 ```
+
 </details>
 
 ### Task 4: Add ABR Route Summarization
+
 Reduce LSA flooding into area 0 by summarizing area 1 subnets on both dist1 and dist2.
 
 <details markdown="1">
@@ -349,12 +369,14 @@ Reduce LSA flooding into area 0 by summarizing area 1 subnets on both dist1 and 
 router ospf 1
    area 0.0.0.1 range 10.0.0.0/8
 ```
+
 </details>
 
 Then verify: `show ip ospf database` on core1 should show a single summary LSA
 (10.0.0.0/8) instead of individual subnet LSAs.
 
 ### Task 5: Add a Second ISP (Dual-Homed WAN)
+
 Extend the topology with a second ISP for redundant internet connectivity.
 
 1. Add isp2 node (FRR, AS65501) with link to edge eth4
@@ -382,6 +404,7 @@ isp2:
 ```
 
 ### Task 6: OSPF Authentication
+
 Protect the OSPF domain by enabling MD5 authentication on all area 0 links.
 
 ```
@@ -406,12 +429,14 @@ Verify neighbors still form, then test with a wrong key to see OSPF drop.
 | ospf-multiarea       | Flat multi-area    | OSPF areas, ABR, stub        | SP backbone study      |
 
 **3-Tier Advantages over spine-leaf:**
+
 - VLANs can span multiple access switches via trunks (required for legacy L2 apps)
 - VRRP provides sub-second failover without requiring all devices to run BGP
 - STP provides loop prevention without full L3 routing everywhere
 - Access layer remains simple (dump switches, no routing config)
 
 **Spine-leaf Advantages over 3-Tier:**
+
 - No STP (pure L3 everywhere eliminates loops by design)
 - ECMP load balancing at every hop (active-active, not active-standby like VRRP)
 - Predictable traffic paths (every leaf is equidistant from every other leaf)

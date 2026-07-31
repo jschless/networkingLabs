@@ -79,20 +79,24 @@ flowchart TB
 ## Your Tasks
 
 ### edge
+
 1. **OSPF area 0** — process 1, passive Ethernet1 (WAN), activate Ethernet2/3, `default-information originate always`
 2. **eBGP to ISP** — `router bgp 65100`, peer 203.0.113.1 AS65500, `network 10.0.0.2/32`
 
 ### cc1
+
 1. **STP priorities** — primary root (4096) for VLANs 10/30; non-root (32768) for VLANs 20/99
 2. **VRRP** — active (120) on VLANs 10/30; standby (100) on VLAN 20
 3. **OSPF area 0** — Ethernet1/2 active, advertise loopback + routed links + all VLAN subnets
 
 ### cc2
+
 1. **STP priorities** — primary root (4096) for VLAN 20; non-root (32768) for VLANs 10/30/99
 2. **VRRP** — active (120) on VLAN 20; standby (100) on VLANs 10/30
 3. **OSPF area 0** — Ethernet1/2 active, advertise loopback + routed links + all VLAN subnets
 
 ### acc1, acc3
+
 1. **STP portfast** — `spanning-tree portfast` on Ethernet2 (client-facing access port)
 
 ## Verification

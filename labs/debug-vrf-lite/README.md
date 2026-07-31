@@ -81,6 +81,7 @@ flowchart LR
 ## Observed symptoms
 
 **Customer A ping fails:**
+
 ```
 ce-a1# ping 10.10.0.2 source 10.10.0.1
 PING 10.10.0.2 (10.10.0.2): 56 data bytes
@@ -89,6 +90,7 @@ PING 10.10.0.2 (10.10.0.2): 56 data bytes
 ```
 
 **Customer B ping succeeds (VRF-BLUE is unaffected):**
+
 ```
 ce-b1# ping 10.20.0.2 source 10.20.0.1
 PING 10.20.0.2: 56 data bytes
@@ -96,6 +98,7 @@ PING 10.20.0.2: 56 data bytes
 ```
 
 **On pe1 — VRF-RED routing table is incomplete:**
+
 ```
 pe1# show ip route vrf VRF-RED
 
@@ -117,6 +120,7 @@ to ce-a1. That subnet belongs to pe1's Ethernet1 interface. Something about
 Ethernet1's VRF assignment is wrong.
 
 Work through the diagnostic questions:
+
 1. On pe1, run `show vrf` — which interfaces are listed under each VRF?
 2. Under VRF-RED, which interfaces appear?
 3. Under VRF-BLUE, which interfaces appear?
@@ -149,11 +153,13 @@ pe1# ping vrf VRF-RED 10.10.0.1
 <summary>Hint 1 — Where to start</summary>
 
 On pe1, run:
+
 ```
 show vrf
 ```
 
 Look at the interface list under each VRF. You should see:
+
 - VRF-RED: Ethernet1 (to ce-a1), Ethernet2 (inter-PE RED)
 - VRF-BLUE: Ethernet3 (to ce-b1), Ethernet4 (inter-PE BLUE)
 
@@ -165,6 +171,7 @@ If Ethernet1 (10.10.12.2) appears under VRF-BLUE instead of VRF-RED, that's the 
 <summary>Hint 2 — Narrowing it down</summary>
 
 On pe1, run:
+
 ```
 show ip route vrf VRF-RED
 ```
@@ -237,6 +244,7 @@ ce-a1# ping 10.10.0.2 source 10.10.0.1
 ```
 
 Expected on pe1 after fix:
+
 ```
 pe1# show ip route vrf VRF-RED
 

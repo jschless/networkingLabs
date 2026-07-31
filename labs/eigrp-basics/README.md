@@ -76,6 +76,7 @@ does EIGRP do with two truly equal-metric paths?
 <summary>Solution</summary>
 
 On each router (router-id per node):
+
 ```text
 router eigrp 100
  eigrp router-id 10.0.0.X
@@ -115,6 +116,7 @@ as a second successor? (They are not the same thing.)
   `(FD/RD)`.
 - Feasibility condition: a neighbor is a feasible successor when its
   **RD < your current FD**.
+
 - `show ip eigrp topology all-links` shows paths that didn't qualify.
 
 </details>
@@ -158,6 +160,7 @@ or the backup?
 <summary>Solution</summary>
 
 On **r1** and **r2**, the r1–r2 interface:
+
 ```text
 interface eth1
  bandwidth 1000
@@ -257,12 +260,15 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **Neighbours not forming**
+
 - Same AS number both sides (`router eigrp 100`); K-values must match
 - `show ip protocols` shows the K-values in use
 
 **No Feasible Successor despite two paths**
+
 - The FS condition is neighbor's RD < current FD; equal-metric paths
   become ECMP successors instead — skew one with `bandwidth`/`delay`
 
 **`eigrp router-id` not accepted**
+
 - Needs FRR with `eigrpd=yes` in `/etc/frr/daemons`

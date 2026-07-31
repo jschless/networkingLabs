@@ -484,12 +484,14 @@ file* from the `ca-baseline` archive.
 ??? question "Predict first"
     First, set up the "before" picture on `admin-ws` (this is Lab 03 muscle
     memory — the root fingerprint is in `docker logs ca1`):
+
     ```bash
     step ca bootstrap --ca-url https://ca1.lab.corp:9000 --fingerprint <fp>
     echo 'P@ssw0rd1' > /tmp/pw
     step ca certificate web1.lab.corp /tmp/web1.crt /tmp/web1.key \
         --provisioner admin --provisioner-password-file /tmp/pw
     ```
+
     Now predict: after `docker exec ca1 rm /home/step/secrets/intermediate_ca_key`,
     (1) does issuing *another* certificate still work? (2) What happens on
     `docker restart ca1`?

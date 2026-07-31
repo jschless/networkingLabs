@@ -143,6 +143,7 @@ ip link set vxlan100 master br100
 ```
 
 Then clear BGP to force re-advertisement:
+
 ```
 vtep2# clear bgp l2vpn evpn * soft
 ```

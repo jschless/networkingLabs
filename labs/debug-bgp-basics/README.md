@@ -77,6 +77,7 @@ Wait ~20 seconds after deploy for BGP sessions to establish.
 ## Observed symptoms
 
 **On r1:**
+
 ```
 r1# show bgp ipv4 unicast summary
 BGP summary information for VRF default
@@ -89,6 +90,7 @@ Neighbor Status Codes: m - Under maintenance
 r1 has an Established session with r2 and sees 2 prefixes — looks fine.
 
 **On r3:**
+
 ```
 r3# show bgp ipv4 unicast summary
 BGP summary information for VRF default
@@ -116,6 +118,7 @@ Notice 10.0.0.1/32: it has `*` (valid) but **no `>`** (not best-path selected).
 r3 cannot install it in the routing table.
 
 **End-to-end ping:**
+
 ```
 r1# ping 10.0.0.4 source 10.0.0.1
 PING 10.0.0.4 (10.0.0.4) from 10.0.0.1 : 72(100) bytes of data.
@@ -133,6 +136,7 @@ But r3 cannot use r1's prefix. The clue is in r3's BGP table — look at
 the Next Hop column for 10.0.0.1/32.
 
 Work through the diagnostic questions:
+
 1. What is the next-hop for 10.0.0.1/32 as seen on r3?
 2. Does r3 have a route to that next-hop address?
 3. Which router is responsible for setting the next-hop when advertising to r3?
@@ -164,6 +168,7 @@ show bgp ipv4 unicast neighbors 10.1.23.2 advertised-routes
 <summary>Hint 1 — Where to start</summary>
 
 On r3, run:
+
 ```
 show bgp ipv4 unicast 10.0.0.1/32
 ```
@@ -215,6 +220,7 @@ r2# write memory
 ```
 
 Then soft-reset the session to re-advertise with the new next-hop:
+
 ```
 r2# clear bgp neighbors 10.1.23.2 soft-outbound
 ```
@@ -240,6 +246,7 @@ r4# ping 10.0.0.1 source 10.0.0.4
 ```
 
 Expected on r3 after fix:
+
 ```
 r3# show bgp ipv4 unicast 10.0.0.1/32
 BGP routing table entry for 10.0.0.1/32

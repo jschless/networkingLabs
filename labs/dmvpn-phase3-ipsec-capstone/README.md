@@ -186,6 +186,7 @@ Hub peer matrix:
 <summary>Solution</summary>
 
 Phase 3 + OSPF:
+
 ```vyos
 set protocols nhrp tunnel tun0 network-id '1'
 set protocols nhrp tunnel tun0 holdtime '300'
@@ -206,6 +207,7 @@ Current VyOS requires a *named* peer with an explicit `remote-address`
 (dotted-IP peer names were removed), and forbids local/remote prefix
 selectors with ESP transport mode — `tunnel 1 protocol gre` alone scopes
 the SA to GRE between `local-address` and `remote-address`:
+
 ```vyos
 set vpn ipsec site-to-site peer spoke1 remote-address '10.0.0.11'
 set vpn ipsec site-to-site peer spoke1 authentication mode 'x509'
@@ -266,6 +268,7 @@ Per-spoke values:
 <summary>Solution</summary>
 
 Overlay (spoke1; adjust per node):
+
 ```vyos
 set protocols nhrp tunnel tun0 network-id '1'
 set protocols nhrp tunnel tun0 holdtime '300'
@@ -283,6 +286,7 @@ set protocols ospf interface tun0 network 'point-to-multipoint'
 
 IPsec peer (spoke1 → hub; repeat to spoke2 and spoke3 with their IDs —
 same named-peer / transport-mode notes as Task 3):
+
 ```vyos
 set vpn ipsec site-to-site peer hub remote-address '10.0.0.1'
 set vpn ipsec site-to-site peer hub authentication mode 'x509'

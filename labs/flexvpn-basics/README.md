@@ -151,6 +151,7 @@ sysctl -w net.ipv4.conf.vti0.disable_policy=1
 ```
 
 In `/etc/ipsec.conf`:
+
 ```
 conn to-hub
     left=203.0.113.6
@@ -195,12 +196,14 @@ via the hub VTI, and the hub routes back to LAN B.
 <summary>Solution</summary>
 
 On **gw-b**:
+
 ```bash
 ip route add 192.168.1.0/24 via 10.10.1.1 dev vti0   # LAN A
 ip route add 192.168.3.0/24 via 10.10.1.1 dev vti0   # spoke2 LAN (via hub)
 ```
 
 On **gw-a** (hub):
+
 ```bash
 ip route add 192.168.2.0/24 via 10.10.1.2 dev vti1
 ```
@@ -290,6 +293,7 @@ large any-to-any mesh.
 ## Reference
 
 ### strongSwan
+
 ```bash
 ipsec start | stop | restart
 ipsec status            # ESTABLISHED / CONNECTING
@@ -299,6 +303,7 @@ tail -f /var/log/syslog # live IKEv2 logs
 ```
 
 ### VTI / XFRM
+
 ```bash
 ip tunnel add vti0 mode vti local <src> remote <dst> key <N>
 ip tunnel show ; ip tunnel del vti0
@@ -307,6 +312,7 @@ ip xfrm state ; ip xfrm policy ; ip xfrm monitor
 ```
 
 ### Traffic
+
 ```bash
 tcpdump -i eth1 esp                       # encrypted on WAN
 tcpdump -i eth1 'udp port 500 or udp port 4500'   # IKEv2

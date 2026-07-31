@@ -62,6 +62,7 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ```
 
 Connect to a router:
+
 ```bash
 sudo ./scripts/lab.sh cli ospf-summarization r4
 ```
@@ -93,6 +94,7 @@ routes for r1's loopbacks.
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 configure terminal
 interface Loopback0
@@ -109,6 +111,7 @@ router ospf
 ```
 
 On **r2**:
+
 ```text
 configure terminal
 router ospf
@@ -120,6 +123,7 @@ router ospf
 ```
 
 On **r3**:
+
 ```text
 configure terminal
 router ospf
@@ -131,6 +135,7 @@ router ospf
 ```
 
 On **r4**:
+
 ```text
 configure terminal
 router ospf
@@ -180,6 +185,7 @@ crosses r3 → r4?
 <summary>Solution</summary>
 
 On **r3**:
+
 ```text
 configure terminal
 ip route 192.168.100.0/24 192.168.100.2
@@ -230,6 +236,7 @@ summary that doesn't actually exist.)
 <summary>Solution</summary>
 
 On **r2**:
+
 ```text
 configure terminal
 router ospf
@@ -282,6 +289,7 @@ about where Type-5 LSAs enter the network?
 <summary>Solution</summary>
 
 On **r3**:
+
 ```text
 configure terminal
 router ospf

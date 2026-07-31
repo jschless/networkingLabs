@@ -1,26 +1,29 @@
-# Lab: High-Availability Network Design (cEOS)
+# High-Availability Network Design — cEOS Capstone
 
-## Purpose
-Build a comprehensive high-availability design using Arista cEOS and containerlab. This lab combines first-hop redundancy, link/node redundancy, control-plane fast convergence, and dual-WAN resiliency in one topology.
+Build a comprehensive high-availability design using Arista cEOS and
+ContainerLab. This capstone combines first-hop, link, node, control-plane,
+and WAN redundancy in one topology.
 
 The topology keeps the six cEOS control nodes and uses FRR/Linux helper nodes for the ISP and endpoint roles so the lab is lighter to run on smaller systems.
 
 You will implement and test:
+
 - LACP + MLAG (access/distribution HA)
 - VRRP with upstream tracking (gateway HA)
 - OSPF + ECMP + BFD (internal routing HA)
 - eBGP dual ISP edge (WAN HA)
 - GR/NSF/NSR/SSO concepts and validation approach
 
-## How to use this lab
+## Prerequisites and workflow
 
 This is a **capstone practice lab** — it assembles the redundancy
 techniques from the `vrrp`, `bfd-ospf`, `bfd-bgp`, `graceful-restart`, and
-`spine-leaf` labs into one design. Do those first. Each task gives an
-objective; build it, then **run the matching Failure Drill and predict the
-outcome before you trigger it**. The design is only "done" when every drill
-behaves as you predicted — a layer that *looks* configured but fails its
-drill is the whole point of catching.
+`spine-leaf` labs into one design. Complete those labs first.
+
+Each task gives you an objective and a prediction to make before opening the
+solution. After the implementation tasks, run the matching failure drills
+with a continuous ping in progress. The design is complete only when the
+observed failure behavior matches your prediction.
 
 ## Topology
 
@@ -114,7 +117,8 @@ Access examples:
 ./scripts/lab.sh bash ha-network-design-ceos app1
 ```
 
-## Pre-configured
+## Preconfigured state
+
 - Interface IP addresses on all routed links
 - L2 interfaces present for MLAG/LACP but no MLAG config
 - `hosta` is a Linux client with prebuilt `bond0` (802.3ad) toward `dist1`/`dist2`
@@ -123,18 +127,23 @@ Access examples:
 - `app1` is a Linux endpoint with a data-plane default route and host-VLAN return routes via both ISPs
 - No OSPF/BFD/BGP/VRRP/MLAG protocol config
 
-Host note:
-- Linux bonding must be available on the host kernel for the `hosta` LACP client to start correctly.
-- The helper endpoints remove the Docker management default route and use the lab data plane as their default path. This avoids accidental reachability via `eth0`.
+> **Host requirement:** Linux bonding must be available on the host kernel for
+> the `hosta` LACP client to start correctly. The helper endpoints remove the
+> Docker management default route and use the lab data plane instead, which
+> prevents accidental reachability through `eth0`.
 
-## Your Tasks
+## Implementation tasks
 
-### Task 1 - Build MLAG + LACP access HA (dist1/dist2 + hosta)
+### Task 1 — Build MLAG and LACP access HA
 
-Configure dist peer-link and MLAG domain.
+**Objective:** Form the `dist1`/`dist2` MLAG domain and bring up the dual-homed
+`hosta` LACP bundle.
+
+**Predict first:** If one `hosta` member link fails, which device and
+Port-Channel states should change, and should the client lose connectivity?
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 On `dist1`:
 
@@ -167,6 +176,7 @@ interface Port-Channel10
 interface Ethernet1
    channel-group 10 mode active
 ```
+
 </details>
 
 On `dist2` use matching config with `peer-address 10.255.254.1`.
@@ -185,10 +195,16 @@ cat /proc/net/bonding/bond0
 ip -br address show bond0
 ```
 
-### Task 2 - Configure VRRP gateway HA on VLAN 10
+### Task 2 — Configure the VLAN 10 VRRP gateway
+
+**Objective:** Provide `hosta` with a redundant default gateway at
+`192.168.10.254`.
+
+**Predict first:** Which distribution switch should become master, and what
+configuration value decides the election?
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 On `dist1`:
 
@@ -199,10 +215,11 @@ interface Vlan10
    vrrp 10 priority 120
    vrrp 10 preempt delay minimum 30
 ```
+
 </details>
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 On `dist2`:
 
@@ -213,6 +230,7 @@ interface Vlan10
    vrrp 10 priority 100
    vrrp 10 preempt delay minimum 30
 ```
+
 </details>
 
 Verify:
@@ -223,12 +241,16 @@ show vrrp
 
 Expected: `dist1` is Master, `dist2` is Backup.
 
-### Task 3 - Add VRRP upstream tracking
+### Task 3 — Add VRRP upstream tracking
 
-If dist1 loses upstream routing connectivity, it should relinquish gateway master role.
+**Objective:** Make `dist1` relinquish the gateway role when both of its
+upstream links fail.
+
+**Predict first:** What will `dist1`'s effective priority be after both
+30-point decrements, and how will that compare with `dist2`?
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 On `dist1`:
 
@@ -240,6 +262,7 @@ interface Vlan10
    vrrp 10 track 1 decrement 30
    vrrp 10 track 2 decrement 30
 ```
+
 </details>
 
 On `dist2`, add similar tracking for its uplinks.
@@ -252,18 +275,24 @@ Failure drill:
 
 Check `show vrrp` on both nodes; `dist2` should take Master.
 
-### Task 4 - Configure OSPF underlay and ECMP (dist/core/edge)
+### Task 4 — Configure the OSPF underlay and ECMP
 
-Use area 0 on all routed links and advertise Loopback0 on all six campus/edge nodes.
+**Objective:** Form area 0 across the distribution, core, and edge layers;
+advertise every `Loopback0`; and preserve equal-cost paths where the topology
+provides them.
 
-Important:
+**Predict first:** From a core switch, how many next hops should be installed
+for a remote edge loopback before and after one parallel link fails?
+
+**Return-path requirement:**
+
 - If you want `hosta` to reach `172.20.20.20`, the campus also needs a return route to VLAN 10.
 - In this topology, that means `dist1` and `dist2` must advertise `192.168.10.0/24` into OSPF, or use another method to distribute that connected subnet.
 
 Example (`core1`):
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 ```
 configure
@@ -273,9 +302,11 @@ router ospf 10
    network 10.0.2.0/24 area 0
    network 10.255.0.21/32 area 0
 ```
+
 </details>
 
 Apply equivalent per-node router-id and loopback network statements on:
+
 - `dist1`, `dist2`
 - `core1`, `core2`
 - `edge1`, `edge2`
@@ -297,10 +328,16 @@ show ip route 10.255.0.32
 
 Expected: multiple equal-cost next-hops where topology allows ECMP.
 
-### Task 5 - Enable BFD for faster failure detection
+### Task 5 — Enable BFD for faster failure detection
+
+**Objective:** Bind BFD to each point-to-point OSPF adjacency so forwarding
+failures are detected faster than the OSPF dead timer.
+
+**Predict first:** With `300/300/3` timers, what is the approximate detection
+time, and how does it compare with the default OSPF dead interval?
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 On each routed point-to-point interface in OSPF domain:
 
@@ -310,6 +347,7 @@ interface EthernetX
    bfd interval 300 min-rx 300 multiplier 3
    ip ospf bfd
 ```
+
 </details>
 
 Verify:
@@ -318,14 +356,22 @@ Verify:
 show bfd peers
 ```
 
-### Task 6 - Configure dual-ISP eBGP on edge
+### Task 6 — Configure dual-ISP eBGP at the edge
+
+**Objective:** Establish one eBGP session from each edge router to its ISP and
+receive the application prefix on both campus edge paths.
+
+**Predict first:** On an FRR node using `traditional` defaults, can the BGP
+session be established while still exchanging zero routes? Which safeguard
+causes that behavior?
 
 AS plan:
+
 - `edge1` = AS65010, peer to `isp1` (AS65101)
 - `edge2` = AS65020, peer to `isp2` (AS65102)
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 On `edge1`:
 
@@ -338,12 +384,13 @@ router bgp 65010
       neighbor 203.0.113.1 activate
       network 10.255.0.31/32
 ```
+
 </details>
 
 On `edge2` use neighbor `203.0.113.3 remote-as 65102` and `network 10.255.0.32/32`.
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 On `isp1` (`vtysh`):
 
@@ -361,11 +408,13 @@ router bgp 65101
 end
 write memory
 ```
+
 </details>
 
 On `isp2`, mirror the config with AS65102 and neighbor `203.0.113.2`.
 
 FRR note:
+
 - The ISP nodes use FRR with `traditional` defaults.
 - FRR enables `bgp ebgp-requires-policy` in this mode, so an eBGP session can come up but still exchange zero routes.
 - `no bgp ebgp-requires-policy` disables that safeguard for this lab so the simple `network` statements advertise routes without adding route-maps on both neighbors.
@@ -377,23 +426,29 @@ show bgp summary
 show ip route 172.20.20.20
 ```
 
-### Task 7 - Leak WAN reachability into campus IGP
+### Task 7 — Advertise WAN reachability into the campus IGP
 
-On each edge router, redistribute BGP into OSPF with policy control.
+**Objective:** Make `172.20.20.20/32` reachable from the campus while avoiding
+unrestricted redistribution of future WAN prefixes.
+
+**Predict first:** Which forward and return routes must exist before a ping
+from `hosta` to `app1` can succeed?
 
 Example (basic):
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Solution</summary>
 
 ```
 configure
 router ospf 10
    redistribute bgp
 ```
+
 </details>
 
 Optional policy-hardening:
+
 - Prefix-list only `172.20.20.20/32`
 - Route-map on redistribution
 
@@ -404,6 +459,7 @@ ping -c 4 172.20.20.20
 ```
 
 If that ping fails:
+
 - Check that `edge1`/`edge2` have a route to `192.168.10.0/24`
 - Check that `dist1`/`dist2` are advertising VLAN 10 into OSPF
 - Check that `isp1`/`isp2` have return routes for `192.168.10.0/24`
@@ -452,6 +508,7 @@ one layer down.
 ## SSO / NSF / GR / NSR Deep Dive
 
 ### GR (Graceful Restart)
+
 GR is the most realistic control-plane HA feature to validate in a containerized NOS lab.
 
 Suggested checks:
@@ -462,29 +519,36 @@ show ip ospf neighbor detail
 ```
 
 Test method:
+
 - Run continuous ping from `hosta` to `app1` loopback.
 - Restart BGP process on `edge1`.
 - Observe whether peers keep stale forwarding state during restart window.
 
 ### NSF (Non-Stop Forwarding)
+
 NSF is a forwarding-continuity behavior while routing control-plane restarts.
 
 Validation approach:
+
 - Continuous ping/iperf during routing process restart.
 - Measure packet loss burst and recovery time.
 - Compare with and without BFD/GR tuning.
 
 ### NSR (Non-Stop Routing)
+
 NSR keeps routing protocol adjacencies through supervisor/control switchover without relying on neighbor GR helper behavior.
 
 Lab guidance:
+
 - Use as an advanced validation item only if your cEOS image exposes NSR features.
 - If unsupported, document as platform capability gap.
 
 ### SSO (Stateful Switchover)
+
 SSO is typically a dual-control-plane hardware behavior and is not fully emulated by single-instance container nodes.
 
 Lab mapping:
+
 - Treat MLAG failover + GR/NSF tests as operational analogs.
 - Keep true SSO as conceptual/design discussion in this virtual lab.
 
@@ -527,26 +591,32 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **MLAG not active**
+
 - `show mlag`
 - Check peer-link Port-Channel state and VLAN4094 reachability.
 
 **VRRP state unexpected**
+
 - `show vrrp`
 - Verify same VRID/VIP on both dist nodes and priorities/tracking decrements.
 
 **OSPF neighbors stuck**
+
 - `show ip ospf neighbor`
 - Confirm matching area and interface reachability.
 
 **BFD peers down**
+
 - `show bfd peers detail`
 - Validate both ends have BFD enabled on the same interface.
 
 **BGP not established on edge/ISP**
+
 - `show bgp summary`
 - Verify neighbor IP and remote AS on both sides.
 
 **hosta ping fails but control-plane looks healthy**
+
 - Check `ip route` on `hosta`
 - Check `cat /proc/net/bonding/bond0`
 - Confirm VRRP master owns VIP

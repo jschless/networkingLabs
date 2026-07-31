@@ -88,6 +88,7 @@ none? Why?
 <summary>Solution</summary>
 
 L1 routers (r1/r4/r5), example r1:
+
 ```text
 configure terminal
 interface lo
@@ -175,6 +176,7 @@ change *external* reachability granularity?
 <summary>Solution</summary>
 
 On **r3**:
+
 ```text
 ip prefix-list LEAK seq 5 permit 10.0.0.4/32
 ip prefix-list LEAK seq 10 permit 10.0.0.5/32

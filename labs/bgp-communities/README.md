@@ -143,6 +143,7 @@ actually show up on r2 on your first try?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 route-map SET-COMM permit 10
    set community 65001:100
@@ -154,6 +155,7 @@ router bgp 65001
 ```
 
 And on **r2** / **r3**, enable sending toward their downstream peer:
+
 ```text
 router bgp 65002
    neighbor 10.1.23.2 send-community
@@ -202,6 +204,7 @@ local-preference 200, leaving untagged routes at 100.
 <summary>Solution</summary>
 
 On **r2**:
+
 ```text
 ip community-list standard PREF-TAG permit 65001:100
 !
@@ -255,6 +258,7 @@ and *which router* makes the suppression decision?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 route-map SET-COMM permit 10
    set community no-export
@@ -291,6 +295,7 @@ would it differ?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 route-map SET-COMM permit 10
    set community no-advertise
@@ -338,6 +343,7 @@ in a chain of ASes community agreements must be made?
 <summary>Solution</summary>
 
 On **r2**:
+
 ```text
 route-map STRIP-COMM permit 10
    set community none
@@ -377,6 +383,7 @@ route-map says `set community 65001:200`, what's on the route afterward?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 route-map SET-COMM permit 10
    set community 65001:100 65001:200 additive
@@ -439,17 +446,20 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **Community not appearing on neighbor**
+
 - EOS requires `neighbor X send-community` per eBGP neighbor — check
   `show bgp neighbors X.X.X.X | grep -i communit`
 - Extended communities need `send-community extended`
 - Did you `clear bgp * soft-outbound` after changing the route-map?
 
 **Route not being suppressed by no-export**
+
 - Confirm the community is actually attached on the *receiving* router:
   `show bgp ipv4 unicast <prefix>`
 - Make sure the route-map is applied outbound on the sender
 
 **Route-map not matching**
+
 - Community-list name must match exactly between `ip community-list` and
   `match community`; inspect with `show ip community-list` and
   `show route-map`

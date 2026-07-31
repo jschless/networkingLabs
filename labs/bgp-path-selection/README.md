@@ -116,6 +116,7 @@ breaking the tie on ce1, and which path will it pick?
 <summary>Solution</summary>
 
 ce1 (AS 65001):
+
 ```text
 router bgp 65001
    bgp router-id 10.0.0.1
@@ -130,6 +131,7 @@ router bgp 65001
 ```
 
 isp1 (AS 65100):
+
 ```text
 router bgp 65100
    bgp router-id 10.0.0.2
@@ -147,6 +149,7 @@ router bgp 65100
 ```
 
 isp2 (AS 65100):
+
 ```text
 router bgp 65100
    bgp router-id 10.0.0.3
@@ -164,6 +167,7 @@ router bgp 65100
 ```
 
 ce2 (AS 65002):
+
 ```text
 router bgp 65002
    bgp router-id 10.0.0.4
@@ -217,6 +221,7 @@ change? Will *inbound* traffic to ce1 change?
 <summary>Solution</summary>
 
 On **ce1**:
+
 ```text
 router bgp 65001
    neighbor 10.1.11.2 weight 200
@@ -269,6 +274,7 @@ afterwards — its own direct eBGP path, or the iBGP path through isp1?
 <summary>Solution</summary>
 
 On **isp1**:
+
 ```text
 route-map LP-CE1-HIGH permit 10
    set local-preference 200
@@ -324,6 +330,7 @@ inbound — and can ce1 *guarantee* the result?
 <summary>Solution</summary>
 
 On **ce1**:
+
 ```text
 route-map PREPEND-ISP2 permit 10
    set as-path prepend 65001 65001
@@ -381,6 +388,7 @@ MED weaker than everything you've used so far?
 <summary>Solution</summary>
 
 On **ce1**:
+
 ```text
 route-map MED-LOW permit 10
    set metric 10
@@ -463,18 +471,22 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **Two paths visible but neither wins decisively**
+
 - Check Weight first (must be set locally under router bgp, not in address-family)
 - Then Local-Pref (check it's being set on the inbound route-map, not outbound)
 
 **Route-map not taking effect**
+
 - `clear bgp * soft` to re-process routes without dropping sessions
 - `show route-map <name>` to verify match/set clauses
 
 **MED not being compared**
+
 - MED is only compared between paths from the same neighbouring AS
 - If the two paths come from different ASes, MED is skipped (`bgp
   always-compare-med` overrides — rarely used in production)
 
 **iBGP session between isp1 and isp2 not working**
+
 - Check `next-hop-self` is configured — without it, iBGP-advertised routes
   have external next-hops that may be unreachable

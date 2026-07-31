@@ -100,6 +100,7 @@ will the route carry — and will r1 be able to use it immediately?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 router bgp 65001
    bgp router-id 10.0.0.1
@@ -112,6 +113,7 @@ router bgp 65001
 ```
 
 On **r2**:
+
 ```text
 router bgp 65002
    bgp router-id 10.0.0.2
@@ -166,6 +168,7 @@ it carry, and will r3 install it in the routing table?
 <summary>Solution</summary>
 
 On **r2** (add):
+
 ```text
 router bgp 65002
    neighbor 10.1.23.2 remote-as 65002
@@ -176,6 +179,7 @@ router bgp 65002
 ```
 
 On **r3**:
+
 ```text
 router bgp 65002
    bgp router-id 10.0.0.3
@@ -188,6 +192,7 @@ router bgp 65002
 ```
 
 The fix, on **r2**:
+
 ```text
 router bgp 65002
    !
@@ -240,6 +245,7 @@ Decide before configuring.
 <summary>Solution</summary>
 
 On **r3** (add):
+
 ```text
 router bgp 65002
    neighbor 10.1.34.2 remote-as 65003
@@ -251,6 +257,7 @@ router bgp 65002
 ```
 
 On **r4**:
+
 ```text
 router bgp 65003
    bgp router-id 10.0.0.4
@@ -366,20 +373,24 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **Session stuck in Active**
+
 - Confirm IP addresses and `remote-as` values are correct on both ends
 - `ping 10.1.12.2` from r1 — if this fails, check interface IPs
 
 **Session flapping with notifications in the log**
+
 - The peers disagree about something in OPEN — usually remote-as vs. the
   peer's actual AS
 
 **Prefix visible in BGP table but not in routing table**
+
 - The next-hop is unreachable — add `next-hop-self` on the advertising
   iBGP peer
 - `show bgp ipv4 unicast 10.0.0.1/32` — look at the Nexthop field and the
   'inaccessible' note
 
 **BGP routes not showing up on r1 from r4**
+
 - Walk the path: does r4 have the prefix? Does r3? Does r2?
 - `show bgp ipv4 unicast` on each hop and look for the missing handoff
 

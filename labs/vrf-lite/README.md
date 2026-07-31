@@ -154,6 +154,7 @@ mirror the whole config on pe2, and verify both end-to-end reachability
 <summary>Solution</summary>
 
 pe1 statics:
+
 ```text
 ip route vrf VRF-RED  10.10.0.1/32 10.10.12.1
 ip route vrf VRF-RED  10.10.0.2/32 10.10.99.2
@@ -162,6 +163,7 @@ ip route vrf VRF-BLUE 10.20.0.2/32 10.20.99.2
 ```
 
 pe2 statics:
+
 ```text
 ip route vrf VRF-RED  10.10.0.1/32 10.10.99.1
 ip route vrf VRF-RED  10.10.0.2/32 10.10.34.2
@@ -211,6 +213,7 @@ ce-b1 now reach *all* of RED, or just the leaked prefix?
 <summary>Solution</summary>
 
 On **pe1** (and the equivalent on pe2):
+
 ```text
 ip route vrf VRF-BLUE 10.10.0.1/32 10.10.12.1 vrf VRF-RED
 ```
@@ -300,12 +303,15 @@ independent — RED's OSPF has no awareness of BLUE's.
 ## Troubleshooting
 
 **Interface has no IP after assigning a VRF**
+
 - `vrf` must be set *before* `ip address`; re-add the address after the VRF
 
 **Routes in the VRF table but ping fails**
+
 - The CE's default must point at the PE's IP *in the right VRF subnet*
 - Both PEs need routes in both directions (`show ip route vrf ...`)
 
 **Cross-VRF ping unexpectedly succeeds**
+
 - `show vrf` — confirm each interface is in the intended VRF; check for
   an unintended leak

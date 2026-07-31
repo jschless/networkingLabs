@@ -21,6 +21,7 @@ simulation, threat intel, and incident response workflow.
 ## Platform Notes
 
 - Build the shared images once:
+
   - `docker build -t soc-endpoint:local images/soc-endpoint/`
   - `docker build -t soc-sensor:local images/soc-sensor/`
   - `docker build -t soc-attacker:local images/soc-attacker/`

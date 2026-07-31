@@ -30,6 +30,7 @@ flowchart LR
 | r3:Ethernet2 - r4:Ethernet1 | 10.1.34.0/30 | r3=.1 | r4=.2 | Area 0 |
 
 Loopbacks:
+
 - r1=10.0.0.1/32 (area 2)
 - r2=10.0.0.2/32 (**area 1** — the placement matters; you'll see why)
 - r3=10.0.0.3/32 (area 0)
@@ -81,6 +82,7 @@ missing? Same question for r4. Commit to an answer per router.
 <summary>Solution</summary>
 
 r1:
+
 ```text
 router ospf
  router-id 10.0.0.1
@@ -89,6 +91,7 @@ router ospf
 ```
 
 r2:
+
 ```text
 router ospf
  router-id 10.0.0.2
@@ -98,6 +101,7 @@ router ospf
 ```
 
 r3:
+
 ```text
 router ospf
  router-id 10.0.0.3
@@ -107,6 +111,7 @@ router ospf
 ```
 
 r4:
+
 ```text
 router ospf
  router-id 10.0.0.4
@@ -163,12 +168,14 @@ up?
 <summary>Solution</summary>
 
 On r2:
+
 ```text
 router ospf
  area 1 virtual-link 10.0.0.3
 ```
 
 On r3:
+
 ```text
 router ospf
  area 1 virtual-link 10.0.0.2

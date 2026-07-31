@@ -128,6 +128,7 @@ A query for `google.com` from `admin-ws` should succeed; the same query from
 
 ??? note "Solution"
     Edit `/etc/bind/named.conf.options` on `dns1`:
+
     ```conf
     acl internal-clients {
         10.100.1.0/24;
@@ -150,12 +151,16 @@ A query for `google.com` from `admin-ws` should succeed; the same query from
         dnssec-validation auto;
     };
     ```
+
     Apply:
+
     ```bash
     docker exec dns1 named-checkconf      # must be silent / exit 0
     docker exec dns1 rndc reconfig
     ```
+
     Test from each client:
+
     ```bash
     docker exec admin-ws  dig @10.100.1.40 google.com A +short   # internal → works
     docker exec ext-client dig @10.100.1.40 google.com A         # external → refused
@@ -193,6 +198,7 @@ AD DNS on `dc1`** — so a client pointed at `dns1` can resolve both
 
 ??? note "Hints"
     - A conditional forwarder is a zone whose `type` is `forward`:
+
       ```conf
       zone "lab.corp" {
           type forward;
@@ -200,6 +206,7 @@ AD DNS on `dc1`** — so a client pointed at `dns1` can resolve both
           forwarders { 10.100.1.10; };
       };
       ```
+
       Put it in `/etc/bind/named.conf.local`.
     - If your first attempt comes back `SERVFAIL`, read `docker logs dns1` —
       the reason is printed there, and it is **not** "can't reach dc1".
@@ -208,6 +215,7 @@ AD DNS on `dc1`** — so a client pointed at `dns1` can resolve both
 
 ??? note "Solution"
     Add the forward zone to `/etc/bind/named.conf.local`:
+
     ```conf
     zone "lab.corp" {
         type forward;
@@ -215,20 +223,26 @@ AD DNS on `dc1`** — so a client pointed at `dns1` can resolve both
         forwarders { 10.100.1.10; };
     };
     ```
+
     Apply and test — you'll hit `SERVFAIL`:
+
     ```bash
     docker exec dns1 rndc reconfig
     docker exec admin-ws dig @10.100.1.40 dc1.lab.corp A +short   # → empty (SERVFAIL)
     docker logs dns1 | grep -i "trust chain" | tail -2
     # → "broken trust chain resolving 'dc1.lab.corp/A/IN': 10.100.1.10#53"
     ```
+
     The fix: tell BIND **not** to DNSSEC-validate the internal zone. Add to
     `options {}` in `named.conf.options`:
+
     ```conf
         dnssec-validation auto;
         validate-except { "lab.corp"; };
     ```
+
     Re-apply and retest:
+
     ```bash
     docker exec dns1 rndc reconfig
     docker exec admin-ws dig @10.100.1.40 dc1.lab.corp A +short            # → 10.100.1.10
@@ -277,13 +291,16 @@ only for internal clients. To do per-client answers, you must restructure
 
 ??? note "Solution"
     Create `/etc/bind/db.apps.internal` on `dns1`:
+
     ```text
     $TTL 300
     @   IN  SOA dns1.lab.corp. hostmaster.lab.corp. ( 1 3600 600 86400 300 )
     @   IN  NS  dns1.lab.corp.
     portal  IN  A   10.100.2.50
     ```
+
     Rewrite `/etc/bind/named.conf.local` to wrap everything in a view:
+
     ```conf
     view "internal" {
         match-clients { internal-clients; };
@@ -300,7 +317,9 @@ only for internal clients. To do per-client answers, you must restructure
         };
     };
     ```
+
     Apply and test:
+
     ```bash
     docker exec dns1 named-checkconf
     docker exec dns1 rndc reconfig
@@ -346,16 +365,19 @@ answers depending on **who asks**.
 
 ??? note "Solution"
     Create `/etc/bind/db.apps.external`:
+
     ```text
     $TTL 300
     @   IN  SOA dns1.lab.corp. hostmaster.lab.corp. ( 1 3600 600 86400 300 )
     @   IN  NS  dns1.lab.corp.
     portal  IN  A   203.0.113.50
     ```
+
     First, drop the now-redundant `allow-recursion` line from `options {}` in
     `named.conf.options` (the internal view's `match-clients` gates recursion
     now). Then append the external view to `named.conf.local` (after the
     internal view):
+
     ```conf
     view "external" {
         match-clients { any; };
@@ -367,7 +389,9 @@ answers depending on **who asks**.
         };
     };
     ```
+
     Apply, then ask the **same question from both clients**:
+
     ```bash
     docker exec dns1 rndc reconfig
     docker exec admin-ws  dig @10.100.1.40 portal.apps.lab.corp A +short   # → 10.100.2.50
@@ -383,10 +407,12 @@ answers depending on **who asks**.
     `ext-client` falls through to the `any` catch-all.
 
     Now confirm the external view is properly *isolated*:
+
     ```bash
     docker exec ext-client dig @10.100.1.40 dc1.lab.corp A | grep status:
     # → status: REFUSED  (external view has no lab.corp forward, no recursion)
     ```
+
     An outsider pointed at your resolver can see only what the external view
     publishes — not your AD records, not the internet. The view boundary is a
     security boundary.
@@ -414,6 +440,7 @@ answers depending on **who asks**.
 
 ??? note "Solution"
     Create `/etc/bind/db.10.100.1`:
+
     ```text
     $TTL 300
     @   IN  SOA dns1.lab.corp. hostmaster.lab.corp. ( 1 3600 600 86400 300 )
@@ -421,14 +448,18 @@ answers depending on **who asks**.
     10  IN  PTR dc1.lab.corp.
     40  IN  PTR dns1.lab.corp.
     ```
+
     Add the zone to the **internal** view in `named.conf.local`:
+
     ```conf
         zone "1.100.10.in-addr.arpa" {
             type master;
             file "/etc/bind/db.10.100.1";
         };
     ```
+
     Apply and test:
+
     ```bash
     docker exec dns1 rndc reconfig
     docker exec admin-ws dig @10.100.1.40 -x 10.100.1.10 +short   # → dc1.lab.corp.
@@ -507,6 +538,7 @@ zone — now feel its absence.
 
 **Break it** — edit `/etc/bind/named.conf.local` on `dns1` and delete (or
 comment out) the `lab.corp` forward zone inside the internal view, then:
+
 ```bash
 docker exec dns1 rndc reconfig
 docker exec dns1 rndc flush          # crucial — clear cached lab.corp answers
@@ -514,6 +546,7 @@ docker exec dns1 rndc flush          # crucial — clear cached lab.corp answers
 
 **Now diagnose from a client** that resolves via `dns1` (Task 6 left `admin-ws`
 pointed there):
+
 ```bash
 docker exec admin-ws kdestroy 2>/dev/null
 docker exec admin-ws getent hosts dc1.lab.corp        # observe
@@ -548,12 +581,14 @@ docker exec admin-ws bash -c 'kinit alice@LAB.CORP <<< "P@ssw0rd1"'   # observe 
       worked a minute ago" that makes caching bugs maddening.
 
 **Repair it** — restore the forward zone, reload, and flush:
+
 ```bash
 # put the lab.corp forward zone back inside view "internal", then:
 docker exec dns1 rndc reconfig
 docker exec dns1 rndc flush
 docker exec admin-ws bash -c 'kdestroy 2>/dev/null; kinit alice@LAB.CORP <<< "P@ssw0rd1" && klist | grep krbtgt'
 ```
+
 A TGT for `krbtgt/LAB.CORP@LAB.CORP` in `klist` confirms the repair.
 
 ---

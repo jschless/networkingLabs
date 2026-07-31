@@ -95,13 +95,16 @@ flowchart TB
 ## Your Tasks
 
 ### core1, core2
+
 1. **OSPF area 0 + BFD** — all 5 Ethernet interfaces active, `bfd default` under `router ospf 1`, network loopback + all 5 links in area 0
 2. **iBGP stub** — `router bgp 65000`, peer with the other core via Loopback0 update-source
 
 ### dist1, dist2, dist3, dist4
+
 1. **OSPF ABR + stub area 1** — Ethernet1/2 active in area 0, Ethernet3 active in area 1; `area 0.0.0.1 stub`; BFD enabled
 
 ### acc1, acc2
+
 1. **OSPF area 1 stub + BFD** — Ethernet1/2 (to dist) active, Ethernet3/4 (to hosts) passive; all networks in area 1; `area 0.0.0.1 stub`; `bfd default`
 
 ## Verification

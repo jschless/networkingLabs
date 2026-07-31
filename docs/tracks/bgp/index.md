@@ -26,6 +26,7 @@ bgp-basics → bgp-path-selection → bgp-filtering → bgp-communities
 ## Platform
 
 All labs use **Arista cEOS**:
+
 ```bash
 docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F
 ```

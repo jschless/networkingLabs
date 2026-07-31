@@ -375,9 +375,11 @@ read the script.
 ## Task B1 — "Nobody can log in"
 
 **Inflict it, then diagnose:**
+
 ```bash
 docker exec dns1 bash /break/break-dns.sh
 ```
+
 Now a user on a freshly-resolving client cannot reach the domain — a new
 `getent hosts dc1.lab.corp` returns nothing, and operations that must locate the
 DC start failing.
@@ -415,9 +417,11 @@ DC start failing.
 ## Task B2 — "Everyone's password expired at once"
 
 **Inflict it, then diagnose:**
+
 ```bash
 docker exec dc1 bash /break/break-kerberos.sh
 ```
+
 Now every `kinit` — for any user — fails with *"Password expired. You must change
 it now,"* even with the correct password.
 
@@ -456,9 +460,11 @@ confirm logins recover.
 ## Task B3 — "The mail clients can't log in"
 
 **Inflict it, then diagnose:**
+
 ```bash
 docker exec mail1 bash /break/break-mail.sh
 ```
+
 Now IMAP logins fail for everyone, though AD itself is healthy (users can still
 `kinit`).
 

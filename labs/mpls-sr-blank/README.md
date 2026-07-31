@@ -179,6 +179,7 @@ router isis CORE
  segment-routing on
  segment-routing prefix <loopback>/32 index <index>
 ```
+
 </details>
 
 Use each router's index from the table above (e.g. pe1 = index 2).
@@ -192,6 +193,7 @@ Use each router's index from the table above (e.g. pe1 = index 2).
 interface <transit-interface>
  mpls enable
 ```
+
 </details>
 
 Apply to all transit interfaces (not the loopback, not CE-facing).
@@ -251,6 +253,7 @@ router bgp 65000
   neighbor IBGP send-community both
  exit-address-family
 ```
+
 </details>
 
 ### On pe1 and pe2: BGP toward rr1
@@ -275,6 +278,7 @@ router bgp 65000
   neighbor 10.0.0.1 send-community both
  exit-address-family
 ```
+
 </details>
 
 ### Verify BGP
@@ -325,6 +329,7 @@ vrf CUST-A
 interface eth1 vrf CUST-A     ! pe1: eth1 is CE-facing
  ip address 192.168.10.2/30
 ```
+
 </details>
 
 Then run `vtysh -b` (or exit and re-enter vtysh) to reload the config
@@ -352,6 +357,7 @@ router bgp 65000 vrf CUST-A
   import vpn
  exit-address-family
 ```
+
 </details>
 
 ### On pe2: same pattern, different addresses
@@ -376,6 +382,7 @@ router bgp 65000 vrf CUST-A
   import vpn
  exit-address-family
 ```
+
 </details>
 
 ### On ce1 and ce2: eBGP toward PE
@@ -396,6 +403,7 @@ router bgp 65001           ! ce2: use 65002
   network 10.100.1.1/32    ! ce2: network 10.100.2.1/32
  exit-address-family
 ```
+
 </details>
 
 ### Verify L3VPN
@@ -417,6 +425,7 @@ ping -I 10.100.1.1 10.100.2.1
 ```
 
 A successful ping means:
+
 - IS-IS found the path through the SP core
 - SR pushed the right MPLS labels at pe1
 - Labels were swapped/popped at p1 and p2
@@ -524,24 +533,29 @@ cat /proc/sys/net/mpls/conf/eth1/input   # 1 = MPLS enabled on interface
 ## Troubleshooting
 
 **IS-IS adjacencies not forming**
+
 - Check that both ends of a link have `ip router isis CORE` and `isis network point-to-point`
 - Check that the IS-IS NET is unique per router and correctly formatted
 
 **MPLS labels not installed in kernel (`ip -M route show` is empty)**
+
 - Confirm `net.mpls.platform_labels` is non-zero: `cat /proc/sys/net/mpls/platform_labels`
 - Confirm `mpls enable` is in the running config for each transit interface: `show run`
 - If you added `mpls enable` after IS-IS was already up, run `vtysh -b` to reload
 
 **BGP sessions stuck in Active**
+
 - Loopbacks must be reachable first — confirm IS-IS is working: `ping 10.0.0.1 source 10.0.0.2`
 - Check `update-source lo` is configured on both ends
 
 **VRF BGP session not coming up**
+
 - Confirm the Linux VRF exists: `ip vrf show`
 - Confirm the CE-facing interface is enslaved: `ip link show master CUST-A`
 - If you configured `interface ethX vrf CUST-A` in FRR before creating the Linux VRF,
   run `vtysh -b` after creating the VRF
 
 **CE routes not reaching the other PE**
+
 - Check `rt vpn both 65000:100` is the same on both PE nodes (import/export RT must match)
 - Check `show bgp ipv4 vpn` on rr1 — routes from both PEs should be visible there

@@ -137,6 +137,7 @@ get `client1` a lease.
 
 ??? note "Solution"
     On `dhcp1` (`docker exec -it dhcp1 vim /etc/kea/kea-dhcp4.conf`):
+
     ```json
     {
       "Dhcp4": {
@@ -163,6 +164,7 @@ get `client1` a lease.
       }
     }
     ```
+
     ```bash
     docker exec dhcp1 kea-dhcp4 -t /etc/kea/kea-dhcp4.conf   # validate
     docker exec dhcp1 kea-start
@@ -173,10 +175,12 @@ get `client1` a lease.
 ??? success "Check your work"
     `dhclient` logs `DHCPDISCOVER → DHCPOFFER of 10.100.10.100 → DHCPREQUEST →
     DHCPACK`, and `ip addr` shows **both** addresses:
+
     ```
     inet 10.100.10.51/16  … eth0
     inet 10.100.10.100/16 … secondary dynamic eth0
     ```
+
     The lease appears **alongside** Docker's address as a `secondary` — Docker's
     IPAM gave `.51` at creation; Kea's DHCP gave `.100` just now. In a real
     network there is no Docker IPAM, only DHCP, so the lease *is* the address.
@@ -294,6 +298,7 @@ that `client1.dhcp.lab.corp` resolves to `client1`'s leased address.
 
 ??? note "Solution"
     `/etc/kea/kea-dhcp-ddns.conf` on `dhcp1` (paste your real secret):
+
     ```json
     {
       "DhcpDdns": {
@@ -313,7 +318,9 @@ that `client1.dhcp.lab.corp` resolves to `client1`'s leased address.
       }
     }
     ```
+
     Add to the `Dhcp4` object in `kea-dhcp4.conf` (alongside `subnet4`):
+
     ```json
         "dhcp-ddns": { "enable-updates": true,
                        "server-ip": "127.0.0.1", "server-port": 53001 },
@@ -323,7 +330,9 @@ that `client1.dhcp.lab.corp` resolves to `client1`'s leased address.
         "ddns-override-no-update": true,
         "ddns-override-client-update": true,
     ```
+
     Restart and re-lease:
+
     ```bash
     docker exec dhcp1 kea-start
     docker exec client1 bash -c 'echo "send host-name = gethostname();" > /etc/dhcp/dhclient.conf'
@@ -376,13 +385,16 @@ statically configured.
     MAC=$(docker exec client1 cat /sys/class/net/eth0/address)
     echo "client1 MAC = $MAC"     # paste into the reservation below
     ```
+
     Inside the `subnet4` entry in `kea-dhcp4.conf`:
+
     ```json
         "reservations": [
           { "hw-address": "<MAC>", "ip-address": "10.100.10.150",
             "hostname": "client1" }
         ]
     ```
+
     ```bash
     docker exec dhcp1 kea-start
     docker exec client1 bash -c 'dhclient -r eth0; dhclient -v eth0' 2>&1 | grep DHCPACK
@@ -451,6 +463,7 @@ there is — DHCP "works," but names don't resolve.
 
 **Break it** — on `dhcp1`, change the secret in `kea-dhcp-ddns.conf` to a
 different valid-looking base64 string, then restart and clear the ddns log:
+
 ```bash
 docker exec dhcp1 sed -i 's/"secret": "[^"]*"/"secret": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/' \
     /etc/kea/kea-dhcp-ddns.conf
@@ -459,6 +472,7 @@ docker exec dhcp1 kea-start
 ```
 
 **Now diagnose** — lease a fresh client and look:
+
 ```bash
 docker exec client2 bash -c 'echo "send host-name = gethostname();" > /etc/dhcp/dhclient.conf'
 docker exec client2 bash -c 'dhclient -r eth0; dhclient -v eth0' 2>&1 | grep DHCPACK   # lease OK?
@@ -491,6 +505,7 @@ docker exec dhcp1 tail -5 /var/log/kea-ddns.log                                 
     server would tell you everything is fine.
 
 **Repair it** — restore the correct secret from the key file and restart:
+
 ```bash
 SECRET=$(docker exec dhcp1 grep secret /etc/kea/ddns.key | sed 's/.*secret "//;s/".*//')
 docker exec dhcp1 sed -i "s|\"secret\": \"[^\"]*\"|\"secret\": \"$SECRET\"|" /etc/kea/kea-dhcp-ddns.conf

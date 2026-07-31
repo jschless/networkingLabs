@@ -114,6 +114,7 @@ video are crowded out by the bulk data stream. You will see the voice client
 reporting packet loss and jitter.
 
 Check voice client stats:
+
 ```bash
 ./scripts/lab.sh cmd qos-enterprise client-voice -- tail -f /tmp/iperf3-voice.log
 ```
@@ -139,6 +140,7 @@ strict priority over video and data.
 ```
 
 Key fields to observe:
+
 - **Sent bytes/packets**: cumulative traffic forwarded by this class
 - **dropped**: packets discarded (congestion — class is full)
 - **overlimits**: times the class tried to exceed its guaranteed rate
@@ -179,6 +181,7 @@ tcpdump -i eth4 -v ip | grep -E 'tos|length' | head -40
 ```
 
 Look for:
+
 - `tos 0xb8` — voice traffic (EF)
 - `tos 0x88` — video traffic (AF41)
 - `tos 0x0`  — data traffic (Best Effort)

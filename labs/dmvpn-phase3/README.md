@@ -69,6 +69,7 @@ it have for *all* remote spoke LANs, and through whom?
 <summary>Solution</summary>
 
 On **spoke1** (spoke2/spoke3 mirror with their values):
+
 ```vyos
 configure
 set protocols nhrp tunnel tun0 network-id '1'

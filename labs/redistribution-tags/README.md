@@ -109,6 +109,7 @@ about its own prefix from the far side?
 <summary>Solution</summary>
 
 On **asbr1** and **asbr2** (identical):
+
 ```text
 route-map EIGRP-TO-OSPF permit 10
 route-map OSPF-TO-EIGRP permit 10
@@ -163,6 +164,7 @@ on OSPF→EIGRP routes and tag 200 on EIGRP→OSPF routes, and on each ASBR
 <summary>Solution</summary>
 
 On **asbr1** and **asbr2** (identical):
+
 ```text
 no route-map EIGRP-TO-OSPF permit 10
 no route-map OSPF-TO-EIGRP permit 10

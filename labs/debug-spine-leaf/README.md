@@ -92,6 +92,7 @@ Wait ~25 seconds after deploy for BGP sessions to establish.
 ## Observed symptoms
 
 **On leaf1 — correct ECMP (for comparison):**
+
 ```
 leaf1# show ip route bgp
 B>* 10.0.0.2/32 [20/0] via 10.1.0.1, eth1
@@ -105,6 +106,7 @@ B>* 10.0.0.4/32 [20/0] via 10.1.0.1, eth1
 leaf1 shows two next-hops per destination (via spine1 and spine2). ECMP is working.
 
 **On leaf2 — single path only:**
+
 ```
 leaf2# show ip route bgp
 B>* 10.0.0.1/32 [20/0] via 10.1.0.3, eth1
@@ -116,6 +118,7 @@ leaf2 only shows one path (via spine1's 10.1.0.3). spine2's path is not installe
 despite the BGP session being up.
 
 **BGP sessions are up on leaf2:**
+
 ```
 leaf2# show bgp ipv4 unicast summary
 Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
@@ -135,6 +138,7 @@ path per destination is installed in the routing table. This is a BGP multipath
 configuration problem.
 
 Work through the diagnostic questions:
+
 1. On leaf2, what does `show bgp ipv4 unicast 10.0.0.1/32` show for number of paths?
 2. On leaf1 (working), what BGP global parameters differ from leaf2?
 3. What two commands are required for BGP ECMP in a DC spine-leaf fabric?
@@ -167,6 +171,7 @@ show running-config | include multipath
 <summary>Hint 1 — Where to start</summary>
 
 On leaf2, run:
+
 ```
 show bgp ipv4 unicast 10.0.0.1/32
 ```
@@ -230,6 +235,7 @@ leaf2# write memory
 ```
 
 Then trigger BGP to re-evaluate best paths:
+
 ```
 leaf2# clear ip bgp * soft
 ```
@@ -254,6 +260,7 @@ ping 10.0.0.1 source 10.0.0.2 repeat 100
 ```
 
 Expected on leaf2 after fix:
+
 ```
 leaf2# show ip route bgp
 B>* 10.0.0.1/32 [20/0] via 10.1.0.3, eth1

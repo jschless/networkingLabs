@@ -98,6 +98,7 @@ router bgp 65001
 2. **OSPF routes not installed over tunnel**: EOS default is `no tunnel routes`. The adjacency forms but routes aren't installed. Fix: add `tunnel routes` under `router ospf 1`.
 
 3. **Transit forwarding blocked by iptables**: cEOS installs DROP rules in `EOS_FORWARD` for data-plane interfaces. Fix via topology exec:
+
    ```yaml
    exec:
      - bash -c "iptables -D EOS_FORWARD -i eth1 -j DROP 2>/dev/null || true"

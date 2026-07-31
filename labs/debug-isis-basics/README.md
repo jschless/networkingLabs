@@ -70,12 +70,14 @@ Wait ~20 seconds after deploy for IS-IS hello timers to expire.
 ## Observed symptoms
 
 **On r2 — no IS-IS neighbors:**
+
 ```
 r2# show isis neighbor
 (no output)
 ```
 
 **On r3 — only r4 as neighbor:**
+
 ```
 r3# show isis neighbor
 Area CORE:
@@ -86,12 +88,14 @@ Area CORE:
 r3 sees r4, but not r2. r2 is completely isolated.
 
 **On r1 — no IS-IS neighbors:**
+
 ```
 r1# show isis neighbor
 (no output)
 ```
 
 **Routing impact — r1 can't reach r3 or r4:**
+
 ```
 r1# show ip route isis
 (no output)
@@ -109,6 +113,7 @@ IS-IS Level-1 adjacency formation requires both neighbors to be in the **same ar
 The area is encoded in the NET (Network Entity Title) address.
 
 Work through the diagnostic questions:
+
 1. On r2, what is the NET address shown by `show isis summary`?
 2. On r3, what is the NET address?
 3. What is the area portion of each NET? (First field after `49.`)
@@ -143,6 +148,7 @@ show ip route isis
 <summary>Hint 1 — Where to start</summary>
 
 On each router, run:
+
 ```
 show isis summary
 ```
@@ -165,6 +171,7 @@ area is `0002` and r1/r3 have area `0001`, every hello r2 sends will be rejected
 the area ID in the hello doesn't match.
 
 Check r2's database:
+
 ```
 show isis database
 ```
@@ -226,6 +233,7 @@ r1# ping 10.0.0.4 source 10.0.0.1
 ```
 
 Expected on r2 after fix:
+
 ```
 r2# show isis neighbor
 Area CORE:

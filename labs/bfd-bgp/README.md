@@ -1,6 +1,7 @@
 # Lab: bfd-bgp
 
 ## Purpose
+
 Learn BFD (Bidirectional Forwarding Detection) integrated with BGP. Understand how BFD
 enables near-instant BGP session teardown on link failure, replacing the slow 90-second
 hold timer mechanism.
@@ -240,6 +241,7 @@ Traffic blackhole window: <1 second vs up to 90 seconds
 3. BFD establishes a separate control-plane session with 10.1.12.2
 4. BFD sends/receives lightweight packets at the negotiated interval
 5. If BFD detects failure (N consecutive packets lost):
+
    - BFD notifies BGP immediately
    - BGP tears down the session without waiting for hold timer
    - BGP withdraws routes from the failed session
@@ -257,6 +259,7 @@ router bgp 65001
  neighbor 10.1.12.2 bfd                           # enable BFD
  neighbor 10.1.12.2 bfd check-control-plane-failure  # optional: also check CP
 ```
+
 </details>
 
 You can also set custom timers per-neighbor:
@@ -274,6 +277,7 @@ bfd
   receive-interval 100
   detect-multiplier 3
 ```
+
 </details>
 
 ### BFD vs BGP Hold Timer — When Each Applies

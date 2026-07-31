@@ -34,6 +34,9 @@ jobs:
       - name: Lint admonitions
         run: ./scripts/check-docs-admonitions.sh
 
+      - name: Lint Markdown block spacing
+        run: python3 scripts/check-markdown-spacing.py
+
       - name: Lint labs (topology parse, image docs, nav consistency)
         run: python3 scripts/lint-labs.py
 

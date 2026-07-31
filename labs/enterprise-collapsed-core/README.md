@@ -234,6 +234,7 @@ show spanning-tree detail
 ```
 
 Expected hops:
+
 1. 10.10.10.1 — cc1 VRRP VIP (also cc1 SVI IP 10.10.10.2)
 2. 10.0.12.1 — edge (cc1→edge link)
 3. 203.0.113.1 — isp
@@ -254,23 +255,27 @@ loss do you expect, and when cc1 returns, will it reclaim both roles? Commit
 before triggering.
 
 **Step 1**: watch VRRP state on cc2 before failure:
+
 ```bash
 # On cc2
 watch show vrrp
 ```
 
 **Step 2**: watch client-a connectivity in another terminal:
+
 ```bash
 # Continuous ping from client-a
 ./scripts/lab.sh cmd enterprise-collapsed-core client-a -- ping 10.10.10.1
 ```
 
 **Step 3**: shut cc1 down:
+
 ```bash
 docker stop clab-enterprise-collapsed-core-cc1
 ```
 
 **Expected observations**:
+
 - cc2 transitions VLAN 10 VRRP group from BACKUP to MASTER (after 3 x 1 second
   advertisement interval = ~3 second dead interval)
 - client-a pings resume using cc2 as gateway
@@ -280,6 +285,7 @@ docker stop clab-enterprise-collapsed-core-cc1
   priority 32768
 
 **Step 4**: restore cc1:
+
 ```bash
 docker start clab-enterprise-collapsed-core-cc1
 ```
@@ -407,6 +413,7 @@ for VLAN 10 and 30. cc2 owns VLAN 20. This ensures that L2 and L3 traffic
 take the same physical path, avoiding suboptimal routing through the CC interlink.
 
 **cc interlink (10.0.99.0/30)**: L3 routed link between cc1 and cc2. Used for:
+
 - OSPF adjacency (backup path to edge if one CC-edge link fails)
 - VRRP multicast advertisement exchange
 - Forwarding inter-VLAN traffic if one CC loses its edge uplink

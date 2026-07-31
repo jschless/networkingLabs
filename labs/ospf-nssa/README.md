@@ -90,6 +90,7 @@ router?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 router ospf
  router-id 10.0.0.1
@@ -99,6 +100,7 @@ router ospf
 ```
 
 On **r2**:
+
 ```text
 router ospf
  router-id 10.0.0.2
@@ -108,6 +110,7 @@ router ospf
 ```
 
 On **r3**:
+
 ```text
 router ospf
  router-id 10.0.0.3
@@ -155,6 +158,7 @@ advertising router as in Task 1?
 <summary>Solution</summary>
 
 On **r1** and **r2**:
+
 ```text
 router ospf
  area 1 nssa
@@ -238,6 +242,7 @@ will r1's new default appear (`O IA`, `O E2`, or `O N2`)?
 <summary>Solution</summary>
 
 On **r2** only:
+
 ```text
 router ospf
  area 1 nssa no-summary

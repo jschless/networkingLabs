@@ -58,15 +58,18 @@ flowchart TB
 ## Your Tasks
 
 ### edge (Tasks 1–4)
+
 1. **route-map LP-HIGH** — `set local-preference 200` (inbound from isp1)
 2. **route-map LP-LOW + PREPEND-ISP2** — LP 100 inbound from isp2; AS-path prepend 65300×3 outbound to isp2
 3. **router bgp 65300** — dual eBGP sessions, apply route-maps, originate 198.51.100.0/24, black-hole static route
 4. **router ospf 1** — area 0 on Ethernet3/4, `passive-interface default`, `default-information originate always`
 
 ### core1
+
 1. **OSPF area 0** — all 3 interfaces active (edge, core2, server), `passive-interface default`
 
 ### core2
+
 1. **OSPF area 0** — both interfaces active (edge, core1)
 
 ## Verification

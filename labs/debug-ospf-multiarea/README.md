@@ -84,6 +84,7 @@ Run these commands immediately after deploying. This is the broken state
 you are starting from.
 
 **On r1:**
+
 ```
 r1# show ip ospf neighbor
 Neighbor ID Instance VRF      Pri State                  Dead Time   Address         Interface
@@ -91,6 +92,7 @@ Neighbor ID Instance VRF      Pri State                  Dead Time   Address    
 ```
 
 **On r4:**
+
 ```
 r4# show ip ospf neighbor
 (no output — no neighbors)
@@ -100,6 +102,7 @@ r4# show ip route ospf
 ```
 
 **End-to-end connectivity:**
+
 ```
 r1# ping 10.0.0.4 source 10.0.0.1
 PING 10.0.0.4 (10.0.0.4): 56 data bytes
@@ -119,6 +122,7 @@ Use the show commands below to determine why r3 and r4 are not forming
 an OSPF adjacency. The physical link is up — this is a configuration issue.
 
 Work through the diagnostic questions:
+
 1. Which side of the r3–r4 link is failing to participate in OSPF correctly?
 2. What does `show ip ospf interface Ethernet2` tell you on r3?
 3. What does `show ip ospf interface Ethernet1` tell you on r4?
@@ -232,6 +236,7 @@ Expected neighbor table (all nodes):
 | r3 — r4 | Full  |
 
 r4 should show a default route in `show ip route ospf`:
+
 ```
 O IA   0.0.0.0/0 [110/11] via 10.1.34.1, Ethernet1
 ```

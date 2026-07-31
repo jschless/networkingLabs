@@ -26,6 +26,7 @@ flowchart LR
 ```
 
 r1 originates three prefixes:
+
 - `10.0.0.1/32` — loopback
 - `172.16.1.0/24` — extra prefix (sometimes permitted)
 - `172.16.2.0/24` — extra prefix (you'll filter this one)
@@ -189,6 +190,7 @@ see — and what does r2's `received-routes` view for the r1 session show?
 <summary>Solution</summary>
 
 On **r2**:
+
 ```text
 ip prefix-list BLOCK-172-16-2 seq 5 deny 172.16.2.0/24
 ip prefix-list BLOCK-172-16-2 seq 10 permit 0.0.0.0/0 le 32
@@ -248,6 +250,7 @@ r2's own loopback 10.0.0.2/32 on r3 and on r4?
 <summary>Solution</summary>
 
 On **r3**:
+
 ```text
 ip as-path access-list ONLY-AS65001 permit _65001$
 !
@@ -302,6 +305,7 @@ r2 — `received-routes`, `routes`, both, or neither?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 ip prefix-list LOOPBACK-ONLY seq 5 permit 10.0.0.1/32
 ip prefix-list LOOPBACK-ONLY seq 10 deny 0.0.0.0/0 le 32
@@ -362,6 +366,7 @@ match clauses if you forget the final stanza.
 <summary>Solution</summary>
 
 On **r2**:
+
 ```text
 no router bgp 65002 ... ! remove prior: no neighbor 10.1.12.1 prefix-list BLOCK-172-16-2 in
 ip prefix-list WANT-172-16-1 seq 5 permit 172.16.1.0/24
@@ -445,20 +450,24 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **Filter not taking effect**
+
 - Run `clear bgp * soft-inbound` / `soft-outbound` (or per-neighbor) —
   without a soft reset, existing routes keep their old filter decisions
 
 **Prefix-list matching too much or too little**
+
 - `show ip prefix-list NAME` to see the entries
 - Remember the implicit deny-all at the end of every prefix-list
 
 **AS-path regex not matching**
+
 - Test live: `show bgp ipv4 unicast regexp _65001$`
 - Use `_` as the separator token, not `.` (which matches any character)
 - `^65001$` matches only a one-hop path; `_65001$` matches any path
   originated by 65001
 
 **Combining AS-path and prefix filters**
+
 - Combine in one route-map with multiple match conditions (AND within a
   stanza), or accept that prefix-list + route-map on a session must BOTH
   permit

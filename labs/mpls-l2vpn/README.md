@@ -103,6 +103,7 @@ hellos over the transport address) to exchange PW labels. This session goes over
 the MPLS core using the transport labels distributed by the normal link LDP sessions.
 
 **Linux bridge on PE:** each PE has a Linux bridge `br-l2vpn` connecting:
+
 - The CE-facing attachment circuit (`eth1` on pe1, `eth2` on pe2)
 - A pseudowire dummy interface (`pw0`) representing the MPLS tunnel endpoint
 
@@ -161,51 +162,65 @@ Before the pseudowire can work, the MPLS core must be healthy.
 ### 1a. Check IS-IS adjacencies
 
 On pe1:
+
 ```
 show isis neighbor
 ```
+
 Expected: p1 listed as neighbor, state UP.
 
 On p1:
+
 ```
 show isis neighbor
 ```
+
 Expected: pe1 and pe2 both listed as neighbors, state UP.
 
 ### 1b. Check IS-IS routing table
 
 On pe1:
+
 ```
 show isis route
 ```
+
 Expected: routes to 10.0.0.2/32 (p1) and 10.0.0.3/32 (pe2) visible.
 
 ### 1c. Check LDP link sessions
 
 On pe1:
+
 ```
 show mpls ldp neighbor
 ```
+
 Expected: LDP peer 10.0.0.2 (p1) shown with session state OPERATIONAL.
 
 On p1:
+
 ```
 show mpls ldp neighbor
 ```
+
 Expected: LDP peers 10.0.0.1 (pe1) and 10.0.0.3 (pe2) both OPERATIONAL.
 
 ### 1d. Check MPLS forwarding table (IGP transport labels)
 
 On pe1:
+
 ```
 show mpls table
 ```
+
 Expected: entries for pe2's loopback (10.0.0.3/32) with an outgoing label via p1.
 
 On p1:
+
 ```
 show mpls table
 ```
+
 Expected: swap entries forwarding toward both pe1 and pe2.
 
 ---
@@ -217,25 +232,32 @@ The pseudowire requires a *targeted* LDP session between pe1 and pe2.
 ### 2a. Check targeted LDP session
 
 On pe1:
+
 ```
 show mpls ldp neighbor
 ```
+
 Look for a peer entry for **10.0.0.3** (pe2) with session type `Targeted`.
 This session DOES NOT require a direct link — it uses the MPLS core as transport.
 
 On pe2:
+
 ```
 show mpls ldp neighbor
 ```
+
 Look for a peer entry for **10.0.0.1** (pe1) with session type `Targeted`.
 
 ### 2b. Check LDP pseudowires
 
 On pe1:
+
 ```
 show mpls ldp pseudowires
 ```
+
 Expected output (indicative):
+
 ```
 Pseudowire    Peer             PW-ID  Local Label  Remote Label  Status
 ------------  ---------------  -----  -----------  ------------  ------
@@ -248,13 +270,17 @@ The `Remote Label` is what pe1 pushes when sending frames to pe2.
 ### 2c. Confirm MPLS label stack
 
 On pe1 (bash shell):
+
 ```bash
 ip -M route show
 ```
+
 or in FRR vtysh:
+
 ```
 show mpls table
 ```
+
 Look for an entry with the PW remote label pushing into the outgoing label (IGP label for 10.0.0.3/32).
 
 ---
@@ -268,6 +294,7 @@ The data plane uses the Linux bridge `br-l2vpn` on each PE.
 ```bash
 bridge link show
 ```
+
 Expected: `eth1` and `pw0` both enslaved to `br-l2vpn`.
 
 ```bash
@@ -279,11 +306,13 @@ ip link show eth1
 ### 3b. Observe the bridge MAC table
 
 Before any traffic, the MAC table is empty:
+
 ```bash
 bridge fdb show dev br-l2vpn
 ```
 
 After ce1 sends traffic (ARP), ce1's MAC should appear:
+
 ```bash
 bridge fdb show dev br-l2vpn
 ```
@@ -305,6 +334,7 @@ Expected: successful ping. The first ping may be slightly slower (ARP resolution
 but subsequent pings should be fast.
 
 **What is happening underneath:**
+
 1. ce1 sends ARP: "Who has 10.100.0.2? Tell 10.100.0.1"
 2. ARP frame goes: ce1 → pe1:eth1 → br-l2vpn → pw0 → MPLS encap → pe2 → br-l2vpn → pe2:eth2 → ce2
 3. ce2 replies with ARP. The reply traverses the same path in reverse.
@@ -332,9 +362,11 @@ ip neigh show
 ### 4d. Observe MAC learning on the bridge
 
 After traffic, run on pe1 bash shell:
+
 ```bash
 bridge fdb show dev br-l2vpn
 ```
+
 You should see MAC addresses for both ce1 and ce2 learned on the bridge.
 
 ---
@@ -349,17 +381,20 @@ Use tcpdump/tshark to see the label stack on the MPLS core link.
 ```
 
 In another terminal, trigger traffic:
+
 ```bash
 ./scripts/lab.sh bash mpls-l2vpn ce1
 # ping 10.100.0.2
 ```
 
 In the capture you should see:
+
 - MPLS packets with 2 labels (label stack)
 - Inner label = PW VC label
 - Outer label = IGP transport label for pe2
 
 Compare with p1's traffic (only 1 label after p1 swaps the outer label):
+
 ```bash
 ./scripts/lab.sh capture mpls-l2vpn p1 eth2
 ```
@@ -374,6 +409,7 @@ remote PEs in the same VPLS instance, and uses MAC learning on the bridge to
 decide which PW to use for forwarding.
 
 To experiment with a third CE site, you could add:
+
 - A third PE router (pe3) with its own LDP pseudowire to both pe1 and pe2
 - A third CE (ce3) attached to pe3
 - pe1 and pe2 each need an additional `member pseudowire` in the l2vpn stanza
@@ -431,32 +467,39 @@ ip link show master br-l2vpn   # interfaces enslaved to br-l2vpn
 ## Key concepts
 
 ### Attachment Circuit (AC)
+
 The physical or logical interface on the PE that connects to the customer CE.
 In this lab: `pe1:eth1` (connected to ce1) and `pe2:eth2` (connected to ce2).
 The AC carries raw L2 frames with no IP processing by the PE.
 
 ### Pseudowire (PW)
+
 The logical tunnel across the MPLS core that carries L2 frames between two PE
 attachment circuits. The PW is identified by:
+
 - **Sender PE loopback** (e.g., 10.0.0.1 for pe1)
 - **Receiver PE loopback** (e.g., 10.0.0.3 for pe2)
 - **PW-ID** (100 in this lab)
 
 ### VC label (PW label / inner label)
+
 A label negotiated by the targeted LDP session, specific to the pseudowire.
 The receiving PE uses it to identify which bridge (VPLS instance) to deliver
 the frame to. This is the inner label in the stack.
 
 ### Transport label (outer label)
+
 The IGP label distributed by LDP link sessions across the core, used to forward
 the encapsulated PW packet toward the remote PE. p1 performs a label swap on this.
 
 ### Targeted LDP
+
 A special LDP session between two PEs that do not share a direct link.
 Hellos are unicast (not multicast), and the session is established over the
 MPLS transport network. Required for PW label negotiation.
 
 ### FEC 128
+
 The IETF term for a point-to-point pseudowire with a manually configured
 sender ID, receiver ID, and PW-ID. "FEC 128" refers to the LDP TLV type
 used to advertise the PW label binding.
@@ -516,23 +559,27 @@ No answers provided — reason them through.
 ### LDP sessions not forming
 
 1. Check IS-IS is up first — LDP needs IGP reachability to the remote transport address:
+
    ```
    show isis neighbor
    show ip route 10.0.0.3/32   (on pe1 — should show via p1)
    ```
 
 2. Check LDP is enabled on the core interface:
+
    ```
    show mpls ldp discovery       # should list eth2 as active discovery interface
    ```
 
 3. Check targeted hello is configured and accepted:
+
    ```
    show mpls ldp neighbor       # look for 10.0.0.3 with Targeted session
    show mpls ldp discovery      # look for targeted hello to 10.0.0.3
    ```
 
 4. Verify MPLS is enabled on core interfaces:
+
    ```
    show interface eth2           # look for "MPLS enabled"
    ```
@@ -540,17 +587,21 @@ No answers provided — reason them through.
 ### Pseudowire shows "down" or no labels
 
 1. Verify targeted LDP session is OPERATIONAL:
+
    ```
    show mpls ldp neighbor detail
    ```
 
 2. Check the l2vpn stanza parsed correctly:
+
    ```
    show running-config
    ```
+
    Look for the `l2vpn VPWS-CUST` block with `neighbor lsr-id` and `pw-id`.
 
 3. Check MPLS label table for PW label entries:
+
    ```
    show mpls table
    ```
@@ -558,24 +609,29 @@ No answers provided — reason them through.
 ### Ping fails between ce1 and ce2
 
 1. Check the bridge is up on both PEs (bash shell):
+
    ```bash
    ip link show br-l2vpn
    bridge link show
    ```
 
 2. Check eth1/eth2 (CE port) is enslaved to br-l2vpn:
+
    ```bash
    ip link show master br-l2vpn
    ```
 
 3. Capture ARP on pe1 eth1 to see if ce1 is sending ARPs:
+
    ```bash
    ./scripts/lab.sh capture mpls-l2vpn pe1 eth1
    ```
+
    Then ping from ce1. You should see ARP requests.
 
 4. If ARP requests are seen on pe1:eth1 but not pe2:eth2, the pseudowire data
    plane is not forwarding. Check PW label and kernel MPLS routes:
+
    ```bash
    ip -M route show
    ```

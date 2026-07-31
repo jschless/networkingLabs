@@ -74,18 +74,22 @@ manager's `local_rules.xml` and `ossec.conf`. Three editor-free ways:
   It validates the XML and restarts the manager for you.
 - **Write the whole file from the host** (good for `local_rules.xml`, which is a
   standalone file):
+
   ```bash
   docker exec -i wazuh-manager tee /var/ossec/etc/rules/local_rules.xml >/dev/null <<'EOF'
   ...your rules...
   EOF
   ```
+
 - **Targeted insert** (good for `ossec.conf`, which you must NOT overwrite whole):
+
   ```bash
   docker exec wazuh-manager sed -i 's#</ossec_config>#  <active-response>...</active-response>\n</ossec_config>#' /var/ossec/etc/ossec.conf
   ```
 
 After a host-side write, fix ownership or `analysisd` may silently ignore the
 file (a "my rule won't fire" trap), then reload:
+
 ```bash
 docker exec wazuh-manager chown wazuh:wazuh /var/ossec/etc/rules/local_rules.xml
 docker exec wazuh-manager /var/ossec/bin/wazuh-control restart
@@ -390,6 +394,7 @@ A composite rule uses `frequency` + `timeframe` + `<same_field>` to correlate.
 
 ??? note "Solution"
     Write `/var/ossec/etc/rules/local_rules.xml` on the manager:
+
     ```xml
     <group name="samba_ad,">
       <rule id="100200" level="0">
@@ -413,6 +418,7 @@ A composite rule uses `frequency` + `timeframe` + `<same_field>` to correlate.
       </rule>
     </group>
     ```
+
     ```bash
     docker exec wazuh-manager /var/ossec/bin/wazuh-control restart
     # Generate 6 failures for one account:
@@ -448,6 +454,7 @@ shows nothing, and fix it.
 
 ??? note "Hints"
     - Add this rule to `local_rules.xml`:
+
       ```xml
       <rule id="100210" level="8">
         <decoded_as>json</decoded_as>
@@ -457,6 +464,7 @@ shows nothing, and fix it.
         <group>policy_changed,</group>
       </rule>
       ```
+
     - Restart the manager, then `samba-tool user create eviluser P@ssw0rd99!`
       on dc1. Check for alerts — and check the raw audit log:
       `grep '"operation": "Add"' /var/log/samba/samba.log`.
@@ -526,6 +534,7 @@ firewall. Trigger it and confirm the iptables rule appears.
 ??? note "Solution"
     Add to the manager's `/var/ossec/etc/ossec.conf`, just before
     `</ossec_config>`:
+
     ```xml
     <active-response>
       <command>firewall-drop</command>
@@ -534,6 +543,7 @@ firewall. Trigger it and confirm the iptables rule appears.
       <timeout>180</timeout>
     </active-response>
     ```
+
     ```bash
     docker exec wazuh-manager /var/ossec/bin/wazuh-control restart
     sleep 8
@@ -621,6 +631,7 @@ catch.
 ??? note "Solution"
     There's no single answer — this is the thinking task. The cleanest
     demonstration:
+
     ```bash
     docker exec dc1 /var/ossec/bin/wazuh-control stop
     docker exec dc1 bash -c 'for i in $(seq 1 8); do echo wrongpw | kinit administrator@LAB.CORP >/dev/null 2>&1; done'

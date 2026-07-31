@@ -127,6 +127,7 @@ interface eth1
 end
 write memory
 ```
+
 </details>
 
 Verify configuration:
@@ -229,6 +230,7 @@ interface eth1
 end
 write memory
 ```
+
 </details>
 
 Now repeat the spoofed ping:
@@ -298,6 +300,7 @@ interface eth1
  ip verify unicast source reachable-via any allow-default
 end
 ```
+
 </details>
 
 Repeat:
@@ -314,6 +317,7 @@ Repeat:
 ```bash
 ./scripts/lab.sh cli urpf-antispoofing edge
 ```
+
 <details markdown="1">
 <summary>Show configuration</summary>
 
@@ -325,6 +329,7 @@ interface eth1
 end
 no ip route 0.0.0.0/0 10.10.2.2
 ```
+
 </details>
 
 ---
@@ -405,6 +410,7 @@ The output shows the RPF interface and next-hop. If the RPF interface does not m
 | Loose + default | `ip verify unicast source reachable-via any allow-default` | Default route also satisfies the check |
 
 **Best practices:**
+
 - Use strict mode on all single-homed customer/access interfaces
 - Use loose mode on multi-homed or peering interfaces
 - Never use `allow-default` unless you understand the security tradeoff

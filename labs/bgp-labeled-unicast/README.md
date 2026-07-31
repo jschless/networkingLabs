@@ -94,6 +94,7 @@ establish — and which pre-built protocol provides it here?
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 router bgp 65001
    bgp router-id 10.0.0.1
@@ -105,6 +106,7 @@ router bgp 65001
 ```
 
 On **r2**:
+
 ```text
 router bgp 65001
    bgp router-id 10.0.0.2
@@ -148,6 +150,7 @@ break if you used it?
 <summary>Solution</summary>
 
 On **r3**:
+
 ```text
 router bgp 65002
    bgp router-id 10.0.0.3
@@ -161,6 +164,7 @@ router bgp 65002
 ```
 
 On **r4**:
+
 ```text
 router bgp 65002
    bgp router-id 10.0.0.4

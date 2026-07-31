@@ -81,6 +81,7 @@ Wait ~20 seconds after deploy for BGP sessions to establish.
 ## Observed symptoms
 
 **On r4 — 172.16.2.0/24 is visible when it should be blocked:**
+
 ```
 r4# show bgp ipv4 unicast
 BGP routing table information for VRF default
@@ -103,6 +104,7 @@ AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Li
 172.16.2.0/24 reached r4. The filter on r2 is not working.
 
 **On r3 — also seeing 172.16.2.0/24:**
+
 ```
 r3# show bgp ipv4 unicast
 BGP routing table information for VRF default
@@ -126,6 +128,7 @@ A prefix-list named `BLOCK-172-16-2` exists on r2 and is supposed to prevent
 but the effect is missing.
 
 Work through the diagnostic questions:
+
 1. On r2, does `show bgp ipv4 unicast` show 172.16.2.0/24 in r2's RIB?
 2. On r2, what does `show bgp ipv4 unicast neighbors 10.1.23.2 advertised-routes` show?
 3. On r2, what does `show bgp neighbors 10.1.23.2` say about the `BLOCK-172-16-2` filter?
@@ -160,6 +163,7 @@ clear bgp neighbors 10.1.23.2 soft-outbound
 <summary>Hint 1 — Where to start</summary>
 
 On r2, run:
+
 ```
 show bgp ipv4 unicast neighbors 10.1.23.2 advertised-routes
 ```
@@ -174,11 +178,13 @@ it's applied in the wrong direction.
 <summary>Hint 2 — Narrowing it down</summary>
 
 On r2, run:
+
 ```
 show bgp neighbors 10.1.23.2
 ```
 
 Look for lines containing:
+
 - `Inbound prefix-list`
 - `Outbound prefix-list`
 
@@ -221,6 +227,7 @@ r2# write memory
 ```
 
 Then re-advertise to r3 with the corrected filter:
+
 ```
 r2# clear bgp neighbors 10.1.23.2 soft-outbound
 ```
@@ -248,6 +255,7 @@ show bgp ipv4 unicast
 ```
 
 Expected on r3 after fix:
+
 ```
 r3# show bgp ipv4 unicast
 BGP routing table information for VRF default

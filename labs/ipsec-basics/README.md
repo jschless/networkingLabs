@@ -103,6 +103,7 @@ where a wrong DH group fails versus a wrong selector.
 <summary>Solution</summary>
 
 On **gw-a**:
+
 ```vyos
 configure
 set vpn ipsec ike-group SITE-TO-SITE key-exchange 'ikev2'

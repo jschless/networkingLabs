@@ -49,6 +49,7 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 ```
 
 Connect to a router:
+
 ```bash
 sudo ./scripts/lab.sh cli ospf-auth r1
 ```
@@ -76,6 +77,7 @@ and `ping 10.0.0.3 source 10.0.0.1` succeeds.
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 configure terminal
 router ospf
@@ -86,6 +88,7 @@ router ospf
 ```
 
 On **r2**:
+
 ```text
 configure terminal
 router ospf
@@ -97,6 +100,7 @@ router ospf
 ```
 
 On **r3**:
+
 ```text
 configure terminal
 router ospf
@@ -330,6 +334,7 @@ No answers provided — reason them through.
 | `debug ospf packet all` | Live packet events incl. auth failures (disable after use) |
 
 To disable debug:
+
 ```text
 no debug ospf packet all
 ```

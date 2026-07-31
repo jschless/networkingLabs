@@ -108,6 +108,7 @@ lookup does PBR act?
 <summary>Solution</summary>
 
 On **router**:
+
 ```text
 ip access-list extended HOST-A
  permit ip 192.168.1.0/30 any

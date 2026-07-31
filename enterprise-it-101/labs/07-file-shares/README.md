@@ -121,10 +121,12 @@ what makes group-based file permissions possible.
     `wbinfo --ping-dc` reports the NETLOGON connection to `dc1.lab.corp`
     succeeded — `fs1` has a working machine account and secure channel. `id
     alice` returns something like:
+
     ```
     uid=11103(alice) gid=10513(domain users)
     groups=10513(domain users),11106(engineering),11108(all-staff),…
     ```
+
     Those are the **AD groups from Lab 01**, resolved on `fs1` with no local
     account for alice. The answer to the prediction: identities come from the DC
     via **winbind**, and the `idmap config LAB : backend = rid` line in
@@ -158,13 +160,16 @@ group. Set the directory's POSIX ownership/permissions to match.
 
 ??? note "Solution"
     On `fs1`, append to `/etc/samba/smb.conf`:
+
     ```ini
     [engineering]
         path = /srv/shares/engineering
         read only = no
         valid users = @engineering
     ```
+
     Set ownership + permissions and reload:
+
     ```bash
     docker exec fs1 bash -c '
       chgrp engineering /srv/shares/engineering
@@ -213,6 +218,7 @@ group. Set the directory's POSIX ownership/permissions to match.
         read only = yes
         valid users = @all-staff
     ```
+
     ```bash
     docker exec fs1 bash -c '
       chgrp finance  /srv/shares/finance;  chmod 2770 /srv/shares/finance
@@ -347,11 +353,13 @@ failed, then repair.
 
 **Break it** on `fs1` — strip the filesystem's engineering access but keep the
 share definition:
+
 ```bash
 docker exec fs1 bash -c 'chgrp root /srv/shares/engineering; setfacl -b /srv/shares/engineering; ls -ld /srv/shares/engineering'
 ```
 
 **Now diagnose** from `admin-ws` as alice:
+
 ```bash
 docker exec admin-ws bash -c 'kdestroy 2>/dev/null; kinit alice@LAB.CORP <<< "P@ssw0rd1"
   smbclient //fs1.lab.corp/engineering -N --use-kerberos=required -c "ls; put /tmp/a.txt brk.txt"'
@@ -378,6 +386,7 @@ docker exec admin-ws bash -c 'kdestroy 2>/dev/null; kinit alice@LAB.CORP <<< "P@
     AD membership (both fine) and gets stuck.
 
 **Repair it:**
+
 ```bash
 docker exec fs1 bash -c '
   chgrp engineering /srv/shares/engineering
@@ -386,6 +395,7 @@ docker exec fs1 bash -c '
 docker exec admin-ws smbclient //fs1.lab.corp/engineering -N --use-kerberos=required \
   -c "put /tmp/a.txt ok.txt; ls"
 ```
+
 The write succeeds again once the filesystem layer agrees with the share layer.
 
 ---

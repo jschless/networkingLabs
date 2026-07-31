@@ -68,6 +68,7 @@ installed?
 <summary>Solution</summary>
 
 On **router**:
+
 ```text
 ip route 0.0.0.0/0 10.0.1.2 5
 ip route 0.0.0.0/0 10.0.2.2 10
@@ -109,6 +110,7 @@ object to its reachability.
 <summary>Solution</summary>
 
 On **router**:
+
 ```text
 ip sla 1
  icmp-echo 10.99.0.1 source-interface eth1
@@ -146,6 +148,7 @@ matter?
 <summary>Solution</summary>
 
 On **router**:
+
 ```text
 no ip route 0.0.0.0/0 10.0.1.2 5
 ip route 0.0.0.0/0 10.0.1.2 5 track 1

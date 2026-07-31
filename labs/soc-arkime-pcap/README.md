@@ -10,6 +10,7 @@ pre-built; your job is to *investigate*, not to follow a script. For each
 task, **form a hypothesis about what the logs/PCAP will show before you
 query them**, then run the filter and compare. The challenge questions push
 you from "find the indicator" to "explain and respond."
+
 ## Build And Deploy
 
 ```bash

@@ -100,24 +100,29 @@ flowchart TB
 ## Your Tasks
 
 ### edge
+
 1. **OSPF area 0** — process 1, passive-interface default, activate Ethernet2/3, network loopback + both core links, `default-information originate always`
 2. **BGP prefix-list + route-map** — `ip prefix-list ENTERPRISE-OUT` matching 198.51.100.0/24, `route-map BGP-TO-ISP permit 10`
 3. **eBGP to ISP** — `router bgp 65100`, peer 203.0.113.1 AS65500, black-hole static route, `network 198.51.100.0/24`, apply route-map outbound
 
 ### core1, core2
+
 1. **OSPF area 0** — all 4 Ethernet interfaces active, network loopback + all 4 links in area 0
 
 ### dist1
+
 1. **STP priorities** — primary root (4096) for VLANs 10/30/99, secondary (8192) for VLAN 20
 2. **VRRP** — active (120) on VLANs 10/30/99, standby (100) on VLAN 20, VIP = x.x.x.1
 3. **OSPF ABR** — Ethernet1/2 active in area 0, SVIs in area 1
 
 ### dist2
+
 1. **STP priorities** — primary root (4096) for VLAN 20, secondary (8192) for VLANs 10/30/99
 2. **VRRP** — active (120) on VLAN 20, standby (100) on VLANs 10/30/99
 3. **OSPF ABR** — same structure as dist1
 
 ### acc1, acc3
+
 1. **STP portfast** — `spanning-tree portfast` on the client-facing access port (Ethernet2)
 
 ## Verification

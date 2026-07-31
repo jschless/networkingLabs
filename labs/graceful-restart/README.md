@@ -28,6 +28,7 @@ flowchart LR
 - direct iBGP sessions on the point-to-point links, with `r2` as route reflector
 - BGP graceful restart on all routers
 - One BGP-only service prefix per node:
+
   - `r1`: `172.16.1.1/32`
   - `r2`: `172.16.2.1/32`
   - `r3`: `172.16.3.1/32`

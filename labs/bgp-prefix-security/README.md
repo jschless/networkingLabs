@@ -76,6 +76,7 @@ AS-path `65100 65001`.
 <summary>Solution</summary>
 
 legitimate (others mirror the shape):
+
 ```text
 configure
 router bgp 65001
@@ -115,6 +116,7 @@ what single attribute decides it?
 <summary>Solution</summary>
 
 On **hijacker**:
+
 ```text
 router bgp 65002
    address-family ipv4
@@ -150,6 +152,7 @@ but the hijacker's AS-path is no shorter. Will the /25 win for traffic to
 <summary>Solution</summary>
 
 On **hijacker**:
+
 ```text
 router bgp 65002
    address-family ipv4
@@ -195,6 +198,7 @@ for?
 <summary>Solution</summary>
 
 On **isp**:
+
 ```text
 router bgp 65100
    neighbor 10.1.12.2 maximum-routes 5
@@ -240,6 +244,7 @@ victim to both the /24 hijack *and* the /25 hijack? Both gone, one gone?
 <summary>Solution</summary>
 
 On **isp**:
+
 ```text
 ip prefix-list HIJACKER-IN seq 5 deny 192.0.2.0/24 le 32
 ip prefix-list HIJACKER-IN seq 10 permit 0.0.0.0/0 le 32
@@ -291,6 +296,7 @@ and note that the /25 is invalid for *two* independent reasons.
 
 **Route selection relevant to hijacking** (longest-prefix match runs
 *before* all of this):
+
 1. Shortest AS-path → 2. Lowest MED → 3. eBGP over iBGP → 4. Lowest
 router-id.
 

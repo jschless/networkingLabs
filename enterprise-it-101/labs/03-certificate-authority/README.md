@@ -225,6 +225,7 @@ You inspect the CA and learn its trust model, make it resolvable, **establish tr
       tls certfile = /var/lib/samba/private/tls/dc1.crt
       tls cafile   = /var/lib/samba/private/tls/ca.crt
       ```
+
     - Apply with `supervisorctl restart samba`, then confirm `:636` is listening (`ss -tlnp | grep 636`).
     - From `admin-ws`: `openssl s_client -connect dc1.lab.corp:636` shows what the server presents and whether your OS trusts it. Then run the Lab 01 simple bind, but with `ldaps://`.
 
@@ -275,9 +276,11 @@ docker exec admin-ws ldapsearch -x -H ldaps://dc1.lab.corp -b "DC=lab,DC=corp" \
 
 ??? note "Diagnosis hints (try before revealing)"
     - The `ldapsearch` error talks about *contacting the server*. Is the server actually unreachable? Test the raw TLS layer instead of trusting the LDAP error:
+
       ```bash
       docker exec admin-ws bash -c 'echo | openssl s_client -connect dc1.lab.corp:636 2>/dev/null | grep "Verify return code"'
       ```
+
     - Compare what `openssl` says about the certificate vs. what `ldapsearch` claims about connectivity. Which layer is *really* failing?
 
 ??? success "What you should observe"

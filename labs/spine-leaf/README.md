@@ -174,6 +174,7 @@ Repeat for leaf2–leaf4 with appropriate router-id, neighbor IPs, and AS number
 ## Step 4 — Verify
 
 Check BGP sessions on spine1:
+
 ```
 show bgp summary
 ```
@@ -181,6 +182,7 @@ show bgp summary
 All 4 leaves should show `Estab` with non-zero prefixes received.
 
 Check ECMP on spine1:
+
 ```
 show ip route 10.0.0.1/32
 ```
@@ -188,6 +190,7 @@ show ip route 10.0.0.1/32
 Should show 2 equal-cost paths (one via each leaf uplink — wait, spine1 only connects to one leaf per link, so this may show one path per leaf loopback. But a leaf's loopback is reachable via both spines from another leaf's perspective).
 
 Verify ECMP from a leaf perspective:
+
 ```
 # On leaf1
 show ip route 10.0.0.2/32
@@ -196,6 +199,7 @@ show ip route 10.0.0.2/32
 Should show 2 paths: via 10.1.0.1 (spine1) and 10.2.0.1 (spine2).
 
 End-to-end reachability:
+
 ```
 # On leaf1
 ping 10.0.0.2 repeat 5     ← leaf2 loopback
@@ -210,6 +214,7 @@ ping 10.0.0.102 repeat 5   ← spine2 loopback
 ## Experiment — Observe ECMP in action
 
 Use extended ping from leaf1 to leaf4's loopback with traceroute:
+
 ```
 traceroute 10.0.0.4 repeat 3
 ```
@@ -217,6 +222,7 @@ traceroute 10.0.0.4 repeat 3
 You should see the path alternating between spine1 and spine2 across multiple probes (EOS uses 5-tuple hashing by default).
 
 Check ECMP forwarding table:
+
 ```
 show ip route 10.0.0.4/32 detail
 ```
@@ -231,6 +237,7 @@ multi-tenant EVPN/VXLAN design.
 ### Capstone Outcomes
 
 By the end, you should be able to:
+
 1. Build and troubleshoot eBGP CLOS underlay with ECMP.
 2. Add operational hardening (BFD, guardrails, policy filters, peer-groups).
 3. Segment tenants with VRFs and VLANs at leafs.
@@ -241,11 +248,13 @@ By the end, you should be able to:
 ### Phase 1 — Underlay Foundation (Current Lab Core)
 
 Scope:
+
 1. Complete BGP on all spines/leaves.
 2. Validate all sessions `Established`.
 3. Validate ECMP for remote leaf loopbacks.
 
 Exit criteria:
+
 1. `show bgp summary` is healthy on every node.
 2. `show ip route <remote-loopback>/32` shows expected next-hops.
 3. Leaf-to-leaf loopback ping works with loopback source.
@@ -253,12 +262,14 @@ Exit criteria:
 ### Phase 2 — Underlay Hardening
 
 Scope:
+
 1. Enable BFD on all eBGP adjacencies.
 2. Add `maximum-routes` guardrails per neighbor.
 3. Add inbound prefix filtering to only accept expected loopback/service ranges.
 4. Refactor repeated BGP config with peer-groups.
 
 Suggested checks:
+
 ```
 show bfd peers
 show bgp neighbors
@@ -266,25 +277,30 @@ show running-config section router bgp
 ```
 
 Failure drill:
+
 ```
 # host shell example
 ./scripts/lab.sh cmd spine-leaf leaf1 -- ip link set eth1 down
 ```
+
 Measure session and route convergence before/after BFD.
 
 ### Phase 3 — Tenant Segmentation on Leafs (VRFs + VLANs)
 
 Scope:
+
 1. Create two tenant VRFs on each leaf (for example `TENANT_A`, `TENANT_B`).
 2. Create VLANs and SVIs per tenant.
 3. Place local test endpoints/subinterfaces into tenant VLANs.
 4. Validate local L3 within each VRF before overlay.
 
 Design target:
+
 1. No route leakage between tenants unless explicitly configured.
 2. Clean separation of routing tables per VRF.
 
 Suggested checks:
+
 ```
 show vrf
 show ip route vrf TENANT_A
@@ -294,12 +310,14 @@ show ip route vrf TENANT_B
 ### Phase 4 — EVPN Control Plane
 
 Scope:
+
 1. Add VTEP loopback (`Loopback1`) on each leaf.
 2. Advertise VTEP loopbacks in underlay IPv4 BGP.
 3. Build BGP EVPN sessions (commonly leaf-to-spine RR model in larger fabrics).
 4. Enable EVPN address-family neighbors and extended communities.
 
 Control-plane checks:
+
 ```
 show bgp evpn summary
 show bgp evpn route-type mac-ip
@@ -308,12 +326,14 @@ show bgp evpn route-type mac-ip
 ### Phase 5 — VXLAN Data Plane
 
 Scope:
+
 1. Map tenant VLANs to L2 VNIs.
 2. Configure VTEP source interface and VXLAN encapsulation on leaves.
 3. (Optional) Add L3VNI per VRF for distributed inter-subnet routing.
 4. Validate host reachability across leaves within the same tenant.
 
 Data-plane checks:
+
 ```
 show vxlan vni
 show mac address-table dynamic
@@ -323,12 +343,14 @@ show arp vrf TENANT_A
 ### Phase 6 — Policy, Failure, and Operations
 
 Scope:
+
 1. Apply route-policy controls per tenant/VRF.
 2. Validate behavior for link, spine, and leaf failure scenarios.
 3. Document expected blast radius for each failure.
 4. Capture operational runbook commands.
 
 Suggested capstone drills:
+
 1. Uplink loss on a leaf (ECMP path reduction, no outage expected).
 2. Full spine failure (fabric continues through surviving spine).
 3. Tenant route leak attempt (policy should block it).
@@ -360,6 +382,7 @@ These are starter templates, not final answer keys. Fill the TODOs and adapt per
 <summary>Show configuration</summary>
 
 Leaf template:
+
 ```
 configure
 router bfd
@@ -371,12 +394,14 @@ router bgp <LEAF_ASN>
    neighbor <SPINE1_P2P_IP> maximum-routes 32 warning-only
    neighbor <SPINE2_P2P_IP> maximum-routes 32 warning-only
 ```
+
 </details>
 
 <details markdown="1">
 <summary>Show configuration</summary>
 
 Spine template:
+
 ```
 configure
 ip prefix-list LEAF-LOOPS seq 10 permit 10.0.0.0/24 ge 32 le 32
@@ -390,6 +415,7 @@ router bgp <SPINE_ASN>
    neighbor LEAFS route-map FROM-LEAFS-IN in
    ! TODO: bind each leaf neighbor IP to peer-group LEAFS
 ```
+
 </details>
 
 ### Phase 3 Snippet — VRFs + VLANs on Leafs
@@ -419,9 +445,11 @@ interface Ethernet3
 interface Ethernet4
    switchport access vlan 20
 ```
+
 </details>
 
 TODO ideas:
+
 1. Pick an endpoint model (local host containers, subinterfaces, or just SVI reachability checks).
 2. Decide if each leaf hosts both tenants or split tenants across leaf pairs.
 
@@ -431,6 +459,7 @@ TODO ideas:
 <summary>Show configuration</summary>
 
 Leaf template:
+
 ```
 configure
 interface Loopback1
@@ -447,12 +476,14 @@ router bgp <LEAF_ASN>
       neighbor <SPINE1_P2P_IP> activate
       neighbor <SPINE2_P2P_IP> activate
 ```
+
 </details>
 
 <details markdown="1">
 <summary>Show configuration</summary>
 
 Spine template:
+
 ```
 configure
 router bgp <SPINE_ASN>
@@ -462,6 +493,7 @@ router bgp <SPINE_ASN>
    address-family evpn
       neighbor <LEAF_PEERS_OR_GROUP> activate
 ```
+
 </details>
 
 ### Phase 5 Snippet — VXLAN + VNI Mapping
@@ -485,12 +517,14 @@ router bgp <LEAF_ASN>
       rd auto
       route-target both 65000:1020
 ```
+
 </details>
 
 <details markdown="1">
 <summary>Show configuration</summary>
 
 Optional L3VNI direction:
+
 ```
 router bgp <LEAF_ASN>
    vrf TENANT_A
@@ -502,6 +536,7 @@ router bgp <LEAF_ASN>
       route-target import evpn 65000:11020
       route-target export evpn 65000:11020
 ```
+
 </details>
 
 ### Phase 6 Snippet — Policy + Failure Drills
@@ -510,6 +545,7 @@ router bgp <LEAF_ASN>
 <summary>Show configuration</summary>
 
 Policy skeleton:
+
 ```
 configure
 ip prefix-list TENANT_A_ALLOWED seq 10 permit 172.16.10.0/24 le 32
@@ -517,9 +553,11 @@ route-map EVPN-TENANT-A-OUT permit 10
    match ip address prefix-list TENANT_A_ALLOWED
 route-map EVPN-TENANT-A-OUT deny 100
 ```
+
 </details>
 
 Failure test examples:
+
 1. Disable one leaf uplink and observe ECMP to single-path transition.
 2. Disable one spine and validate control-plane/data-plane survival.
 3. Introduce a bad prefix and verify policy blocks propagation.
@@ -577,15 +615,18 @@ No answers provided — reason them through.
 ## Troubleshooting
 
 **BGP session stuck in `Active`**
+
 - `show ip interface Ethernet1` — confirm interface is up and IP is correct
 - `ping 10.1.0.1` from leaf1 — direct neighbor reachability
 - Check AS numbers: each leaf must have the correct remote-as for the spine
 
 **Routes not propagating**
+
 - Confirm `network 10.0.0.x/32` is present under `address-family ipv4` and the loopback IP matches exactly
 - `show bgp neighbors 10.1.0.1 received-routes` — what is the neighbor sending?
 
 **No ECMP (`show ip route` shows only 1 path)**
+
 - Check `maximum-paths 2 ecmp 2` is configured
 - Check `bgp bestpath as-path multipath-relax` is present
 - `show bgp 10.0.0.2/32` — how many paths are in the BGP RIB?

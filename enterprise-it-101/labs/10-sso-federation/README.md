@@ -138,6 +138,7 @@ the canonical names used in redirects and tokens; point them at your published p
     docker compose -f base/docker-compose.yml \
                    -f labs/10-sso-federation/docker-compose.override.yml ps
     ```
+
     Then open `http://keycloak.lab.corp:8088` → **Administration Console** → log in
     `admin` / `admin`.
 
@@ -175,11 +176,13 @@ users there.
     The realm switcher reads **lab-corp** and the left nav shows empty Users/Clients.
     A fresh realm already has a full OIDC stack (signing keys, the
     `.well-known/openid-configuration` document, default login flows) — confirm:
+
     ```bash
     docker exec admin-ws curl -s \
       http://keycloak.lab.corp:8088/realms/lab-corp/.well-known/openid-configuration \
       | python3 -m json.tool | grep -E 'issuer|authorization_endpoint|token_endpoint'
     ```
+
     The `issuer` is `http://keycloak.lab.corp:8088/realms/lab-corp` — the name from
     Task 1, which is why the host mapping had to match.
 
@@ -231,6 +234,7 @@ at login, binds to AD as the user to verify the password.
     use the provider's **Action → Sync all users**.
 
     Verify from the CLI:
+
     ```bash
     docker exec admin-ws bash -c '
       AT=$(curl -s -X POST http://keycloak.lab.corp:8088/realms/master/protocol/openid-connect/token \
@@ -323,11 +327,13 @@ secret and runs server-side (it can keep one) — as opposed to a public SPA.
     - **Clients → Create client** → type **OpenID Connect**, Client ID `sample-app`.
     - Turn **Client authentication = On** (makes it confidential) and enable
       **Standard flow** + **Direct access grants**.
+
     - Valid redirect URIs: the app's callback, wildcard-friendly.
     - The secret is under the client's **Credentials** tab after creation.
 
 ??? note "Solution"
     **Clients → Create client**:
+
     - Client type **OpenID Connect**, **Client ID** = `sample-app` → Next
     - **Client authentication** = On; **Standard flow** ✓, **Direct access grants** ✓
       → Next
@@ -335,6 +341,7 @@ secret and runs server-side (it can keep one) — as opposed to a public SPA.
     - **Web origins** = `+` → Save
 
     Open **Credentials** tab, copy the **Client secret**, then restart the app with it:
+
     ```bash
     cd enterprise-it-101
     OIDC_CLIENT_SECRET='<paste-secret-here>' docker compose \
@@ -346,11 +353,13 @@ secret and runs server-side (it can keep one) — as opposed to a public SPA.
     The required redirect URI is `http://sample-app.lab.corp:8089/callback` (the
     wildcard `/*` covers it). After restarting the app with the secret, it boots
     clean and its `/login` route now bounces you to Keycloak:
+
     ```bash
     docker exec admin-ws curl -s -o /dev/null -D - http://sample-app.lab.corp:8089/login \
       | grep -i '^location:'
     # → Location: http://keycloak.lab.corp:8088/realms/lab-corp/protocol/openid-connect/auth?...
     ```
+
     That redirect — with `client_id=sample-app` and your `redirect_uri` — is the first
     leg of the Authorization-Code flow.
 
@@ -367,6 +376,7 @@ authorization decisions on group/role claims, so you must add one.
 ??? note "Hints"
     - **Clients → sample-app → Client scopes →** the `sample-app-dedicated` scope →
       **Add mapper → By configuration → Group Membership**.
+
     - Token Claim Name `groups`; turn **Full group path = Off** (you want `engineering`,
       not `/engineering`); include it in ID + access + userinfo.
     - Then browse to `http://sample-app.lab.corp:8089/` and sign in as alice.
@@ -374,6 +384,7 @@ authorization decisions on group/role claims, so you must add one.
 ??? note "Solution"
     **Clients → sample-app → Client scopes → sample-app-dedicated → Add mapper →
     By configuration → Group Membership**:
+
     - Name `groups`, **Token Claim Name** `groups`, **Full group path** Off, add to
       ID/access/userinfo token → Save.
 
@@ -406,6 +417,7 @@ from a signed claim, not from a lookup it controls.
 
 ??? note "Solution"
     On the app page, read the **Decoded ID-token claims** block. For the CLI view:
+
     ```bash
     docker exec admin-ws bash -c '
       AT=$(curl -s -X POST http://keycloak.lab.corp:8088/realms/lab-corp/protocol/openid-connect/token \
@@ -443,6 +455,7 @@ you raise the assurance level at the IdP and every federated app inherits it.
     - **Authentication → Required actions** → enable **Configure OTP** (optionally
       "Set as default action" for all users). Or force it for one user:
       **Users → alice → Required user actions → Configure OTP**.
+
     - No authenticator phone app needed — `oathtool` (on `admin-ws`) generates codes
       from the shared secret Keycloak shows you.
 
@@ -450,9 +463,11 @@ you raise the assurance level at the IdP and every federated app inherits it.
     **Users → alice →** set **Required user actions = Configure OTP** → Save. Log out
     of the app (`/logout`) and sign in again as alice. Keycloak shows a QR code and,
     under "Unable to scan?", the **secret key**. Generate a code from it:
+
     ```bash
     docker exec admin-ws oathtool --totp --base32 "<SECRET-FROM-KEYCLOAK>"
     ```
+
     Enter that 6-digit code to finish enrolment; subsequent logins prompt for a fresh
     code.
 
@@ -477,6 +492,7 @@ that blames the *account*, not the directory. Diagnose from the symptom, then re
 
 **Break it:** **User federation → ad →** toggle **Enabled = Off** → Save. Then try to
 log in as alice (browser, or CLI):
+
 ```bash
 docker exec admin-ws bash -c 'curl -s -X POST \
   http://keycloak.lab.corp:8088/realms/lab-corp/protocol/openid-connect/token \

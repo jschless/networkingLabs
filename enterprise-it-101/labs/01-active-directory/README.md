@@ -198,10 +198,12 @@ A client that wants to authenticate doesn't have `dc1`'s address hard-coded. It 
     You'll see **six** entries, not three: `Administrator`, `krbtgt`, `Guest`, plus your alice/bob/charlie. The interesting one is **`krbtgt`** — that's the Kerberos service account whose key encrypts every TGT in the domain. You never log in as it, but if its password is compromised, an attacker can forge tickets for *anyone* (the infamous "Golden Ticket" attack). Provisioning a domain silently creates the entire Kerberos trust anchor.
 
     Confirm alice actually landed in the right OU:
+
     ```bash
     samba-tool user show alice | grep -i distinguishedName
     # → CN=Alice Smith,OU=Employees,DC=lab,DC=corp
     ```
+
     Note the CN is the *display name* ("Alice Smith"), not the logon name ("alice") — AD keys the RDN off the full name while `sAMAccountName`/UPN carry the login. That mismatch trips people up later when they build DNs by hand.
 
 ---
@@ -318,6 +320,7 @@ This is the heart of the lab. Don't just run the commands — *read the ticket c
     ```
 
     Capture the exchange (two shells into admin-ws, or background the capture):
+
     ```bash
     kdestroy
     tcpdump -n -i any port 88 -w /tmp/krb.pcap &
@@ -343,6 +346,7 @@ This is the heart of the lab. Don't just run the commands — *read the ticket c
     If you delete the SRV record that tells clients where to find LDAP/Kerberos, what *error message* will `kinit` produce on admin-ws? Will it be an obvious "DNS is broken" message, or something that looks like an authentication problem? Predict the wording.
 
 **Break it** (on dc1). `delete` must match the record *exactly*, so query it first to get the real priority/weight:
+
 ```bash
 docker exec -it dc1 bash
 
@@ -358,6 +362,7 @@ samba-tool dns delete dc1.lab.corp lab.corp _kerberos._tcp SRV "dc1.lab.corp 88 
 ```
 
 **Now diagnose from the client**, as if you didn't know what changed:
+
 ```bash
 docker exec -it admin-ws bash
 kdestroy 2>/dev/null
@@ -367,9 +372,11 @@ kinit alice@LAB.CORP        # observe the failure
 ??? note "Diagnosis hints (try before revealing)"
     - Did `kinit` say anything about *authentication*, or about *contacting a KDC*?
     - Our `/etc/krb5.conf` on admin-ws hard-codes `kdc = dc1.lab.corp`, so this particular client may still work — if so, that itself is a lesson. Test discovery directly instead of trusting it:
+
       ```bash
       dig @10.100.1.10 _kerberos._tcp.lab.corp SRV     # compare to Task 2's answer
       ```
+
     - A machine *without* a hard-coded KDC (the normal case, set via DHCP/realm join) relies entirely on this SRV record. What happens to it?
 
 ??? success "What you should observe"
@@ -378,6 +385,7 @@ kinit alice@LAB.CORP        # observe the failure
     Because our lab workstation has `kdc = dc1.lab.corp` pinned in `/etc/krb5.conf`, *its* `kinit` may still succeed even with the SRV record gone — demonstrating exactly why hard-coding works around the symptom but hides the disease. In production almost nothing hard-codes the KDC, so this record is load-bearing for the entire domain.
 
 **Repair it:**
+
 ```bash
 docker exec -it dc1 bash
 samba-tool dns add dc1.lab.corp lab.corp _kerberos._tcp SRV "dc1.lab.corp 88 0 100" -U Administrator
@@ -398,6 +406,7 @@ In a real Windows enterprise, AD administration happens in GUI tools like Active
 3. Browse the OU tree — find alice under `OU=Employees` and confirm it matches the DN you saw in Task 4.
 4. Open alice's object and find the attributes you queried over LDAP in Task 6 (`memberOf`, `userPrincipalName`, `objectSID`). Notice the GUI shows you the *whole* attribute set at a glance.
 5. **Create a user `dave` via the GUI**, then drop to the CLI and prove it took:
+
    ```bash
    docker exec dc1 samba-tool user show dave | grep -i distinguishedName
    ```

@@ -207,6 +207,7 @@ control node can reach them.
     ansible_ssh_private_key_file=/root/.ssh/id_ed25519
     ansible_python_interpreter=/usr/bin/python3
     ```
+
     ```bash
     docker exec -it ansible1 bash      # then: cd /root/ansible
     ansible all -i inventory.ini -m ping
@@ -243,6 +244,7 @@ them and confirm they change the hosts.
 
 ??? note "Solution"
     `/root/ansible/enforce-ntp.yml`:
+
     ```yaml
     ---
     - name: Enforce NTP configuration
@@ -259,7 +261,9 @@ them and confirm they change the hosts.
               rtcsync
             mode: "0644"
     ```
+
     `/root/ansible/enforce-ssh-banner.yml`:
+
     ```yaml
     ---
     - name: Enforce SSH login banner
@@ -280,6 +284,7 @@ them and confirm they change the hosts.
         - name: reload sshd
           ansible.builtin.shell: sshd -t && pkill -HUP -o sshd
     ```
+
     ```bash
     ansible-playbook -i inventory.ini enforce-ntp.yml enforce-ssh-banner.yml
     ```
@@ -343,6 +348,7 @@ working.
 
 ??? note "Solution"
     `/root/ansible/harden-sshd.yml`:
+
     ```yaml
     ---
     - name: Harden sshd
@@ -362,6 +368,7 @@ working.
         - name: reload sshd
           ansible.builtin.shell: sshd -t && pkill -HUP -o sshd
     ```
+
     ```bash
     ansible-playbook -i inventory.ini harden-sshd.yml
     ansible-playbook -i inventory.ini harden-sshd.yml   # idempotent: changed=0
@@ -391,17 +398,20 @@ then correct it — without touching the compliant host.
     what will it report for `ws1` versus `ws2`? Does `--check` *change* anything?
 
 **Break it** — drift `ws1` by hand:
+
 ```bash
 docker exec ws1 sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
 docker exec ws1 grep "^PasswordAuthentication" /etc/ssh/sshd_config   # yes
 ```
 
 **Detect it** — dry-run with a diff:
+
 ```bash
 docker exec ansible1 bash -c 'cd /root/ansible && ansible-playbook -i inventory.ini harden-sshd.yml --check --diff'
 ```
 
 **Correct it** — apply for real, then confirm:
+
 ```bash
 docker exec ansible1 bash -c 'cd /root/ansible && ansible-playbook -i inventory.ini harden-sshd.yml'
 docker exec ws1 grep "^PasswordAuthentication" /etc/ssh/sshd_config   # back to no

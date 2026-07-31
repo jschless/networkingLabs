@@ -66,6 +66,7 @@ docker pull postgres:15
 # Lab 11 (web origins)
 docker pull nginx:alpine
 ```
+
 </details>
 
 <details markdown="1">
@@ -83,6 +84,7 @@ docker compose \
   -f base/docker-compose.yml \
   -f labs/05-dns-deep-dive/docker-compose.override.yml up -d
 ```
+
 </details>
 
 <!-- site:curriculum -->

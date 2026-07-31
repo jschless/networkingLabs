@@ -17,6 +17,7 @@ eigrp-basics → eigrp-variance → eigrp-stub
 ## Platform
 
 All labs use **FRR 8.4** (`frr-lab:local`). Build once before deploying:
+
 ```bash
 docker build -t frr-lab:local images/frr/
 ```

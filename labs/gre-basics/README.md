@@ -118,6 +118,7 @@ protocol up.
 <summary>Solution</summary>
 
 gw-a:
+
 ```text
 configure
 interface Tunnel0
@@ -128,6 +129,7 @@ interface Tunnel0
 ```
 
 gw-b:
+
 ```text
 configure
 interface Tunnel0
@@ -209,6 +211,7 @@ failing) to do?
 <summary>Solution</summary>
 
 On **gw-a** (mirror on gw-b with router-id 10.0.0.2):
+
 ```text
 configure
 no ip route 192.168.2.0/24 172.16.0.2

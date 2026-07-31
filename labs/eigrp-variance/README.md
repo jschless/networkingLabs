@@ -83,6 +83,7 @@ r3 path even appear in the topology table as a backup?
 <summary>Solution</summary>
 
 On each router:
+
 ```text
 router eigrp 100
  network 10.0.0.X/32
@@ -152,6 +153,7 @@ both r2 and r3.
 <summary>Solution</summary>
 
 On **r1**:
+
 ```text
 router eigrp 100
  variance 2

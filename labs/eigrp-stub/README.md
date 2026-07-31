@@ -81,6 +81,7 @@ loopback from the hub.
 <summary>Solution</summary>
 
 On each node:
+
 ```text
 router eigrp 100
  network <loopback>/32
@@ -124,6 +125,7 @@ them — does it change what *they* learn?
 <summary>Solution</summary>
 
 On **spoke1** and **spoke2**:
+
 ```text
 router eigrp 100
  eigrp stub connected summary
@@ -168,6 +170,7 @@ special handling that spoke1/spoke2 didn't?
 <summary>Solution</summary>
 
 On **spoke3**:
+
 ```text
 ip prefix-list LEAK-CE seq 5 permit 10.1.30.0/30
 ip prefix-list LEAK-CE seq 10 permit 10.0.0.5/32

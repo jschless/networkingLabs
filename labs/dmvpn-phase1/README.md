@@ -106,6 +106,7 @@ adjacency over `tun0`, advertising its LAN.
 <summary>Solution</summary>
 
 On **spoke1**:
+
 ```vyos
 configure
 set protocols nhrp tunnel tun0 network-id '1'
