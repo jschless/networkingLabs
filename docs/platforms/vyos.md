@@ -70,6 +70,7 @@ This repository uses `vyos:local` for:
 - `dmvpn-phase3`
 - `dmvpn-phase3-ipsec-capstone`
 - `debug-dmvpn-phase1`
+- `urpf-antispoofing`
 
 ## Access Model
 

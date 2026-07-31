@@ -1,50 +1,30 @@
 name: urpf-antispoofing
 
-# uRPF Anti-Spoofing Practice Lab  (FRR)
-#
-# Topology:
-#   [attacker] ---eth1--- [edge] ---eth2--- [internet]
-#
-# IP Addressing:
-#   attacker eth1: 10.10.1.1/30    attacker lo: 10.0.0.10/32
-#   edge     eth1: 10.10.1.2/30    edge     lo: 10.0.0.1/32
-#   edge     eth2: 10.10.2.1/30
-#   internet eth1: 10.10.2.2/30    internet lo: 10.0.0.100/32
-#
-# Concept:
-#   uRPF strict mode on edge eth1: edge checks that return path for any
-#   received packet's source IP would go back out eth1. If attacker sends
-#   a packet with spoofed source 10.99.99.99 (not in routing table via eth1),
-#   edge drops it. Legitimate traffic (source 10.10.1.1) passes.
-#
-# Pre-configured: All IP addressing, OSPF for routing context.
-# Your task: Enable uRPF in strict mode, test spoofed vs legitimate traffic.
-
 topology:
   defaults:
     kind: linux
-    image: frr-lab:local
-    binds:
-      - configs/daemons:/etc/frr/daemons
-      - configs/vtysh.conf:/etc/frr/vtysh.conf
-    sysctls:
-      net.ipv4.ip_forward: "1"
-    exec:
-      - vtysh -b
+    image: ops-lab:local
 
   nodes:
     attacker:
       binds:
-        - configs/attacker/frr.conf:/etc/frr/frr.conf
+        - configs/attacker/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
 
     edge:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/edge/config.boot
       binds:
-        - configs/edge/frr.conf:/etc/frr/frr.conf
+        - configs/edge/inject-fault.sh:/opt/inject-fault.sh:ro
 
     internet:
       binds:
-        - configs/internet/frr.conf:/etc/frr/frr.conf
+        - configs/internet/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
 
   links:
-    - endpoints: ["attacker:eth1", "edge:eth1"]    # 10.10.1.0/30
-    - endpoints: ["edge:eth2",     "internet:eth1"] # 10.10.2.0/30
+    - endpoints: ["attacker:eth1", "edge:eth1"]
+    - endpoints: ["edge:eth2", "internet:eth1"]
