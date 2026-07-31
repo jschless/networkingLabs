@@ -1,0 +1,42 @@
+hostname assurance-router
+!
+no aaa root
+!
+ip routing
+!
+interface Ethernet1
+   description client data link and SPAN source
+   no switchport
+   ip address 10.1.0.1/24
+   no shutdown
+!
+interface Ethernet2
+   description server data link
+   no switchport
+   ip address 10.2.0.1/24
+   no shutdown
+!
+interface Ethernet3
+   description management and telemetry
+   no switchport
+   ip address 172.16.0.1/24
+   no shutdown
+!
+interface Ethernet4
+   description native SPAN destination to flow sensor
+   no switchport
+   no shutdown
+!
+snmp-server community ASSURANCE ro
+snmp-server group assurance v3 priv
+snmp-server engineID local 800000090300001122334455
+snmp-server user observer assurance v3 localized 800000090300001122334455 auth sha 4dad09b163f0fa97a8c0dcff1e218e2dab3e866e priv aes 43a16e0703ef8ea94b43d80e6132a998
+!
+logging host 172.16.0.2
+logging local-interface Ethernet3
+logging trap informational
+!
+monitor session ASSURANCE source Ethernet1 both
+monitor session ASSURANCE destination Ethernet4
+!
+end

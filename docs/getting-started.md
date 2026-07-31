@@ -120,7 +120,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `zt-access-tools:local`, `zt-keycloak:local` | `zero-trust-secure-access` | `docker build -t zt-access-tools:local labs/zero-trust-secure-access/` and `docker build -f labs/zero-trust-secure-access/Dockerfile.keycloak -t zt-keycloak:local labs/zero-trust-secure-access/` (pinned Python 3.12.7, Keycloak 26.0.7, and BusyBox base images) |
 | `nac-practice:local` | `dot1x-ceos-practice` | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
 | `nac-practice-tacacs:local` | `dot1x-ceos-practice` | `docker build -f labs/dot1x-ceos-practice/Dockerfile.tacacs -t nac-practice-tacacs:local labs/dot1x-ceos-practice/` |
-| `assurance-lab:local` | `network-assurance` | `docker build -t assurance-lab:local labs/network-assurance/` |
+| `assurance-lab:local` | `network-assurance` | Build `ops-lab:local` and `assurance-lab:local`, then prepare `ceos:4.35.2F` using the [cEOS platform notes](platforms/ceos.md) |
 | `qos-lab:local` | `qos-enterprise` | `docker build -t qos-lab:local labs/qos-enterprise/` |
 | `telemetry-lab:local` | `telemetry-monitoring-hybrid` | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
 | `sdwan-lab:local` | `sdwan-concepts` | `docker build -t sdwan-lab:local labs/sdwan-concepts/` |

@@ -1,87 +1,52 @@
+---
 name: network-assurance
 
-# Network Assurance Lab — SNMP, Syslog, SPAN, NetFlow
-#
-# Three FRR routers form an OSPF domain; management node collects:
-#   - SNMP (v2c + v3) polls from all routers
-#   - Syslog (UDP 514) from all routers
-#   - NetFlow v5 (UDP 2055) via softflowd on each router
-#
-# SPAN (port mirroring) is configured on r2 via tc mirred:
-#   r2:eth1 traffic is mirrored to r2:eth3 (management link),
-#   and the analyzer receives mirrored frames via management's eth4.
-#
-# Topology:
-#
-#   [client]─eth1─[r1]─eth2─[r2]─eth2─[r3]─eth2─[server]
-#                   │eth3     │eth3     │eth3
-#                   │         │         │
-#                 172.16.0.x ─┴─────────┘
-#                       [management]─eth4─[analyzer]
+# Reference/observation lab: one native EOS forwarding device exposes SNMP,
+# syslog, and SPAN. A non-inline Linux sensor turns the mirrored packets into
+# genuine NetFlow v9 records without participating in the forwarding path.
 
 topology:
-  defaults:
-    kind: linux
-    image: assurance-lab:local
-
   nodes:
-    r1:
-      binds:
-        - configs/r1/frr.conf:/etc/frr/frr.conf
-        - configs/r1/setup.sh:/setup.sh
-        - configs/shared/daemons:/etc/frr/daemons
-        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
-      exec:
-        - bash /setup.sh
-
-    r2:
-      binds:
-        - configs/r2/frr.conf:/etc/frr/frr.conf
-        - configs/r2/setup.sh:/setup.sh
-        - configs/shared/daemons:/etc/frr/daemons
-        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
-      exec:
-        - bash /setup.sh
-
-    r3:
-      binds:
-        - configs/r3/frr.conf:/etc/frr/frr.conf
-        - configs/r3/setup.sh:/setup.sh
-        - configs/shared/daemons:/etc/frr/daemons
-        - configs/shared/vtysh.conf:/etc/frr/vtysh.conf
-      exec:
-        - bash /setup.sh
-
-    management:
-      binds:
-        - configs/management/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
-
-    analyzer:
-      binds:
-        - configs/analyzer/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+    router:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/router/startup-config
 
     client:
+      kind: linux
+      image: ops-lab:local
       binds:
-        - configs/client/setup.sh:/setup.sh
+        - configs/client/setup.sh:/setup.sh:ro
       exec:
         - bash /setup.sh
 
     server:
+      kind: linux
+      image: ops-lab:local
       binds:
-        - configs/server/setup.sh:/setup.sh
+        - configs/server/setup.sh:/setup.sh:ro
       exec:
         - bash /setup.sh
 
+    management:
+      kind: linux
+      image: assurance-lab:local
+      binds:
+        - configs/management/setup.sh:/setup.sh:ro
+      exec:
+        - bash /setup.sh
+
+    sensor:
+      kind: linux
+      image: assurance-lab:local
+      binds:
+        - configs/sensor/setup.sh:/opt/assurance/start-sensor.sh:ro
+      exec:
+        - bash /opt/assurance/start-sensor.sh
+
   links:
-    - endpoints: ["client:eth1",      "r1:eth1"]       # 10.1.0.0/30
-    - endpoints: ["r1:eth2",          "r2:eth1"]       # 10.0.12.0/30
-    - endpoints: ["r2:eth2",          "r3:eth1"]       # 10.0.23.0/30
-    - endpoints: ["r3:eth2",          "server:eth1"]   # 10.3.0.0/30
-    - endpoints: ["r1:eth3",          "management:eth1"] # 172.16.0.0/30
-    - endpoints: ["r2:eth3",          "management:eth2"] # 172.16.0.4/30
-    - endpoints: ["r3:eth3",          "management:eth3"] # 172.16.0.8/30
-    - endpoints: ["management:eth4",  "analyzer:eth1"]   # 192.168.99.0/30
+    - endpoints: ["client:eth1", "router:eth1"]          # 10.1.0.0/24
+    - endpoints: ["server:eth1", "router:eth2"]          # 10.2.0.0/24
+    - endpoints: ["management:eth1", "router:eth3"]      # 172.16.0.0/24
+    - endpoints: ["sensor:eth1", "router:eth4"]          # unnumbered SPAN feed
+    - endpoints: ["management:eth2", "sensor:eth2"]      # 172.16.1.0/30

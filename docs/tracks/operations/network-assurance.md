@@ -1,12 +1,14 @@
 ---
-title: network-assurance
+title: Network Assurance
 ---
 
-!!! tip "Practice Lab"
-    SNMP, syslog, SPAN, NetFlow — four observability mechanisms
+!!! info "Reference / Observation Lab"
+    Correlate native cEOS SNMP, syslog, and SPAN with NetFlow v9 records from
+    a non-inline sensor observing the mirrored traffic.
 
-!!! note "Image"
-    `assurance-lab:local` — `docker build -t assurance-lab:local labs/network-assurance/`
+!!! note "Images"
+    Build `ops-lab:local` and `assurance-lab:local`, and prepare
+    `ceos:4.35.2F` using the cEOS platform notes.
 
 {%
   include-markdown "../../../labs/network-assurance/README.md"

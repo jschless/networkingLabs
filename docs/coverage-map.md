@@ -71,7 +71,7 @@ carrier, voice, OT, storage, and assessment maturity), see the
 |-------|--------|------|
 | 4.1 Diagnose with debugs, traceroute, ping, SNMP, syslog | ✅ | `network-assurance`, `telemetry-monitoring-hybrid`, the entire `debug-*` track |
 | 4.2 Flexible NetFlow | 🟡 | `telemetry-monitoring-hybrid` — flow export concepts, not IOS FNF record/monitor syntax |
-| 4.3 SPAN/RSPAN/ERSPAN | 🟡 | `packet-analysis-basics`, `soc-dmz-foundation` (mirror feed) — port mirroring concepts, not Catalyst SPAN syntax |
+| 4.3 SPAN/RSPAN/ERSPAN | 🟡 | `network-assurance` (native cEOS SPAN), `packet-analysis-basics`, `soc-dmz-foundation` (mirror feed) — port mirroring concepts, not Catalyst SPAN syntax |
 | 4.4 IP SLA | 🟡 | `ip-sla-tracking` — probe + tracked-object failover behavior; syntax differs |
 | 4.5 Cisco Catalyst Center (DNA Center) workflows | ❌ | Product-specific; study notes / sandbox |
 | 4.6 NETCONF and RESTCONF | 🟡 | `automation-fundamentals` — hands-on with a JSON-over-HTTP API (eAPI) + gNMI extension; NETCONF/RESTCONF semantics covered comparatively (challenge questions), not as live protocols |
@@ -154,7 +154,7 @@ carrier, voice, OT, storage, and assessment maturity), see the
 | 4.3 Logging (syslog, debugs, conditional debugs) | ✅ | `network-assurance`, `telemetry-monitoring-hybrid`, the `debug-*` track |
 | 4.4 IPv4/IPv6 DHCP (client, server, relay, options) | ✅ | `dhcp-dns-troubleshooting`, `ipv6-access-services`, `enterprise-it-101/06-dhcp-dynamic-dns` |
 | 4.5 IP SLA (jitter, tracking, delay, connectivity) | 🟡 | `ip-sla-tracking` — probe/track/failover behavior; IOS `ip sla` syntax differs |
-| 4.6 NetFlow (v5, v9, flexible) | 🟡 | `telemetry-monitoring-hybrid` — flow concepts, not IOS NetFlow CLI |
+| 4.6 NetFlow (v5, v9, flexible) | 🟡 | `network-assurance` (NetFlow v9 from an external SPAN sensor), `telemetry-monitoring-hybrid` — flow concepts, not IOS NetFlow CLI |
 | 4.7 Cisco DNA Center assurance | ❌ | Product-specific; study notes / sandbox |
 
 ---

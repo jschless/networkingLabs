@@ -1,6 +1,6 @@
 # Network Operations Track
 
-Seventeen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, observability (SNMP, syslog, SPAN, NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, NetBox, GitOps change safety, and streaming telemetry.
+Seventeen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, correlated observability evidence (SNMP, syslog, SPAN, and sensor-exported NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, NetBox, GitOps change safety, and streaming telemetry.
 
 The Enterprise track's
 [enterprise-voice-sip-qos](../enterprise/enterprise-voice-sip-qos.md) lab
@@ -16,7 +16,7 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 | [enterprise-dual-stack-capstone](enterprise-dual-stack-capstone.md) | Cross-track capstone | IPv4/IPv6 control/data path parity, DNS, PMTUD, and return-path diagnosis |
 | [packet-analysis-basics](packet-analysis-basics.md) | Practice | ARP, OSPF, ICMP, TCP handshake capture, mirrored traffic, Wireshark workflow |
 | [mtu-pmtud-troubleshooting](mtu-pmtud-troubleshooting.md) | Guided Debug | Locate a GRE packet-size boundary, calculate native VyOS tunnel MTUs, and prove PMTUD feedback |
-| [network-assurance](network-assurance.md) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |
+| [network-assurance](network-assurance.md) | Reference / Observation | Correlate native cEOS SNMP, syslog, and SPAN with NetFlow v9 from a non-inline sensor |
 | [qos-enterprise](qos-enterprise.md) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
 | [ztp-basics](ztp-basics.md) | Practice | Zero-touch provisioning: DHCP option 67 + HTTP config service, factory-reset a cEOS and watch native ZTP install your config |
 | [automation-fundamentals](automation-fundamentals.md) | Practice | eAPI from curl up to Python: structured state, idempotent change, verify-from-the-other-end, drift report |
@@ -34,7 +34,7 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 - **aaa-ops-troubleshooting**: `docker build -t ops-lab:local images/ops-lab/`, `docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/`, and `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 - **ipv6-access-services**: `docker build -t ops-lab:local images/ops-lab/`
 - **mtu-pmtud-troubleshooting**: build `ops-lab:local` and prepare `vyos:local` using the [VyOS platform notes](../../platforms/vyos.md)
-- **network-assurance**: `docker build -t assurance-lab:local labs/network-assurance/`
+- **network-assurance**: build `ops-lab:local` and `assurance-lab:local`, then prepare `ceos:4.35.2F` using the [cEOS platform notes](../../platforms/ceos.md)
 - **qos-enterprise**: `docker build -t qos-lab:local labs/qos-enterprise/`
 - **ztp-basics**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t ops-lab:local images/ops-lab/`
 - **automation-fundamentals**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t automation-fundamentals:local labs/automation-fundamentals/`
