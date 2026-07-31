@@ -15,7 +15,7 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 | [ipv6-access-services](ipv6-access-services.md) | Practice | Router advertisements, SLAAC, default route learning, DNS over IPv6 |
 | [enterprise-dual-stack-capstone](enterprise-dual-stack-capstone.md) | Cross-track capstone | IPv4/IPv6 control/data path parity, DNS, PMTUD, and return-path diagnosis |
 | [packet-analysis-basics](packet-analysis-basics.md) | Practice | ARP, OSPF, ICMP, TCP handshake capture, mirrored traffic, Wireshark workflow |
-| [mtu-pmtud-troubleshooting](mtu-pmtud-troubleshooting.md) | Practice | GRE overhead, exact-size probes, PMTUD, tunnel MTU correction |
+| [mtu-pmtud-troubleshooting](mtu-pmtud-troubleshooting.md) | Guided Debug | Locate a GRE packet-size boundary, calculate native VyOS tunnel MTUs, and prove PMTUD feedback |
 | [network-assurance](network-assurance.md) | Practice | SNMP, syslog, SPAN, NetFlow — four observability mechanisms |
 | [qos-enterprise](qos-enterprise.md) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
 | [ztp-basics](ztp-basics.md) | Practice | Zero-touch provisioning: DHCP option 67 + HTTP config service, factory-reset a cEOS and watch native ZTP install your config |
@@ -33,6 +33,7 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 - **dhcp-dns-troubleshooting**: `docker build -t ops-lab:local images/ops-lab/` and `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 - **aaa-ops-troubleshooting**: `docker build -t ops-lab:local images/ops-lab/`, `docker build -f labs/enterprise-services-infra/Dockerfile.tacacs -t enterprise-tacacs:local labs/enterprise-services-infra/`, and `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
 - **ipv6-access-services**: `docker build -t ops-lab:local images/ops-lab/`
+- **mtu-pmtud-troubleshooting**: build `ops-lab:local` and prepare `vyos:local` using the [VyOS platform notes](../../platforms/vyos.md)
 - **network-assurance**: `docker build -t assurance-lab:local labs/network-assurance/`
 - **qos-enterprise**: `docker build -t qos-lab:local labs/qos-enterprise/`
 - **ztp-basics**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t ops-lab:local images/ops-lab/`
