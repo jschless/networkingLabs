@@ -130,7 +130,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `lb-lab:local` | `load-balancer-basics` | `docker build -t lb-lab:local labs/load-balancer-basics/` |
 | `global-delivery:local` | `global-application-delivery` | `docker build -t global-delivery:local labs/global-application-delivery/` (pinned Alpine 3.22.1 and CoreDNS 1.12.2 bases; HAProxy/nginx/dnsmasq packages pinned) |
 | `service-ha:local` | `service-ha` | `docker build -t service-ha:local labs/service-ha/` |
-| `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
+| `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` (digest-pinned Python 3.12.13; pinned Ansible, requests, pynetbox, Jinja2, and PyYAML) |
 | `opnsense-tools:local` | `opnsense-ngfw-basics`, `opnsense-ipsec-nat-t` | `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/` |
 | `enterprise-services-infra:local` | `enterprise-services-infra` | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |
 | `enterprise-voice-tools:1.0.0` | `enterprise-voice-sip-qos` | `docker build -t enterprise-voice-tools:1.0.0 labs/enterprise-voice-sip-qos/` (digest-pinned Ubuntu 24.04 base; pinned Asterisk 20.6.0 and SIPp 3.7.7) |
@@ -151,7 +151,11 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 
 Some labs also reference public registry images that `containerlab deploy` pulls on
 first use — no build step needed: `frrouting/frr:latest` (helper/bridge nodes in the
-DMVPN labs), and `netboxcommunity/netbox:v4.1.11` + `postgres:15` + `redis:7-alpine`
+DMVPN labs), and
+`netboxcommunity/netbox:v4.1.11@sha256:d1260201d775b3f1d0b19e425bd19facc1e907e7153a8247d04d996037969e53`,
+`postgres:15@sha256:f30e3de0ac9cc938dac627ef2231099867c694b5f949fadb924c8c977428c399`,
+and
+`redis:7-alpine@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065`
 (`network-automation-netbox`).
 
 > **arm64 note:** `nac-practice-tacacs:local` and `enterprise-tacacs:local` build from

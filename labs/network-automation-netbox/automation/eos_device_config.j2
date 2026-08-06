@@ -1,6 +1,4 @@
-hostname {{ device.name }}
-!
-username {{ automation.admin_username }} privilege 15 role network-admin secret {{ automation.admin_secret }}
+! NetBox merge candidate for {{ device.name }}
 !
 ip routing
 !
@@ -16,20 +14,23 @@ vlan {{ vlan.vid }}
 {% endfor %}
 {% endif %}
 interface Loopback0
+   description fabric router-id
    ip address {{ loopback.address }}
 !
 {% for iface in fabric_interfaces %}
 interface {{ iface.name }}
-   description to {{ iface.peer_device }} {{ iface.peer_interface }}
+   description {{ iface.description }}
    no switchport
    ip address {{ iface.address }}
+   mtu {{ iface.mtu }}
    no shutdown
 !
 {% endfor %}
 {% for iface in access_interfaces %}
 interface {{ iface.name }}
-   description access port for VLAN {{ iface.vlan }}
+   description {{ iface.description }}
    switchport access vlan {{ iface.vlan }}
+   mtu {{ iface.mtu }}
    no shutdown
 !
 {% endfor %}
@@ -54,16 +55,5 @@ router bgp {{ local_asn }}
 {% endfor %}
       network {{ loopback.address }}
    !
-!
-{% for name_server in automation.name_servers %}
-ip name-server {{ name_server }}
-{% endfor %}
-{% for ntp_server in automation.ntp_servers %}
-ntp server {{ ntp_server }}
-{% endfor %}
-!
-management api http-commands
-   no shutdown
-   protocol http
 !
 end

@@ -1,266 +1,304 @@
 #!/usr/bin/env python3
+"""Idempotently seed the underlay/DCIM baseline, but no learner service."""
+
 import pathlib
 
 import yaml
 
-from netbox_common import api_post, build_clients, ensure_object
+from netbox_common import (
+    LabModelError,
+    api_patch,
+    api_post,
+    build_clients,
+    ensure_object,
+    paginated_results,
+)
+
 
 ROOT = pathlib.Path("/workspace")
-MODEL = yaml.safe_load((ROOT / "netbox_model.yml").read_text())
-nb, session, _ = build_clients("lab-seed-token")
 
 
-site = ensure_object(
-    nb.dcim.sites,
-    {"slug": MODEL["site"]["slug"]},
-    MODEL["site"],
-)
-tenant = ensure_object(
-    nb.tenancy.tenants,
-    {"slug": MODEL["tenant"]["slug"]},
-    MODEL["tenant"],
-)
-manufacturer = ensure_object(
-    nb.dcim.manufacturers,
-    {"slug": MODEL["manufacturer"]["slug"]},
-    MODEL["manufacturer"],
-)
-platform = ensure_object(
-    nb.dcim.platforms,
-    {"slug": MODEL["platform"]["slug"]},
-    {**MODEL["platform"], "manufacturer": manufacturer.id},
-)
-device_type = ensure_object(
-    nb.dcim.device_types,
-    {"slug": MODEL["device_type"]["slug"]},
-    {**MODEL["device_type"], "manufacturer": manufacturer.id},
-)
+def object_id(value):
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return value.get("id")
+    return getattr(value, "id", value)
 
-roles = {}
-for role in MODEL["roles"]:
-    roles[role["slug"]] = ensure_object(
-        nb.dcim.device_roles, {"slug": role["slug"]}, role
-    )
 
-racks = {}
-for rack in MODEL["racks"]:
-    racks[rack["name"]] = ensure_object(
-        nb.dcim.racks,
-        {"name": rack["name"], "site_id": site.id},
-        {"name": rack["name"], "site": site.id, "status": "active"},
-    )
-
-tag_ids = []
-for tag in MODEL["tags"]:
-    tag_obj = ensure_object(
-        nb.extras.tags,
-        {"slug": tag},
-        {"name": tag, "slug": tag},
-    )
-    tag_ids.append(tag_obj.id)
-
-vlan_group = ensure_object(
-    nb.ipam.vlan_groups,
-    {"slug": MODEL["vlan_group"]["slug"]},
-    {"name": MODEL["vlan_group"]["name"], "slug": MODEL["vlan_group"]["slug"]},
-)
-
-vrfs = {}
-for vrf in MODEL["vrfs"]:
-    vrfs[vrf["name"]] = ensure_object(
-        nb.ipam.vrfs,
-        {"name": vrf["name"]},
-        {"name": vrf["name"], "rd": vrf["rd"], "tenant": tenant.id},
-    )
-
-vlans = {}
-for vlan in MODEL["vlans"]:
-    vlans[vlan["vid"]] = ensure_object(
-        nb.ipam.vlans,
-        {"vid": vlan["vid"], "group_id": vlan_group.id},
-        {
-            "vid": vlan["vid"],
-            "name": vlan["name"],
-            "status": "active",
-            "group": vlan_group.id,
-            "tenant": tenant.id,
-        },
-    )
-
-for prefix in MODEL["prefixes"]:
-    payload = {
-        "prefix": prefix["prefix"],
-        "status": "active",
-        "description": prefix["description"],
-        "site": site.id,
-        "tenant": tenant.id,
-    }
-    if "vrf" in prefix:
-        payload["vrf"] = vrfs[prefix["vrf"]].id
-    ensure_object(nb.ipam.prefixes, {"prefix": prefix["prefix"]}, payload)
-
-template_text = (ROOT / MODEL["config_template"]["file"]).read_text()
-config_template = ensure_object(
-    nb.extras.config_templates,
-    {"name": MODEL["config_template"]["name"]},
-    {
-        "name": MODEL["config_template"]["name"],
-        "description": MODEL["config_template"]["description"],
-        "template_code": template_text,
-    },
-)
-
-platform.update({"config_template": config_template.id})
-for role in roles.values():
-    role.update({"config_template": None})
-
-scope_map = {
-    "sites": {site.name: site.id},
-    "roles": {role.slug: role.id for role in roles.values()},
-    "platforms": {platform.slug: platform.id},
-}
-
-for context in MODEL["config_contexts"]:
-    payload = {
-        "name": context["name"],
-        "description": context["description"],
-        "weight": context["weight"],
-        "is_active": True,
-        "data": context["data"],
-    }
-    scopes = context.get("scopes", {})
-    for scope_name, values in scopes.items():
-        payload[scope_name] = [scope_map[scope_name][value] for value in values]
-    ensure_object(nb.extras.config_contexts, {"name": context["name"]}, payload)
-
-devices = {}
-interfaces = {}
-
-for device in MODEL["devices"]:
-    device_payload = {
-        "name": device["name"],
-        "status": "active",
-        "site": site.id,
-        "device_type": device_type.id,
-        "role": roles[device["role"]].id,
-        "platform": platform.id,
-        "tenant": tenant.id,
-        "rack": racks[device["rack"]].id,
-        "position": device["position"],
-        "face": "front",
-        "serial": f"{device['name']}-lab",
-        "asset_tag": f"asn-{device['asn']}",
-    }
-    devices[device["name"]] = ensure_object(
-        nb.dcim.devices, {"name": device["name"]}, device_payload
-    )
-    asn_tag = ensure_object(
-        nb.extras.tags,
-        {"slug": f"asn-{device['asn']}"},
-        {"name": f"asn-{device['asn']}", "slug": f"asn-{device['asn']}"},
-    )
-    devices[device["name"]].update({"tags": tag_ids + [asn_tag.id]})
-
-    mgmt = ensure_object(
-        nb.dcim.interfaces,
-        {"device_id": devices[device["name"]].id, "name": "Management0"},
-        {
-            "device": devices[device["name"]].id,
-            "name": "Management0",
-            "type": "virtual",
-            "mgmt_only": True,
-            "enabled": True,
-        },
-    )
-    lo0 = ensure_object(
-        nb.dcim.interfaces,
-        {"device_id": devices[device["name"]].id, "name": "Loopback0"},
-        {
-            "device": devices[device["name"]].id,
-            "name": "Loopback0",
-            "type": "virtual",
-            "enabled": True,
-        },
-    )
-    interfaces[(device["name"], "Management0")] = mgmt
-    interfaces[(device["name"], "Loopback0")] = lo0
-
-    for intf in device["interfaces"]:
-        if intf["name"].startswith("Vlan"):
-            intf_type = "virtual"
-        else:
-            intf_type = "1000base-t"
-        payload = {
-            "device": devices[device["name"]].id,
-            "name": intf["name"],
-            "type": intf_type,
-            "enabled": True,
-        }
-        if intf["name"].startswith("Ethernet") and intf.get("mode") == "access":
-            payload["description"] = f"access vlan {intf['vlan']}"
-            payload["mode"] = "access"
-            payload["untagged_vlan"] = vlans[intf["vlan"]].id
-        elif intf["name"].startswith("Vlan"):
-            payload["description"] = f"{intf.get('vrf', '')} service interface".strip()
-            payload["vrf"] = vrfs[intf["vrf"]].id
-        iface = ensure_object(
-            nb.dcim.interfaces,
-            {"device_id": devices[device["name"]].id, "name": intf["name"]},
-            payload,
+def scoped_ip(nb, address, vrf_id, label):
+    matches = []
+    for candidate in nb.ipam.ip_addresses.filter(address=address):
+        if object_id(candidate.vrf) == vrf_id:
+            matches.append(candidate)
+    if len(matches) > 1:
+        raise LabModelError(
+            f"{label}: duplicate {address} assignments in VRF {vrf_id or 'global'}"
         )
-        interfaces[(device["name"], intf["name"])] = iface
+    return matches[0] if matches else None
 
-    for address, ifname in (
-        (device["mgmt_ip"], "Management0"),
-        (device["loopback"], "Loopback0"),
-    ):
-        ip = ensure_object(
-            nb.ipam.ip_addresses,
-            {"address": address},
-            {
-                "address": address,
-                "status": "active",
-                "assigned_object_type": "dcim.interface",
-                "assigned_object_id": interfaces[(device["name"], ifname)].id,
-                "tenant": tenant.id,
-            },
-        )
-        if ifname == "Management0":
-            devices[device["name"]].update({"primary_ip4": ip.id})
 
-    for intf in device["interfaces"]:
-        if "address" not in intf:
-            continue
-        payload = {
-            "address": intf["address"],
-            "status": "active",
-            "assigned_object_type": "dcim.interface",
-            "assigned_object_id": interfaces[(device["name"], intf["name"])].id,
-            "tenant": tenant.id,
-        }
-        if "vrf" in intf:
-            payload["vrf"] = vrfs[intf["vrf"]].id
-        ensure_object(nb.ipam.ip_addresses, {"address": intf["address"]}, payload)
+def ensure_ip(nb, address, interface, tenant, label, vrf_id=None):
+    payload = {
+        "address": address,
+        "status": "active",
+        "assigned_object_type": "dcim.interface",
+        "assigned_object_id": interface.id,
+        "tenant": tenant.id,
+        "vrf": vrf_id,
+    }
+    ip_address = scoped_ip(nb, address, vrf_id, label)
+    if ip_address:
+        ip_address.update(payload)
+        return nb.ipam.ip_addresses.get(id=ip_address.id) or ip_address
+    return nb.ipam.ip_addresses.create(payload)
 
-for cable in MODEL["cables"]:
+
+def cable_endpoint_id(termination):
+    return termination.get("object_id") or (termination.get("object") or {}).get("id")
+
+
+def ensure_cable(session, interfaces, cable):
     a = interfaces[(cable["a_device"], cable["a_interface"])]
     b = interfaces[(cable["b_device"], cable["b_interface"])]
-    existing = nb.dcim.cables.filter(
-        termination_a_id=a.id,
-        termination_b_id=b.id,
+    cables = paginated_results(session, "/api/dcim/cables/")
+    desired = frozenset((a.id, b.id))
+    for existing in cables:
+        endpoint_ids = {
+            cable_endpoint_id(item)
+            for side in ("a_terminations", "b_terminations")
+            for item in existing.get(side, [])
+        }
+        if endpoint_ids == desired:
+            api_patch(
+                session,
+                f"/api/dcim/cables/{existing['id']}/",
+                {"status": "connected", "type": "cat6a"},
+            )
+            return
+        if a.id in endpoint_ids or b.id in endpoint_ids:
+            raise LabModelError(
+                f"{cable['a_device']}:{cable['a_interface']} to "
+                f"{cable['b_device']}:{cable['b_interface']}: endpoint already "
+                "belongs to a different cable"
+            )
+    api_post(
+        session,
+        "/api/dcim/cables/",
+        {
+            "a_terminations": [
+                {"object_type": "dcim.interface", "object_id": a.id}
+            ],
+            "b_terminations": [
+                {"object_type": "dcim.interface", "object_id": b.id}
+            ],
+            "status": "connected",
+            "type": "cat6a",
+        },
     )
-    if list(existing):
-        continue
-    payload = {
-        "a_terminations": [{"object_type": "dcim.interface", "object_id": a.id}],
-        "b_terminations": [{"object_type": "dcim.interface", "object_id": b.id}],
-        "status": "connected",
-        "type": "cat6a",
-        "tenant": tenant.id,
-    }
-    api_post(session, "/api/dcim/cables/", payload)
 
-print(
-    "Seeded NetBox with devices, interfaces, IPAM, VLANs, VRFs, cables, "
-    "config context, and a native EOS config template."
-)
+
+def main():
+    model = yaml.safe_load((ROOT / "netbox_model.yml").read_text())
+    nb, session, _ = build_clients("network-automation-netbox seed")
+
+    site = ensure_object(nb.dcim.sites, {"slug": model["site"]["slug"]}, model["site"])
+    tenant = ensure_object(
+        nb.tenancy.tenants, {"slug": model["tenant"]["slug"]}, model["tenant"]
+    )
+    manufacturer = ensure_object(
+        nb.dcim.manufacturers,
+        {"slug": model["manufacturer"]["slug"]},
+        model["manufacturer"],
+    )
+    platform = ensure_object(
+        nb.dcim.platforms,
+        {"slug": model["platform"]["slug"]},
+        {**model["platform"], "manufacturer": manufacturer.id},
+    )
+    device_type = ensure_object(
+        nb.dcim.device_types,
+        {"slug": model["device_type"]["slug"]},
+        {**model["device_type"], "manufacturer": manufacturer.id},
+    )
+    roles = {
+        role["slug"]: ensure_object(
+            nb.dcim.device_roles, {"slug": role["slug"]}, role
+        )
+        for role in model["roles"]
+    }
+    racks = {
+        rack["name"]: ensure_object(
+            nb.dcim.racks,
+            {"name": rack["name"], "site_id": site.id},
+            {"name": rack["name"], "site": site.id, "status": "active"},
+        )
+        for rack in model["racks"]
+    }
+    tags = [
+        ensure_object(
+            nb.extras.tags,
+            {"slug": tag},
+            {"name": tag, "slug": tag},
+        )
+        for tag in model["tags"]
+    ]
+    custom_field = model["custom_field"]
+    ensure_object(
+        nb.extras.custom_fields,
+        {"name": custom_field["name"]},
+        custom_field,
+        "custom field local_asn",
+    )
+    vlan_group = model["vlan_group"]
+    ensure_object(
+        nb.ipam.vlan_groups,
+        {"slug": vlan_group["slug"]},
+        vlan_group,
+    )
+
+    for prefix in model["prefixes"]:
+        ensure_object(
+            nb.ipam.prefixes,
+            {"prefix": prefix["prefix"], "vrf_id": "null"},
+            {
+                **prefix,
+                "status": "active",
+                "site": site.id,
+                "tenant": tenant.id,
+            },
+            f"global prefix {prefix['prefix']}",
+        )
+
+    template_model = model["config_template"]
+    template = ensure_object(
+        nb.extras.config_templates,
+        {"name": template_model["name"]},
+        {
+            "name": template_model["name"],
+            "description": template_model["description"],
+            "template_code": (ROOT / template_model["file"]).read_text(),
+        },
+    )
+    platform.update({"config_template": template.id})
+    for role in roles.values():
+        role.update({"config_template": None})
+
+    scope_map = {"sites": {site.name: site.id}}
+    for context in model["config_contexts"]:
+        payload = {
+            "name": context["name"],
+            "description": context["description"],
+            "weight": context["weight"],
+            "is_active": True,
+            "data": context["data"],
+        }
+        for scope_name, values in context.get("scopes", {}).items():
+            payload[scope_name] = [scope_map[scope_name][value] for value in values]
+        ensure_object(nb.extras.config_contexts, {"name": context["name"]}, payload)
+
+    peer_by_endpoint = {}
+    for cable in model["cables"]:
+        a = (cable["a_device"], cable["a_interface"])
+        b = (cable["b_device"], cable["b_interface"])
+        peer_by_endpoint[a] = b
+        peer_by_endpoint[b] = a
+
+    devices = {}
+    interfaces = {}
+    for device_model in model["devices"]:
+        name = device_model["name"]
+        device = ensure_object(
+            nb.dcim.devices,
+            {"name": name},
+            {
+                "name": name,
+                "status": "active",
+                "site": site.id,
+                "device_type": device_type.id,
+                "role": roles[device_model["role"]].id,
+                "platform": platform.id,
+                "tenant": tenant.id,
+                "rack": racks[device_model["rack"]].id,
+                "position": device_model["position"],
+                "face": "front",
+                "asset_tag": None,
+                "custom_fields": {"local_asn": device_model["local_asn"]},
+                "tags": [tag.id for tag in tags],
+            },
+            f"device {name}",
+        )
+        devices[name] = device
+
+        interface_models = [
+            {
+                "name": "Management0",
+                "type": "virtual",
+                "mgmt_only": True,
+                "enabled": True,
+                "description": "",
+                "mtu": 1500,
+            },
+            {
+                "name": "Loopback0",
+                "type": "virtual",
+                "enabled": True,
+                "description": "fabric router-id",
+                "mtu": 65535,
+            },
+        ]
+        for interface_model in device_model["interfaces"]:
+            peer = peer_by_endpoint[(name, interface_model["name"])]
+            interface_models.append(
+                {
+                    "name": interface_model["name"],
+                    "type": "1000base-t",
+                    "enabled": True,
+                    "description": f"to {peer[0]} {peer[1]}",
+                    "mtu": interface_model["mtu"],
+                }
+            )
+        for interface_model in interface_models:
+            interface = ensure_object(
+                nb.dcim.interfaces,
+                {"device_id": device.id, "name": interface_model["name"]},
+                {"device": device.id, **interface_model},
+                f"{name} {interface_model['name']}",
+            )
+            interfaces[(name, interface_model["name"])] = interface
+
+        management_ip = ensure_ip(
+            nb,
+            device_model["mgmt_ip"],
+            interfaces[(name, "Management0")],
+            tenant,
+            f"{name} Management0",
+        )
+        device.update({"primary_ip4": management_ip.id})
+        ensure_ip(
+            nb,
+            device_model["loopback"],
+            interfaces[(name, "Loopback0")],
+            tenant,
+            f"{name} Loopback0",
+        )
+        for interface_model in device_model["interfaces"]:
+            ensure_ip(
+                nb,
+                interface_model["address"],
+                interfaces[(name, interface_model["name"])],
+                tenant,
+                f"{name} {interface_model['name']}",
+            )
+
+    for cable in model["cables"]:
+        ensure_cable(session, interfaces, cable)
+
+    print(
+        "Seeded the idempotent underlay/DCIM baseline: 4 devices, 16 interfaces, "
+        "16 addresses, 4 cables, local_asn, template, and context."
+    )
+
+
+if __name__ == "__main__":
+    main()

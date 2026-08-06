@@ -4,17 +4,8 @@ username admin privilege 15 role network-admin secret admin
 !
 ip routing
 !
-vrf instance BLUE
-!
-vrf instance GREEN
-!
-vlan 10
-   name USERS
-!
-vlan 20
-   name SERVERS
-!
 interface Loopback0
+   description fabric router-id
    ip address 10.255.0.13/32
 !
 interface Ethernet1
@@ -28,28 +19,6 @@ interface Ethernet2
    no switchport
    ip address 10.0.0.5/31
    no shutdown
-!
-interface Ethernet3
-   description access port for VLAN 10
-   switchport access vlan 10
-   no shutdown
-!
-interface Ethernet4
-   description access port for VLAN 20
-   switchport access vlan 20
-   no shutdown
-!
-interface Vlan10
-   description BLUE users gateway
-   vrf BLUE
-   ip address 10.10.10.1/24
-   no autostate
-!
-interface Vlan20
-   description GREEN servers gateway
-   vrf GREEN
-   ip address 10.20.20.1/24
-   no autostate
 !
 router bgp 65111
    router-id 10.255.0.13

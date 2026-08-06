@@ -1,7 +1,25 @@
 - name: Push rendered config from NetBox model
   hosts: all
   gather_facts: false
+  vars:
+    candidate_dir: /workspace/generated
   tasks:
+    - name: Require a nonempty device candidate
+      ansible.builtin.stat:
+        path: "{{ candidate_dir }}/{{ inventory_hostname }}.cfg"
+      register: candidate
+      delegate_to: localhost
+
+    - name: Refuse an absent or empty candidate
+      ansible.builtin.assert:
+        that:
+          - candidate.stat.exists
+          - candidate.stat.size | int > 0
+        fail_msg: "candidate missing or empty for {{ inventory_hostname }}"
+
     - name: Load generated EOS config
       arista.eos.eos_config:
-        src: "/workspace/generated/{{ inventory_hostname }}.cfg"
+        src: "{{ candidate_dir }}/{{ inventory_hostname }}.cfg"
+        match: line
+        replace: line
+        save_when: never

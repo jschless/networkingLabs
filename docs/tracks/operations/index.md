@@ -1,6 +1,6 @@
 # Network Operations Track
 
-Seventeen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, correlated observability evidence (SNMP, syslog, SPAN, and sensor-exported NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, NetBox, GitOps change safety, and streaming telemetry.
+Seventeen labs covering management access, DHCP/DNS, AAA operations, packet capture workflow, hybrid-flow evidence, carrier acceptance, MTU/PMTUD troubleshooting, correlated observability evidence (SNMP, syslog, SPAN, and sensor-exported NetFlow), QoS, zero-touch provisioning, API-driven automation fundamentals, a relational NetBox capstone, GitOps change safety, and streaming telemetry.
 
 The Enterprise track's
 [enterprise-voice-sip-qos](../enterprise/enterprise-voice-sip-qos.md) lab
@@ -20,7 +20,7 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 | [qos-enterprise](qos-enterprise.md) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
 | [ztp-basics](ztp-basics.md) | Practice | Zero-touch provisioning: DHCP option 67 + HTTP config service, factory-reset a cEOS and watch native ZTP install your config |
 | [automation-fundamentals](automation-fundamentals.md) | Practice | eAPI from curl up to Python: structured state, idempotent change, verify-from-the-other-end, drift report |
-| [network-automation-netbox](network-automation-netbox.md) | Practice | NetBox capstone: DCIM, IPAM, native config templates, discovery sync, and drift validation |
+| [network-automation-netbox](network-automation-netbox.md) | Capstone | Build relational DCIM/IPAM, validate cable/address graphs, render native EOS, and reconcile explicit field ownership |
 | [suzieq-network-observability](suzieq-network-observability.md) | Reference | SuzieQ: agentless polling, fleet-wide queries, LLDP topology mapping, path tracing, health assertions |
 | [network-gitops-change-pipeline](network-gitops-change-pipeline.md) | Practice / Troubleshooting | Versioned intent, semantic review, pre-checks, bounded cEOS sessions, service verification, drift, partial-push rollback |
 | [telemetry-monitoring-hybrid](telemetry-monitoring-hybrid.md) | Practice | gNMI telemetry, Prometheus, Grafana, classic NMS |

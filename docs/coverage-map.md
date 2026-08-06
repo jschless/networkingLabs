@@ -104,7 +104,7 @@ carrier, voice, OT, storage, and assessment maturity), see the
 | 6.4 APIs for Catalyst Center and SD-WAN Manager | ❌ | Product-specific; study notes |
 | 6.5 Interpret REST API response codes/payloads | ✅ | `automation-fundamentals` — 200/401, transport vs auth vs application errors, JSON-RPC error objects |
 | 6.6 EEM applets | ❌ | IOS-only feature; study notes |
-| 6.7 Agent vs agentless orchestration | 🟡 | `network-automation-netbox` (source of truth + automation), `enterprise-it-101` Lab 09 area uses Ansible — comparison itself is theory |
+| 6.7 Agent vs agentless orchestration | 🟡 | `network-automation-netbox` (agentless Ansible driven from a relational source of truth with explicit intended/observed ownership), `enterprise-it-101` Lab 09 area uses Ansible — comparison itself is theory |
 
 ---
 
