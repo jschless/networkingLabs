@@ -1,74 +1,52 @@
 # Kubernetes ↔ BGP Fabric — Practice Lab
 
-Make a Kubernetes `Service` become a route. A two-node **k3s** cluster hangs
-off a single Top-of-Rack router the way a rack of servers actually does.
-**MetalLB** in BGP mode runs on the nodes, peers to the ToR, and advertises
-each `LoadBalancer` service as a **/32** — and because both nodes advertise
-the *same* VIP, the ToR installs **ECMP** across the rack. You build the
-ToR's BGP, MetalLB's BGP, expose a service, watch the /32 appear in the
-router's table, and reach it from a client that has never heard of
-Kubernetes. Then you flip `externalTrafficPolicy` and watch the
-advertisement itself change — the seam where the cluster and the fabric
-actually negotiate.
+Build the boundary between a Kubernetes service and a routed data-center
+fabric. A `LoadBalancer` object receives one address from MetalLB, two
+node-local speakers advertise that address as the same BGP /32, and an Arista
+cEOS ToR installs two next-hops in its FIB. You will then diagnose a locality
+change that preserves BGP reachability and HTTP while withdrawing one ECMP
+path.
 
-This is the integration every on-prem Kubernetes platform team has to get
-right, and it's pure BGP underneath the Kubernetes vocabulary.
+**Lab type:** Build
 
 ## Topology
 
 ```mermaid
 flowchart TB
-    client["client<br/>172.16.9.10"]
-    tor["tor — FRR, AS 65000<br/>ToR / default gw<br/>lo 10.0.0.254"]
-    racksw{{"racksw<br/>(L2 rack segment<br/>10.1.0.0/24)"}}
-    k3s1["k3s1 — server<br/>node-ip 10.1.0.11<br/>MetalLB speaker"]
-    k3s2["k3s2 — agent<br/>node-ip 10.1.0.12<br/>MetalLB speaker"]
+    client["external client<br/>172.16.9.10"]
+    tor["tor — Arista cEOS<br/>AS 65000<br/>172.16.9.1 / 10.1.0.1"]
+    racksw{{"racksw<br/>L2 rack segment"}}
+    k3s1["k3s1 — server<br/>10.1.0.11<br/>MetalLB speaker AS 65001"]
+    k3s2["k3s2 — agent<br/>10.1.0.12<br/>MetalLB speaker AS 65001"]
 
-    client --- |"172.16.9.0/24"| tor
-    tor --- |"eth1 10.1.0.1"| racksw
+    client ---|"172.16.9.0/24"| tor
+    tor ---|"10.1.0.0/24"| racksw
     racksw --- k3s1
     racksw --- k3s2
-
-    classDef rtr stroke:#a06bd6,stroke-width:2px
-    classDef k8s stroke:#17a589,stroke-width:2px
-    classDef cli stroke:#9aa0a6,stroke-width:2px
-    classDef sw stroke:#c8873c,stroke-width:2px
-    class tor rtr
-    class k3s1,k3s2 k8s
-    class client cli
-    class racksw sw
 ```
 
-### Link / segment addressing
+### Link and service addressing
 
-| Segment            | Subnet          | Members                                   |
-|--------------------|-----------------|-------------------------------------------|
-| rack (via racksw)  | 10.1.0.0/24     | tor .1, k3s1 .11, k3s2 .12                 |
-| clients            | 172.16.9.0/24   | tor .1, client .10                        |
-| service VIP pool   | 198.51.100.0/24 | MetalLB assigns from 198.51.100.100–199   |
+| Segment | Subnet or address | Members |
+|---------|-------------------|---------|
+| Rack | `10.1.0.0/24` | tor `.1`, k3s1 `.11`, k3s2 `.12` |
+| External client | `172.16.9.0/24` | tor `.1`, client `.10` |
+| Service pool | `198.51.100.100/32` | one VIP allocated by MetalLB |
+| ToR router ID | `10.0.0.254/32` | tor `Loopback0` |
 
 ### Node reference
 
-| Node   | Role                          | AS    | Key address        |
-|--------|-------------------------------|-------|--------------------|
-| tor    | Top-of-Rack router (FRR)      | 65000 | 10.1.0.1, lo 10.0.0.254 |
-| k3s1   | k3s **server** + MetalLB      | 65001 | node-ip 10.1.0.11  |
-| k3s2   | k3s **agent** + MetalLB       | 65001 | node-ip 10.1.0.12  |
-| racksw | plain L2 bridge (rack fabric) | —     | —                  |
-| client | service consumer              | —     | 172.16.9.10        |
+| Node | Platform | Role | Learner-owned state |
+|------|----------|------|---------------------|
+| `tor` | Arista cEOS (amd64 4.35.2F / arm64 4.36.1F; canonical tag `ceos:4.35.2F`) | Routed ToR and client gateway | BGP, inbound prefix policy, ECMP |
+| `racksw` | Incidental Linux bridge | Rack L2 segment | None |
+| `k3s1` | k3s server | Control plane, workload node, MetalLB speaker | MetalLB and Service objects |
+| `k3s2` | k3s agent | Workload node and MetalLB speaker | MetalLB and Service objects |
+| `client` | Incidental Linux endpoint | Consumer outside Kubernetes | None |
 
-**What's pre-built (scaffolding):** the k3s cluster (both nodes joined),
-MetalLB **installed but unconfigured**, and a sample `web` deployment
-(4 nginx replicas, spread across both nodes). Each k3s node's `node-ip` is
-its rack address — that matters, because MetalLB advertises a node's
-InternalIP as the BGP next-hop.
-
-**What you build (the lab):** all the BGP — on the ToR *and* in MetalLB —
-plus the service that ties them together.
-
-> A cEOS or NX-OS ToR would take the same BGP config with cosmetic syntax
-> changes; FRR keeps the whole rack under ~1.5 GB and validates locally.
-> The Kubernetes and MetalLB objects are identical on any cluster.
+The topology supplies addressing, a two-node k3s cluster, MetalLB's controller
+and speakers, and four nginx replicas. The ToR deliberately has no routing
+protocol, and MetalLB deliberately has no peer, pool, or advertisement.
 
 ## How to use this lab
 
@@ -85,122 +63,128 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 
 ## Deploy
 
-Build the images once if you haven't (`docker build -t frr-lab:local
-images/frr/` and `docker build -t ops-lab:local images/ops-lab/`). The k3s
-and MetalLB/nginx images are pulled from the internet, so **this lab needs
-internet access at deploy time.**
+Prepare the licensed cEOS image for your host architecture and build the
+incidental Linux tool image:
+
+```bash
+scripts/build-images.sh ceos
+docker build -t ops-lab:local images/ops-lab/
+```
+
+Every topology uses the canonical tag `ceos:4.35.2F`. On amd64 that tag
+contains EOS 4.35.2F; on arm64, `scripts/build-images.sh ceos` imports the
+supported cEOSarm 4.36.1F image under the same canonical tag. The checker
+keeps the tag assertion exact and verifies the corresponding runtime release.
+The final live evidence in `VALIDATION.md` was collected on amd64; it is not
+an arm64 live-validation claim.
+
+The topology pulls k3s by exact digest:
+
+```text
+rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf
+```
+
+The vendored manifests also pin MetalLB controller v0.14.8, speaker v0.14.8,
+and nginx 1.27-alpine by digest. A cold deployment therefore needs registry
+access for any pinned image absent from the local cache.
 
 ```bash
 ./scripts/lab.sh deploy k8s-fabric
 ```
 
-First boot takes a few minutes: k3s starts, the agent joins, then a
-background bootstrap installs MetalLB and the workload. Wait for it:
+Bootstrap uses separate bounded waits for API, node, and rollout phases and
+records failure diagnostics in `/var/log/bootstrap.log`. The command below
+gives the deployment a seven-minute observation window; that window is not
+the sum of bootstrap's internal phase bounds:
 
 ```bash
-# watch it finish (look for "bootstrap] done")
-./scripts/lab.sh cmd k8s-fabric k3s1 -- tail -f /var/log/bootstrap.log
+./scripts/lab.sh cmd k8s-fabric k3s1 -- timeout 420 sh -c 'until grep -q "\[bootstrap\] done" /var/log/bootstrap.log; do sleep 5; done; tail -n 30 /var/log/bootstrap.log'
 ```
 
-Work the cluster from the server node (kubectl is preconfigured there):
+If the observation command times out, inspect the log for the phase-specific
+timeout and its node, pod, and event diagnostics.
 
-```bash
-./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get nodes
-./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get pods -A
-./scripts/lab.sh vtysh k8s-fabric tor       # the ToR's FRR CLI
-```
+> **Safe k3s teardown:** do not force-remove a running k3s container. If you
+> ever manage one by hand, use `docker stop -t 20 <container>` before
+> removal. The lab destroy wrapper performs the safe sequence.
 
-Destroy when done:
+## Task 1 — Establish the silent baseline
 
-```bash
-./scripts/lab.sh destroy k8s-fabric
-```
-
-> **k3s teardown note:** if you ever remove a node container by hand, use
-> `docker stop -t 20 <name>` **before** `docker rm` — force-removing a
-> *running* k3s container can wedge the Docker daemon while it unwinds
-> k3s's mounts. `containerlab destroy` does this correctly.
-
----
-
-## Task 1 — Survey the cluster and the silent ToR (guided)
-
-**Objective:** confirm the starting point — a healthy 2-node cluster with a
-workload, MetalLB running but doing nothing, and a ToR with no BGP.
+**Objective:** prove that the supplied cluster and workload are ready while
+both sides of the BGP boundary remain unconfigured.
 
 ```bash
 ./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get nodes -o wide
-./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get pods -o wide -l app=web
-./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl -n metallb-system get pods
-./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get svc
-./scripts/lab.sh vtysh k8s-fabric tor
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get pods -l app=web -o wide
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl -n metallb-system get pods -o wide
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl -n metallb-system get bgppeers,ipaddresspools,bgpadvertisements
+./scripts/lab.sh cli k8s-fabric tor
 ```
+
+At the EOS prompt:
 
 ```text
 show ip route
-show bgp ipv4 unicast summary
+show ip bgp summary
+show running-config section router bgp
 ```
 
 <details markdown="1">
 <summary>Check your work</summary>
 
-Both nodes are `Ready` with **InternalIP 10.1.0.11 / 10.1.0.12** — the rack
-addresses, not the containerlab mgmt IPs (that's the `--node-ip` in each
-node's entrypoint doing its job; remember it for Task 3). The four `web`
-pods are split across both nodes. MetalLB shows a `controller` and **two**
-`speaker` pods (a speaker per node, `DaemonSet`) — all `Running`, but there
-is no `LoadBalancer` service yet and no MetalLB config, so they're idle. On
-the ToR, `show ip route` has only connected routes (plus the mgmt network),
-and `show bgp ipv4 unicast summary` reports **no BGP instance** — the router
-doesn't know the cluster exists. Everything that connects the two, you're
-about to build.
+Exactly two nodes are `Ready`, their InternalIPs are `10.1.0.11` and
+`10.1.0.12`, and four ready `web` pods are split across them. One MetalLB
+controller and two speakers run, but the three MetalLB routing resources do
+not exist. EOS has the connected rack and client routes but no BGP process.
+This separates healthy scaffolding from the control plane you must build.
 
 </details>
 
-## Task 2 — Give the ToR its BGP
+## Task 2 — Bound and enable the ToR peering
 
-**Objective:** an eBGP configuration on the ToR that peers with **both**
-k3s nodes and is ready to install a prefix learned from both of them as
-ECMP. The nodes only ever *advertise* to the ToR — they accept nothing — so
-this side originates nothing and just listens.
+**Objective:** configure native EOS eBGP to both MetalLB speakers, accept
+only the service pool's exact /32, and permit multiple equal BGP paths in the
+FIB. Do not originate a prefix from the ToR.
 
-**Predict first:** you'll bring BGP up before MetalLB is configured on the
-other side. What state will the two neighbors sit in — `Established`,
-`Active`, or `Idle` — and why?
+**Predict first:** before the MetalLB peer exists, should either configured
+EOS neighbor be `Established`? What evidence distinguishes a missing remote
+speaker from a rejected route?
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- `router bgp 65000`, then a `neighbor <node-ip> remote-as 65001` for each
-  of 10.1.0.11 and 10.1.0.12.
-- FRR default: eBGP with no policy exchanges nothing. `no bgp
-  ebgp-requires-policy` (you'll accept whatever MetalLB sends).
-- ECMP is not automatic. Under `address-family ipv4 unicast`, FRR's default
-  eBGP `maximum-paths` is **1** — one prefix from two peers installs a
-  single next-hop unless you raise it. Set `maximum-paths` and `activate`
-  both neighbors.
-- The nodes have no BGP yet, so don't expect the sessions to come up during
-  this task.
+- Build the prefix filter before the peer. The service pool contains only one
+  host route, so the least-privilege filter has one permit entry.
+- Apply the filter inbound to each neighbor through a route-map.
+- EOS controls eBGP FIB width with `maximum-paths ... ecmp ...` under the BGP
+  process. Use AS 65000 locally and AS 65001 for both rack neighbors.
+- Use `show ip bgp summary`, the prefix-list, and the route-map attachment as
+  three separate checks.
 
 </details>
 
 <details markdown="1">
 <summary>Solution</summary>
-
-On the ToR:
 
 ```text
 configure terminal
+ip prefix-list METALLB-SERVICE-ONLY seq 10 permit 198.51.100.100/32
+!
+route-map METALLB-IN permit 10
+   match ip address prefix-list METALLB-SERVICE-ONLY
+!
 router bgp 65000
- bgp router-id 10.0.0.254
- no bgp ebgp-requires-policy
- neighbor 10.1.0.11 remote-as 65001
- neighbor 10.1.0.12 remote-as 65001
- address-family ipv4 unicast
-  maximum-paths 4
-  neighbor 10.1.0.11 activate
-  neighbor 10.1.0.12 activate
- exit-address-family
+   router-id 10.0.0.254
+   maximum-paths 4 ecmp 4
+   neighbor 10.1.0.11 remote-as 65001
+   neighbor 10.1.0.11 route-map METALLB-IN in
+   neighbor 10.1.0.12 remote-as 65001
+   neighbor 10.1.0.12 route-map METALLB-IN in
+   !
+   address-family ipv4
+      neighbor 10.1.0.11 activate
+      neighbor 10.1.0.12 activate
+end
 ```
 
 </details>
@@ -208,45 +192,43 @@ router bgp 65000
 <details markdown="1">
 <summary>Check your work</summary>
 
-`show bgp ipv4 unicast summary` lists both neighbors in **`Idle`** (or
-briefly `Active`/`Connect`) with `never` under Up/Down — the prediction.
-MetalLB's speakers haven't been told to peer yet, so nothing is listening
-on the node side; the ToR keeps trying. That's expected — you've built the
-router's half of the seam. The next task builds the cluster's half, and the
-sessions come up on their own.
+Both neighbors exist but cannot establish until Task 3 creates the remote
+peer. The prefix-list has exactly one permitted /32, and both neighbors have
+`METALLB-IN` attached inbound. That distinction matters: session state tests
+TCP/BGP adjacency; accepted-prefix state tests policy after adjacency.
 
 </details>
 
-## Task 3 — Give MetalLB its BGP
+## Task 3 — Define the MetalLB routing contract
 
-**Objective:** configure MetalLB so each speaker peers to the ToR and any
-`LoadBalancer` VIP is advertised. Three objects: a `BGPPeer`, an
-`IPAddressPool`, and a `BGPAdvertisement`. Success: both ToR sessions reach
-`Established`.
+**Objective:** create one reviewable Kubernetes artifact containing the
+exact peer, address pool, and advertisement. Success means two established
+sessions but zero advertised service prefixes because no LoadBalancer exists
+yet.
 
-**Predict first:** you write **one** `BGPPeer` naming the ToR (10.1.0.1),
-yet the ToR ends up with **two** sessions. Where does the second one come
-from?
+**Predict first:** why does one `BGPPeer` object produce two sessions at the
+ToR?
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- `BGPPeer` (apiVersion `metallb.io/v1beta2`): `myASN: 65001`,
-  `peerASN: 65000`, `peerAddress: 10.1.0.1`. It applies to every speaker,
-  so each node peers to the ToR from its own node-ip.
-- `IPAddressPool` (`v1beta1`): the addresses MetalLB may hand out —
-  `198.51.100.100-198.51.100.199`.
-- `BGPAdvertisement` (`v1beta1`): references the pool by name; without it,
-  MetalLB allocates VIPs but never advertises them over BGP.
-- Apply from k3s1: `kubectl apply -f <file>`. Check MetalLB's own view with
-  `kubectl -n metallb-system logs -l component=speaker | grep -i bgp`.
+- The three kinds are `BGPPeer`, `IPAddressPool`, and `BGPAdvertisement` in
+  the `metallb-system` namespace.
+- The peer needs the local ASN, remote ASN, and ToR rack address. The
+  advertisement must select the pool explicitly.
+- Inspect API discovery or `kubectl explain` for field names instead of
+  copying a generic Internet example.
 
 </details>
 
 <details markdown="1">
 <summary>Solution</summary>
 
-```yaml
+Open a shell on `k3s1`, create the learner artifact, and apply it:
+
+```bash
+./scripts/lab.sh bash k8s-fabric k3s1
+cat >/tmp/metallb-bgp.yaml <<'YAML'
 apiVersion: metallb.io/v1beta2
 kind: BGPPeer
 metadata:
@@ -264,7 +246,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    - 198.51.100.100-198.51.100.199
+    - 198.51.100.100/32
 ---
 apiVersion: metallb.io/v1beta1
 kind: BGPAdvertisement
@@ -274,6 +256,9 @@ metadata:
 spec:
   ipAddressPools:
     - svc-pool
+YAML
+kubectl apply -f /tmp/metallb-bgp.yaml
+exit
 ```
 
 </details>
@@ -281,240 +266,236 @@ spec:
 <details markdown="1">
 <summary>Check your work</summary>
 
-Within a few seconds `show bgp ipv4 unicast summary` on the ToR shows
-**both** neighbors `Established` with `0` prefixes received — the sessions
-are up but there's no VIP to advertise yet. The prediction: one `BGPPeer`
-becomes two sessions because the speaker is a `DaemonSet` — a pod on *every*
-node — and each pod peers to the ToR independently from its node-ip. Two
-nodes, two speakers, two sessions. That's also the seed of the ECMP you're
-about to see: two speakers advertising the same VIP is what gives the ToR
-two next-hops.
+`show ip bgp summary` on EOS shows exactly `10.1.0.11` and `10.1.0.12`
+Established, both with AS 65001. The prefix count remains zero. One peer
+object is consumed by the speaker DaemonSet on both nodes; each speaker uses
+its node's rack-facing InternalIP, producing two independent sessions.
 
 </details>
 
-## Task 4 — Turn a Service into a route
+## Task 4 — Trace one Service into the FIB
 
-**Objective:** expose the `web` deployment as a `LoadBalancer`, and prove
-the assigned VIP is now a real BGP route in the ToR — reachable from the
-client, which only speaks IP.
+**Objective:** expose `web` with an explicit LoadBalancer artifact, then
+trace the same intent through allocation, speakers, BGP RIB, two-next-hop
+EOS FIB, and external HTTP.
 
-**Predict first:** the client has no idea Kubernetes exists. What has to be
-true in the ToR's *forwarding table* for the client's HTTP request to the
-VIP to be delivered?
+**Predict first:** which observation proves the router can forward the VIP,
+rather than merely knowing two BGP paths for it?
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- `kubectl expose deploy web --type=LoadBalancer --port=80 --name=web-lb`,
-  then `kubectl get svc web-lb` for the `EXTERNAL-IP`.
-- On the ToR: `show bgp ipv4 unicast` (did the /32 arrive?), then
-  `show ip route <VIP>/32` (did it get installed?).
-- From the client: `wget -qO- http://<VIP>/` and
-  `traceroute -n <VIP>`.
+- The Service selects `app: web`, exposes TCP/80, and starts with
+  `externalTrafficPolicy: Cluster`.
+- Follow the object in order: Service status, speaker placement, BGP route,
+  IP route, then a client request. Do not skip from Kubernetes straight to
+  HTTP.
 
 </details>
 
 <details markdown="1">
-<summary>Check your work</summary>
+<summary>Solution</summary>
 
-`kubectl get svc web-lb` shows `EXTERNAL-IP 198.51.100.100` — MetalLB's
-controller allocated the first address in the pool and the speakers
-advertised it. On the ToR, `show bgp ipv4 unicast` lists `198.51.100.100/32`
-with **two paths** (one per node, both AS `65001`), and `show ip route
-198.51.100.100/32` installs it `via 10.1.0.11` **and** `via 10.1.0.12`,
-weight 1 each. That answers the prediction: the ToR needs a FIB entry for
-the VIP whose next-hop is a node — which is exactly what MetalLB's
-advertisement produced. `wget` from the client returns the nginx welcome
-page, and `traceroute` goes client → `172.16.9.1` (ToR) → `10.1.0.11` (a
-node) → the service. A Kubernetes object is now a line in a routing table.
+```bash
+./scripts/lab.sh bash k8s-fabric k3s1
+cat >/tmp/web-service.yaml <<'YAML'
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-lb
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  selector:
+    app: web
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+YAML
+kubectl apply -f /tmp/web-service.yaml
+exit
+```
 
 </details>
 
-## Task 5 — Read the ECMP, and make it visible
+Use this merged trace rather than treating each plane as a separate demo:
 
-**Objective:** confirm the ToR is genuinely load-sharing across both nodes,
-and expose *why* it is by tying the two BGP paths back to the two speakers.
+```bash
+# Service -> allocation
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get service web-lb -o wide
 
-**Predict first:** with `maximum-paths 4` and both speakers advertising, how
-many next-hops are in the ToR's FIB for the VIP? If you removed
-`maximum-paths` (back to the default 1), how many — and would traffic still
-work?
+# Allocation -> two speakers
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl -n metallb-system get pods -l component=speaker -o wide
+
+# Speakers -> BGP RIB -> two-next-hop FIB
+./scripts/lab.sh cli k8s-fabric tor
+```
+
+```text
+show ip bgp 198.51.100.100/32
+show ip route 198.51.100.100/32
+exit
+```
+
+```bash
+# FIB -> external HTTP
+./scripts/lab.sh cmd k8s-fabric client -- traceroute -n -m 4 198.51.100.100
+./scripts/lab.sh cmd k8s-fabric client -- wget -qO- --timeout=5 http://198.51.100.100/
+```
+
+<details markdown="1">
+<summary>Check your work</summary>
+
+The Service status contains exactly `198.51.100.100`. The BGP RIB contains
+that /32 from both node peers, and the EOS IP route contains next-hops
+`10.1.0.11` and `10.1.0.12`. The IP route is the forwarding proof: it is the
+RIB-to-FIB decision the client depends on. The external client then receives
+the nginx page without using Kubernetes DNS or the Kubernetes API.
+
+</details>
+
+## Task 5 — Diagnose an endpoint-locality withdrawal
+
+**Objective:** begin with a working service, inject an opaque cluster-side
+fault, and determine why one route path disappears even though both BGP
+sessions and client HTTP remain healthy. Repair the state and recover
+two-next-hop ECMP.
+
+First record a bounded, fresh source-address observation under the solved
+state. The ten-second log window avoids treating an old request as evidence:
+
+```bash
+./scripts/lab.sh cmd k8s-fabric client -- sh -c 'for n in 1 2 3; do wget -qO- --timeout=5 http://198.51.100.100/ >/dev/null; done'
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl logs -l app=web --since=10s --tail=20 --max-log-requests=10 | awk '/GET \/ HTTP/{print $1}' | sort -u
+```
+
+Inject the scenario. The injector deliberately does not print its mutation:
+
+```bash
+./labs/k8s-fabric/break.sh
+```
+
+**Predict first:** if both sessions stay Established and HTTP still works,
+which evidence would let you rank service policy, endpoint placement, BGP
+policy, and physical reachability without guessing?
+
+Collect symptoms from every boundary:
+
+```bash
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get service web-lb -o yaml
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get pods -l app=web -o wide
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl get endpointslice -l kubernetes.io/service-name=web-lb -o wide
+./scripts/lab.sh cli k8s-fabric tor
+```
+
+```text
+show ip bgp summary
+show ip bgp 198.51.100.100/32
+show ip route 198.51.100.100/32
+exit
+```
+
+```bash
+./scripts/lab.sh cmd k8s-fabric client -- wget -qO- --timeout=5 http://198.51.100.100/
+./scripts/lab.sh cmd k8s-fabric client -- sh -c 'for n in 1 2 3; do wget -qO- --timeout=5 http://198.51.100.100/ >/dev/null; done'
+./scripts/lab.sh cmd k8s-fabric k3s1 -- kubectl logs -l app=web --since=10s --tail=20 --max-log-requests=10 | awk '/GET \/ HTTP/{print $1}' | sort -u
+```
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- `show ip route 198.51.100.100/32` — count the `via` lines.
-- `show bgp ipv4 unicast 198.51.100.100/32` — the `multipath` markers show
-  which paths FRR selected together.
-- Tie it to the cluster: each next-hop (10.1.0.11 / 10.1.0.12) is a node
-  running a speaker. `kubectl get pods -n metallb-system -o wide` shows the
-  speaker on each.
+- Compare the Service forwarding policy with the nodes named by the ready
+  endpoints.
+- A speaker can maintain its BGP session while withdrawing one NLRI. Session
+  health and route presence answer different questions.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+The injected state changes the Service to `externalTrafficPolicy: Local` and
+places all four endpoints on `k3s1`. With `Local`, only a node that owns a
+ready local endpoint advertises the VIP. The k3s2 speaker therefore withdraws
+the /32 without tearing down its BGP session. EOS retains one path through
+`10.1.0.11`, so HTTP remains reachable; the fresh nginx log now exposes the
+real client source `172.16.9.10` rather than the cluster-side translated
+source seen under `Cluster`.
+
+Apply the repair twice to prove it is idempotent:
+
+```bash
+./labs/k8s-fabric/solution.sh
+./labs/k8s-fabric/solution.sh
+```
 
 </details>
 
 <details markdown="1">
 <summary>Check your work</summary>
 
-The FIB has **two** next-hops, weight 1 each — the ToR hashes flows across
-both nodes. In `show bgp ipv4 unicast 198.51.100.100/32` both paths are
-flagged `multipath` and one is `best`; drop `maximum-paths` back to 1 and
-the FIB collapses to a single node while BGP still *knows* both — traffic
-keeps working through one node, but you've thrown away half your ingress
-bandwidth and a node's worth of redundancy. The two paths exist because two
-speakers, on two nodes, advertised the same /32; ECMP here is not a fabric
-trick you configured on top, it's the *direct* consequence of the cluster
-having more than one node. Add a third k3s node and the same VIP would
-become a 3-way ECMP with nothing else to change.
+In the broken state, both neighbors remain Established, the client still
+gets the nginx page, and the VIP route has exactly one next-hop:
+`10.1.0.11`. After repair, the Service policy is `Cluster`, ready endpoints
+are split two per node, and the EOS FIB again contains exactly `.11` and
+`.12`. The three changes connect Kubernetes forwarding policy to
+endpoint-local advertisement and finally to fabric ECMP.
 
 </details>
-
-## Task 6 — Break it: the policy that decides who advertises
-
-**Objective:** discover how `externalTrafficPolicy` changes not just the
-data path but the **BGP advertisement itself** — and the failure it can
-cause. This is the single most-misunderstood knob in on-prem Kubernetes
-networking.
-
-Two facts to establish, then a break. First, who sees the client's IP?
-Check what source address a pod logs today (policy is `Cluster`, the
-default):
-
-```bash
-# fetch a few times from the client, then read the pods' access logs
-./scripts/lab.sh cmd k8s-fabric client -- sh -c 'for i in 1 2 3; do wget -qO- http://198.51.100.100/ >/dev/null; done'
-./scripts/lab.sh cmd k8s-fabric k3s1 -- sh -c 'for p in $(kubectl get pods -l app=web -o name); do kubectl logs "$p" --since=20s; done' | grep -oE '^[0-9.]+' | sort -u
-```
-
-Now switch the service to `Local` and repeat that log check. Then, with the
-service still `Local`, force **all** `web` pods onto **one** node and watch
-the ToR:
-
-```bash
-kubectl patch svc web-lb -p '{"spec":{"externalTrafficPolicy":"Local"}}'
-kubectl patch deploy web -p '{"spec":{"template":{"spec":{"nodeSelector":{"kubernetes.io/hostname":"k3s1"}}}}}'
-kubectl rollout status deploy/web
-```
-
-Work out, from the ToR's route table, what changed and why — before the
-hints.
-
-<details markdown="1">
-<summary>Hints</summary>
-
-- After the source-IP check: `Cluster` vs `Local` should give **different**
-  answers. One of them is a node/CNI address, the other is the real client.
-- After pinning pods to k3s1: `show ip route 198.51.100.100/32` on the ToR.
-  How many next-hops now? Which node dropped out, and does it still have a
-  `web` pod?
-- Connect the two: under `Local`, a node only advertises the VIP if it has
-  a **local** endpoint for that service.
-
-</details>
-
-<details markdown="1">
-<summary>Check your work</summary>
-
-Under the default `Cluster`, pods log a source IP of **10.42.0.1** — the
-node's CNI gateway: kube-proxy SNATs so replies come back to the node that
-received the packet, which means it can forward to a pod on *either* node,
-but the real client IP is lost. Under `Local`, the same pods log
-**172.16.9.10** — the real client — because kube-proxy stops SNATing and
-only sends to pods on the receiving node.
-
-That "only pods on the receiving node" is the catch. Once you pin every
-`web` pod to k3s1, `show ip route 198.51.100.100/32` drops to a **single**
-next-hop: **k3s2 withdrew the /32**, because under `Local` a node with no
-local endpoint has nothing to send traffic to, so MetalLB stops advertising
-from it. Good — the ToR now only steers to a node that can actually serve.
-But notice what you traded: ECMP is gone, all ingress funnels through k3s1,
-and during a rollout where pods move between nodes the advertisement
-follows them a beat behind the endpoints — the window where the fabric and
-the cluster disagree is exactly when `Local` blackholes a flow. `Cluster`
-hides the client IP but is even across nodes and forgiving of pod placement;
-`Local` preserves the client IP and avoids the extra hop but couples your
-routing to your scheduler. Choosing between them *is* the on-prem
-Kubernetes networking decision.
-
-**Repair** — put the workload back where both nodes serve it, and restore
-ECMP:
-
-```bash
-kubectl patch deploy web --type=json -p '[{"op":"remove","path":"/spec/template/spec/nodeSelector"}]'
-kubectl patch svc web-lb -p '{"spec":{"externalTrafficPolicy":"Cluster"}}'
-kubectl rollout status deploy/web
-```
-
-`show ip route 198.51.100.100/32` is back to two next-hops. Run
-`./labs/k8s-fabric/check.sh` from the host to confirm the full end state.
-
-</details>
-
----
 
 ## Verification
 
-End state, all of which `./labs/k8s-fabric/check.sh` asserts:
+```bash
+./labs/k8s-fabric/check.sh
+```
 
-- [ ] All five containers running; both k3s nodes `Ready`
-- [ ] MetalLB controller + two speakers `Running`
-- [ ] ToR has **two** `Established` BGP sessions (`show bgp ipv4 unicast
-      summary`)
-- [ ] `web-lb` has an `EXTERNAL-IP` from the pool (198.51.100.100)
-- [ ] The ToR installs the VIP /32 as **ECMP** across both nodes
-      (`show ip route <VIP>/32`)
-- [ ] The client reaches the VIP through the ToR (`wget`)
+The deterministic solved result is `31 passed, 0 failed`. The checker is
+read-only with respect to EOS and Kubernetes configuration and verifies:
+
+- all five containers and their exact topology image references;
+- the architecture-specific EOS runtime identity (including the exact amd64
+  engineering build), k3s runtime, and pinned workload images;
+- two Ready nodes, exact MetalLB resources, one exact VIP, and two-per-node
+  ready web endpoints;
+- the native EOS /32 prefix-list, route-map attachments, BGP neighbors,
+  Established state, RIB prefix, and `.11`/`.12` FIB next-hops;
+- bounded external HTTP through the routed VIP.
+
+Under the supported fault, only the repaired Service policy, endpoint spread,
+and two-next-hop FIB assertions fail; BGP sessions and HTTP remain healthy.
 
 ## Challenge questions
 
-No answers provided — argue them from what you built.
-
-1. MetalLB advertises a node's **InternalIP** as the BGP next-hop. Trace
-   what breaks, end to end, if this lab's k3s nodes had kept their
-   containerlab mgmt IP as the node-ip instead of the rack IP — the session
-   might even come up. Where exactly do packets die, and what does that tell
-   you about why `--node-ip` is load-bearing here?
-2. You've seen `Cluster` (even, hides client IP, extra hop) versus `Local`
-   (client IP preserved, no extra hop, coupled to placement). Design the
-   pod scheduling that makes `Local` safe to run for a 3-replica service on
-   a 5-node cluster — and say what you give up to get it.
-3. This lab peers each node to the ToR with an explicit `neighbor`
-   statement. At 40 nodes that's 40 neighbor lines and every node addition
-   is a ToR config change. What BGP feature removes that toil, and what's
-   the security trade-off of turning it on?
-4. A LoadBalancer VIP is a /32 injected by BGP from inside the cluster. An
-   operator worries a compromised or buggy speaker could advertise
-   `0.0.0.0/0` or someone else's prefix and black-hole the rack. What are
-   your two independent controls — one on the ToR, one in MetalLB/k8s — to
-   bound what the cluster is allowed to originate?
-5. Compare this VIP mechanism with the one in `anycast-dns`: both put the
-   same /32 in the routing table from multiple hosts and let ECMP/anycast
-   spread load. What does MetalLB add that the anycast-dns watchdog doesn't,
-   and in which failure (a dead *pod* vs a dead *node* vs a dead *service*)
-   does each design converge faster?
+1. A platform grows to 60 worker nodes. Design a peer-scaling approach that
+   avoids 60 static neighbor statements while preventing an arbitrary rack
+   host from joining the ToR's BGP process.
+2. The service pool expands from one /32 to 32 addresses. Design the narrowest
+   maintainable inbound route policy, and explain how you would test that a
+   default route from a compromised speaker is rejected.
+3. A three-replica service must preserve client source IP across five nodes.
+   Choose a placement strategy and failure policy that keeps `Local` safe
+   during node drains and rolling upgrades.
+4. A VIP exists in the BGP RIB with two paths but only one path reaches the
+   FIB. Rank the EOS controls and path attributes you would inspect before
+   changing MetalLB.
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| ToR sessions stuck `Idle`/`Active`, never `Established` | MetalLB `BGPPeer` not applied, wrong `peerAddress`/ASN, or a speaker not running | `kubectl -n metallb-system get pods`; `kubectl -n metallb-system logs -l component=speaker \| grep -i bgp`; check the `BGPPeer` ASNs match the ToR |
-| Sessions `Established` but `0` prefixes and no VIP route | No `BGPAdvertisement`, or the service isn't `LoadBalancer`, or the pool is exhausted | `kubectl get svc` for an `EXTERNAL-IP`; ensure a `BGPAdvertisement` references the pool |
-| Service `EXTERNAL-IP` stuck `<pending>` | No `IPAddressPool`, pool exhausted, or the MetalLB controller is down | `kubectl -n metallb-system logs deploy/controller`; check the pool range |
-| VIP route present but only **one** next-hop | `maximum-paths` still 1 on the ToR, or only one node advertises (see next row) | `maximum-paths 4` under the ToR's `address-family ipv4 unicast` |
-| Only one node advertises under `externalTrafficPolicy: Local` | That's the design — a node with no local endpoint doesn't advertise | Spread the workload (both nodes need a pod), or use `Cluster` |
-| `wget` to the VIP hangs from the client | Client lacks a route to the VIP pool, or the ToR has no FIB entry | Client `ip route` must cover `198.51.100.0/24` via the ToR; check `show ip route <VIP>/32` on the ToR |
-| A node won't `Ready`, or the agent won't join | Slow image pulls, or the rack interface never got its IP | `./scripts/lab.sh cmd k8s-fabric k3s2 -- journalctl -u k3s-agent` is not available — read `docker logs clab-k8s-fabric-k3s2`; confirm eth1 has 10.1.0.12 |
+| Symptom | Likely cause | Focused fix |
+|---------|--------------|-------------|
+| Bootstrap reaches its bound | Registry pull, API readiness, or node join failed | Read the bounded diagnostics in `/var/log/bootstrap.log`; confirm both rack IPs and registry access before rerunning `/bootstrap.sh` |
+| EOS neighbors stay Active | Missing/wrong `BGPPeer`, peer address, or ASN | Compare the peer object to rack addressing and inspect both speaker pods |
+| Sessions establish but no VIP enters the BGP RIB | Missing advertisement, no LoadBalancer allocation, or inbound /32 policy mismatch | Trace pool → Service status → advertisement → EOS prefix-list in that order |
+| BGP RIB has two paths but the FIB has one | Native EOS multipath capacity is missing or one path is not equal | Inspect `maximum-paths`, both path attributes, then `show ip route` |
+| VIP route has one next-hop while both sessions are Established | One speaker withdrew the NLRI because service policy and endpoint locality differ | Inspect `externalTrafficPolicy` and ready endpoint node placement; repair placement or choose `Cluster` deliberately |
+| Client route exists but HTTP times out | Node return route, Service endpoints, or workload readiness failed | Verify the node route to `172.16.9.0/24`, EndpointSlices, and ready nginx pods |
 
-## Extensions
+## Cleanup
 
-- Replace the two explicit `neighbor` lines with a **dynamic listen range**
-  (`bgp listen range 10.1.0.0/24 peer-group RACK`) so new nodes peer with no
-  ToR change — challenge question 3 made real.
-- Add a `BGPAdvertisement` with `communities` and have the ToR match on the
-  community to, say, prefer one node or tag VIPs for export — the beginning
-  of real traffic policy for cluster services.
-- Give a specific service a pinned VIP with the `metallb.io/loadBalancerIPs`
-  annotation, and advertise it with a different pool/community than the
-  default range.
-- Bring up a second service and confirm each gets its own /32 and its own
-  ECMP set; then scale one service to a single replica under `Local` and
-  watch its VIP track that one pod around the cluster.
+Remove the lab with the safe k3s teardown path:
+
+```bash
+./scripts/lab.sh destroy k8s-fabric
+```

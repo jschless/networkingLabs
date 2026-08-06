@@ -112,7 +112,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
 | `black-core-tools:local` | `black-core-routing` | `docker build -t black-core-tools:local labs/black-core-routing/` |
 | `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `mtu-pmtud-troubleshooting`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` (multi-arch Alpine 3.20.10 base pinned by OCI index digest) |
-| `rancher/k3s:v1.30.6-k3s1` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1` (multi-arch; MetalLB + nginx also pull at deploy — needs internet) |
+| `rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`; the lab also needs `ceos:4.35.2F`, `ops-lab:local`, and the manifest-pinned MetalLB/nginx images |
 | `anycast-dns:local` | `anycast-dns` | `docker build -t anycast-dns:local labs/anycast-dns/` |
 | `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
 | `wireless-auth-control:local` | `wireless-auth-control-operations` | `docker build -t wireless-auth-control:local labs/wireless-auth-control-operations/` (pinned Debian 12.12 base; live wired EAPOL/RADIUS only) |
@@ -152,6 +152,12 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 Some labs also reference public registry images that `containerlab deploy` pulls on
 first use — no build step needed: `frrouting/frr:latest` (helper/bridge nodes in the
 DMVPN labs), and
+`rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`,
+`quay.io/metallb/controller:v0.14.8@sha256:93b83b39d06bbcb0aedc0eb750c9e43e3c46dc08a6f88400ed96105224d784ec`,
+`quay.io/metallb/speaker:v0.14.8@sha256:fd86bfc502601d6525739d411a0045e7085a4008a732be7e271c851800952142`,
+and
+`docker.io/library/nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10`
+(`k8s-fabric`), plus
 `netboxcommunity/netbox:v4.1.11@sha256:d1260201d775b3f1d0b19e425bd19facc1e907e7153a8247d04d996037969e53`,
 `postgres:15@sha256:f30e3de0ac9cc938dac627ef2231099867c694b5f949fadb924c8c977428c399`,
 and

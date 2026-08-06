@@ -1,0 +1,24 @@
+hostname tor
+!
+username admin privilege 15 role network-admin secret admin
+!
+management api http-commands
+   protocol http
+   no shutdown
+!
+interface Ethernet1
+   no switchport
+   ip address 10.1.0.1/24
+   no shutdown
+!
+interface Ethernet2
+   no switchport
+   ip address 172.16.9.1/24
+   no shutdown
+!
+interface Loopback0
+   ip address 10.0.0.254/32
+!
+ip routing
+!
+end
