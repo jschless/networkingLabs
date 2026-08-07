@@ -2,11 +2,15 @@
 # k3s2 entrypoint — the agent (worker). Same eth1-first ordering as k3s1,
 # then joins the server at 10.1.0.11 with the shared token. k3s retries the
 # join until the server is up, so node boot order doesn't matter.
-set -e
+set -eu
 
-i=0
+deadline=$(( $(date +%s) + 90 ))
 while ! ip link show eth1 >/dev/null 2>&1; do
-    i=$((i + 1)); [ "$i" -gt 60 ] && break
+    if [ "$(date +%s)" -ge "$deadline" ]; then
+        echo "[k3s2] eth1 did not appear within 90 seconds" >&2
+        ip -brief link >&2 || true
+        exit 1
+    fi
     sleep 1
 done
 ip addr add 10.1.0.12/24 dev eth1 2>/dev/null || true

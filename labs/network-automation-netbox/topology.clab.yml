@@ -32,7 +32,7 @@ topology:
 
     postgres:
       kind: linux
-      image: postgres:15
+      image: postgres:15@sha256:f30e3de0ac9cc938dac627ef2231099867c694b5f949fadb924c8c977428c399
       mgmt-ipv4: 172.31.40.21
       env:
         POSTGRES_DB: netbox
@@ -41,12 +41,12 @@ topology:
 
     redis:
       kind: linux
-      image: redis:7-alpine
+      image: redis:7-alpine@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065
       mgmt-ipv4: 172.31.40.22
 
     netbox:
       kind: linux
-      image: netboxcommunity/netbox:v4.1.11
+      image: netboxcommunity/netbox:v4.1.11@sha256:d1260201d775b3f1d0b19e425bd19facc1e907e7153a8247d04d996037969e53
       mgmt-ipv4: 172.31.40.23
       ports:
         - 127.0.0.1:8001:8080

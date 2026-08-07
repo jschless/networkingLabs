@@ -107,20 +107,20 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `enterprise-dual-stack-tools:local` | `enterprise-dual-stack-capstone` Linux services/endpoints | `docker build -t enterprise-dual-stack-tools:local labs/enterprise-dual-stack-capstone/` |
 | `advanced-security-tools:1.0.0` | `advanced-security-architecture` endpoints, WAF/PEP, DNS/proxy/logs | `docker build -t advanced-security-tools:1.0.0 labs/advanced-security-architecture/` (pinned Debian 12.12 digest; pinned nginx/ModSecurity CRS, dnsmasq, Squid, nftables, and rsyslog packages) |
 | `advanced-security-fw:1.0.0` | `advanced-security-architecture` stateful gateway and inline IDS/IPS | `docker build -f labs/advanced-security-architecture/Dockerfile.fw -t advanced-security-fw:1.0.0 labs/advanced-security-architecture/` (pinned Suricata 7.0.10 image digest; nftables NFQUEUE) |
-| `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | one-time build from a free VyOS ISO — see [VyOS platform notes](platforms/vyos.md) |
+| `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, `mtu-pmtud-troubleshooting`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | one-time build from a free VyOS ISO — see [VyOS platform notes](platforms/vyos.md) |
 | `ipsec-lab:local` | `ipsec-basics`, `flexvpn-basics` | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
 | `black-core-tools:local` | `black-core-routing` | `docker build -t black-core-tools:local labs/black-core-routing/` |
-| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` |
-| `rancher/k3s:v1.30.6-k3s1` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1` (multi-arch; MetalLB + nginx also pull at deploy — needs internet) |
-| `anycast-dns:local` | `anycast-dns` | `docker build -t anycast-dns:local labs/anycast-dns/` |
+| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `mtu-pmtud-troubleshooting`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` (multi-arch Alpine 3.20.10 base pinned by OCI index digest) |
+| `rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`; the lab also needs `ceos:4.35.2F`, `ops-lab:local`, and the manifest-pinned MetalLB/nginx images |
+| `anycast-dns:local` | `anycast-dns` FRR resolver hosts | `docker build -t anycast-dns:local labs/anycast-dns/` (pinned Alpine 3.16-compatible bash, bind-tools, and dnsmasq packages; the lab also needs `ceos:4.35.2F`, `frr-lab:local`, and `ops-lab:local`) |
 | `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
 | `wireless-auth-control:local` | `wireless-auth-control-operations` | `docker build -t wireless-auth-control:local labs/wireless-auth-control-operations/` (pinned Debian 12.12 base; live wired EAPOL/RADIUS only) |
 | `carrier-ethernet-tools:1.0.0` | `carrier-ethernet-handoff`, `troubleshooting-range-dci-edge` | `docker build -t carrier-ethernet-tools:1.0.0 labs/carrier-ethernet-handoff/` (pinned Debian 12.12 base; OVS userspace QinQ and Linux test tools) |
 | `zt-access-tools:local`, `zt-keycloak:local` | `zero-trust-secure-access` | `docker build -t zt-access-tools:local labs/zero-trust-secure-access/` and `docker build -f labs/zero-trust-secure-access/Dockerfile.keycloak -t zt-keycloak:local labs/zero-trust-secure-access/` (pinned Python 3.12.7, Keycloak 26.0.7, and BusyBox base images) |
 | `nac-practice:local` | `dot1x-ceos-practice` | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
 | `nac-practice-tacacs:local` | `dot1x-ceos-practice` | `docker build -f labs/dot1x-ceos-practice/Dockerfile.tacacs -t nac-practice-tacacs:local labs/dot1x-ceos-practice/` |
-| `assurance-lab:local` | `network-assurance` | `docker build -t assurance-lab:local labs/network-assurance/` |
+| `assurance-lab:local` | `network-assurance` | Build `ops-lab:local` and `assurance-lab:local`, then prepare `ceos:4.35.2F` using the [cEOS platform notes](platforms/ceos.md) |
 | `qos-lab:local` | `qos-enterprise` | `docker build -t qos-lab:local labs/qos-enterprise/` |
 | `telemetry-lab:local` | `telemetry-monitoring-hybrid` | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
 | `sdwan-lab:local` | `sdwan-concepts` | `docker build -t sdwan-lab:local labs/sdwan-concepts/` |
@@ -130,7 +130,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `lb-lab:local` | `load-balancer-basics` | `docker build -t lb-lab:local labs/load-balancer-basics/` |
 | `global-delivery:local` | `global-application-delivery` | `docker build -t global-delivery:local labs/global-application-delivery/` (pinned Alpine 3.22.1 and CoreDNS 1.12.2 bases; HAProxy/nginx/dnsmasq packages pinned) |
 | `service-ha:local` | `service-ha` | `docker build -t service-ha:local labs/service-ha/` |
-| `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` |
+| `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` (digest-pinned Python 3.12.13; pinned Ansible, requests, pynetbox, Jinja2, and PyYAML) |
 | `opnsense-tools:local` | `opnsense-ngfw-basics`, `opnsense-ipsec-nat-t` | `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/` |
 | `enterprise-services-infra:local` | `enterprise-services-infra` | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |
 | `enterprise-voice-tools:1.0.0` | `enterprise-voice-sip-qos` | `docker build -t enterprise-voice-tools:1.0.0 labs/enterprise-voice-sip-qos/` (digest-pinned Ubuntu 24.04 base; pinned Asterisk 20.6.0 and SIPp 3.7.7) |
@@ -151,7 +151,17 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 
 Some labs also reference public registry images that `containerlab deploy` pulls on
 first use — no build step needed: `frrouting/frr:latest` (helper/bridge nodes in the
-DMVPN labs), and `netboxcommunity/netbox:v4.1.11` + `postgres:15` + `redis:7-alpine`
+DMVPN labs), and
+`rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`,
+`quay.io/metallb/controller:v0.14.8@sha256:93b83b39d06bbcb0aedc0eb750c9e43e3c46dc08a6f88400ed96105224d784ec`,
+`quay.io/metallb/speaker:v0.14.8@sha256:fd86bfc502601d6525739d411a0045e7085a4008a732be7e271c851800952142`,
+and
+`docker.io/library/nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10`
+(`k8s-fabric`), plus
+`netboxcommunity/netbox:v4.1.11@sha256:d1260201d775b3f1d0b19e425bd19facc1e907e7153a8247d04d996037969e53`,
+`postgres:15@sha256:f30e3de0ac9cc938dac627ef2231099867c694b5f949fadb924c8c977428c399`,
+and
+`redis:7-alpine@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065`
 (`network-automation-netbox`).
 
 > **arm64 note:** `nac-practice-tacacs:local` and `enterprise-tacacs:local` build from

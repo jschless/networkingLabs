@@ -12,7 +12,7 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 | [dmvpn-phase3](dmvpn-phase3.md) | Practice | VyOS | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp |
 | [dmvpn-phase3-ipsec-capstone](dmvpn-phase3-ipsec-capstone.md) | Capstone | VyOS | DMVPN Phase 3 with in-lab PKI and certificate-based IPsec |
 | [flexvpn-basics](flexvpn-basics.md) | Practice | strongSwan | IKEv2 FlexVPN, Virtual Tunnel Interfaces |
-| [wireguard](wireguard.md) | Practice | WireGuard | WireGuard VPN, key pairs, hub-and-spoke topology |
+| [wireguard](wireguard.md) | Build | Linux WireGuard | Public-key identity, cryptokey routing, encrypted capture, hub forwarding |
 | [opnsense-ipsec-nat-t](opnsense-ipsec-nat-t.md) | Practice | OPNsense | IKEv2 IPsec through NAT, UDP/4500, failure triage |
 | [opnsense-remote-access-concentrator](opnsense-remote-access-concentrator.md) | Practice | OPNsense + WireGuard | Remote-access concentration, split tunnel, per-peer policy |
 | [vrf-lite](vrf-lite.md) | Practice | cEOS | VRF-Lite, per-VRF routing tables, route leaking |

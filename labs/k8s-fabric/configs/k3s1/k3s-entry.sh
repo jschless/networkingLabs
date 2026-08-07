@@ -6,11 +6,15 @@
 # as --node-ip. That ordering matters: MetalLB advertises the node's
 # InternalIP as the BGP next-hop, so the node IP must be the rack-facing
 # address, not the mgmt (eth0) address containerlab assigns.
-set -e
+set -eu
 
-i=0
+deadline=$(( $(date +%s) + 90 ))
 while ! ip link show eth1 >/dev/null 2>&1; do
-    i=$((i + 1)); [ "$i" -gt 60 ] && break
+    if [ "$(date +%s)" -ge "$deadline" ]; then
+        echo "[k3s1] eth1 did not appear within 90 seconds" >&2
+        ip -brief link >&2 || true
+        exit 1
+    fi
     sleep 1
 done
 ip addr add 10.1.0.11/24 dev eth1 2>/dev/null || true

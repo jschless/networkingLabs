@@ -1,0 +1,177 @@
+# Lab Remediation Status
+
+This ledger is the durable orchestration record for the networking-lab curriculum
+remediation. It was initialized from the filesystem rather than from a hand-maintained
+catalog.
+
+- Branch: `codex/networking-lab-remediation`
+- Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
+- Inventory date: 2026-07-31
+- Topology-backed labs: 143
+- Completed labs: 10 of 143
+- Remaining pending labs: 133
+- Completed type mix: 6 Build, 2 Guided Debug, 1 Reference / Observation,
+  and 1 Capstone
+- Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
+  and cleaned up at a time.
+- Global validation limitation: the requested installed `lab-tutor` skill is not
+  available in this Codex session. Student-flow review therefore uses
+  `labs/AUTHORING.md` as the fallback contract. No ledger entry may claim
+  `lab-tutor` validation unless that skill later becomes available and is actually run.
+
+## Status meanings
+
+- `pending`: inventoried but not yet completed.
+- `compliant`: inspected and no remediation was required.
+- `changed`: remediated and committed.
+- `blocked-external`: safe static work is complete, but an external dependency prevented
+  required live validation.
+- `intentionally-exempt`: excluded from the active workflow for a documented reason.
+
+## Per-lab ledger
+
+| Lab | Status | Lab type | Instructional findings | Platform decision | FRR/Linux exception | Validation performed | Peak memory | Commit SHA | Remaining limitation |
+|---|---|---|---|---|---|---|---|---|---|
+| aaa-ops-troubleshooting | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| acl-basics | changed | Build | Duplicated management-plane Linux filtering; exposed iptables answer; missing task anatomy, topology tables, Break-It, mechanism checks, and troubleshooting | cEOS 4.35.2F for critical transit router; ops-lab Linux for incidental clients/server; live multi-node probe proved forwarding ACL, per-entry counters, placement fault, and repair | Linux retained only for incidental traffic generators/service endpoint; no critical-role exception | Clean final walk; baseline, initial policy, counters, wrong-interface break/repair, final exception; 31/31 checker twice; 13-finding negative test; repository gates; AUTHORING fallback review | About 1.14 GiB sampled full-topology high | 60ea8eab0362f5eda2fca6c03f6818bbb3b5d5c9 | lab-tutor and vulnerability scanner unavailable; IPv6, fragments, scale, and physical ASIC behavior not tested |
+| advanced-security-architecture | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| anycast-dns | changed | Build | Final fault was exposed and non-opaque; task anatomy was incomplete with answer leakage; FRR filled the critical site-router roles; lifecycle waits and daemon startup were unbounded and duplicate-prone; checker mutated state and covered only 17 weak assertions; failover was falsely claimed below 2 seconds; host outbound policy leaked seven routes despite an intended two | Native cEOS under the canonical tag for critical r1/r2: amd64 4.35.2F and arm64 cEOSarm 4.36.1F; FRR retained on dns1/dns2 because routing-on-host is intrinsic to the objective; ops-lab retained for incidental clients | Linux/FRR is critical only on the service hosts as the intrinsic routing-on-host mechanism; no site-router exception | Clean final amd64 cEOS build, deployment, and full documented walk; exact two-prefix host exports with three-layer policy, two VIP paths, local FIB selection, anycast and unique-address queries; solved checker 52/52; normal failover 2.657 s and recovery 0.878 s with no peer drops; break twice produced exactly 47/5 while routing remained green; solution twice restored 52/52; second clean redeploy reached 52/52; repository gates; AUTHORING fallback review and same-reviewer follow-ups | About 2.50 GiB sampled total | 28a4d47ea6f702816a4ca293f104b5e98542b8fa | lab-tutor unavailable; arm64 mapping not live-validated; licensed cEOS and local image build required; physical/provider convergence not tested |
+| automation-fundamentals | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bfd-bgp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bfd-ospf | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bgp-aggregation | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bgp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bgp-communities | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bgp-filtering | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bgp-labeled-unicast | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bgp-path-selection | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bgp-prefix-security | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bgp-rpki | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| black-core-routing | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| campus-l2-hardening | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| carrier-ethernet-handoff | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| cloud-hybrid-networking | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| copp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dc-storage-networking | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dci-evpn-multisite | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-bgp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-bgp-filtering | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-bgp-path-selection | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-dmvpn-phase1 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-eigrp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-gre-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-isis-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-mpls-sr-isis-bgp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-ospf-auth | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-ospf-bgp-redist | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-ospf-multiarea | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-ospf-nssa | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-spine-leaf | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-vrf-lite | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-vxlan-evpn | changed | Guided Debug | Cause exposed up front; all-FRR platform/catalog mismatch; missing staged evidence and hidden diagnosis; unrelated loopback-OSPF and EVPN-RR defects; weak checker; no supported fault lifecycle or probe/validation records | Native cEOS under the canonical tag for critical spine, vtep1, and vtep2; ops-lab Linux only for incidental host1/host2 | Linux retained only for incidental endpoints; no critical-role exception | Legacy causal probe; clean amd64 cEOS deployment with OSPF, Lo0 reachability, and EVPN healthy; solved checker 44/44; break twice produced exactly 37/7 with control plane green and one-way UDP/4789 from .22 to .1 on VNI 100; solution twice restored 44/44; full repository gates; AUTHORING fallback and same-reviewer closure; clean destroy | About 3.73 GiB sampled total: spine 1.209, vtep1 1.255, vtep2 1.269 GiB | 40b959249bc898187f494dea86b90c2ba24d05ab | lab-tutor unavailable; arm64 not live-tested; licensed local cEOS required; memory is point-in-time; physical ASIC, scale, IPv6, and multihoming not tested |
+| dhcp-dns-troubleshooting | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dmvpn-ceos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dmvpn-phase1 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dmvpn-phase2 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dmvpn-phase3 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dmvpn-phase3-ipsec-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dot1x-ceos-practice | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dot1x-nac | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| eigrp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| eigrp-stub | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| eigrp-variance | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-access-security | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-campus | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-campus-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-collapsed-core | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-collapsed-core-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-dmz | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-dmz-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-dual-stack-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-edge-nat-firewall | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-grand-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-multicast | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-routed-access | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-routed-access-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-services-infra | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-voice-sip-qos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-wan-edge | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-wan-edge-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| enterprise-wireless-architecture | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| evpn-border-ceos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| flexvpn-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| global-application-delivery | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| graceful-restart | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| gre-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| gre-ipsec | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ha-network-design-ceos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| internet-peering-ixp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ip-sla-tracking | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ipsec-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ipv6-access-services | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ipv6-bgp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ipv6-ospf3 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ipv6-transition | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| isis-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| isis-multiarea | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| k8s-fabric | changed | Build | Duplicated ECMP tasks, answer leakage, missing solution anatomy and opaque Break-It, unbounded asynchronous bootstrap, weak 11-check checker, unpinned runtime images, and FRR used for the critical ToR | Native cEOS canonical tag for the critical ToR (amd64 4.35.2F / arm64 cEOSarm 4.36.1F); k3s retained as intrinsic Linux; ops-lab used only for the incidental rack bridge and client | Linux retained only for intrinsic Kubernetes and incidental endpoints/L2; no critical-role exception | Clean final amd64 cEOS task walk; exact VIP, two BGP paths, FIB ECMP, and HTTP; 31/31 solved; break twice produced exact 28/3 with Local, all pods on k3s1, and one `.11` path while BGP and HTTP stayed healthy with source `.10`; solution twice then 31/31; static repository gates; AUTHORING fallback review and same-reviewer follow-up | About 1.94 GiB sampled total | c9d23d98fb0b4d6fb4a7eb968a5610fe91fd7324 | lab-tutor unavailable; arm64 mapping statically reviewed but not live-validated; cold registry access required for absent pinned images |
+| lacp-etherchannel | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| load-balancer-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| macsec-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| management-access-control | changed | Build | Exposed iptables transcription; missing task anatomy, topology tables, mechanism checks, and break/fix; plaintext service mislabeled as HTTPS | cEOS 4.35.2F for critical device1; ops-lab Linux for incidental clients; live probe proved system control-plane ACL, SSH, HTTPS, and counters | Linux retained only for incidental traffic generators; no critical-role exception | Two clean deploys; full README walk; 24/24 checker; rule-order and interface-attachment negative tests; repository gates; AUTHORING fallback student-flow review | 1.19 GiB sampled high; full three-node probe about 1.162 GiB | 2da1997a6570a2f5533498d030a77bcef01a6d2f | lab-tutor and vulnerability scanner unavailable; authentication transactions intentionally out of scope |
+| mpls-l2vpn | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| mpls-ldp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| mpls-sr-blank | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| mpls-sr-isis-bgp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| mpls-sr-srlinux | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| mtu-pmtud-troubleshooting | changed | Guided Debug | Exposed underlay/tunnel-MTU cause and Linux repair; all roles used FRR/Linux despite no routing daemon; false unconnected-UDP EMSGSIZE claim; no actual feedback black hole; missing task anatomy/tables/hidden solution/Break-It; three-assertion checker | VyOS on both critical GRE edges; ops-lab Linux for incidental hosts/provider; live five-node probe proved native GRE, exact MTU semantics, ICMP feedback, TCP recovery, and one-sided enforcement | Linux retained only for incidental endpoints and provider fault scaffolding; no critical-role exception | Two clean deploys; exact 1348/1349 captures and counter delta; native repair and ICMP MTU 1376; 79/79 checker twice; idempotent one-sided break rejected 75/79 and repaired to 79/79; repository gates; independent reviewer closed with no findings; AUTHORING fallback review | About 538 MiB sampled final solved state; disposable probe about 526 MiB | 8f04ebd3868c7c393e329846333ae167bfada7a6 | lab-tutor unavailable; tested VyOS image has documented missing-GRUB health/config warning; IPv6, GRE options, IPsec, scale, and hardware forwarding not tested |
+| network-assurance | changed | Reference / Observation | Misclassified as Practice; exposed all commands; missing task anatomy, link table, predictions, bounded captures, mechanism checks, hidden blind spot, repair, troubleshooting, and cleanup; unsupported OSPF-MIB, FRR syslog, bidirectional mirror, and deterministic flow claims; minimal checker | cEOS 4.35.2F for the critical routed telemetry source with native SNMPv2c/v3, syslog, and bidirectional SPAN; assurance-lab Linux management and non-inline sensor provide genuine NetFlow v9 after live cEOS sampled-flow probes produced no packet records and VyOS flow export failed against the host kernel | Linux retained for incidental endpoints and telemetry service roles, not a critical network-device role; documented external sensor is required because locally available NOS flow export was nonfunctional | Full five-task README walk; exact counter, SPAN, flow, interface-transition, syslog, and SNMP security evidence; 60/60 checker twice; flow-only break passed 50/60 with all other planes healthy; idempotent repair; interrupted-capture cleanup; repository gates; same independent reviewer closed with no findings; AUTHORING fallback review | About 1.15 GiB sampled final solved state | 58bfdaaeee494527e457a5074cc9e20012bd6d43 | lab-tutor unavailable; validation is local to a cEOS engineering build and one host kernel; native cEOS flow export and VyOS flow module unavailable; SPAN and flow share a failure domain; memory is point-in-time; IPv6, scale, reliable UDP, production security, and physical hardware not tested |
+| network-automation-netbox | changed | Capstone | Pre-solved learner service; ASN encoded through tags/asset tags; cable-insensitive renderer lacked complete-set fail-closed behavior; ambiguous intended-versus-observed ownership; salted bootstrap username defeated idempotence; unbounded readiness; missing causal capstone workflow and learner-authored rationale | Exact cEOS 4.35.2F on all four critical fabric roles; digest-pinned NetBox, Postgres, and Redis; digest/version-pinned instructional controller | Linux is used only for the instructional controller and NetBox plus incidental database/cache services; no critical-role exception | Cold bootstrap with service withheld; seed and import twice with exact counts; stable secret-free native render; deploy/precheck idempotence; serial-only adoption, drift detection, and NetBox-wins restore; missing-cable and bad-/31 fail-closed tests; reviewer role/platform/template/cable tamper failed exactly and preserved candidates; solved 62/0, broken 58/4, repaired 62/0; static/docs gates; independent reviewer cleared after AUTHORING fallback review | About 5.6 GiB sampled full-topology high | 4fd0f5124323412a9ef76577489a420f3cee3b57 | lab-tutor unavailable; no physical BLUE client/access link or ASIC forwarding validation; disposable HTTP and local credentials are non-production |
+| network-gitops-change-pipeline | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| opnsense-ipsec-nat-t | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| opnsense-ngfw-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| opnsense-remote-access-concentrator | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| orchestrated-wan-overlay | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ospf-auth | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ospf-bgp-redist | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ospf-default-route | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ospf-multiarea | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ospf-nssa | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ospf-summarization | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ospf-virtual-link | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ot-zone-conduit | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| packet-analysis-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| qos-enterprise | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| redistribution-tags | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| route-maps-pbr | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| sdwan-concepts | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| service-ha | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-adversary-simulation | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-arkime-pcap | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-dmz-foundation | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-elk-ingest | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-ir-case-management | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-kibana-hvt-dashboard | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-suricata-ids | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-threat-intel-misp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-yara-file-pipeline | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| soc-zeek-analysis | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| spine-leaf | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| stp-operations | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| suzieq-network-observability | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| troubleshooting-range | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| troubleshooting-range-advanced | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| troubleshooting-range-campus | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| troubleshooting-range-dci-edge | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| troubleshooting-range-hybrid-access | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| two-routers | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| urpf-antispoofing | changed | Build | Critical router used unproven FRR/Linux uRPF, exposed exact answers, conflated spoofed-ping failure with forwarding drops, and lacked the required five-task anatomy, robust checker, and opaque break/fix | VyOS 2026.03.15 rolling for the critical edge after cEOS 4.35.2F reported uRPF unsupported on this container platform; ops-lab Linux for incidental endpoints; live probes proved strict/loose/default-route behavior and counters | Linux retained only for incidental traffic generation/capture; no critical-role exception | Clean full task walk; immediate disabled baseline; strict/loose/asymmetry/default comparisons; 30/30 checker twice; direct-kernel-route and four-finding break negatives; repair; repository gates; AUTHORING fallback and independent review | About 399.3 MiB sampled probe high; final target about 253 MiB | 6a0a028d4cf743e86637cb852b8d8eacba15e9b1 | lab-tutor unavailable; IPv6, ECMP, policy routing, scale, fragments, and physical forwarding hardware not tested; local VyOS image due for review by 2026-08-31 |
+| vlan-trunks-switchport-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| vrf-lite | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| vrrp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| vxlan-evpn | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| vxlan-evpn-srlinux | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| wireguard | changed | Build | External host bridge made deploy nonportable; exposed placeholder configs were not directly executable or key-safe; incomplete task anatomy and opaque lifecycle; weak checker did not prove identity/config continuity, exact peer ownership, forwarding, or encrypted evidence | Purpose-built `wireguard-lab:local` Linux for hub/gw-a/gw-b because the native kernel WireGuard plus `wg`/`wg-quick` model is the objective; incidental `ops-lab:local` internal WAN bridge; no FRR or router-NOS claim | Documented intrinsic critical-role Linux exception for all three learned WireGuard roles; Linux is the native mechanism under study, while the WAN container is incidental | Fresh executable README solution with protected keys; 29/29 healthy; break twice produced exact 25/4 while WAN and authenticated handshakes remained green; solution twice restored 29/29; outer-only UDP/51820 capture and exact config-empty 28/1 negative; clean repeat deploys/destroys with no leaked interfaces or artifacts; repository gates; AUTHORING fallback review closed after two fix/follow-up rounds with no findings | About 3.927 MiB point-in-time total | 51eb582 | lab-tutor unavailable; amd64 only; NAT, IPv6, scale, roaming, long-duration rekey, and physical hardware not live-tested; memory is a point sample; next image review 2026-09-06 |
+| wireless-auth-control-operations | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| zero-trust-secure-access | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ztp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |

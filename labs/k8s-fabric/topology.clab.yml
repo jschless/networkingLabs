@@ -1,46 +1,19 @@
 name: k8s-fabric
 
-# Kubernetes ↔ BGP fabric integration practice lab
-#
-# A two-node k3s cluster hangs off a single Top-of-Rack router the way a
-# rack of servers actually does. MetalLB (BGP mode) on each node peers to
-# the ToR and advertises LoadBalancer service VIPs as /32s; because both
-# nodes advertise the same VIP, the ToR installs ECMP across the rack. You
-# build the ToR's BGP, MetalLB's BGP, expose a service, and watch a
-# Kubernetes object become a route.
-#
-#            client 172.16.9.10
-#                   │ 172.16.9.0/24
-#                 [tor]  FRR — AS 65000, ToR/default gw
-#                   │ eth1 10.1.0.1/24
-#               [racksw]  ── plain L2 "rack" segment 10.1.0.0/24
-#                 /        \
-#           [k3s1]         [k3s2]
-#        server .11        agent .12      ← MetalLB speakers, AS 65001
-#        node-ip 10.1.0.11 / 10.1.0.12    (advertise LoadBalancer /32s)
-#
-# k3s runs as PID 1 in each node; the entrypoint waits for containerlab to
-# wire eth1, addresses it on the rack subnet, then execs k3s with that as
-# its --node-ip (so MetalLB's BGP next-hop is the rack IP, not mgmt).
-# Cluster join is declarative: a fixed --token, agent --server the .11 IP.
-#
-# Needs internet at deploy: k3s pulls MetalLB (quay.io) and nginx images.
+# Kubernetes LoadBalancer object -> MetalLB BGP /32 -> native EOS RIB/FIB.
+# The ToR boots with addressing and management access only. The learner owns
+# every BGP and route-policy statement that joins the cluster to the fabric.
 
 topology:
   nodes:
     tor:
-      kind: linux
-      image: frr-lab:local
-      binds:
-        - configs/tor/daemons:/etc/frr/daemons
-        - configs/tor/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/tor/frr.conf:/etc/frr/frr.conf
-      exec:
-        - vtysh -b
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/tor/startup-config
 
     racksw:
       kind: linux
-      image: frr-lab:local
+      image: ops-lab:local
       binds:
         - configs/racksw/setup.sh:/setup.sh:ro
       exec:
@@ -48,12 +21,13 @@ topology:
 
     k3s1:
       kind: linux
-      image: rancher/k3s:v1.30.6-k3s1
+      image: rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf
       # k3s server; entrypoint addresses eth1 first, then execs k3s
       entrypoint: /k3s-entry.sh
       binds:
         - configs/k3s1/k3s-entry.sh:/k3s-entry.sh:ro
         - configs/k3s1/bootstrap.sh:/bootstrap.sh:ro
+        - configs/k3s1/scenario-state.sh:/scenario-state.sh:ro
         - configs/manifests:/manifests:ro
       exec:
         # Install MetalLB + the sample workload once the cluster is up
@@ -62,7 +36,7 @@ topology:
 
     k3s2:
       kind: linux
-      image: rancher/k3s:v1.30.6-k3s1
+      image: rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf
       # k3s agent; joins https://10.1.0.11:6443 with the shared token
       entrypoint: /k3s-entry.sh
       binds:

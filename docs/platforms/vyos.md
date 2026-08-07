@@ -70,6 +70,8 @@ This repository uses `vyos:local` for:
 - `dmvpn-phase3`
 - `dmvpn-phase3-ipsec-capstone`
 - `debug-dmvpn-phase1`
+- `urpf-antispoofing`
+- `mtu-pmtud-troubleshooting`
 
 ## Access Model
 
@@ -100,3 +102,9 @@ run show ip nhrp
 ## Current Image Quirk
 
 The current local image can report an unhealthy container state because of a missing `/boot/grub/grub.cfg` inside the container filesystem. That does not prevent the DMVPN labs from booting or operating, but the health status is not yet clean.
+
+On the tested rolling image, the same failed system-option reset can make
+`configure` print a warning that the boot configuration had an error. Confirm
+the intended state with `show configuration commands` and operational `show`
+or Linux `ip` commands; native commits and `save` still work in these labs.
+Do not assume an identically worded warning is harmless on an untested image.

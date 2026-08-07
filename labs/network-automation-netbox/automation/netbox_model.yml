@@ -40,6 +40,14 @@ tags:
   - fabric
   - managed
 
+custom_field:
+  name: local_asn
+  label: Local ASN
+  description: Automation-owned BGP autonomous system number
+  type: integer
+  object_types:
+    - dcim.device
+
 config_template:
   name: eos-fabric-base
   description: Native NetBox config template for the lab fabric
@@ -53,31 +61,12 @@ config_contexts:
       sites:
         - lab
     data:
-      automation:
-        admin_username: admin
-        admin_secret: admin
-        name_servers:
-          - 1.1.1.1
-        ntp_servers:
-          - time.google.com
       bgp:
         maximum_paths: 2
-
-vrfs:
-  - name: BLUE
-    rd: "65111:10"
-  - name: GREEN
-    rd: "65112:20"
 
 vlan_group:
   name: campus
   slug: campus
-
-vlans:
-  - vid: 10
-    name: USERS
-  - vid: 20
-    name: SERVERS
 
 prefixes:
   - prefix: 172.31.40.0/24
@@ -92,86 +81,85 @@ prefixes:
     description: spine2-leaf1
   - prefix: 10.0.0.6/31
     description: spine2-leaf2
-  - prefix: 10.10.10.0/24
-    description: BLUE users
-    vrf: BLUE
-  - prefix: 10.20.20.0/24
-    description: GREEN servers
-    vrf: GREEN
+
+service_contract:
+  name: BLUE
+  rd: "65111:10"
+  vlan:
+    vid: 10
+    name: BLUE-USERS
+  prefix: 10.10.10.0/24
+  leaves:
+    - device: leaf1
+      access_interface: Ethernet3
+      access_description: BLUE user access
+      svi: Vlan10
+      svi_description: BLUE gateway
+      address: 10.10.10.1/24
+    - device: leaf2
+      access_interface: Ethernet3
+      access_description: BLUE user access
+      svi: Vlan10
+      svi_description: BLUE gateway
+      address: 10.10.10.2/24
 
 devices:
   - name: spine1
     role: spine
     rack: rack-a
     position: 1
-    asn: 65100
+    local_asn: 65100
     mgmt_ip: 172.31.40.11/24
     loopback: 10.255.0.11/32
     interfaces:
       - name: Ethernet1
         address: 10.0.0.0/31
+        mtu: 1500
       - name: Ethernet2
         address: 10.0.0.2/31
+        mtu: 1500
   - name: spine2
     role: spine
     rack: rack-a
     position: 2
-    asn: 65101
+    local_asn: 65101
     mgmt_ip: 172.31.40.12/24
     loopback: 10.255.0.12/32
     interfaces:
       - name: Ethernet1
         address: 10.0.0.4/31
+        mtu: 1500
       - name: Ethernet2
         address: 10.0.0.6/31
+        mtu: 1500
   - name: leaf1
     role: leaf
     rack: rack-b
     position: 1
-    asn: 65111
+    local_asn: 65111
     mgmt_ip: 172.31.40.13/24
     loopback: 10.255.0.13/32
     interfaces:
       - name: Ethernet1
         address: 10.0.0.1/31
+        mtu: 1500
       - name: Ethernet2
         address: 10.0.0.5/31
-      - name: Ethernet3
-        mode: access
-        vlan: 10
-      - name: Ethernet4
-        mode: access
-        vlan: 20
-      - name: Vlan10
-        address: 10.10.10.1/24
-        vrf: BLUE
-      - name: Vlan20
-        address: 10.20.20.1/24
-        vrf: GREEN
+        mtu: 1500
   - name: leaf2
     role: leaf
     rack: rack-b
     position: 2
-    asn: 65112
+    local_asn: 65112
     mgmt_ip: 172.31.40.14/24
     loopback: 10.255.0.14/32
     interfaces:
       - name: Ethernet1
         address: 10.0.0.3/31
+        mtu: 1500
       - name: Ethernet2
         address: 10.0.0.7/31
-      - name: Ethernet3
-        mode: access
-        vlan: 10
-      - name: Ethernet4
-        mode: access
-        vlan: 20
-      - name: Vlan10
-        address: 10.10.10.2/24
-        vrf: BLUE
-      - name: Vlan20
-        address: 10.20.20.2/24
-        vrf: GREEN
+        mtu: 1500
 
 cables:
   - a_device: spine1

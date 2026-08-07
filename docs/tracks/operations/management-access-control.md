@@ -2,11 +2,14 @@
 title: management-access-control
 ---
 
-!!! tip "Practice Lab"
-    Restrict SSH and UI access by source subnet and interface, verify with counters
+!!! tip "Build Lab"
+    Build and verify source-based SSH and HTTPS eAPI protection on the cEOS
+    system control plane, then diagnose a management lockout.
 
-!!! note "Image"
-    `ops-lab:local` — `docker build -t ops-lab:local images/ops-lab/`
+!!! note "Images — mixed cEOS/Linux"
+    `ceos:4.35.2F` for `device1` plus `ops-lab:local` for the two incidental
+    Linux traffic generators. Import cEOS and build the Linux image exactly as
+    shown in the lab prerequisites.
 
 {%
   include-markdown "../../../labs/management-access-control/README.md"

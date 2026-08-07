@@ -1,437 +1,482 @@
-# uRPF Anti-Spoofing Lab
+# Unicast RPF Anti-Spoofing — Practice Lab
 
-Unicast Reverse Path Forwarding (uRPF) is a router feature that drops packets with source IP addresses that fail a reverse-path lookup. It is one of the primary tools for mitigating IP spoofing attacks at network edges.
+Build source-address validation at a routed trust boundary with VyOS. You
+will use packet capture and kernel rule counters to distinguish strict and
+loose unicast Reverse Path Forwarding (uRPF), expose the risk of a default
+route in loose mode, and diagnose a deliberately broken reverse path. The
+central question is not whether a spoofed ping gets a reply, but whether the
+edge forwards the spoofed request at all.
 
-## Background
-
-### Why IP Spoofing Matters
-
-An attacker can craft packets with a forged (spoofed) source IP address. Without source validation at the network edge, these packets traverse the network normally. This enables:
-
-- **DDoS amplification attacks** — send a small request with a victim's IP as source; large responses flood the victim
-- **Blind TCP injection** — forge source IP to hijack sessions
-- **Traceback evasion** — hide the true origin of an attack
-
-BCP 38 (RFC 2827) recommends that all ISPs and enterprise edge routers perform source address validation using mechanisms like uRPF.
-
-### How uRPF Works
-
-When a packet arrives on an interface, the router performs a **reverse path lookup**: it looks up the packet's **source IP** in the routing table and asks "which interface would I use to reach this source?" If the answer does not match the interface the packet arrived on (strict mode), or if there is no route at all (loose mode), the packet is dropped.
-
-```
-Packet arrives on eth1 with source 10.99.99.1
-  -> RIB lookup for 10.99.99.1
-  -> No route found (or route points to eth2, not eth1)
-  -> STRICT: DROP   LOOSE: DROP (no route) / PASS (any route exists)
-```
-
-### Strict Mode vs Loose Mode
-
-```
-STRICT MODE  (reachable-via rx)
-  Pass:  source IP has a route pointing back out the same interface the packet arrived on
-  Drop:  source IP has no route, or route points to a different interface
-
-LOOSE MODE  (reachable-via any)
-  Pass:  source IP has ANY route in the RIB (any interface, any path)
-  Drop:  source IP has no route at all (not in RIB)
-```
-
-**When to use strict:** Single-homed customer edge links. The path to the customer is always via the single access interface. Very effective.
-
-**When to use loose:** Multi-homed environments where asymmetric routing is expected (traffic comes in one link, goes out another). Strict would drop legitimate traffic; loose still catches completely bogus source addresses.
-
-## How to use this lab
-
-This is a **practice lab**, not a tutorial. The foundation is pre-built;
-you produce the configuration from the objectives. **Predict each result
-before you verify**, use the success criteria to grade yourself, and treat
-the break-it steps and challenge questions as the real test.
+| Attribute | Value |
+|-----------|-------|
+| Lab type | Build |
+| Learned platform | VyOS `vyos:local` |
+| Incidental endpoints | Linux `ops-lab:local` |
+| Estimated time | 45–60 minutes |
+| Starting policy | uRPF disabled |
+| Final policy | Strict source validation on `edge:eth1` |
 
 ## Topology
 
 ```mermaid
 flowchart LR
-    attacker(["attacker<br/>lo: 10.0.0.10/32<br/>eth1: 10.10.1.1/30"])
-    edge["edge<br/>lo: 10.0.0.1/32<br/>eth1: 10.10.1.2/30<br/>eth2: 10.10.2.1/30<br/>uRPF on eth1"]
-    internet(["internet<br/>lo: 10.0.0.100/32<br/>eth1: 10.10.2.2/30"])
+    attacker(["attacker (Linux)<br/>eth1: 10.10.1.1/30<br/>lo: 10.0.0.10/32<br/>test sources: 10.99.99.1, 10.88.88.1"])
+    edge["edge (VyOS)<br/>eth1: 10.10.1.2/30<br/>eth2: 10.10.2.1/30"]
+    internet(["internet (Linux)<br/>eth1: 10.10.2.2/30"])
 
-    attacker -- "10.10.1.0/30" --- edge
-    edge -- "10.10.2.0/30" --- internet
-
-    classDef router stroke:#4778ff,stroke-width:2px
-    classDef host stroke:#6aa84f,stroke-width:2px
-
-    class edge router
-    class attacker,internet host
+    attacker ---|"source-facing boundary"| edge
+    edge ---|"downstream observation link"| internet
 ```
 
-- **attacker** — simulates a malicious host that can send packets with spoofed source IPs
-- **edge** — the internet edge router where uRPF will be configured on the attacker-facing interface (eth1)
-- **internet** — represents the legitimate internet; loopback 10.0.0.100/32 is the "victim host"
+| Node | Interface | Address | Role |
+|------|-----------|---------|------|
+| `attacker` | eth1 | `10.10.1.1/30` | Packet source on the source-facing link |
+| `attacker` | lo | `10.0.0.10/32` | Legitimate alternate source with a reverse route |
+| `attacker` | lo | `10.99.99.1/32`, `10.88.88.1/32` | Controlled spoof-test sources |
+| `edge` | eth1 | `10.10.1.2/30` | VyOS trust-boundary ingress |
+| `edge` | eth2 | `10.10.2.1/30` | VyOS downstream egress |
+| `internet` | eth1 | `10.10.2.2/30` | Capture and reply endpoint |
 
-## Pre-configured
+| Link | Subnet | Forward direction under test | Reverse-path fact |
+|------|--------|------------------------------|-------------------|
+| `attacker:eth1` ↔ `edge:eth1` | `10.10.1.0/30` | Packets enter `edge:eth1` | `10.0.0.10/32` initially resolves through eth1 |
+| `edge:eth2` ↔ `internet:eth1` | `10.10.2.0/30` | Accepted packets leave `edge:eth2` | `internet` defaults to `10.10.2.1` |
 
-- All IP addresses on all nodes
-- OSPF area 0 on edge and internet (for routing context; attacker uses a static default route)
-- uRPF is **not** configured — that is your task
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure.** When a task asks for a prediction,
+  commit to an answer before touching the CLI. Being wrong and finding out
+  why is the point.
+- **Open the hints before the solution.** The solution toggle is the answer
+  key — use it to check your work or when genuinely stuck, not as step one.
+- **Verify like an operator.** After each task, prove the state is what you
+  think it is with `show` commands before moving on.
 
 ## Deploy
 
+This lab needs a locally imported VyOS image and the repository's small
+Linux endpoint image. Follow the
+[VyOS platform notes](../../docs/platforms/vyos.md) to build and tag the
+router image for your host architecture:
+
 ```bash
-# Build image first if not already done
-docker build -t frr-lab:local images/frr/
+docker build -t ops-lab:local images/ops-lab/
 
 ./scripts/lab.sh deploy urpf-antispoofing
+./scripts/lab.sh status urpf-antispoofing
 ```
 
----
+The supplied feature probe sampled about 399.3 MiB total: 397.3 MiB for
+`edge`, 612 KiB for `attacker`, and 1.379 MiB for `internet`.
 
-## Task 1: Verify Baseline Connectivity
-
-Confirm all nodes can reach each other before enabling any filtering.
-
-```bash
-# From attacker — ping the internet host (legitimate source IP)
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c3 10.0.0.100
-
-# From attacker — ping edge loopback
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c3 10.0.0.1
-
-# Verify OSPF is up on edge
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "show ip ospf neighbor"
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "show ip route"
-```
-
-Expected: all pings succeed, edge has OSPF adjacency with internet, routing table shows 10.0.0.100/32.
-
----
-
-## Task 2: Enable uRPF Strict Mode on edge eth1
-
-**Predict first:** strict uRPF checks the packet's *source* against the FIB's best path out that interface. Before enabling it, predict which of the later test cases (legitimate, spoofed, asymmetric) will pass and which will drop — and why.
-
-Connect to the edge router and enable uRPF strict mode on the attacker-facing interface:
+Open the VyOS administrative shell when a task calls for configuration:
 
 ```bash
 ./scripts/lab.sh cli urpf-antispoofing edge
 ```
 
-<details markdown="1">
-<summary>Show configuration</summary>
+## Initial state and success criteria
 
+The addressing in the tables is pre-configured. `edge` has a static reverse
+route for legitimate source `10.0.0.10/32` through `10.10.1.1`; it has no
+data-plane default route and no route for either spoof-test prefix. Its
+ContainerLab management interface is isolated in VRF `MGMT`, so the
+management default cannot accidentally satisfy a data-plane uRPF lookup.
+Source validation is deliberately absent at startup.
+
+Your final state must satisfy all of these conditions:
+
+- strict IPv4 source validation is active only where test packets enter,
+  `edge:eth1`;
+- `10.0.0.10/32` resolves through `10.10.1.1` on eth1 and can reach
+  `10.10.2.2`;
+- strict-mode spoof requests increment a drop counter and do not appear in
+  an `internet:eth1` capture;
+- the temporary `10.99.99.0/24` route and data-plane default route are gone;
+- VRF `MGMT` retains table 100 and its management-only default route.
+
+## Task 1 — Establish the unfiltered evidence path
+
+**Objective:** Prove the initial routing state and capture a request sourced
+from `10.99.99.1` at `internet:eth1` while source validation is disabled.
+Record capture evidence separately from the ping command's exit status.
+
+**Predict first:** Will the spoofed ping report success? Independently, will
+its echo request cross `edge` and appear in the downstream capture?
+
+Inspect the main and management routing tables on `edge`:
+
+```bash
+./scripts/lab.sh cmd urpf-antispoofing edge -- ip -4 route show table main
+./scripts/lab.sh cmd urpf-antispoofing edge -- ip -4 route show table 100
 ```
+
+Then use two terminals. Start this bounded capture first:
+
+```bash
+# Terminal 1
+./scripts/lab.sh cmd urpf-antispoofing internet -- \
+  timeout 8 tcpdump -lnni eth1 -c 1 \
+  'icmp[icmptype] == icmp-echo and src host 10.99.99.1'
+```
+
+Generate the request in the other terminal:
+
+```bash
+# Terminal 2
+./scripts/lab.sh cmd urpf-antispoofing attacker -- \
+  ping -c 2 -W 1 -I 10.99.99.1 10.10.2.2
+```
+
+Build a results table as you progress through the lab. Do not collapse
+"ping failed" and "request was filtered" into the same observation.
+
+| Stage | Source | Reverse route at edge | Internet capture sees request? | Ping gets reply? | Relevant drop counter delta |
+|-------|--------|-----------------------|-------------------------------|------------------|-----------------------------|
+| Baseline, disabled | `10.99.99.1` | none | | | n/a |
+| Strict, legitimate | `10.0.0.10` | eth1 | | | |
+| Strict, unrouted | `10.99.99.1` | none | | | |
+| Strict, wrong interface | `10.99.99.1` | eth2 | | | |
+| Loose, wrong interface | `10.99.99.1` | eth2 | | | |
+| Loose, unrouted | `10.88.88.1` | none | | | |
+| Loose, main default | `10.88.88.1` | main default | | | |
+
+<details markdown="1">
+<summary>Check your work</summary>
+
+The main table has the two connected data subnets and a route for
+`10.0.0.10/32`, but no default. Table 100 has the management default. The
+capture sees the echo request from `10.99.99.1`, proving that the disabled
+edge forwards it. The ping still fails because the edge lacks a return route
+to that spoofed source. A failed spoofed ping is therefore not drop evidence.
+
+</details>
+
+## Task 2 — Enforce and observe strict uRPF
+
+**Objective:** Configure strict source validation on the source-facing VyOS
+interface. Prove that a legitimate alternate source passes, an unrouted
+source is dropped, and fresh spoof traffic changes the strict rule counter.
+
+**Predict first:** Does strict mode require the source address to be assigned
+to the incoming subnet, or does it require the best reverse route to select
+the same incoming interface?
+
+<details markdown="1">
+<summary>Hint 1 — Find the configuration hierarchy</summary>
+
+In VyOS configuration mode, explore below `interfaces ethernet eth1 ip ?`.
+The feature name describes validation of the packet's source.
+
+</details>
+
+<details markdown="1">
+<summary>Hint 2 — Choose and inspect the mode</summary>
+
+Use `?` after the source-validation node to compare its supported values.
+After committing, inspect both `show configuration commands` and the
+`vyos_rpfilter` chain in nftables. The strict rule combines source-FIB and
+incoming-interface information.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```text
 configure
-interface eth1
- ip verify unicast source reachable-via rx
-end
-write memory
+set interfaces ethernet eth1 ip source-validation strict
+commit
+save
+exit
 ```
 
 </details>
 
-Verify configuration:
+Test the legitimate source, then repeat Task 1's bounded downstream capture
+for `10.99.99.1`. Take an nftables snapshot before and after the spoof:
 
 ```bash
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "show running-config interface eth1"
-```
-
-You should see `ip verify unicast source reachable-via rx` under the interface.
-
-> Note: FRR implements uRPF in the kernel via the `rpfilter` netfilter module or via zebra's forwarding plane depending on version. The `ip verify unicast source reachable-via rx` command instructs FRR/zebra to enable strict RPF checking on that interface.
-
----
-
-## Task 3: Test Legitimate Traffic (Should Pass)
-
-With strict uRPF enabled, traffic sourced from 10.10.1.1 should still pass. The edge router has a route to 10.10.1.0/30 via eth1 (directly connected), so the reverse path check passes.
-
-```bash
-# From attacker — use legitimate source IP (eth1 address)
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c5 -I 10.10.1.1 10.0.0.100
-```
-
-Expected: **all pings succeed**. The source 10.10.1.1 is in the subnet directly reachable via eth1, so strict uRPF passes it.
-
-```bash
-# Also test from loopback (10.0.0.10) — does this pass?
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c5 -I 10.0.0.10 10.0.0.100
-```
-
-This will likely **fail** because the edge router has no route to 10.0.0.10/32 via eth1 (attacker's loopback is not advertised into OSPF — only a static default route exists). This is expected behavior — the attacker's loopback is not known to edge.
-
-To make the loopback reachable and allow it through uRPF, you would need to advertise it (e.g., redistribute the connected loopback into OSPF on attacker — but attacker doesn't run OSPF in this lab by design).
-
----
-
-## Task 4: Test Spoofed Traffic (Should Fail)
-
-Now test with a spoofed source IP that is **not** reachable via eth1.
-
-**Step 1: Add a spoofed address to the attacker**
-
-```bash
-./scripts/lab.sh bash urpf-antispoofing attacker
-ip addr add 10.99.99.1/32 dev lo
-```
-
-**Step 2: Send traffic with the spoofed source**
-
-```bash
-# Still inside attacker bash shell
-ping -c5 -I 10.99.99.1 10.0.0.100
-```
-
-Expected: **all pings fail** (100% packet loss). The edge router looks up 10.99.99.1 in its routing table. There is no route for 10.99.99.0/24 via eth1, so strict uRPF drops the packets.
-
-**Step 3: Check drop counters on edge**
-
-```bash
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "show interface eth1"
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "show ip traffic"
-```
-
-Look for uRPF drops or input drops incrementing.
-
-**Step 4: Confirm with a tcpdump**
-
-Open a second terminal and watch on the edge's eth1 vs eth2:
-
-```bash
-# Terminal 1: watch what arrives on edge eth1 (should see ICMP requests)
-./scripts/lab.sh cmd urpf-antispoofing edge -- tcpdump -i eth1 icmp -n
-
-# Terminal 2: watch edge eth2 (should see nothing — packets dropped before forwarding)
-./scripts/lab.sh cmd urpf-antispoofing edge -- tcpdump -i eth2 icmp -n
-
-# Terminal 3: send the spoofed pings from attacker
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c5 -I 10.99.99.1 10.0.0.100
-```
-
-You should see ICMP requests on eth1 (they arrive) but nothing on eth2 (they are dropped by uRPF before forwarding).
-
----
-
-## Task 5: Switch to Loose Mode
-
-Loose mode (`reachable-via any`) drops only packets whose source has no route anywhere in the RIB. Change the mode and repeat the spoofed traffic test.
-
-```bash
-./scripts/lab.sh cli urpf-antispoofing edge
+./scripts/lab.sh cmd urpf-antispoofing attacker -- \
+  ping -c 3 -W 2 -I 10.0.0.10 10.10.2.2
+./scripts/lab.sh cmd urpf-antispoofing edge -- \
+  nft list chain ip raw vyos_rpfilter
 ```
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Check your work</summary>
 
-```
+The `10.0.0.10` ping succeeds because the edge's best reverse path selects
+eth1, even though that address is not in the directly connected `/30`.
+The downstream capture times out for `10.99.99.1`, while the eth1 strict-drop
+rule's packet count increases. Together those observations prove the request
+was dropped at the learned VyOS boundary.
+
+</details>
+
+## Task 3 — Separate strict from loose mode
+
+**Objective:** Add a temporary route that makes `10.99.99.0/24` reachable
+through the wrong interface. Show that strict mode still drops its packet,
+then change only the uRPF mode and show that loose mode forwards it.
+
+**Predict first:** When a source exists in the FIB through eth2 but arrives
+on eth1, which result changes between strict and loose mode?
+
+<details markdown="1">
+<summary>Hint 1 — Create the controlled asymmetry</summary>
+
+Use a temporary static route for `10.99.99.0/24` whose next hop is the Linux
+node on the eth2 link. Confirm the installed route and selected interface
+before generating traffic.
+
+</details>
+
+<details markdown="1">
+<summary>Hint 2 — Change one variable</summary>
+
+Keep the route and packet source unchanged. Replace the value under
+`interfaces ethernet eth1 ip source-validation`, commit, then repeat the
+same downstream capture. Compare the rendered nftables rule: strict includes
+the incoming-interface comparison; loose asks only whether the source FIB
+lookup resolves to an output.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+First add the controlled route and test while strict remains active:
+
+```text
 configure
-interface eth1
- ip verify unicast source reachable-via any
-end
-write memory
+set protocols static route 10.99.99.0/24 next-hop 10.10.2.2
+commit
+exit
+```
+
+After recording strict-mode evidence, change only the mode:
+
+```text
+configure
+set interfaces ethernet eth1 ip source-validation loose
+commit
+exit
 ```
 
 </details>
 
-Now repeat the spoofed ping:
+<details markdown="1">
+<summary>Check your work</summary>
 
-```bash
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c5 -I 10.99.99.1 10.0.0.100
-```
+Strict mode does not forward the request: its best reverse path is eth2, not
+the eth1 interface on which the packet arrived. Loose mode does forward the
+same request because the source is reachable somewhere in the main FIB. A
+one-way `internet:eth1` capture—not ping success—is the deciding evidence.
 
-Expected: **pings still fail** — 10.99.99.1 has no route in edge's RIB at all (not just no route via eth1). Loose mode drops packets with completely unknown source IPs.
+</details>
 
-**Add a route for the spoofed prefix to demonstrate loose mode passing it:**
+## Task 4 — Expose the loose-mode default-route caveat
 
-```bash
-# On edge — add a route for the "spoofed" network (simulating a route learned from somewhere)
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "configure" -c "ip route 10.99.99.0/24 10.10.2.2"
-```
+**Objective:** With loose mode active, show that truly unrouted source
+`10.88.88.1` is initially dropped. Add a temporary main-table default route,
+repeat the exact probe, and explain why the same source is now forwarded.
+Remove both experiment routes and restore the strict final policy.
 
-Now repeat:
-
-```bash
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c5 -I 10.99.99.1 10.0.0.100
-```
-
-Expected with loose mode: **pings now succeed** — 10.99.99.1 matches the 10.99.99.0/24 route (via eth2), so loose mode allows it even though the traffic arrived on eth1. This demonstrates why loose mode is weaker than strict.
-
-Clean up the static route afterward:
-
-```bash
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "configure" -c "no ip route 10.99.99.0/24 10.10.2.2"
-```
-
----
-
-## Task 6: The `allow-default` Option
-
-By default, uRPF does **not** count a default route (0.0.0.0/0) as a valid reverse path. This is intentional — if it did, any source IP would pass loose-mode uRPF as long as a default route exists, making it useless.
-
-The `allow-default` option explicitly allows the default route to satisfy the RPF check.
-
-**Demonstrate the default route interaction:**
-
-First, add a default route on the edge pointing to internet:
-
-```bash
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "configure" -c "ip route 0.0.0.0/0 10.10.2.2"
-```
-
-With loose mode (no allow-default), spoofed 10.99.99.1 still fails even though a default route exists:
-
-```bash
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c3 -I 10.99.99.1 10.0.0.100
-# Expected: FAIL (default route does not count)
-```
-
-Now enable `allow-default`:
-
-```bash
-./scripts/lab.sh cli urpf-antispoofing edge
-```
+**Predict first:** If every unknown source matches `0.0.0.0/0`, can loose
+mode still distinguish a plausible source from an arbitrary one?
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Hint 1 — Prove the negative before changing routing</summary>
 
-```
+Capture echo requests sourced by `10.88.88.1` downstream. Snapshot the loose
+drop counter, send the packet, and check the counter again. Verify that there
+is currently no main-table default; table 100 is a separate VRF and does not
+satisfy this lookup.
+
+</details>
+
+<details markdown="1">
+<summary>Hint 2 — Add, compare, and clean up</summary>
+
+Use the eth2 neighbor as a temporary next hop for `0.0.0.0/0`. Change no
+other variable before repeating the capture. Afterward, remove the two
+temporary routes, restore the strict mode chosen for the final target, and
+inspect the main table rather than assuming cleanup succeeded.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+After proving the no-default result, add only the experiment default:
+
+```text
 configure
-interface eth1
- ip verify unicast source reachable-via any allow-default
-end
+set protocols static route 0.0.0.0/0 next-hop 10.10.2.2
+commit
+exit
+```
+
+When your comparison is complete, return to the final policy shape:
+
+```text
+configure
+delete protocols static route 0.0.0.0/0
+delete protocols static route 10.99.99.0/24
+set interfaces ethernet eth1 ip source-validation strict
+commit
+save
+exit
 ```
 
 </details>
 
-Repeat:
+<details markdown="1">
+<summary>Check your work</summary>
+
+Without a main default, loose mode drops `10.88.88.1` and its loose-rule
+counter increases. With the main default present, the same request appears
+at `internet:eth1`: the source FIB lookup now resolves, which is all loose
+mode requires. At cleanup, the main table again has no default or spoof
+prefix, strict mode is active on eth1, and VRF table 100 still owns the
+management default.
+
+</details>
+
+## Task 5 — Diagnose and repair a legitimate-source outage
+
+**Objective:** Inject the supplied fault into the otherwise solved strict
+policy. Diagnose why the previously legitimate `10.0.0.10` source stops
+working by locating the last observation point that sees its request and
+correlating that boundary with policy counters. Make the smallest repair and
+pass the automated checker.
+
+Run the idempotent fault helper:
 
 ```bash
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c3 -I 10.99.99.1 10.0.0.100
-# Expected: PASS (default route now satisfies loose-mode uRPF)
+./labs/urpf-antispoofing/break.sh
 ```
 
-`allow-default` dramatically weakens uRPF when a default route is present. Use it only when explicitly needed (e.g., provider edge routers that must accept traffic from customers who only have a default route in the provider's RIB).
-
-**Clean up:**
-
-```bash
-./scripts/lab.sh cli urpf-antispoofing edge
-```
+**Predict first:** Which two capture locations and one counter can
+distinguish a source-generation failure, rejection at the edge, and a
+downstream or reply-path failure?
 
 <details markdown="1">
-<summary>Show configuration</summary>
+<summary>Hint 1 — Observe before changing</summary>
 
-```
+- Inspect the edge's exact route for `10.0.0.10/32` and note the chosen
+  output interface.
+- Capture the legitimate request first on edge eth1, then on internet eth1.
+- Compare the strict nft drop counter around one fresh request.
+
+</details>
+
+<details markdown="1">
+<summary>Hint 2 — Repair the invariant</summary>
+
+The final topology table tells you where a reverse packet destined for
+`10.0.0.10` must leave the edge. Repair only the route that violates that
+invariant; do not weaken strict validation to make the symptom disappear.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+Replace the incorrect reverse-path next hop with the attacker-facing next
+hop, then commit and save:
+
+```text
 configure
-interface eth1
- ip verify unicast source reachable-via rx
- no ip verify unicast source reachable-via any allow-default
-end
-no ip route 0.0.0.0/0 10.10.2.2
+delete protocols static route 10.0.0.10/32
+set protocols static route 10.0.0.10/32 next-hop 10.10.1.1
+commit
+save
+exit
 ```
 
 </details>
 
----
+<details markdown="1">
+<summary>Check your work</summary>
 
-## Task 7: Asymmetric Routing Scenario
+Before repair, the legitimate request reaches edge eth1 but strict uRPF
+drops it because the best reverse route selects a different interface. After
+the minimal route repair, `10.0.0.10` again reaches `10.10.2.2` while strict
+spoof traffic still increments the drop counter and remains absent from the
+downstream capture. The checker verifies both positive and negative evidence.
 
-Strict uRPF breaks in asymmetric routing environments — where traffic takes a different path inbound vs outbound. This is common in multi-homed networks.
+</details>
 
-**Simulate asymmetric routing:**
+## Verification
 
-Imagine edge has two upstream links and traffic from a legitimate host arrives inbound on eth1 but the route to that host's network points to eth2 (due to policy routing or unequal ECMP). Strict uRPF would drop these legitimate packets.
-
-To observe this in the lab, advertise attacker's loopback (10.0.0.10/32) via OSPF so edge learns it — but change the route to point to eth2 instead of eth1:
-
-```bash
-# On edge — add a static route for attacker loopback pointing to eth2 (wrong interface)
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "configure" -c "ip route 10.0.0.10/32 10.10.2.2"
-```
-
-Now with strict uRPF on eth1, ping from attacker using its loopback:
+Run the end-state checker from the repository root:
 
 ```bash
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c5 -I 10.0.0.10 10.0.0.100
-# Expected: FAIL — strict uRPF sees route for 10.0.0.10 points to eth2, but packet arrived on eth1
+./scripts/lab.sh check urpf-antispoofing
 ```
 
-Switch to loose mode:
+It verifies the node roles and images, addressing, exact strict policy,
+reverse route, absence of experiment routes in the main table, management
+VRF isolation, rendered strict nftables rules, legitimate forwarding, a
+fresh drop-counter increase, and a bounded downstream negative capture.
+
+Manual final checklist:
+
+```text
+show configuration commands
+show ip route 10.0.0.10/32
+```
 
 ```bash
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "configure" -c "interface eth1" -c " ip verify unicast source reachable-via any"
+./scripts/lab.sh cmd urpf-antispoofing edge -- ip -4 route show table main
+./scripts/lab.sh cmd urpf-antispoofing edge -- ip -4 route show table 100
+./scripts/lab.sh cmd urpf-antispoofing edge -- \
+  nft list chain ip raw vyos_rpfilter
 ```
 
-```bash
-./scripts/lab.sh cmd urpf-antispoofing attacker -- ping -c5 -I 10.0.0.10 10.0.0.100
-# Expected: PASS — loose mode only checks that a route exists, not which interface
-```
+## Challenge questions
 
-This is why strict uRPF is only suitable for single-homed customer-facing interfaces, while loose mode is used on peering links or multi-homed edges.
+1. A multihomed customer legitimately receives traffic on either uplink but
+   advertises its source prefix through only one best path. Where would
+   strict mode fail, and what routing or validation designs preserve
+   anti-spoofing without breaking the asymmetry?
+2. Rank strict uRPF, loose uRPF with no default, and loose uRPF with a default
+   from strongest to weakest for this edge. What legitimate traffic pattern
+   might reverse the operational preference?
+3. If equal-cost routes to a source exist through eth1 and eth2, what exact
+   behavior would you test before enabling strict mode on a production NOS?
+4. Design an IPv6 version of this experiment. Which packet types and control
+   traffic would you protect from an overly broad source-validation rule?
+5. Where in a real network would an ACL or source-prefix policy add assurance
+   beyond uRPF, and what maintenance tradeoff would it introduce?
 
-**Clean up:**
+## Troubleshooting
 
-```bash
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "configure" -c "no ip route 10.0.0.10/32 10.10.2.2"
-```
+| Symptom | Likely cause | Operator response |
+|---------|--------------|-------------------|
+| No baseline packet appears downstream | Addressing, link state, or destination route is broken before uRPF is involved | Check both endpoint addresses, edge connected routes, link state, then repeat the bounded capture |
+| Spoofed ping fails but capture sees its request | Return routing is absent; forwarding was not blocked | Treat downstream capture as the forward-path evidence and inspect the source route separately |
+| Strict mode drops a legitimate alternate source | Best reverse route selects a different interface or is absent | Inspect the exact source prefix in the main FIB and repair the routing invariant; do not immediately weaken the mode |
+| Loose mode unexpectedly forwards an arbitrary source | A covering route, often a default, makes the source reachable | Inspect longest-prefix resolution in the same VRF and decide whether route policy or stricter validation is required |
+| Counter does not change during a probe | Wrong ingress interface, wrong source selection, or stale observation | Capture on edge eth1, confirm `ping -I` chose the intended address, then take before/after counter snapshots |
+| Checker reports the main default is present | Task 4 experiment was not removed, or management routing leaked into main | Remove the data-plane experiment and verify the management default exists only in table 100 |
 
----
+## Stretch challenge
 
-## Verification Commands Reference
-
-| Command | Purpose |
-|---------|---------|
-| `show running-config interface eth1` | Confirm uRPF config |
-| `show interface eth1` | Interface counters including drops |
-| `show ip traffic` | Global IP traffic stats |
-| `show ip route` | Routing table (used for RPF lookups) |
-| `show ip rpf <address>` | Show RPF check result for a specific source IP |
-
-### Key `show ip rpf` usage
-
-```bash
-# On edge — what would uRPF do with source 10.10.1.1?
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "show ip rpf 10.10.1.1"
-
-# What about a spoofed source?
-./scripts/lab.sh cmd urpf-antispoofing edge -- vtysh -c "show ip rpf 10.99.99.1"
-```
-
-The output shows the RPF interface and next-hop. If the RPF interface does not match the interface the packet arrived on, strict uRPF drops it.
-
----
-
-## Summary
-
-| Mode | Command | Behavior |
-|------|---------|----------|
-| Strict | `ip verify unicast source reachable-via rx` | Source must have a route via the same interface the packet arrived on |
-| Loose | `ip verify unicast source reachable-via any` | Source must have any route in the RIB |
-| Loose + default | `ip verify unicast source reachable-via any allow-default` | Default route also satisfies the check |
-
-**Best practices:**
-
-- Use strict mode on all single-homed customer/access interfaces
-- Use loose mode on multi-homed or peering interfaces
-- Never use `allow-default` unless you understand the security tradeoff
-- uRPF is most effective when deployed close to the source (ingress filtering at the edge)
+Without changing the final checker target, design a fourth source prefix and
+an additional return path that creates equal-cost multipath at the edge.
+Write a test plan that can tell whether this VyOS build accepts strict uRPF
+when any ECMP member matches the ingress interface or only when the selected
+member does. Predict first, then capture and count; do not infer the result
+from generic vendor documentation.
 
 ## Cleanup
 
 ```bash
 ./scripts/lab.sh destroy urpf-antispoofing
 ```
-
-## Challenge questions
-
-No answers provided — reason them through.
-
-1. Strict vs. loose uRPF: define each precisely and give a legitimate
-   topology (asymmetric routing / multihoming) where strict mode drops
-   valid traffic and loose mode is required.
-2. uRPF checks the *source* against the FIB. Walk through exactly how that
-   blocks a spoofed-source DDoS at the edge, and what it cannot stop.
-3. Where in the network is uRPF appropriate (edge/access) and where is it
-   dangerous (core/transit)? Justify from the asymmetry of real routing.
-4. An attacker spoofs a source inside your own prefix. Does uRPF catch it?
-   What additional filtering (BCP 38) is required and where?

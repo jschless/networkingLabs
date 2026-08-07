@@ -1,0 +1,50 @@
+hostname vtep2
+!
+vlan 100
+   name APPLICATION
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+   ip ospf area 0.0.0.0
+!
+interface Loopback100
+   ip address 10.0.0.22/32
+!
+interface Ethernet1
+   description underlay-to-spine
+   no switchport
+   ip address 10.1.2.1/30
+   ip ospf area 0.0.0.0
+   no shutdown
+!
+interface Ethernet2
+   description application-host2
+   switchport access vlan 100
+   no shutdown
+!
+interface Vxlan1
+   vxlan source-interface Loopback100
+   vxlan udp-port 4789
+   vxlan vlan 100 vni 100
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.2
+   passive-interface Loopback0
+!
+router bgp 65000
+   router-id 10.0.0.2
+   neighbor 10.0.0.100 remote-as 65000
+   neighbor 10.0.0.100 update-source Loopback0
+   neighbor 10.0.0.100 send-community extended
+   !
+   address-family evpn
+      neighbor 10.0.0.100 activate
+   !
+   vlan 100
+      rd 10.0.0.2:100
+      route-target both 65000:100
+      redistribute learned
+!
+end

@@ -1,48 +1,47 @@
 name: mtu-pmtud-troubleshooting
 
-# MTU and PMTUD troubleshooting over a GRE tunnel.
-# The WAN path is reduced to MTU 1400, but the GRE tunnel is left at its default MTU.
-# Small traffic works. Large DF traffic does not.
-
 topology:
   defaults:
     kind: linux
-    image: frr-lab:local
+    image: ops-lab:local
 
   nodes:
     host-a:
       binds:
-        - configs/host-a/setup.sh:/setup.sh
+        - configs/host-a/setup.sh:/setup.sh:ro
+        - configs/common/df-probe.py:/df-probe.py:ro
+        - configs/common/services.py:/services.py:ro
       exec:
         - bash /setup.sh
 
     edge-a:
-      binds:
-        - configs/edge-a/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/edge-a/config.boot
 
-    internet:
+    provider:
       binds:
-        - configs/internet/setup.sh:/setup.sh
+        - configs/provider/setup.sh:/setup.sh:ro
       exec:
         - bash /setup.sh
 
     edge-b:
+      kind: vyosnetworks_vyos
+      image: vyos:local
+      startup-config: configs/edge-b/config.boot
       binds:
-        - configs/edge-b/setup.sh:/setup.sh
-      exec:
-        - bash /setup.sh
+        - configs/edge-b/inject-fault.sh:/opt/inject-fault.sh:ro
 
     host-b:
       binds:
-        - configs/host-b/setup.sh:/setup.sh
-        - configs/host-b/udp-echo.py:/udp-echo.py
+        - configs/host-b/setup.sh:/setup.sh:ro
+        - configs/common/df-probe.py:/df-probe.py:ro
+        - configs/common/services.py:/services.py:ro
       exec:
         - bash /setup.sh
 
   links:
-    - endpoints: ["host-a:eth1", "edge-a:eth1"]       # 192.168.1.0/24
-    - endpoints: ["edge-a:eth2", "internet:eth1"]     # 203.0.113.0/30
-    - endpoints: ["internet:eth2", "edge-b:eth2"]     # 203.0.113.4/30
-    - endpoints: ["edge-b:eth1", "host-b:eth1"]       # 192.168.2.0/24
+    - endpoints: ["host-a:eth1", "edge-a:eth1"]
+    - endpoints: ["edge-a:eth2", "provider:eth1"]
+    - endpoints: ["provider:eth2", "edge-b:eth2"]
+    - endpoints: ["edge-b:eth1", "host-b:eth1"]

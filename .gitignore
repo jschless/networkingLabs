@@ -38,6 +38,12 @@ labs/network-automation-netbox/automation/__pycache__/
 labs/network-automation-netbox/automation/generated/
 labs/network-automation-netbox/automation/backups/
 labs/network-automation-netbox/automation/facts/
+labs/network-automation-netbox/automation/learner-service.yml
+labs/network-automation-netbox/automation/capstone-rationale.md
+labs/network-automation-netbox/automation/.ansible/
+labs/network-automation-netbox/automation/.check-*/
+labs/network-automation-netbox/automation/.precheck-*/
+labs/network-automation-netbox/automation/*.retry
 
 # Security infrastructure lab runtime artifacts
 labs/soc-*/runtime/

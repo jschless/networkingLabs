@@ -1,0 +1,38 @@
+hostname r2
+!
+username admin privilege 15 role network-admin secret admin
+!
+management api http-commands
+   protocol http
+   no shutdown
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description core-to-r1
+   no switchport
+   ip address 10.0.12.2/30
+   no shutdown
+!
+interface Ethernet2
+   description service-host-boundary
+   no switchport
+   ip address 10.0.102.1/30
+   no shutdown
+!
+interface Ethernet3
+   description site-2-clients
+   no switchport
+   ip address 172.16.2.1/24
+   no shutdown
+!
+ip routing
+!
+router bgp 65002
+   router-id 10.0.0.2
+   neighbor 10.0.12.1 remote-as 65001
+   network 10.0.0.2/32
+   network 172.16.2.0/24
+!
+end

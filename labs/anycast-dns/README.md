@@ -1,15 +1,10 @@
 # Anycast DNS — Practice Lab
 
-Run the same service address on two machines at once. Both resolvers hold
-**10.53.53.53/32** on their loopback and advertise it into the network with
-**FRR running on the server itself** — "routing on the host", the pattern
-behind every large resolver farm, root DNS letter, and CDN edge. BGP
-best-path delivers each client to its closest instance; a health-check
-watchdog deletes the VIP from `lo` the moment the DNS daemon stops
-answering, so the route is withdrawn *with* the service and clients fail
-over to the surviving instance in about two seconds. You build the eBGP
-fabric, the filtered redistribution, and then break the health check to
-see why it — not the daemon — is what makes anycast safe.
+Build a two-site anycast resolver whose shared service address follows service
+health. FRR on each DNS host turns a healthy connected `/32` into a tightly
+filtered BGP advertisement; native cEOS routers choose the closest instance
+and program the forwarding path. You will then prove why green BGP sessions
+are not enough when the service-to-route coupling fails.
 
 ## Topology
 
@@ -17,52 +12,44 @@ see why it — not the daemon — is what makes anycast safe.
 flowchart TB
     c1["c1 (client)<br/>172.16.1.10"]
     c2["c2 (client)<br/>172.16.2.10"]
-    r1["r1 — AS 65001<br/>lo 10.0.0.1/32"]
-    r2["r2 — AS 65002<br/>lo 10.0.0.2/32"]
-    dns1["dns1 — AS 65101<br/>lo 10.0.0.11/32<br/>VIP 10.53.53.53/32"]
-    dns2["dns2 — AS 65102<br/>lo 10.0.0.12/32<br/>VIP 10.53.53.53/32"]
+    r1["r1 cEOS — AS 65001<br/>Loopback0 10.0.0.1/32"]
+    r2["r2 cEOS — AS 65002<br/>Loopback0 10.0.0.2/32"]
+    dns1["dns1 FRR + dnsmasq — AS 65101<br/>10.0.0.11/32 + 10.53.53.53/32"]
+    dns2["dns2 FRR + dnsmasq — AS 65102<br/>10.0.0.12/32 + 10.53.53.53/32"]
 
-    c1 --- |"172.16.1.0/24"| r1
-    c2 --- |"172.16.2.0/24"| r2
-    r1 --- |"10.0.12.0/30"| r2
-    r1 --- |"10.0.101.0/30"| dns1
-    r2 --- |"10.0.102.0/30"| dns2
-
-    classDef rtr stroke:#a06bd6,stroke-width:2px
-    classDef srv stroke:#17a589,stroke-width:2px
-    classDef cli stroke:#9aa0a6,stroke-width:2px
-    class r1,r2 rtr
-    class dns1,dns2 srv
-    class c1,c2 cli
+    c1 ---|"172.16.1.0/24"| r1
+    c2 ---|"172.16.2.0/24"| r2
+    r1 ---|"10.0.12.0/30"| r2
+    r1 ---|"10.0.101.0/30"| dns1
+    r2 ---|"10.0.102.0/30"| dns2
 ```
 
 ### Link addressing
 
-| Link       | Subnet         | Left side   | Right side   |
-|------------|----------------|-------------|--------------|
-| r1 — r2    | 10.0.12.0/30   | .1 (r1)     | .2 (r2)      |
-| r1 — dns1  | 10.0.101.0/30  | .1 (r1)     | .2 (dns1)    |
-| r2 — dns2  | 10.0.102.0/30  | .1 (r2)     | .2 (dns2)    |
-| r1 — c1    | 172.16.1.0/24  | .1 (r1)     | .10 (c1)     |
-| r2 — c2    | 172.16.2.0/24  | .1 (r2)     | .10 (c2)     |
+| Link | Subnet | Left side | Right side |
+|------|--------|-----------|------------|
+| r1 — r2 | 10.0.12.0/30 | 10.0.12.1 | 10.0.12.2 |
+| r1 — dns1 | 10.0.101.0/30 | 10.0.101.1 | 10.0.101.2 |
+| r2 — dns2 | 10.0.102.0/30 | 10.0.102.1 | 10.0.102.2 |
+| r1 — c1 | 172.16.1.0/24 | 172.16.1.1 | 172.16.1.10 |
+| r2 — c2 | 172.16.2.0/24 | 172.16.2.1 | 172.16.2.10 |
 
 ### Node reference
 
-| Node | Role                              | AS    | Unique address | Anycast VIP       |
-|------|-----------------------------------|-------|----------------|-------------------|
-| r1   | site-1 router                     | 65001 | 10.0.0.1/32    | —                 |
-| r2   | site-2 router                     | 65002 | 10.0.0.2/32    | —                 |
-| dns1 | resolver #1 (FRR + dnsmasq)       | 65101 | 10.0.0.11/32   | 10.53.53.53/32    |
-| dns2 | resolver #2 (FRR + dnsmasq)       | 65102 | 10.0.0.12/32   | 10.53.53.53/32    |
-| c1   | client behind r1                  | —     | 172.16.1.10    | —                 |
-| c2   | client behind r2                  | —     | 172.16.2.10    | —                 |
+| Node | Platform and role | AS | Unique address | Anycast VIP |
+|------|-------------------|----|----------------|-------------|
+| r1 | cEOS site-1 router | 65001 | 10.0.0.1/32 | — |
+| r2 | cEOS site-2 router | 65002 | 10.0.0.2/32 | — |
+| dns1 | FRR routing-on-host resolver | 65101 | 10.0.0.11/32 | 10.53.53.53/32 |
+| dns2 | FRR routing-on-host resolver | 65102 | 10.0.0.12/32 | 10.53.53.53/32 |
+| c1 | incidental site-1 client | — | 172.16.1.10 | — |
+| c2 | incidental site-2 client | — | 172.16.2.10 | — |
 
-IP addressing is pre-configured everywhere. So are the parts this lab is
-*not* about: dnsmasq serves identical records on both resolvers (plus
-`whoami.lab.test`, a TXT record naming the instance that answered — your
-anycast litmus test), and a watchdog (`configs/dns/healthcheck.sh`) keeps
-the VIP on `lo` only while the local dnsmasq answers. The BGP that turns
-those two boxes into one service is absent — that's your job.
+Addressing, the r1–r2 eBGP core, client-subnet origination, resolver data, and
+an exact resolver return route for `172.16.0.0/16` are scaffolding. The
+service-host BGP boundary is intentionally absent. A watchdog holds the VIP
+on `lo` only while local DNS answers; the BGP policy that exports that
+connected route is yours to build.
 
 ## How to use this lab
 
@@ -79,94 +66,109 @@ This is a **practice lab**, not a tutorial. Each task gives you an
 
 ## Deploy
 
-Build the images once if you haven't:
+Prepare cEOS for your architecture and build the three local images once:
 
 ```bash
+scripts/build-images.sh ceos
 docker build -t frr-lab:local images/frr/
 docker build -t ops-lab:local images/ops-lab/
 docker build -t anycast-dns:local labs/anycast-dns/
 ```
 
-then:
+Deploy the lab:
 
 ```bash
 ./scripts/lab.sh deploy anycast-dns
 ```
 
-Access a node:
+Use native EOS on the routers and FRR or a shell on the service hosts:
 
 ```bash
-./scripts/lab.sh vtysh anycast-dns dns1    # FRR CLI (works on servers too!)
-./scripts/lab.sh bash  anycast-dns dns1    # Linux shell (dig, ip, tcpdump)
+./scripts/lab.sh cli anycast-dns r1
+./scripts/lab.sh vtysh anycast-dns dns1
+./scripts/lab.sh bash anycast-dns dns1
 ```
 
-Destroy when done:
+Clean up safely when finished:
 
 ```bash
 ./scripts/lab.sh destroy anycast-dns
 ```
 
----
+## Task 1 — Survey the healthy service and silent host boundary
 
-## Task 1 — Survey the two-headed service (guided)
+**Objective:** prove the preconfigured core is healthy and each resolver owns
+a working local service, while neither router has a service-host peer or a
+route to the VIP.
 
-**Objective:** confirm the starting state: both resolvers already *are*
-the service locally — same VIP on `lo`, dnsmasq answering, watchdog
-running — but no client can reach any of it.
+**Predict first:** will c1 reach c2, the VIP, both, or neither? Explain which
+control-plane boundary makes the two results different.
 
-On dns1 and dns2 (shell, not vtysh):
-
-```bash
-ip -4 addr show dev lo
-dig +short @127.0.0.1 TXT whoami.lab.test
-cat /var/log/healthcheck.log
-```
-
-From c1:
+Run these observations before configuring anything:
 
 ```bash
-dig @10.53.53.53 TXT whoami.lab.test
-ip route
+docker exec clab-anycast-dns-r1 Cli -p 15 -c enable -c 'show ip bgp summary'
+docker exec clab-anycast-dns-r2 Cli -p 15 -c enable -c 'show ip bgp summary'
+docker exec clab-anycast-dns-c1 ping -c 3 172.16.2.10
+docker exec clab-anycast-dns-dns1 dig +short @127.0.0.1 TXT whoami.lab.test
+docker exec clab-anycast-dns-dns2 dig +short @127.0.0.1 TXT whoami.lab.test
+docker exec clab-anycast-dns-r1 Cli -p 15 -c enable -c 'show ip route 10.53.53.53/32'
 ```
-
-<details markdown="1">
-<summary>Check your work</summary>
-
-Both servers hold **two** extra addresses on `lo`: their unique /32
-(10.0.0.11 or .12) from `frr.conf`, and the *same* 10.53.53.53/32 —
-installed by the watchdog, whose log shows one `healthy — VIP ...
-installed` line. Locally each instance answers with its own name
-(`"dns1"` / `"dns2"`). From c1 the same query prints `;; no servers
-could be reached` almost immediately: c1's only route is a default to
-r1, and r1 has no route to 10.53.53.53 (check `show ip route` on r1 —
-nothing but connecteds, plus the containerlab management network:
-a `K>` default and `172.20.20.0/24` on eth0 — ignore those throughout),
-so r1 answers with an ICMP unreachable. Two machines each believe they
-are 10.53.53.53, and the network has no idea either exists. Everything
-from here on is routing.
-
-</details>
-
-## Task 2 — Build the eBGP core
-
-**Objective:** an eBGP session between r1 and r2, each originating its
-client subnet and its loopback, so that c1 can ping c2
-(`ping 172.16.2.10`).
-
-**Predict first:** when the session comes up, how many prefixes will r1
-receive from r2? Count before you look.
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- `router bgp 65001` → `neighbor 10.0.12.2 remote-as 65002`, then under
-  `address-family ipv4 unicast` originate with `network <prefix>`.
-- FRR default: **eBGP without policy accepts and sends nothing.** The
-  session establishes but stays at 0 prefixes. `no bgp
-  ebgp-requires-policy` is the lab-grade escape hatch — every BGP
-  instance in this lab needs it (a route-map on every peer is the
-  production answer; here it would drown the lesson).
-- `show bgp summary` — a number in State/PfxRcd means Established.
+- Count peers, not prefixes, in each EOS summary.
+- Compare a routed client subnet with the host-facing connected subnet.
+- On each DNS host, inspect `ip -4 address show dev lo` and
+  `/var/log/healthcheck.log` if the local query is not healthy.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+No configuration is required. Restore a changed baseline with a destroy and
+fresh deploy before continuing.
+
+</details>
+
+<details markdown="1">
+<summary>Check your work</summary>
+
+Each cEOS router has exactly one Established peer: the other core router.
+c1 reaches c2 because the core already originates both client `/24`s. Local
+queries answer `"dns1"` and `"dns2"`, and both hosts hold the VIP, but c1
+cannot reach it because the resolver hosts advertise nothing yet. A healthy
+service and a healthy core are separate facts until the host-routing boundary
+couples them.
+
+</details>
+
+## Task 2 — Build the filtered service-host BGP boundary
+
+**Objective:** add one host peer to each cEOS router and one BGP process to
+each resolver. Each host must advertise exactly its unique `/32` and the
+shared VIP `/32`, with independent filtering at connected redistribution,
+host egress, and router ingress.
+
+**Predict first:** unfiltered connected redistribution on dns1 would expose
+more than the two intended `/32`s. Inventory its connected routes and decide
+which management or transit prefixes must never cross this trust boundary.
+
+<details markdown="1">
+<summary>Hints</summary>
+
+- On cEOS, construct an exact-prefix list, match it from a one-sequence
+  route-map, attach that route-map inbound to the local DNS neighbor, and
+  verify the neighbor AS.
+- On each FRR host, pin a unique BGP router ID. Filter `redistribute
+  connected`, then apply a second outbound neighbor policy over the same two
+  permitted `/32`s. FRR's eBGP policy requirement is satisfied by the
+  explicit outbound policy; the host already has a scaffolded client-subnet
+  return route.
+- Prove the sender, receiver, and installed route separately with `advertised-routes`,
+  `received-routes`, and route-table commands.
 
 </details>
 
@@ -176,27 +178,71 @@ receive from r2? Count before you look.
 On r1:
 
 ```text
+enable
 configure terminal
+ip prefix-list DNS1-ONLY seq 10 permit 10.0.0.11/32
+ip prefix-list DNS1-ONLY seq 20 permit 10.53.53.53/32
+route-map DNS1-IN permit 10
+   match ip address prefix-list DNS1-ONLY
 router bgp 65001
- no bgp ebgp-requires-policy
- neighbor 10.0.12.2 remote-as 65002
- address-family ipv4 unicast
-  network 172.16.1.0/24
-  network 10.0.0.1/32
- exit-address-family
+   neighbor 10.0.101.2 remote-as 65101
+   neighbor 10.0.101.2 route-map DNS1-IN in
+end
 ```
 
-On r2, mirrored:
+On r2:
+
+```text
+enable
+configure terminal
+ip prefix-list DNS2-ONLY seq 10 permit 10.0.0.12/32
+ip prefix-list DNS2-ONLY seq 20 permit 10.53.53.53/32
+route-map DNS2-IN permit 10
+   match ip address prefix-list DNS2-ONLY
+router bgp 65002
+   neighbor 10.0.102.2 remote-as 65102
+   neighbor 10.0.102.2 route-map DNS2-IN in
+end
+```
+
+On dns1:
 
 ```text
 configure terminal
-router bgp 65002
- no bgp ebgp-requires-policy
- neighbor 10.0.12.1 remote-as 65001
+ip prefix-list DNS1-EXPORT seq 10 permit 10.0.0.11/32
+ip prefix-list DNS1-EXPORT seq 20 permit 10.53.53.53/32
+route-map CONNECTED-TO-BGP permit 10
+ match ip address prefix-list DNS1-EXPORT
+route-map DNS1-OUT permit 10
+ match ip address prefix-list DNS1-EXPORT
+router bgp 65101
+ bgp router-id 10.0.0.11
+ neighbor 10.0.101.1 remote-as 65001
  address-family ipv4 unicast
-  network 172.16.2.0/24
-  network 10.0.0.2/32
+  neighbor 10.0.101.1 route-map DNS1-OUT out
+  redistribute connected route-map CONNECTED-TO-BGP
  exit-address-family
+end
+```
+
+On dns2:
+
+```text
+configure terminal
+ip prefix-list DNS2-EXPORT seq 10 permit 10.0.0.12/32
+ip prefix-list DNS2-EXPORT seq 20 permit 10.53.53.53/32
+route-map CONNECTED-TO-BGP permit 10
+ match ip address prefix-list DNS2-EXPORT
+route-map DNS2-OUT permit 10
+ match ip address prefix-list DNS2-EXPORT
+router bgp 65102
+ bgp router-id 10.0.0.12
+ neighbor 10.0.102.1 remote-as 65002
+ address-family ipv4 unicast
+  neighbor 10.0.102.1 route-map DNS2-OUT out
+  redistribute connected route-map CONNECTED-TO-BGP
+ exit-address-family
+end
 ```
 
 </details>
@@ -204,353 +250,241 @@ router bgp 65002
 <details markdown="1">
 <summary>Check your work</summary>
 
-`show bgp summary` on r1 shows `2` under State/PfxRcd for 10.0.12.2 —
-that's the prediction: r2 originates exactly its two `network`
-statements (172.16.2.0/24 and 10.0.0.2/32). `ping 172.16.2.10` from c1
-now works: request routed r1→r2 by BGP, reply back the same way. The
-service address is still dark — `network` only advertises what you
-name, and nobody has named the VIP yet.
+Each cEOS summary now has exactly two Established peers. Each host's
+`show bgp ipv4 unicast neighbors <router> advertised-routes` lists exactly
+its unique `/32` and `10.53.53.53/32`; neither the management subnet nor the
+host transit `/30` appears. The redistribution policy couples route presence
+to the watchdog-owned address, while the separate outbound and inbound
+policies contain a mistake at either side of the trust boundary.
 
 </details>
 
-## Task 3 — Routing on the host: advertise the service from the servers
+## Task 3 — Prove closest-instance forwarding
 
-**Objective:** each resolver eBGP-peers with its router and advertises
-**exactly two prefixes**: the VIP and its unique loopback. Nothing else.
-Success: r1 receives 10.53.53.53/32 from dns1, r2 receives it from dns2,
-and each router also learns the other instance's path over the core.
+**Objective:** prove from BGP RIB, FIB, client answers, path, and server logs
+that each site selects its local resolver while both unique instance
+addresses remain reachable across the core.
 
-**Predict first:** the obvious lazy config is `redistribute connected`
-with no filter. List what dns1 would advertise then — check
-`show ip route connected` on dns1 before answering. Which of those
-prefixes would be genuinely dangerous to leak, and why?
+**Predict first:** how many BGP paths to the VIP will r1 retain, which path
+will be best, and how many hops will c1's traceroute show?
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- Same shape as Task 2 on the servers (AS numbers and peer addresses are
-  in the node table and in each server's `frr.conf` banner), plus
-  `no bgp ebgp-requires-policy` again.
-- The VIP is added and removed *by the watchdog at runtime*, so a
-  `network` statement pointing at a sometimes-absent route is the wrong
-  tool. `redistribute connected` follows whatever is on the interfaces —
-  that's the coupling you want. Constrain it:
-  `redistribute connected route-map <NAME>`.
-- Filter shape: `ip prefix-list <PL> seq 5 permit <prefix>` (one per
-  allowed /32) → `route-map <NAME> permit 10` → `match ip address
-  prefix-list <PL>`.
-- Verify from the router: `show bgp ipv4 unicast neighbors 10.0.101.2
-  routes` shows what r1 actually accepted from dns1.
+- On both cEOS routers, inspect `show ip bgp 10.53.53.53/32` and
+  `show ip route 10.53.53.53/32`.
+- Query `whoami.lab.test` and `www.lab.test` through the VIP from both clients.
+- Trace from both clients, then query dns1's unique address from c2 and dns2's
+  unique address from c1.
+- Generate one fresh query, then bound the corresponding dnsmasq log window
+  with `tail` rather than treating old entries as current evidence.
 
 </details>
 
 <details markdown="1">
 <summary>Solution</summary>
 
-On dns1:
-
-```text
-configure terminal
-ip prefix-list ANYCAST seq 5 permit 10.53.53.53/32
-ip prefix-list ANYCAST seq 10 permit 10.0.0.11/32
-route-map ADVERTISE permit 10
- match ip address prefix-list ANYCAST
-exit
-router bgp 65101
- no bgp ebgp-requires-policy
- neighbor 10.0.101.1 remote-as 65001
- address-family ipv4 unicast
-  redistribute connected route-map ADVERTISE
- exit-address-family
+```bash
+docker exec clab-anycast-dns-r1 Cli -p 15 -c enable -c 'show ip bgp 10.53.53.53/32'
+docker exec clab-anycast-dns-r1 Cli -p 15 -c enable -c 'show ip route 10.53.53.53/32'
+docker exec clab-anycast-dns-r2 Cli -p 15 -c enable -c 'show ip bgp 10.53.53.53/32'
+docker exec clab-anycast-dns-r2 Cli -p 15 -c enable -c 'show ip route 10.53.53.53/32'
+docker exec clab-anycast-dns-c1 dig +short @10.53.53.53 TXT whoami.lab.test
+docker exec clab-anycast-dns-c2 dig +short @10.53.53.53 TXT whoami.lab.test
+docker exec clab-anycast-dns-c1 dig +short @10.53.53.53 www.lab.test
+docker exec clab-anycast-dns-c1 traceroute -n -q 1 -w 1 -m 4 10.53.53.53
+docker exec clab-anycast-dns-c2 traceroute -n -q 1 -w 1 -m 4 10.53.53.53
+docker exec clab-anycast-dns-c2 dig +short @10.0.0.11 TXT whoami.lab.test
+docker exec clab-anycast-dns-c1 dig +short @10.0.0.12 TXT whoami.lab.test
 ```
-
-On dns2, mirrored (AS 65102, peer 10.0.102.1 in AS 65002, permit
-10.0.0.12/32 instead of .11).
-
-On the routers, add the server as a second neighbor. r1:
-
-```text
-configure terminal
-router bgp 65001
- neighbor 10.0.101.2 remote-as 65101
-```
-
-and r2 the same with `neighbor 10.0.102.2 remote-as 65102`.
 
 </details>
 
 <details markdown="1">
 <summary>Check your work</summary>
 
-`show bgp ipv4 unicast 10.53.53.53/32` on r1 shows **two paths**: one
-learned directly from dns1 (`65101`), one via the core (`65002 65102`),
-with the direct one marked `best (AS Path)` — shortest AS-path wins, and
-that tie-breaker *is* the "closest instance" logic of this whole lab.
-`show ip route 10.53.53.53/32` installs `B>*` via 10.0.101.2.
-
-Now resolve the prediction — try the lazy version on dns1 and watch what
-r1 receives (`show bgp ipv4 unicast neighbors 10.0.101.2 routes`):
-
-```text
-router bgp 65101
- address-family ipv4 unicast
-  no redistribute connected
-  redistribute connected
-```
-
-Four prefixes, including the transit /30 and — the dangerous one —
-**172.20.20.0/24, the containerlab management network** (in production:
-your Docker/OOB/management segment) now advertised into the routing
-domain by a *DNS server*. This is how host-based routing incidents
-happen: whatever is connected to the box becomes reachable through it.
-Put the filtered version back (again `no redistribute connected` first —
-FRR quirk: re-issuing `redistribute connected route-map ...` *modifies*
-an existing redistribute line, but the bare form does **not** drop an
-existing route-map binding, so remove-then-add is the honest way) and
-confirm 172.20.20.0/24 answers `% Network not in table` on r1.
-
-One more thing worth noticing: `show bgp summary` on a server reports
-its router-id as **10.53.53.53 — on both servers**. FRR picked the
-highest loopback address, which is the VIP, which is shared. Harmless
-here (router-ids must only be unique between direct peers), but in a
-design where both instances peer to the *same* router it becomes a
-tie-breaker oddity — production configs pin `bgp router-id <unique-lo>`.
+Both routers retain two VIP paths. The local host path has one AS hop and is
+best; the remote path crosses the other site's AS and has two. The FIB points
+only to the local host (`10.0.101.2` on r1, `10.0.102.2` on r2). c1 answers
+`"dns1"`, c2 answers `"dns2"`, both receive `192.0.2.80` for
+`www.lab.test`, and each local trace is two hops. Fresh logs place each query
+on the selected local instance. Cross-site unique-address queries prove that
+the individual servers remain observable independently of the anycast VIP.
 
 </details>
 
-## Task 4 — Prove it's anycast
+## Task 4 — Trace normal withdrawal and recovery
 
-**Objective:** demonstrate, three independent ways, that c1 and c2 are
-served by *different machines* on the *same address*: by answer content,
-by path, and by the server's own logs.
+**Objective:** stop dnsmasq visibly on dns1, trace the bounded chain from
+health log to connected VIP to BGP route to remote client selection, then
+restore exactly one daemon and verify local-best recovery.
 
-**Predict first:** `traceroute` from c1 to 10.53.53.53 — how many hops,
-and what will the last hop claim to be?
+**Predict first:** which control-plane sessions will fall, if any? Which BGP
+path survives, and how will c1's traceroute change?
 
-<details markdown="1">
-<summary>Hints</summary>
-
-- Answer content: the `whoami.lab.test` TXT record differs per instance;
-  `www.lab.test` doesn't. Query both, from both clients
-  (`dig +short @10.53.53.53 ...`).
-- Path: `traceroute -n 10.53.53.53` from each client.
-- Server's view: dnsmasq logs every query to `/var/log/dnsmasq.log`
-  (`log-queries` is on). Query from c1, then check *both* servers' logs.
-- Also try `dig +short @10.0.0.11 TXT whoami.lab.test` from **c2** — the
-  far client asking instance #1 directly, by its unique address.
-
-</details>
-
-<details markdown="1">
-<summary>Check your work</summary>
-
-From c1 `whoami` returns `"dns1"`, from c2 `"dns2"` — same question,
-same server address, different machine. `www.lab.test` returns
-192.0.2.80 from both, which is the operational point: identical data,
-so nobody cares which instance answers. Traceroute from c1 is **2
-hops** — 172.16.1.1 (r1), then 10.53.53.53 — and from c2 also 2 hops
-but through 172.16.2.1: "the same host" is two hops from everywhere,
-which no unicast address can be. The logs make it concrete: c1's query
-appears in dns1's `/var/log/dnsmasq.log` (`query[A] ... from
-172.16.1.10`) and dns2's log has no trace of it. And the unique
-addresses still work from anywhere — c2 querying 10.0.0.11 crosses the
-core and gets `"dns1"`. That's why they exist: the VIP tells you the
-*service* is fine somewhere; only the unique address can tell you
-whether a *specific instance* is fine. Monitoring targets the unique
-addresses, clients target the VIP.
-
-</details>
-
-## Task 5 — Kill an instance, watch the network heal
-
-**Objective:** stop dnsmasq on dns1 and verify, from the routing to the
-client, that the service converged onto dns2 — then bring dns1 back.
-
-**Predict first:** how many seconds of DNS outage will c1 see? Reason it
-out from the two moving parts: the watchdog polls every 2 s, and an eBGP
-withdraw propagates in milliseconds on a directly-connected session.
-
-Inject (on dns1's shell — or `./scripts/lab.sh cmd anycast-dns dns1 -- pkill
-dnsmasq` from the host):
+Stop only the service:
 
 ```bash
-pkill dnsmasq
+docker exec clab-anycast-dns-dns1 pkill -x dnsmasq
 ```
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- Watch the mechanism fire, in order: `tail /var/log/healthcheck.log` on
-  dns1 → `ip -4 addr show dev lo` (VIP gone) → on r1,
-  `show bgp ipv4 unicast 10.53.53.53/32` (one path left) → from c1,
-  `dig` and `traceroute` again.
-- Recover with `dnsmasq` (it daemonizes itself; config is already at
-  /etc/dnsmasq.conf) and watch the same chain run forward.
+- Bound each observation rather than waiting forever: inspect the health log,
+  then `lo`, then r1's VIP RIB, then c1's answer and trace.
+- The watchdog polls every two seconds; allow a few seconds for detection and
+  withdrawal. The previous implementation was observed at 3.950 seconds for
+  failover and 2.007 seconds for recovery, so do not promise a sub-two-second
+  result.
+- Restore the daemon with the lifecycle helper already present on the host.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```bash
+timeout 10 docker exec clab-anycast-dns-dns1 sh -c \
+  'until tail -n 1 /var/log/healthcheck.log | grep -q UNHEALTHY; do sleep 1; done'
+docker exec clab-anycast-dns-dns1 ip -4 address show dev lo
+docker exec clab-anycast-dns-r1 Cli -p 15 -c enable -c 'show ip bgp 10.53.53.53/32'
+docker exec clab-anycast-dns-c1 dig +time=2 +tries=1 +short @10.53.53.53 TXT whoami.lab.test
+docker exec clab-anycast-dns-c1 traceroute -n -q 1 -w 1 -m 4 10.53.53.53
+docker exec clab-anycast-dns-dns1 sh -c \
+  '. /usr/local/bin/service-control.sh; start_dns'
+timeout 10 docker exec clab-anycast-dns-dns1 sh -c \
+  'until ip -4 address show dev lo | grep -q "10.53.53.53/32"; do sleep 1; done'
+```
 
 </details>
 
 <details markdown="1">
 <summary>Check your work</summary>
 
-The healthcheck log gains `UNHEALTHY — VIP 10.53.53.53/32 withdrawn from
-lo` within 2 s of the kill; the connected route vanishes, so dns1's
-`redistribute connected` un-advertises it — that's route health
-injection, the entire trick of this lab, firing in reverse. r1's BGP
-entry drops to **one path** (`65002 65102`, now best), c1's `whoami`
-answers `"dns2"`, and the same traceroute is now **3 hops**: r1 → r2
-(10.0.12.2) → 10.53.53.53. c1 never touched its DNS config; the
-*network* moved the service. Measured outage in this lab: **under 2
-seconds**, dominated by the watchdog's poll interval — the BGP
-withdrawal itself is milliseconds. (Prediction check: 0–2 s of poll
-delay + ~0 propagation. If you said "the BGP hold timer, 180 s" — that
-timer is for dead *routers*; here the router is fine and the *route*
-was withdrawn explicitly. Compare the mpls-ldp break-it, which lives
-and dies by exactly that timer.)
-
-After restarting dnsmasq: `healthy — VIP ... installed` in the log
-within 2 s, two paths on r1, and c1 is back on `"dns1"`.
+No BGP session drops. The watchdog removes the unhealthy connected VIP, so
+filtered redistribution withdraws only that prefix. r1 retains the remote
+path through AS65002 and c1 answers from `dns2` over a three-hop path. After
+exactly one dnsmasq returns, the watchdog reinstalls the VIP, the direct
+one-AS path becomes best again, and c1 returns to `dns1` within a bounded few
+seconds. The hold timer is irrelevant: the peer stayed alive and explicitly
+withdrew one route.
 
 </details>
 
-## Task 6 — Break it: the resolver that died with its route still up
+## Task 5 — Diagnose a green-control-plane blackhole
 
-**Objective:** diagnose an anycast pathology from its symptom. Inject
-the fault on dns1 (from the host, without reading the commands' intent
-too closely):
+**Objective:** diagnose an opaque site-local DNS outage in which every BGP
+session and both VIP paths remain green. Identify the failed coupling, repair
+it completely, and explain why remote monitoring can miss the incident.
+
+Inject the supported fault twice to prove the injector is idempotent:
 
 ```bash
-./scripts/lab.sh cmd anycast-dns dns1 -- pkill -f healthcheck.sh
-./scripts/lab.sh cmd anycast-dns dns1 -- pkill dnsmasq
+./labs/anycast-dns/break.sh
+./labs/anycast-dns/break.sh
 ```
 
-Symptoms: c1's DNS is **dead** — `dig @10.53.53.53` reports
-`communications error ... connection refused` — while c2 resolves
-happily, and every BGP session in the network is Established. From c2's
-side (and dns2's, and r2's) the service is completely healthy. Work out
-what's wrong and *where the ICMP refusal is coming from* before opening
-the hints; then repair it and re-verify.
+**Predict first:** if c1 fails while c2 succeeds and r1 still prefers its
+local VIP path, which layer is lying about health? What evidence distinguishes
+a missing route from delivery to a host with no listener?
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- `connection refused` is a different failure than Task 1's `no servers
-  could be reached`. A refusal is ICMP from a machine the packet
-  *reached*: something routed c1's query all the way to a host with no
-  listener on port 53. Which host still claims the VIP, and what
-  should have removed that claim?
-- Compare `show bgp ipv4 unicast 10.53.53.53/32` on r1 with what you
-  saw in Task 5.
+- Compare c1 and c2 queries before touching the control plane.
+- On r1, inspect peer state, both VIP paths, and the installed next hop.
+- On dns1, compare the service listener, local query, VIP presence, and
+  route-health process. A refusal means the packet reached a kernel with no
+  listener; a timeout or unreachable points elsewhere.
+- Do not remove the VIP manually as the final repair. Restore the service and
+  the mechanism that owns the route, then prove process uniqueness.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+The service and its route-health owner must both be restored. Run the full
+repair twice; it converges to exactly one of each process:
+
+```bash
+./labs/anycast-dns/solution.sh
+./labs/anycast-dns/solution.sh
+./scripts/lab.sh check anycast-dns
+```
 
 </details>
 
 <details markdown="1">
 <summary>Check your work</summary>
 
-r1 still holds **two** paths and still prefers dns1: the VIP never left
-dns1's `lo` (`ip -4 addr show dev lo` still lists it), because the
-watchdog — the only thing coupling the route to the service — was dead
-before dnsmasq was. So r1 faithfully delivers every site-1 query to a
-server whose daemon is gone, and that server's kernel answers with
-port-unreachable: a **local blackhole**. Site 2 never notices; anycast
-failures are invisible from wherever the surviving instances are, which
-is exactly what makes them nasty on-call tickets.
-
-The lesson is the inversion of Task 5: BGP tracks *route* liveness
-(is the router up? is the session up?), and every bit of it was green
-while the service was down. Anycast is only as safe as whatever couples
-service health to route presence. In this lab that's a 20-line shell
-loop; in production it's the same idea with more nines (bird +
-health-checker, ExaBGP scripts, BFD to the host, or the LB tier of
-`load-balancer-basics` doing it at L7).
-
-Repair — restart the service *and* the coupling, on dns1:
-
-```bash
-dnsmasq
-nohup sh /usr/local/bin/healthcheck.sh >>/var/log/healthcheck.log 2>&1 &
-```
-
-then re-verify like an operator: log says `healthy`, r1 has two paths
-with the direct one best, c1's `whoami` is `"dns1"` again. Run the full
-end-state check from the host: `./labs/anycast-dns/check.sh`.
+During the fault, dns1 keeps the VIP and its advertisement while local DNS is
+dead. r1 therefore retains two BGP paths and correctly prefers the shorter
+local one, delivering site-1 queries into a local blackhole. Site 2 remains
+healthy, so a remote probe can conceal the outage. After repair, dns1 has
+exactly one dnsmasq and one watchdog, local DNS is healthy, r1 still uses its
+local next hop, and the checker returns **52 passed, 0 failed**. The supported
+fault kept routing green and live validation confirmed exactly **47 passed,
+5 failed**, limited to the five narrow service/coupling/client assertions.
 
 </details>
-
----
 
 ## Verification
 
-End state, all of which `./labs/anycast-dns/check.sh` asserts (the
-failover checks kill and restart dnsmasq on dns1 — the lab self-heals):
+Run the deterministic, read-only end-state checker:
 
-- [ ] All six containers running
-- [ ] r1 and r2 each hold two Established eBGP sessions
-      (`show bgp summary`)
-- [ ] 172.20.20.0/24 is **not** in anyone's BGP table (the route-map did
-      its job)
-- [ ] r1 has two paths to 10.53.53.53/32, direct `65101` best
-- [ ] c1's `whoami` is `"dns1"`, c2's is `"dns2"`; `www.lab.test` is
-      192.0.2.80 from both
-- [ ] c2 can query dns1 directly on 10.0.0.11
-- [ ] c1's traceroute to the VIP is 2 hops
-- [ ] Killing dnsmasq on dns1 moves c1 to `"dns2"` within seconds;
-      restarting it moves c1 back
+```bash
+./scripts/lab.sh check anycast-dns
+```
+
+The solved target is **52 passed, 0 failed**:
+
+- [ ] Six expected containers run the exact topology image references.
+- [ ] Native cEOS and Linux package/runtime identities match the lab pins.
+- [ ] Core and service-host peers, ASNs, exact prefix policies, router IDs,
+      connected redistribution, and host outbound filters are exact.
+- [ ] Each host advertises exactly two intended `/32`s and no management or
+      transit prefix.
+- [ ] Each cEOS router retains two VIP paths but installs only its local host
+      next hop.
+- [ ] Both anycast and both unique-address queries return the intended data,
+      and bounded traceroutes match the closest-instance path.
+- [ ] Each resolver has one DNS daemon, one watchdog, a healthy VIP, and the
+      correct local records.
 
 ## Challenge questions
 
-No answers provided — argue them from what you built.
+No answers are provided. Argue each from the behavior you built.
 
-1. This lab's DNS is UDP: every query is a single packet, so a route
-   flap mid-"connection" costs nothing. Now make it DNS-over-TCP (or
-   HTTPS on the VIP): walk through what happens to an established TCP
-   session when BGP shifts the VIP's best path from dns1 to dns2
-   mid-stream, and why anycast still works fine for short TCP exchanges
-   in practice.
-2. Re-home dns2 to r1, so both instances peer with the same router with
-   equal-length AS paths. What does r1 do with two equal candidates —
-   and what *could* it do if you enabled multipath? For per-flow ECMP,
-   which header fields decide the instance a given client hits, and what
-   operational property of DNS makes that acceptable?
-3. Your monitoring pings 10.53.53.53 every 10 s and it has never once
-   failed — yet site-1 users just filed "DNS is down" tickets (Task 6).
-   Design the monitoring for this lab properly: what do you probe, on
-   which addresses, from where, and what does each combination tell you?
-4. The watchdog polls every 2 s with a 1 s timeout. List the failure
-   modes it still misses (think: wedged-but-listening daemon, watchdog
-   death, a resolver that answers but with garbage) and sketch what
-   production route-health-injection adds for each.
-5. dns1 needs a 30-minute maintenance window. Using only what's in this
-   lab (BGP attributes on the server's advertisement, the watchdog, the
-   unique addresses), design a *graceful drain*: no lost queries, proof
-   of drain before you touch the box, and a clean return to service.
-   Compare that with how `vrrp`-style HA would drain — what does the
-   routing-based version give you that a first-hop protocol can't?
+1. If both resolver instances moved behind one router, which BGP knobs could
+   deliberately install both equal paths, and what would per-flow hashing mean
+   for UDP and TCP DNS clients?
+2. Design probes that distinguish service-wide health, site-local health, and
+   one specific resolver's health. Which source locations and destination
+   addresses are required?
+3. The watchdog gets a syntactically valid but incorrect DNS answer. How would
+   you change the health contract without making a transient upstream failure
+   flap the route?
+4. Design a graceful 30-minute drain of dns1 using routing policy and the
+   unique address. What proves traffic has moved before maintenance begins?
+5. A third site has a much longer AS path and should be emergency-only. Which
+   attributes would express that intent, and where would you enforce them?
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| BGP session stuck in `Active`/`Connect` | Wrong `remote-as` or neighbor address (each server peers with its *router's* AS, not its own) | Check the AS/peer table; fix `neighbor ... remote-as`; sessions poisoned by an earlier wrong AS recover faster with `clear bgp <peer>` |
-| Sessions Established, PfxRcd stays 0 | FRR's eBGP policy default — no policy, no routes | `no bgp ebgp-requires-policy` in every BGP instance (all four nodes) |
-| Router receives the VIP but also 172.20.20.0/24 and the /30 | `redistribute connected` unfiltered, or the route-map didn't bind | Verify with `show bgp ipv4 unicast neighbors <server> routes`; remove-then-re-add: `no redistribute connected`, then `redistribute connected route-map ADVERTISE` |
-| `dig @10.53.53.53` → `no servers could be reached` (fast) | No route: the VIP isn't in BGP at all (server BGP not up, or route-map denies it) | `show ip route 10.53.53.53/32` on the client's router; work back: route-map → prefix-list → is the VIP on the server's `lo`? |
-| `dig @10.53.53.53` → `connection refused` | Route exists but the daemon is dead on the instance the route points at — the Task 6 blackhole (watchdog not running) | On that server: restart `dnsmasq` **and** the watchdog; confirm the log toggles UNHEALTHY/healthy with the daemon |
-| VIP never appears on `lo` after deploy | dnsmasq failed to start, so the watchdog correctly refuses to install the VIP | `/var/log/dnsmasq.log` and `dnsmasq --test` on the server |
-| c1 works, c2 dead (or vice versa) | Nothing shared is broken — it's the site-local leg: r2↔dns2 session, r2's client subnet advertisement, or c2's default route | `show bgp summary` on the local router, then trace c2→r2→dns2 hop by hop |
+| Symptom | Likely cause | Recovery path |
+|---------|--------------|---------------|
+| Core peer is not Established | Wrong core AS/address or modified startup scaffolding | Compare r1/r2 core neighbors and restore the documented baseline |
+| Host peer is Established but advertises zero prefixes | Missing connected redistribution, denied prefix-list, or absent VIP | Inspect host `advertised-routes`, the two route-maps, and `lo` |
+| Host advertises a `/30` or management subnet | Redistribution or outbound policy is missing/broader than exact `/32`s | Restore both host-side filters; confirm exactly two advertisements |
+| cEOS receives an unexpected prefix | Router inbound allowlist is missing or attached to the wrong neighbor/direction | Restore the exact native prefix-list, route-map, and inbound attachment |
+| VIP route is absent everywhere | Local DNS is unhealthy, watchdog is absent, or host BGP cannot export | Trace local query → watchdog log → VIP → host advertised routes |
+| c1 fails while c2 works and both VIP paths remain | Site-local service-to-route coupling is stale | Diagnose Task 5, then run `solution.sh` and prove process uniqueness |
+| Unique-address query fails but VIP works | Instance route missing or return path broken | Inspect the unique `/32` advertisement, exact `172.16.0.0/16` host return route, and core route |
 
-## Extensions
+The final destroy command is always:
 
-- Enable `bgp bestpath as-path multipath-relax` + `maximum-paths` and
-  re-home dns2 to r1 (challenge question 2 made real): watch per-flow
-  ECMP spread clients across instances, then break one and see who
-  notices.
-- Add a third resolver at a "remote site" behind both r1 and r2 with a
-  longer AS path — a backup-of-last-resort instance that only receives
-  queries when both primaries are down.
-- Replace the watchdog's kill test with a *quality* test (dig for a
-  record and compare the answer), and make it drain the unique /32 too
-  when unhealthy — then argue why draining the unique address is
-  actually a bad idea (question 3 is a hint).
-- Do it in production style: replace the shell watchdog with
-  `staticd`-based conditional routes or run the resolver under a
-  process supervisor that manages the VIP, and compare failure coverage.
+```bash
+./scripts/lab.sh destroy anycast-dns
+```

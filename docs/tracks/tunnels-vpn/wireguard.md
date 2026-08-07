@@ -2,11 +2,13 @@
 title: wireguard
 ---
 
-!!! tip "Practice Lab"
-    WireGuard VPN, key pairs, hub-and-spoke topology
+!!! tip "Build Lab"
+    Build and debug WireGuard public-key identity, cryptokey routing, and hub forwarding.
 
-!!! note "Image"
+!!! note "Images"
     `wireguard-lab:local` — `docker build -t wireguard-lab:local labs/wireguard/`
+
+    `ops-lab:local` — `docker build -t ops-lab:local images/ops-lab/`
 
 {%
   include-markdown "../../../labs/wireguard/README.md"

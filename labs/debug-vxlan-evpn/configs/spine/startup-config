@@ -1,0 +1,40 @@
+hostname spine
+!
+interface Loopback0
+   ip address 10.0.0.100/32
+   ip ospf area 0.0.0.0
+!
+interface Ethernet1
+   description underlay-to-vtep1
+   no switchport
+   ip address 10.1.1.2/30
+   ip ospf area 0.0.0.0
+   no shutdown
+!
+interface Ethernet2
+   description underlay-to-vtep2
+   no switchport
+   ip address 10.1.2.2/30
+   ip ospf area 0.0.0.0
+   no shutdown
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.100
+   passive-interface Loopback0
+!
+router bgp 65000
+   router-id 10.0.0.100
+   neighbor VTEPS peer group
+   neighbor VTEPS remote-as 65000
+   neighbor VTEPS update-source Loopback0
+   neighbor VTEPS send-community extended
+   neighbor 10.0.0.1 peer group VTEPS
+   neighbor 10.0.0.2 peer group VTEPS
+   !
+   address-family evpn
+      neighbor VTEPS activate
+      neighbor VTEPS route-reflector-client
+!
+end

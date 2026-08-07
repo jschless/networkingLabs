@@ -1,7 +1,7 @@
 # Sample workload the lab exposes as a LoadBalancer. 4 replicas spread
 # across both nodes (topologySpreadConstraints) so that with
 # externalTrafficPolicy=Cluster every node has a local endpoint, and the
-# Task 6 switch to Local has something to reveal.
+# Task 5 switch to Local has something to reveal.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,7 +23,7 @@ spec:
             matchLabels: { app: web }
       containers:
         - name: web
-          image: nginx:1.27-alpine
+          image: docker.io/library/nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
           ports:
             - containerPort: 80
           resources:

@@ -5,6 +5,7 @@ username admin privilege 15 role network-admin secret admin
 ip routing
 !
 interface Loopback0
+   description fabric router-id
    ip address 10.255.0.11/32
 !
 interface Ethernet1
