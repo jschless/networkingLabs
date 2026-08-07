@@ -3,4 +3,7 @@
 # watchdog and for local verification). bash for the setup script.
 FROM frr-lab:local
 
-RUN apk add --no-cache bash bind-tools dnsmasq
+RUN apk add --no-cache \
+      bash=5.1.16-r2 \
+      bind-tools=9.16.48-r0 \
+      dnsmasq=2.86-r4

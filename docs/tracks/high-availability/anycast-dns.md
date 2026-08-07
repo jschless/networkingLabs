@@ -2,11 +2,11 @@
 title: anycast-dns
 ---
 
-!!! tip "Practice Lab"
-    Anycast DNS via routing-on-the-host: FRR on the servers advertises a shared /32 VIP by eBGP, a health-check watchdog withdraws it with the service, clients fail over in ~2 s
+!!! tip "Build Lab"
+    Build service-health-controlled routing-on-host: FRR resolver hosts export a filtered shared /32 to native cEOS routers, which select and forward to the closest healthy instance
 
 !!! note "Images"
-    `docker build -t frr-lab:local images/frr/`, `docker build -t ops-lab:local images/ops-lab/`, and `docker build -t anycast-dns:local labs/anycast-dns/` (no cEOS required)
+    Prepare `ceos:4.35.2F` with `scripts/build-images.sh ceos`, then build `frr-lab:local`, `ops-lab:local`, and `anycast-dns:local` with the commands in the lab
 
 {%
   include-markdown "../../../labs/anycast-dns/README.md"

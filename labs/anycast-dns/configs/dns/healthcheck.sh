@@ -1,17 +1,30 @@
 #!/bin/sh
-# Route health injection watchdog.
-#
-# Holds the anycast VIP on lo only while the local dnsmasq answers a real
-# query. FRR redistributes connected routes (your Task 3 config), so the
-# /32 enters and leaves BGP together with the service — no VIP on lo,
-# no route in the network. Poll interval 2s; a dead resolver is withdrawn
-# from the whole network in a few seconds.
-#
-# Runs in the background from /setup.sh; log: /var/log/healthcheck.log.
-# Task 6 kills this script on purpose — restart it the same way setup.sh
-# started it.
+# Route-health injection watchdog. A single lock owner evaluates the local
+# resolver and owns the connected anycast /32.
+set -u
 
 VIP=10.53.53.53/32
+PID_FILE=/run/anycast-watchdog.pid
+LOCK_DIR=/run/anycast-watchdog.lock
+
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    exit 0
+fi
+
+cleanup() {
+    rm -f "$PID_FILE"
+    rmdir "$LOCK_DIR" 2>/dev/null || true
+}
+
+terminate() {
+    cleanup
+    trap - EXIT
+    exit 0
+}
+
+trap cleanup EXIT
+trap terminate INT TERM
+printf '%s\n' "$$" >"$PID_FILE"
 
 while :; do
     # Exit status, not output: dig prints ";; connection timed out" on
@@ -20,12 +33,12 @@ while :; do
     if dig +time=1 +tries=1 +short @127.0.0.1 TXT whoami.lab.test >/dev/null 2>&1; then
         if ! ip -4 addr show dev lo | grep -q '10\.53\.53\.53'; then
             ip addr add "$VIP" dev lo
-            echo "$(date -Iseconds) healthy — VIP $VIP installed on lo"
+            echo "$(date -Iseconds) healthy - VIP $VIP installed on lo"
         fi
     else
         if ip -4 addr show dev lo | grep -q '10\.53\.53\.53'; then
             ip addr del "$VIP" dev lo
-            echo "$(date -Iseconds) UNHEALTHY — VIP $VIP withdrawn from lo"
+            echo "$(date -Iseconds) UNHEALTHY - VIP $VIP withdrawn from lo"
         fi
     fi
     sleep 2
