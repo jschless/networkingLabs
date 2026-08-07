@@ -1,59 +1,50 @@
 name: wireguard
 
-# WireGuard Hub-and-Spoke VPN Lab
-#
-# All nodes share a WAN bridge. WAN IPs are pre-configured by setup.sh.
-# User generates WireGuard keys and configures /etc/wireguard/wg0.conf on each node.
-#
-# WAN bridge (br-wan): 10.0.0.0/24
-#   hub  eth1: 10.0.0.1    — VPN server (ListenPort 51820)
-#   gw-a eth1: 10.0.0.10   — Site A gateway
-#   gw-b eth1: 10.0.0.20   — Site B gateway
-#
-# WireGuard overlay (you configure):
-#   hub  wg0: 192.168.100.1/24
-#   gw-a wg0: 192.168.100.10/32
-#   gw-b wg0: 192.168.100.20/32
-#
-# Requires custom image:
-#   docker build -t wireguard-lab:local labs/wireguard/
-
 topology:
   nodes:
-    br-wan:
-      kind: bridge
+    wan:
+      kind: linux
+      image: ops-lab:local
+      cap-add: [NET_ADMIN, NET_RAW]
+      binds:
+        - configs/wan/setup.sh:/setup.sh:ro
+      exec:
+        - sh /setup.sh
 
     hub:
       kind: linux
       image: wireguard-lab:local
+      cap-add: [NET_ADMIN, NET_RAW]
       sysctls:
         net.ipv4.ip_forward: "1"
       binds:
-        - configs/hub/setup.sh:/setup.sh
+        - configs/hub/setup.sh:/setup.sh:ro
       exec:
-        - bash /setup.sh
+        - sh /setup.sh
 
     gw-a:
       kind: linux
       image: wireguard-lab:local
+      cap-add: [NET_ADMIN, NET_RAW]
       sysctls:
         net.ipv4.ip_forward: "1"
       binds:
-        - configs/gw-a/setup.sh:/setup.sh
+        - configs/gw-a/setup.sh:/setup.sh:ro
       exec:
-        - bash /setup.sh
+        - sh /setup.sh
 
     gw-b:
       kind: linux
       image: wireguard-lab:local
+      cap-add: [NET_ADMIN, NET_RAW]
       sysctls:
         net.ipv4.ip_forward: "1"
       binds:
-        - configs/gw-b/setup.sh:/setup.sh
+        - configs/gw-b/setup.sh:/setup.sh:ro
       exec:
-        - bash /setup.sh
+        - sh /setup.sh
 
   links:
-    - endpoints: ["hub:eth1",  "br-wan:eth0"]
-    - endpoints: ["gw-a:eth1", "br-wan:eth1"]
-    - endpoints: ["gw-b:eth1", "br-wan:eth2"]
+    - endpoints: ["hub:eth1", "wan:eth1"]
+    - endpoints: ["gw-a:eth1", "wan:eth2"]
+    - endpoints: ["gw-b:eth1", "wan:eth3"]
