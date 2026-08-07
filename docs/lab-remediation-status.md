@@ -8,9 +8,9 @@ catalog.
 - Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
 - Inventory date: 2026-07-31
 - Topology-backed labs: 143
-- Completed labs: 11 of 143
-- Remaining pending labs: 132
-- Completed type mix: 7 Build, 2 Guided Debug, 1 Reference / Observation,
+- Completed labs: 12 of 143
+- Remaining pending labs: 131
+- Completed type mix: 8 Build, 2 Guided Debug, 1 Reference / Observation,
   and 1 Capstone
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -141,7 +141,7 @@ catalog.
 | ospf-virtual-link | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | ot-zone-conduit | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | packet-analysis-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| qos-enterprise | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| qos-enterprise | changed | Build | Old Linux-`tc` transcript exposed configuration helpers; its classless comparison removed the bottleneck; one shared iperf3 server serialized intended concurrent offers; WRED, strict-priority, and borrowing claims were false; full task anatomy and an opaque fault were missing; checker covered only the baseline | Native VyOS `2026.03.15-0031-rolling` for the critical learned egress router; pinned-Debian `qos-lab:local` Linux endpoints are incidental traffic generators/receiver | No critical-role Linux/FRR exception; Linux remains only on incidental traffic generators/receiver | Native probe; clean TBF baseline and exact README solution; complete package inventory/debsecan scan; deterministic ECN-zero `b8`/`88`/`00` captures; real HTB/PFIFO/SFQ/RED, police/reclassify, borrowing, drop, and class counters; 26/0 healthy; each atomic negative 25/1; repeated break 21/5 and repair 26/0; forced transactional rollback; active peak samples; two clean destroys; full repository gates; AUTHORING fallback and same-reviewer approval | Active peaks: router 259,788.8 KiB (~253.7 MiB), server 4,920.32 KiB (~4.81 MiB), client-data 988 KiB, client-video 956 KiB, client-voice 968 KiB | 97e936b | lab-tutor unavailable; amd64/local VyOS validated; software HTB, not MQC/ASIC/hardware queues; IPv4 and ECN-zero ToS only; transitive apt resolution and advisory scan are time-sensitive, review by 2026-09-07 |
 | redistribution-tags | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | route-maps-pbr | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | sdwan-concepts | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
