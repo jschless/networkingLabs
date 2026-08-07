@@ -8,9 +8,9 @@ catalog.
 - Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
 - Inventory date: 2026-07-31
 - Topology-backed labs: 143
-- Completed labs: 10 of 143
-- Remaining pending labs: 133
-- Completed type mix: 6 Build, 2 Guided Debug, 1 Reference / Observation,
+- Completed labs: 11 of 143
+- Remaining pending labs: 132
+- Completed type mix: 7 Build, 2 Guided Debug, 1 Reference / Observation,
   and 1 Capstone
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -51,7 +51,7 @@ catalog.
 | campus-l2-hardening | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | carrier-ethernet-handoff | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | cloud-hybrid-networking | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| copp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| copp-basics | changed | Build | Legacy workflow exposed unsupported cEOS CoPP answers, conflated a software container with hardware/ASIC CoPP, lacked exact INPUT-versus-FORWARD mechanism checks, robust saved-state validation, and a transactional opaque break/repair lifecycle | Purpose-built `copp-lab:local` FRR 10.5.0 / Linux software policer on all nodes; r2 is the critical learned INPUT role; r1/r3 are incidental BGP/OSPF peers | Documented critical-role feature-unavailable/nonfunctional exception: local cEOS 4.35.2F rejected the CoPP CLI; VyOS 2026.03.15 parsed the firewall candidate but container commit failed; selected r2 implements the learned software `iptables` INPUT policer, not hardware CoPP | Exact README walk and routing; 14/14 healthy; exact 13/1 saved-declaration, live-rate, and broken-path negatives; generic non-leaking failures; transactional abort rollback restored exactly one first INPUT jump with unchanged saved SHA; two break/repair cycles each 13/1 then 14/14; second clean run/destroy; full repository gates; AUTHORING fallback and same-reviewer closure with no findings | Point sample: r1 26.08 MiB, r2 26.85 MiB, r3 25.88 MiB; about 78.81 MiB total | 4a9cb62 | amd64 validated only; lab-tutor unavailable; no hardware ASIC, queue, punt-path, IPv6, or scale claim; memory is a point sample; next image advisory review 2026-09-07 |
 | dc-storage-networking | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | dci-evpn-multisite | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | debug-bgp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
