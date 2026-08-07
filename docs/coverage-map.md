@@ -37,7 +37,7 @@ carrier, voice, OT, storage, and assessment maturity), see the
 | 1.1.b HA techniques: redundancy, FHRP, SSO | 🟡 | `vrrp`, `ha-network-design-ceos`, `graceful-restart`, `bfd-ospf`, `bfd-bgp` — VRRP hands-on; HSRP/GLBP and SSO are Cisco-only (theory) |
 | 1.2 Catalyst SD-WAN principles | 🟡 | `sdwan-concepts` — TLOC/color/OMP/BFD/app-route mechanisms built by hand and mapped one-to-one; vManage/vSmart product workflows remain theory |
 | 1.3 SD-Access principles | ❌ | Underlying data plane (VXLAN) is covered below; LISP control plane and DNA/Catalyst Center are not |
-| 1.4 Interpret QoS configurations | 🟡 | `qos-enterprise` — classification/scheduling with Linux `tc`, not MQC syntax |
+| 1.4 Interpret QoS configurations | 🟡 | `qos-enterprise` — native VyOS HTB/DSCP software scheduling with drop-tail, SFQ, and RED; VyOS renders Linux `tc`, not Cisco MQC or hardware queues |
 
 ### 2.0 Virtualization (10%)
 
