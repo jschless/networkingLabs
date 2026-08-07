@@ -8,6 +8,10 @@ catalog.
 - Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
 - Inventory date: 2026-07-31
 - Topology-backed labs: 143
+- Completed labs: 10 of 143
+- Remaining pending labs: 133
+- Completed type mix: 6 Build, 2 Guided Debug, 1 Reference / Observation,
+  and 1 Capstone
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
 - Global validation limitation: the requested installed `lab-tutor` skill is not
@@ -167,7 +171,7 @@ catalog.
 | vrrp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | vxlan-evpn | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | vxlan-evpn-srlinux | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| wireguard | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| wireguard | changed | Build | External host bridge made deploy nonportable; exposed placeholder configs were not directly executable or key-safe; incomplete task anatomy and opaque lifecycle; weak checker did not prove identity/config continuity, exact peer ownership, forwarding, or encrypted evidence | Purpose-built `wireguard-lab:local` Linux for hub/gw-a/gw-b because the native kernel WireGuard plus `wg`/`wg-quick` model is the objective; incidental `ops-lab:local` internal WAN bridge; no FRR or router-NOS claim | Documented intrinsic critical-role Linux exception for all three learned WireGuard roles; Linux is the native mechanism under study, while the WAN container is incidental | Fresh executable README solution with protected keys; 29/29 healthy; break twice produced exact 25/4 while WAN and authenticated handshakes remained green; solution twice restored 29/29; outer-only UDP/51820 capture and exact config-empty 28/1 negative; clean repeat deploys/destroys with no leaked interfaces or artifacts; repository gates; AUTHORING fallback review closed after two fix/follow-up rounds with no findings | About 3.927 MiB point-in-time total | 51eb582 | lab-tutor unavailable; amd64 only; NAT, IPv6, scale, roaming, long-duration rekey, and physical hardware not live-tested; memory is a point sample; next image review 2026-09-06 |
 | wireless-auth-control-operations | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | zero-trust-secure-access | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | ztp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
