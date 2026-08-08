@@ -1,0 +1,302 @@
+deck: Troubleshooting Drills
+cards:
+
+# Symptom -> cause drills distilled from the debug-* labs. Each is a fault an
+# engineer has actually shipped; the goal is pattern recognition, not trivia.
+
+  - id: dbg-isis-area-mismatch
+    type: basic
+    subdeck: IGP
+    front: |
+      Four routers in a Level-1 IS-IS chain. The middle router shows **no IS-IS
+      neighbours at all**, though every link is up and IP-reachable. What's the
+      most likely cause?
+    back: |
+      **A wrong Area ID in its NET.** L1 adjacency **requires matching area
+      IDs**, so a single mistyped area digit isolates that router from
+      *everyone* — which is why the symptom is "no neighbours at all" rather
+      than one broken adjacency.
+
+      Check with `show isis neighbors` (empty) then compare the `net` statement
+      on each router. Adjacencies return within ~30 s (3 × hello) after the fix.
+    extra: |
+      Contrast: an **L2**-only design would have been unaffected, because L2
+      adjacency ignores area entirely. "No neighbours anywhere" on L1 points at
+      area; "one neighbour missing" points at the link.
+    tags: [troubleshooting, symptom-cause, isis]
+    source: labs/debug-isis-basics
+
+  - id: dbg-ospf-interface-wrong-area
+    type: basic
+    subdeck: IGP
+    front: |
+      Two OSPF routers on the same link, both interfaces up with correct IPs,
+      no adjacency, and nothing in the logs about authentication. What single
+      command reveals the cause?
+    back: |
+      ```
+      show ip ospf interface <intf>
+      ```
+      on **both** ends — and compare the **area**. A mistyped `ip ospf area`
+      (0.0.0.0 on one side, 0.0.0.2 on the other) prevents the hello from being
+      accepted at all.
+
+      The reason this is easy to miss: the routers' *own* config each looks
+      internally consistent. Only the comparison across the link exposes it.
+    extra: |
+      The other hello fields that must match: hello/dead timers, area type
+      (stub/NSSA bits), authentication, and — for reaching `Full` rather than
+      forming at all — MTU.
+    tags: [troubleshooting, symptom-cause, ospf]
+    source: labs/debug-ospf-multiarea
+
+  - id: dbg-ospf-stub-vs-nssa
+    type: basic
+    subdeck: IGP
+    front: |
+      One router has area 1 as **stub**, its neighbour has it as **NSSA**. What
+      breaks, and what's the second problem hiding behind the first?
+    back: |
+      **No adjacency forms.** OSPF encodes area type in hello **option bits**:
+      stub is E=0, N=0; NSSA is E=0, **N=1**. The N-bit mismatch causes the
+      hello to be rejected.
+
+      The hidden second problem: **a stub area cannot host an ASBR.** So even
+      once the adjacency formed, the `redistribute connected` on the router
+      configured as stub would **silently do nothing** — no error, no LSA.
+
+      Fixing the visible fault would have left a second, quieter one behind.
+    tags: [troubleshooting, symptom-cause, ospf]
+    source: labs/debug-ospf-nssa
+
+  - id: dbg-eigrp-one-router-missing
+    type: basic
+    subdeck: IGP
+    front: |
+      In an EIGRP square topology, adjacencies "came up" during configuration
+      but one router is missing from everyone else's neighbour table the next
+      day. What class of fault is this?
+    back: |
+      Something that stops **hellos being accepted** while leaving the
+      interface up — most commonly a **mismatched K-value or AS number**, or an
+      interface that was made **passive**.
+
+      The "it worked on my screen" detail is the clue: adjacencies formed
+      before the breaking change was applied (or saved), then dropped when the
+      hold timer expired. Nobody was watching by then.
+
+      Check `show ip protocols` on both ends and compare the AS number and
+      K-values, then `show ip eigrp interfaces` for a missing interface.
+    tags: [troubleshooting, symptom-cause, eigrp]
+    source: labs/debug-eigrp-basics
+
+  - id: dbg-gre-wrong-tunnel-destination
+    type: basic
+    subdeck: Tunnels
+    front: |
+      Both GRE tunnel interfaces show **up/up**, WAN reachability between the
+      gateways is confirmed, and no traffic crosses. Where do you look?
+    back: |
+      **`tunnel destination` on each end** — one of them is pointing at the
+      wrong address (often the far end's *tunnel* IP rather than its **WAN**
+      IP, or its own address).
+
+      The trap is that **up/up proves nothing**: a GRE tunnel is up as soon as
+      the router has a route to the destination. It never verifies that a peer
+      exists there, so a completely wrong destination still yields a healthy
+      -looking interface.
+
+      Verify that each end's `tunnel destination` is the **other end's transport
+      address**, and add `keepalive` so this failure becomes visible.
+    tags: [troubleshooting, symptom-cause, gre]
+    source: labs/debug-gre-basics
+
+  - id: dbg-bgp-missing-next-hop-self
+    type: basic
+    subdeck: BGP
+    front: |
+      An iBGP peer has the prefix in `show ip bgp` but never installs it, and
+      the path is flagged inaccessible. One command fixes it — where?
+    back: |
+      **`next-hop-self`, on the *advertising* border router's iBGP session** —
+      not on the router that has the problem.
+
+      The border router is passing the eBGP-learned route on with its original
+      next-hop (the external peering address), which the interior router has no
+      route to.
+
+      The instinct is to fix the router showing the symptom. **The fault is
+      one hop upstream**, on whoever sent the update — a good general reflex for
+      BGP.
+    tags: [troubleshooting, symptom-cause, bgp]
+    source: labs/debug-bgp-basics
+
+  - id: dbg-route-map-wrong-direction
+    type: basic
+    subdeck: BGP
+    front: |
+      A route-map setting local-preference is applied and has no effect
+      whatsoever. What's the first thing to check?
+    back: |
+      **The direction.** `set local-preference` applied **`out`** does almost
+      nothing useful — local-pref is a **non-transitive** attribute that isn't
+      even sent to eBGP peers, so setting it on the way out is meaningless.
+
+      It must be applied **`in`**, so the router sets it on routes it *receives*
+      before running best-path and propagating to iBGP peers.
+
+      General rule: **attributes that steer your own decisions are set inbound**
+      (weight, local-pref); **attributes that ask others to decide differently
+      are set outbound** (AS-path prepend, MED, communities).
+    tags: [troubleshooting, symptom-cause, bgp]
+    source: labs/debug-bgp-path-selection
+
+  - id: dbg-filter-wrong-direction
+    type: basic
+    subdeck: BGP
+    front: |
+      A prefix-list meant to stop r2 leaking a prefix to r3 is applied `in` on
+      the r3 neighbour. Why does it have exactly zero effect?
+    back: |
+      Because `in` filters what r2 **receives from** r3 — and r3 never sends
+      that prefix to r2 in the first place (it only has it because r2 sent it).
+      The filter is watching a direction the traffic never travels.
+
+      It belongs **`out`** on the r3 neighbour.
+
+      Diagnostic that settles it immediately: compare
+      `show ip bgp neighbors <r3> advertised-routes` (what r2 sends) against
+      `... received-routes`. A filter with **zero hits** in the direction you
+      care about is applied to the wrong one.
+    tags: [troubleshooting, symptom-cause, bgp, filtering]
+    source: labs/debug-bgp-filtering
+
+  - id: dbg-redistribution-one-direction
+    type: basic
+    subdeck: Redistribution
+    front: |
+      Routes flow from OSPF into BGP but end-to-end traffic fails. Both
+      protocols are healthy. What's missing?
+    back: |
+      **The reverse redistribution.** `redistribute ospf` under BGP handles one
+      direction; `redistribute bgp` under the OSPF process handles the other,
+      and it's the one that got removed.
+
+      The BGP side sees the OSPF prefixes and looks correct — but the OSPF
+      domain has **no return route**, so every reply is dropped.
+
+      **A one-way route is a two-way outage.** Whenever you check
+      redistribution, check it from **both** protocols' route tables, not just
+      the one you configured.
+    tags: [troubleshooting, symptom-cause, redistribution]
+    source: labs/debug-ospf-bgp-redist
+
+  - id: dbg-ecmp-missing-multipath-relax
+    type: basic
+    subdeck: Data center
+    front: |
+      One leaf in an eBGP CLOS fabric has full reachability but only **one**
+      path to every remote loopback, while its peers have two. Nothing is
+      logged. What's missing?
+    back: |
+      **`bgp bestpath as-path multipath-relax` and/or `maximum-paths`** on that
+      leaf.
+
+      Without `multipath-relax`, the two spine paths have different AS-paths
+      (65100 vs 65200), so only the first-received is selected as best. Without
+      `maximum-paths`, even eligible paths aren't installed.
+
+      There is **no error** — reachability is fine, so nothing alarms. You have
+      silently halved that leaf's uplink capacity and removed its redundancy.
+
+      Compare `show ip route <loopback>` path counts **across leaves**; the
+      outlier is the misconfigured one.
+    tags: [troubleshooting, symptom-cause, datacenter, bgp]
+    source: labs/debug-spine-leaf
+
+  - id: dbg-vrf-wrong-interface-assignment
+    type: basic
+    subdeck: VRF
+    front: |
+      A customer's link appears in the *wrong* VRF's routing table, and the
+      static route you configured for them is inactive. What happened?
+    back: |
+      **The interface was assigned to the wrong VRF** — a one-word typo
+      (`vrf VRF-BLUE` instead of `vrf VRF-RED`).
+
+      Two symptoms follow together, and the pairing is the signature:
+      1. The connected subnet shows up under the **wrong** VRF.
+      2. Static routes in the **intended** VRF go **inactive**, because their
+         next-hop is no longer in that VRF's table.
+
+      Check `show ip route vrf <each>` and `show vrf` — the connected route
+      tells you where the interface actually is, regardless of what you meant.
+    extra: |
+      On IOS-XE, changing an interface's VRF **clears its IP address** — always
+      re-apply the address after moving it, or you create a second fault while
+      fixing the first.
+    tags: [troubleshooting, symptom-cause, vrf]
+    source: labs/debug-vrf-lite
+
+  - id: dbg-duplicate-sr-sid
+    type: basic
+    subdeck: MPLS
+    front: |
+      Two routers in an SR-MPLS core advertise the **same** node SID index.
+      What happens?
+    back: |
+      Both claim the same label (SRGB base + index), so every router's MPLS
+      forwarding table has **conflicting entries** for that label. Traffic for
+      one loopback is forwarded to the other, and any service riding that
+      transport label breaks completely.
+
+      The IGP stays up and the routing table looks fine — the conflict lives
+      **only in the label forwarding table**, which is why IP-level checks all
+      pass.
+
+      Compare each node's advertised SID index against the design; the
+      duplicate is usually a copy-paste from the neighbouring router's config.
+    tags: [troubleshooting, symptom-cause, mpls]
+    source: labs/debug-mpls-sr-isis-bgp
+
+  - id: dbg-vtep-source-mismatch
+    type: basic
+    subdeck: Data center
+    front: |
+      EVPN sessions are Established and routes are exchanged, but no VXLAN
+      traffic passes between two VTEPs. What invariant is broken?
+    back: |
+      **The VXLAN source interface doesn't match the address advertised in the
+      underlay.** One VTEP sources encapsulation from a loopback whose address
+      is **not** reachable by the other — so EVPN happily carries that address
+      as forwarding information while no UDP/4789 return path can be built.
+
+      The control plane is genuinely healthy; the **data plane endpoint is an
+      address nobody can route to**.
+
+      Check: does the address in `vxlan source-interface` appear in every other
+      VTEP's routing table? That single question resolves it.
+    extra: |
+      This is the general EVPN lesson: **an Established session and received
+      routes prove nothing about the tunnel.** Verify the VTEP list and the
+      underlay reachability of each VTEP address separately.
+    tags: [troubleshooting, symptom-cause, datacenter, evpn]
+    source: labs/debug-vxlan-evpn
+
+  - id: dbg-general-heuristics
+    type: basic
+    subdeck: Method
+    front: |
+      Four heuristics that recur across nearly every debug scenario.
+    back: |
+      1. **The fault is often one hop upstream** from the router showing the
+         symptom (missing `next-hop-self`, a filter on the far end).
+      2. **"Up" proves less than you think** — a GRE tunnel, a BGP session, an
+         EVPN route can all be healthy while the thing they carry is broken.
+      3. **Compare across peers.** The misconfigured device is the one whose
+         output differs from its identical siblings — far faster than reading
+         any single config.
+      4. **Zero counters are evidence.** A filter, ACL or route-map with no
+         hits is applied in the wrong direction or on the wrong interface.
+    tags: [troubleshooting, concept, method]
+    source: labs/debug-bgp-basics
