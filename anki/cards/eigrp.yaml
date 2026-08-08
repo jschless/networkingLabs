@@ -1,0 +1,384 @@
+deck: EIGRP
+cards:
+
+# ── DUAL fundamentals ─────────────────────────────────────────────────────
+
+  - id: eigrp-fd-rd-definitions
+    type: basic
+    subdeck: DUAL
+    front: |
+      Define **FD**, **RD**, **successor**, and **feasible successor**.
+    back: |
+      - **RD (Reported Distance)** — the neighbour's own metric to the
+        destination, as reported to you. Also called Advertised Distance.
+      - **FD (Feasible Distance)** — your best total metric to the
+        destination (through the successor).
+      - **Successor** — the next-hop with the lowest total metric; goes in the
+        routing table.
+      - **Feasible successor** — a backup next-hop that satisfies the
+        feasibility condition, held in the topology table ready to promote.
+    extra: |
+      `show ip eigrp topology <prefix>` prints the metric pair as `(FD/RD)`.
+    tags: [eigrp, concept, dual]
+    source: labs/eigrp-basics
+
+  - id: eigrp-feasibility-condition
+    type: basic
+    subdeck: DUAL
+    front: |
+      State the feasibility condition, and explain *why* it guarantees a
+      loop-free backup.
+    back: |
+      **A neighbour is a feasible successor when its RD is strictly less than
+      your current FD.**
+
+      If the neighbour's own distance to the destination is *shorter than your
+      best distance*, that neighbour cannot possibly be routing through you —
+      its path would then be longer than yours, contradicting the premise. So
+      promoting it can't create a loop.
+
+      A merely "second-best" path offers no such proof, which is why EIGRP
+      refuses to pre-install it.
+    tags: [eigrp, concept, dual]
+    source: labs/eigrp-basics
+
+  - id: eigrp-fs-vs-ecmp
+    type: basic
+    subdeck: DUAL
+    front: |
+      Two paths have *equal* metrics. Is the second one a feasible successor?
+    back: |
+      **No — they are two co-equal successors**, installed as ECMP.
+
+      A feasible successor is by definition a strictly-backup path whose RD is
+      below the FD. Equal metrics give you load-sharing, not a backup, and the
+      two are not the same thing.
+
+      To produce a true FS you have to skew one path with `bandwidth` or
+      `delay`.
+    tags: [eigrp, concept, dual]
+    source: labs/eigrp-basics
+
+  - id: eigrp-query-vs-fs-convergence
+    type: basic
+    subdeck: DUAL
+    front: |
+      Same link failure, two very different convergence times. What changes
+      when a feasible successor exists vs. when one doesn't?
+    back: |
+      **FS present**: the router already holds a *provably* loop-free backup,
+      so it promotes it locally — sub-second, **no queries sent**. This is
+      DUAL's entire purpose.
+
+      **No FS**: the route goes **active**. The router cannot prove any
+      remaining path is loop-free on its own, so it must send **QUERY** packets
+      and wait for **REPLY** from every neighbour before installing anything.
+
+      In a large network an active route that never gets all its replies is
+      **SIA — stuck in active**.
+    tags: [eigrp, concept, dual]
+    source: labs/eigrp-basics
+
+  - id: eigrp-metric-k-values
+    type: basic
+    subdeck: Metrics
+    front: |
+      Which K-values are on by default in EIGRP, what do they weight, and why
+      is enabling the others a mistake?
+    back: |
+      Default **K1=1, K3=1**, K2=K4=K5=0 — i.e. **minimum bandwidth along the
+      path** and **cumulative delay**. Both are static properties of the links.
+
+      K2 (load) and K5 (reliability) are *dynamic* — they change with traffic.
+      Feeding them into the metric makes the metric change under load, which
+      causes route flapping and oscillation: heavy use worsens the metric,
+      traffic leaves, the metric improves, traffic returns.
+
+      **K-values must match on both ends or no adjacency forms.**
+    tags: [eigrp, concept, metrics]
+    source: labs/eigrp-basics
+
+  - id: eigrp-bandwidth-delay-knobs
+    type: basic
+    subdeck: Metrics
+    front: |
+      Which interface knob should you use to influence EIGRP path selection,
+      and why is it usually not `bandwidth`?
+    back: |
+      Prefer **`delay`**.
+
+      `bandwidth` is read by QoS, by SNMP capacity reporting, and by other
+      protocols' interface cost calculations — changing it for routing has
+      side effects everywhere else. `delay` is used by essentially nothing but
+      EIGRP's metric.
+
+      ```
+      interface GigabitEthernet0/0
+       delay 1000          ! tens of microseconds
+      ```
+
+      Lower bandwidth → **higher** metric (inversely proportional). Higher
+      delay → higher metric. Both must be set on **both ends** to stay
+      symmetric.
+    tags: [eigrp, ios-xe, concept, metrics]
+    source: labs/eigrp-basics
+
+# ── Variance / unequal-cost ───────────────────────────────────────────────
+
+  - id: eigrp-variance-definition
+    type: basic
+    subdeck: Variance
+    front: |
+      What does `variance N` do, and what is the most common misconception
+      about it?
+    back: |
+      It installs **feasible successor** paths whose metric is ≤ N × FD.
+      Default is `variance 1` — equal-cost only, like OSPF.
+
+      **The misconception:** that variance means "use any second path up to
+      N×." It does not. Variance only widens the *acceptance threshold* among
+      paths that **already satisfy the feasibility condition**. If a path's RD
+      ≥ FD, no value of variance will ever install it.
+    tags: [eigrp, ios-xe, concept, variance]
+    source: labs/eigrp-variance
+
+  - id: eigrp-variance-cannot-loop
+    type: basic
+    subdeck: Variance
+    front: |
+      Can an aggressive `variance 10` create a routing loop? What's the real
+      danger?
+    back: |
+      **No loop is possible** — the feasibility condition gates every installed
+      path, so variance can only widen the set among already-loop-free
+      candidates.
+
+      The real danger is **performance**: you start pouring meaningful traffic
+      onto very slow paths (satellite, backup DSL) that should carry almost
+      nothing, inflating latency and jitter for whichever flows land there.
+
+      Variance is a precision tool for genuinely comparable links (2–3), not a
+      "use everything" switch.
+    tags: [eigrp, concept, variance]
+    source: labs/eigrp-variance
+
+  - id: eigrp-unequal-load-share
+    type: basic
+    subdeck: Variance
+    front: |
+      With variance enabled and two unequal paths installed, how does EIGRP
+      split the traffic?
+    back: |
+      **Inversely proportional to metric** — the faster path carries
+      proportionally more. Not a 50/50 split.
+
+      That's correct behaviour: dumping equal traffic onto a 10×-slower link
+      would just move the bottleneck there.
+
+      This proportional unequal-cost load balancing is **EIGRP's signature
+      capability** — nothing in OSPF or IS-IS does it; they are ECMP-only.
+    extra: |
+      Controlled by `traffic-share balanced` (the default). `traffic-share min`
+      installs the extra paths for fast failover but sends traffic only over
+      the best one.
+    tags: [eigrp, concept, variance]
+    source: labs/eigrp-variance
+
+  - id: eigrp-variance-wrong-tool-for-backup
+    type: basic
+    subdeck: Variance
+    front: |
+      You want a slow satellite link used **only** when the primary fails,
+      never during normal operation. Is variance the right tool?
+    back: |
+      **No.** Variance's whole purpose is to use the extra path *concurrently*.
+      Any variance high enough to install the satellite path also starts
+      sending live traffic over it.
+
+      For pure standby you want the path present as a **feasible successor but
+      not installed** — leave `variance 1`, and let DUAL promote it on failure.
+      If it isn't feasible, use a floating static or a tracked route instead.
+    tags: [eigrp, concept, variance]
+    source: labs/eigrp-variance
+
+# ── Stub routers ──────────────────────────────────────────────────────────
+
+  - id: eigrp-stub-what-it-does
+    type: basic
+    subdeck: Stub
+    front: |
+      What does making a router an EIGRP stub actually change — and what does
+      it *not* change?
+    back: |
+      **Changes:** the stub is barred from being a **transit** path, and its
+      neighbours **stop sending it queries**.
+
+      **Does not change:** what the stub *learns*. A stub still receives the
+      full routing table and can reach everything.
+
+      The common misconception is that stub "cuts off" the spoke. It only stops
+      the spoke being dragged into a query process it couldn't help with anyway.
+    tags: [eigrp, concept, stub]
+    source: labs/eigrp-stub
+
+  - id: eigrp-stub-modes
+    type: basic
+    subdeck: Stub
+    front: |
+      Name the EIGRP stub modes and what each advertises.
+    back: |
+      ```
+      eigrp stub                      ! connected routes only
+      eigrp stub connected summary    ! connected + summaries — the common one
+      eigrp stub receive-only         ! advertises nothing at all
+      eigrp stub connected summary leak-map MAP   ! + whatever MAP permits
+      ```
+    extra: |
+      `receive-only` suits a device that must never be reached *through* — a
+      monitoring probe or an out-of-band appliance. Applying it to a router
+      with a downstream LAN silently strips that LAN from the network.
+    tags: [eigrp, ios-xe, syntax, stub]
+    source: labs/eigrp-stub
+
+  - id: eigrp-stub-leak-map
+    type: basic
+    subdeck: Stub
+    front: |
+      A branch router is a stub but has a real downstream LAN behind another
+      router. Plain `eigrp stub connected summary` breaks reachability to it.
+      Why, and what's the fix?
+    back: |
+      A stub advertises only **connected** and **summary** routes. The
+      downstream LAN is neither — it's a *learned EIGRP route*, so the stub
+      stops advertising it and the hub loses it.
+
+      Fix — a **leak-map**, which carves an exception without giving up stub
+      status:
+
+      ```
+      ip prefix-list LEAK-CE seq 5 permit 10.1.30.0/30
+      !
+      route-map LEAK-MAP permit 10
+       match ip address prefix-list LEAK-CE
+      !
+      router eigrp 100
+       eigrp stub connected summary leak-map LEAK-MAP
+      ```
+    tags: [eigrp, ios-xe, symptom-cause, stub]
+    source: labs/eigrp-stub
+
+  - id: eigrp-stub-query-scoping
+    type: basic
+    subdeck: Stub
+    front: |
+      Why is stub the main EIGRP scaling tool for a hub with hundreds of
+      branches?
+    back: |
+      Queries are the scaling limit. Without stub, losing a route makes the hub
+      query **every** spoke and wait for every reply — an O(spokes) query storm,
+      and the SIA risk that comes with it, sent to routers that obviously have
+      nowhere else to forward the query.
+
+      Marking spokes as stubs limits the hub's queries to non-stub (core)
+      peers: **O(spokes) becomes O(core)**.
+    extra: |
+      Confirm from the hub with `show ip eigrp neighbors detail` — stub peers
+      show `Peer-type is Stub`. The other query-bounding tool is
+      summarization, which terminates a query at the summarizing router.
+    tags: [eigrp, concept, stub]
+    source: labs/eigrp-stub
+
+  - id: eigrp-stub-not-transit-tradeoff
+    type: basic
+    subdeck: Stub
+    front: |
+      Two stub spokes get accidentally cabled together. Can that link serve as
+      backup transit if the hub link fails?
+    back: |
+      **No** — "stub = not transit" is exactly what prevents it. Neither spoke
+      will advertise routes learned from the other, so the path is never used
+      even though the link is up.
+
+      Usually that's the safety you want (branch links are never sized for
+      transit). It's the wrong behaviour precisely when you *wanted* a
+      deliberate spoke-to-spoke backup — in which case those routers must not
+      be stubs.
+    tags: [eigrp, concept, stub]
+    source: labs/eigrp-stub
+
+# ── Config ────────────────────────────────────────────────────────────────
+
+  - id: eigrp-iosxe-classic-config
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE classic mode: bring up EIGRP AS 100 on 10.1.12.0/30 and a
+      loopback, with an explicit router-id and the loopback passive.
+    back: |
+      ```
+      router eigrp 100
+       eigrp router-id 10.0.0.1
+       network 10.0.0.1 0.0.0.0
+       network 10.1.12.0 0.0.0.3
+       passive-interface Loopback0
+       no auto-summary
+      ```
+    extra: |
+      `network` takes a **wildcard mask**, same as OSPF. `no auto-summary`
+      matters on classic IOS, where EIGRP summarises at classful boundaries by
+      default — a silent source of missing subnets in discontiguous networks.
+    tags: [eigrp, ios-xe, syntax]
+    source: labs/eigrp-basics
+
+  - id: eigrp-iosxe-named-mode
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      What is EIGRP **named mode** on IOS-XE, and why prefer it?
+    back: |
+      ```
+      router eigrp CORP
+       address-family ipv4 unicast autonomous-system 100
+        eigrp router-id 10.0.0.1
+        network 10.1.12.0 0.0.0.3
+        af-interface Loopback0
+         passive-interface
+        exit-af-interface
+      ```
+
+      It puts all EIGRP settings — including per-interface timers,
+      authentication and summaries — under **one hierarchy** instead of
+      scattering them across interface configs, and it's the only mode that
+      supports newer features (wide metrics, IPv6 and IPv4 in one process).
+    tags: [eigrp, ios-xe, syntax]
+    source: labs/eigrp-basics
+
+  - id: eigrp-adjacency-requirements
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      EIGRP neighbours won't form. What must match between the two routers?
+    back: |
+      - The **AS number** (`router eigrp 100`)
+      - The **K-values** — check `show ip protocols` on both ends
+      - **Authentication** key-chain, key ID and key string, if configured
+      - They must be on the **same subnet**, and neither interface passive
+
+      Notably **not** required to match: hello and hold timers. EIGRP carries
+      the hold time in each hello, so mismatched timers still form an adjacency
+      — they just fail over at different speeds.
+    extra: |
+      That last point is the opposite of OSPF, where mismatched hello/dead
+      timers prevent adjacency entirely.
+    tags: [eigrp, symptom-cause, troubleshooting]
+    source: labs/eigrp-basics
+
+  - id: eigrp-route-codes
+    type: cloze
+    subdeck: Config (IOS-XE)
+    text: |
+      EIGRP internal routes appear in the routing table with code {{c1::D}}
+      (for {{c2::DUAL}}) at administrative distance {{c3::90}}; routes
+      redistributed into EIGRP appear as {{c4::D EX}} at AD {{c5::170}}.
+    tags: [eigrp, cloze, ios-xe]
+    source: labs/eigrp-basics
