@@ -321,6 +321,187 @@ cards:
     tags: [datacenter, symptom-cause, evpn]
     source: labs/vxlan-evpn
 
+# ── DCI / multisite ───────────────────────────────────────────────────────
+
+  - id: dc-dci-border-gateway
+    type: basic
+    subdeck: DCI
+    front: |
+      Why interconnect two EVPN fabrics through **border gateways** rather than
+      just extending one fabric across both sites?
+    back: |
+      A border gateway **terminates** each site's overlay and re-originates
+      routes into the DCI, which gives you a real **failure and policy
+      boundary**:
+
+      - **Blast radius** — a broadcast storm, a VTEP flap, or a control-plane
+        problem stays inside its own site instead of propagating fabric-wide.
+      - **Policy** — you choose per-tenant what crosses. Some tenants extend,
+        some stay local.
+      - **Independent addressing and scale** — each site keeps its own
+        underlay, its own ASN plan, and its own VTEP count.
+
+      One stretched fabric gives you none of that: every site shares one
+      failure domain.
+    tags: [datacenter, concept, dci, evpn]
+    source: labs/dci-evpn-multisite
+
+  - id: dc-dci-selective-tenant-extension
+    type: basic
+    subdeck: DCI
+    front: |
+      Two sites, tenants PROD and DEV. PROD must span both sites; DEV must stay
+      local. What mechanism enforces that?
+    back: |
+      **Route-target policy at the border gateways.** PROD's RTs are exported
+      into and imported from the DCI; DEV's are not.
+
+      DEV traffic has no *route* to the other site — not a filter blocking it.
+      Both sites can even use the **same DEV VNI and the same subnet**
+      independently, because nothing ever exchanges those routes.
+
+      Selective extension is a property of what you import and export, which is
+      why RT design is the real DCI design.
+    tags: [datacenter, concept, dci, evpn]
+    source: labs/dci-evpn-multisite
+
+  - id: dc-import-rt-fib-vs-table
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      A site receives a healthy EVPN type-5 NLRI for a remote subnet, all
+      sessions Established — but hosts can't reach it. Which changes first, the
+      EVPN table or the tenant FIB?
+    back: |
+      **The EVPN table already shows it; the tenant FIB never does.** That gap
+      *is* the diagnosis: a **wrong import route-target**.
+
+      The route is received and sits in the global EVPN table, but no VRF
+      imports it, so it is never installed into the tenant routing table.
+
+      ```
+      show bgp evpn route-type ip-prefix       ! present
+      show ip route vrf PROD 172.16.10.0/24    ! not found
+      ```
+
+      **"Received but not installed" always points at import policy, never at
+      the session.**
+    tags: [datacenter, symptom-cause, dci, evpn]
+    source: labs/dci-evpn-multisite
+
+# ── Kubernetes on a routed fabric ─────────────────────────────────────────
+
+  - id: dc-metallb-bgp-model
+    type: basic
+    subdeck: Kubernetes
+    front: |
+      How does a Kubernetes `LoadBalancer` service get an address that works on
+      a routed fabric, with no load balancer appliance?
+    back: |
+      **MetalLB (or equivalent) makes every eligible node a BGP speaker that
+      advertises the service VIP as a /32.**
+
+      The ToR receives the same /32 from multiple nodes, installs them as
+      **ECMP next-hops**, and hashes flows across them. The "load balancer" is
+      just the router's ECMP hash plus the cluster's own kube-proxy.
+
+      This is why one `BGPPeer` object produces *several* sessions at the ToR —
+      the object describes the peer, and every speaker node instantiates it.
+    tags: [datacenter, concept, kubernetes]
+    source: labs/k8s-fabric
+
+  - id: dc-external-traffic-policy
+    type: basic
+    subdeck: Kubernetes
+    front: |
+      A service's ECMP path count drops from two to one, but BGP sessions stay
+      up and HTTP still works. What changed?
+    back: |
+      **Endpoint locality** — either `externalTrafficPolicy: Local` with pods
+      no longer running on that node, or the pod on that node was
+      evicted/rescheduled.
+
+      - `Cluster` (default): **every** node advertises the VIP and forwards to
+        pods anywhere, at the cost of an extra hop and **losing the client
+        source IP** to SNAT.
+      - `Local`: only nodes **actually running a pod** advertise it. Preserves
+        the client source IP and avoids the extra hop — but the advertised path
+        set now tracks pod scheduling, so ECMP width changes as pods move.
+
+      Reachability surviving while path count drops is the signature: routing is
+      healthy, **endpoint placement** changed.
+    tags: [datacenter, symptom-cause, kubernetes]
+    source: labs/k8s-fabric
+
+# ── Storage networking ────────────────────────────────────────────────────
+
+  - id: dc-iscsi-multipath
+    type: basic
+    subdeck: Storage
+    front: |
+      An iSCSI LUN is presented over two independent storage fabrics. How many
+      SCSI disks does the OS see, and how many multipath maps?
+    back: |
+      **Two SCSI disks, one multipath map.**
+
+      Each session presents the LUN independently, so the OS discovers
+      `/dev/sdb` and `/dev/sdc` — the *same* LUN twice. Device-mapper multipath
+      recognises them as one device (by SCSI identity / WWID) and presents a
+      single `/dev/mapper/...` device with two paths beneath it.
+
+      Writing to the raw `/dev/sdX` devices instead of the map is a classic and
+      destructive mistake — you bypass path management entirely.
+    extra: |
+      The two fabrics are kept **completely separate** (separate switches,
+      separate subnets, no interconnect) so no single L2 failure or broadcast
+      event can take out both paths at once.
+    tags: [datacenter, concept, storage]
+    source: labs/dc-storage-networking
+
+  - id: dc-jumbo-mtu-validation
+    type: basic
+    subdeck: Storage
+    front: |
+      Why is a successful ordinary ping insufficient evidence that jumbo frames
+      work end to end, and what proves it?
+    back: |
+      Ordinary ping sends ~64 bytes — it proves reachability, not MTU. A single
+      hop left at 1500 in the middle of a "9000-byte" path silently fragments
+      or drops full-size frames while every ping succeeds.
+
+      Prove it with a **maximum-size, don't-fragment** ping:
+
+      ```
+      ping -M do -s 8972 10.111.10.20        # Linux
+      ping 10.111.10.20 size 9000 df-bit     # IOS-XE
+      ```
+
+      **8972** = 9000 − 20 (IP) − 8 (ICMP). It must succeed on **every** path
+      independently — MTU is a property of the whole path, and the weakest hop
+      wins.
+    tags: [datacenter, symptom-cause, storage]
+    source: labs/dc-storage-networking
+
+  - id: dc-storage-needs-lossless
+    type: basic
+    subdeck: Storage
+    front: |
+      Why does storage traffic need different network treatment from ordinary
+      IP traffic?
+    back: |
+      Storage protocols were designed for a **lossless** transport (a Fibre
+      Channel fabric). SCSI has no fast retransmit — a dropped frame becomes a
+      **SCSI timeout and retry**, measured in seconds, which the application
+      experiences as an I/O stall, not a slow packet.
+
+      So a storage fabric needs guaranteed bandwidth and near-zero loss:
+      dedicated fabrics or a dedicated queue with a bandwidth **minimum**, plus
+      DCB/PFC for per-priority flow control on converged links.
+
+      "TCP will just retransmit" is exactly the assumption that breaks here.
+    tags: [datacenter, concept, storage, qos]
+    source: labs/dc-storage-networking
+
   - id: dc-tenant-segmentation-mechanism
     type: basic
     subdeck: EVPN

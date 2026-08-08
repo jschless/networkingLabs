@@ -475,6 +475,47 @@ cards:
 
 # ── WireGuard and VRF-lite ────────────────────────────────────────────────
 
+  - id: tun-ikev2-vs-ikev1
+    type: basic
+    subdeck: IPsec
+    front: |
+      What did IKEv2 improve over IKEv1?
+    back: |
+      - **4 messages to establish**, versus 9 for IKEv1 main mode.
+      - **Built-in NAT traversal** and **dead peer detection**, rather than
+        bolted-on extensions.
+      - **Simpler rekeying** — no separate main/aggressive/quick mode zoo.
+      - **Asymmetric authentication** — each side may use a different method
+        (e.g. certificate one way, EAP the other), which is what makes remote
+        access work.
+      - **Mandatory cipher agility** and reliable, sequenced message exchange.
+
+      IKEv2 is not backward compatible with IKEv1 — both ends must speak the
+      same version.
+    tags: [vpn, concept, ipsec]
+    source: labs/flexvpn-basics
+
+  - id: tun-flexvpn-vs-dmvpn
+    type: basic
+    subdeck: IPsec
+    front: |
+      FlexVPN vs. DMVPN — what's the architectural difference, and what does
+      each give up?
+    back: |
+      **FlexVPN** is Cisco's IKEv2 framework built on **static VTIs**
+      (Virtual-Access interfaces on the hub, one per spoke). Routing over the
+      tunnel is natural, per-spoke policy is easy, and configuration is
+      uniform — but by default **spoke-to-spoke traffic goes via the hub**.
+
+      **DMVPN** uses **mGRE + NHRP** to build *dynamic* spoke-to-spoke tunnels,
+      so traffic can go direct. The cost is NHRP's extra moving parts and the
+      per-phase design constraints.
+
+      FlexVPN trades direct spoke-to-spoke for simplicity and richer per-peer
+      policy (AAA-driven attributes, per-spoke routes pushed at connect time).
+    tags: [vpn, concept, ipsec, dmvpn]
+    source: labs/flexvpn-basics
+
   - id: tun-wireguard-model
     type: basic
     subdeck: WireGuard

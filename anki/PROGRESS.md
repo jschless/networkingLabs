@@ -29,15 +29,30 @@ what has actually been carded. Update it whenever a lab is finished.
 | `mpls.yaml` | mpls-ldp, mpls-sr-isis-bgp, bgp-labeled-unicast | 20 |
 | `bgp.yaml` (+) | bgp-prefix-security, internet-peering-ixp | +10 |
 
-**21 of 162 labs carded, 180 cards.**
+| `layer2.yaml` | stp-operations, vlan-trunks-switchport-basics, lacp-etherchannel, campus-l2-hardening | 24 |
+| `data-center.yaml` | spine-leaf, vxlan-evpn | 17 |
+| `tunnels-vpn.yaml` | gre-basics, gre-ipsec, ipsec-basics, dmvpn-phase1/2/3, wireguard, vrf-lite | 23 |
+| `high-availability.yaml` | vrrp, bfd-ospf, bfd-bgp, graceful-restart, anycast-dns | 15 |
 
-## Next up (batch 1 — routing, remainder)
+**40 of 162 labs carded, 259 cards.**
 
-- [ ] labs/ipv6-bgp
-- [ ] labs/mpls-l2vpn, labs/carrier-ethernet-handoff, labs/ipv6-transition
-- [ ] labs/mpls-sr-srlinux (concepts only — SR-Linux CLI is out of scope)
-- [ ] labs/mpls-sr-blank (blank practice twin of mpls-sr-isis-bgp — skip,
-      no new content)
+## Next up
+
+Batch 1 stragglers (low new-content — fold in opportunistically):
+- [ ] labs/ipv6-bgp, labs/mpls-l2vpn, labs/carrier-ethernet-handoff,
+      labs/ipv6-transition
+- [ ] labs/mpls-sr-srlinux, labs/vxlan-evpn-srlinux (concepts only —
+      SR-Linux CLI is out of scope)
+- [ ] labs/mpls-sr-blank (blank twin of mpls-sr-isis-bgp — skip, no new content)
+
+Batch 2 remainder (genuinely new concepts):
+- [ ] labs/dci-evpn-multisite, labs/dc-storage-networking, labs/k8s-fabric
+- [ ] labs/flexvpn-basics, labs/service-ha
+- [ ] labs/evpn-border-ceos, labs/ha-network-design-ceos,
+      labs/dmvpn-phase3-ipsec-capstone (capstones — check for new content only)
+- [ ] labs/opnsense-* (OPNsense-specific — concepts only)
+
+Then batch 3 (78 labs) and batch 4 (18 debug labs).
 
 Then batches 2–4 per `anki/MANIFEST.md`.
 
