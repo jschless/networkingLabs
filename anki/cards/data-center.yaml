@@ -1,0 +1,342 @@
+deck: Data Center
+cards:
+
+# ── CLOS underlay ─────────────────────────────────────────────────────────
+
+  - id: dc-ebgp-clos-why-per-device-as
+    type: basic
+    subdeck: CLOS underlay
+    front: |
+      Why does an eBGP CLOS fabric put every leaf and every spine in its **own**
+      AS instead of running one big iBGP AS?
+    back: |
+      - **No route reflectors and no full mesh.** eBGP's AS-path handles loop
+        prevention natively; iBGP would need RRs or a full mesh at every layer.
+      - **AS-path is a free loop-prevention and traffic-engineering tool** — a
+        leaf automatically rejects a route that already contains its own ASN,
+        so it can never become transit between two spines.
+      - **Uniform configuration.** Every device runs the same eBGP template
+        with different numbers; there's no "special" RR role to size and
+        protect.
+      - **Deterministic convergence** — no iBGP RR path-hiding, where the RR
+        reflects only its own best path.
+    tags: [datacenter, concept, clos]
+    source: labs/spine-leaf
+
+  - id: dc-multipath-relax
+    type: basic
+    subdeck: CLOS underlay
+    front: |
+      In an eBGP CLOS fabric, ECMP is **off by default** even with
+      `maximum-paths` set. Why, and what fixes it?
+    back: |
+      Standard BGP multipath requires the candidate paths to have **identical
+      AS-paths**. In a CLOS fabric every spine is a *different* AS, so
+      leaf1→leaf2 via spine1 has AS-path `65100 65002` while via spine2 it's
+      `65200 65002` — different, so BGP refuses to multipath them.
+
+      ```
+      router bgp 65001
+       address-family ipv4 unicast
+        maximum-paths 4
+        bgp bestpath as-path multipath-relax
+      ```
+
+      `multipath-relax` relaxes the check to **same AS-path *length***.
+    tags: [datacenter, ios-xe, concept, clos]
+    source: labs/spine-leaf
+
+  - id: dc-two-broken-ecmp-states
+    type: basic
+    subdeck: CLOS underlay
+    front: |
+      `maximum-paths` and `multipath-relax` are independent knobs. What is the
+      symptom of setting each one *without* the other?
+    back: |
+      **`maximum-paths` but no `multipath-relax`**: the BGP RIB holds both
+      paths (`show bgp ipv4 unicast <prefix>` shows two), but only one is
+      marked multipath and only one lands in `show ip route`. BGP rejected them
+      as a multipath *set* on the AS-path check.
+
+      **`multipath-relax` but no `maximum-paths`**: the paths are eligible, but
+      the multipath limit is 1, so again only one is installed.
+
+      Both look identical in `show ip route` — one path. The BGP table is where
+      they differ.
+    extra: |
+      Neither breaks reachability, which is what makes this dangerous: you
+      silently halve the fabric's bisection bandwidth and lose a redundant path
+      with zero errors logged anywhere.
+    tags: [datacenter, symptom-cause, clos]
+    source: labs/spine-leaf
+
+  - id: dc-why-31-links
+    type: basic
+    subdeck: CLOS underlay
+    front: |
+      Why do data centre fabrics use /31 link subnets instead of /30?
+    back: |
+      A /30 wastes two of its four addresses on network and broadcast; a **/31
+      gives you both usable addresses** on a point-to-point link — halving IP
+      consumption across thousands of fabric links, and making the addressing
+      plan far easier to scale.
+
+      Standardised by **RFC 3021**, which is safe precisely because a
+      point-to-point link has no need for a broadcast address.
+    tags: [datacenter, concept, clos]
+    source: labs/spine-leaf
+
+  - id: dc-underlay-hardening
+    type: basic
+    subdeck: CLOS underlay
+    front: |
+      Three guardrails worth adding to an eBGP fabric underlay beyond basic
+      sessions.
+    back: |
+      1. **BFD on every eBGP session** — sub-second failure detection instead of
+         waiting out the BGP hold timer, which matters most when the link stays
+         physically up.
+      2. **`maximum-prefix` per neighbour** — a leaf should advertise a handful
+         of loopbacks; a limit of 32 catches a misconfiguration before it
+         becomes a fabric-wide event.
+      3. **Inbound prefix filtering** — accept only the expected loopback and
+         service ranges, so a leaf can never inject an unexpected prefix
+         (including a default) into the fabric.
+
+      Plus **peer-groups/templates**, so all of the above is defined once
+      instead of per-neighbour.
+    tags: [datacenter, concept, clos]
+    source: labs/spine-leaf
+
+# ── VXLAN data plane ──────────────────────────────────────────────────────
+
+  - id: dc-vxlan-encapsulation
+    type: cloze
+    subdeck: VXLAN
+    text: |
+      VXLAN encapsulates an entire Ethernet frame in {{c1::UDP}}, destination
+      port {{c2::4789}}, with an outer IP header from the ingress
+      {{c3::VTEP}} to the egress VTEP. The VNI field is {{c4::24}} bits, giving
+      roughly {{c5::16 million}} segments versus the {{c6::4096}} of 802.1Q.
+    extra: |
+      The outer source UDP port is a **hash of the inner flow** — that's what
+      gives the underlay entropy to ECMP over, since the outer IP addresses are
+      just two fixed VTEP loopbacks.
+    tags: [datacenter, cloze, vxlan]
+    source: labs/vxlan-evpn
+
+  - id: dc-vtep-role
+    type: basic
+    subdeck: VXLAN
+    front: |
+      What is a VTEP, and why is its source interface always a loopback?
+    back: |
+      **VXLAN Tunnel End Point** — the device that encapsulates and
+      decapsulates VXLAN. In a fabric, that's the leaf.
+
+      Its source is a **loopback** so the tunnel endpoint stays reachable via
+      **any** uplink: the underlay ECMPs to the loopback across all spines, so
+      a single uplink or spine failure doesn't tear down the tunnel. A physical
+      interface address would bind the overlay to one link.
+    tags: [datacenter, concept, vxlan]
+    source: labs/vxlan-evpn
+
+  - id: dc-evpn-vs-flood-and-learn
+    type: basic
+    subdeck: EVPN
+    front: |
+      What does BGP EVPN give you that "flood and learn" VXLAN does not?
+    back: |
+      **A control plane.** Flood-and-learn discovers remote MACs by flooding
+      unknown unicast and ARP across the fabric (needing multicast in the
+      underlay or head-end replication), then learning from the data plane —
+      exactly the behaviour that doesn't scale.
+
+      EVPN **advertises MAC and IP bindings in BGP** before any traffic flows.
+      That gives you: no unknown-unicast flooding, ARP suppression, MAC
+      mobility signalling, multihoming, and integrated L2 + L3 in one protocol.
+    tags: [datacenter, concept, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-evpn-route-types
+    type: basic
+    subdeck: EVPN
+    front: |
+      EVPN route types 2, 3 and 5 — what does each carry and when is it
+      generated?
+    back: |
+      | Type | Name | Carries | Generated |
+      |---|---|---|---|
+      | **2** | MAC/IP Advertisement | A host's MAC, and optionally its IP | After the first packet from that host |
+      | **3** | IMET (Inclusive Multicast) | VTEP membership of a VNI — the flood list | As soon as the VNI is created, before any host traffic |
+      | **5** | IP Prefix | A subnet route (e.g. 10.10.10.0/24) | When the VRF has a matching route to export |
+
+      Type-3 existing *before* any host communicates is the point: it builds
+      the BUM flood list so the first broadcast has somewhere to go.
+    extra: |
+      Also worth knowing: **type-1** (Ethernet Auto-Discovery, for multihoming
+      and fast withdrawal) and **type-4** (Ethernet Segment, for designated
+      forwarder election) — both used by EVPN multihoming / ESI-LAG.
+    tags: [datacenter, concept, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-next-hop-unchanged
+    type: basic
+    subdeck: EVPN
+    front: |
+      In an **eBGP** EVPN fabric, why must spines run `next-hop-unchanged`, and
+      what breaks without it?
+    back: |
+      eBGP normally rewrites the next-hop to its own address before
+      re-advertising. On an EVPN route, that next-hop **is the originating
+      leaf's VTEP address** — so the receiving leaf would build its VXLAN
+      tunnel to the *spine* instead of to the real VTEP.
+
+      `next-hop-unchanged` preserves the originating leaf's loopback so tunnels
+      form leaf-to-leaf, with the spine only forwarding in the underlay.
+
+      This is the key difference from a traditional **iBGP route-reflector**
+      design, where the next-hop is preserved automatically.
+    tags: [datacenter, concept, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-send-community-extended-evpn
+    type: basic
+    subdeck: EVPN
+    front: |
+      EVPN IMET routes are visible in the BGP table, but `show ... vtep` shows
+      zero remote VTEPs and no traffic passes. What's the most likely cause?
+    back: |
+      **Extended communities are not being sent.** Route-targets *are*
+      extended communities, so without them the receiving leaf has nothing to
+      match on import — the routes arrive but land in no EVPN instance, and the
+      flood list is never populated.
+
+      Fix: `send-community extended` (or `send-community both`) on **every**
+      eBGP EVPN neighbour, in **both** directions, then bounce the sessions to
+      force re-advertisement.
+
+      Diagnostic: look for the `Extended Community` line on a received route.
+      If it's absent, this is it.
+    extra: |
+      Bites hardest on Arista EOS, where eBGP does **not** send extended
+      communities by default. Never assume — check
+      `show bgp neighbors <ip>` for what's actually advertised.
+    tags: [datacenter, symptom-cause, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-anycast-gateway
+    type: basic
+    subdeck: EVPN
+    front: |
+      What is an anycast gateway in an EVPN fabric, and what three problems
+      does it solve?
+    back: |
+      **The same gateway IP and the same virtual MAC configured on every
+      leaf's SVI for that subnet.**
+
+      1. **Optimal routing** — a host's default gateway is always the leaf it's
+         plugged into; traffic never hairpins to a centralised router.
+      2. **Seamless VM mobility** — a VM moves to another leaf and its ARP
+         cache is still valid, because the gateway MAC is identical there. No
+         gratuitous-ARP storm, no re-ARP.
+      3. **No FHRP** — no HSRP/VRRP election, no active/standby, no protocol
+         state between leaves at all.
+    tags: [datacenter, concept, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-symmetric-vs-asymmetric-irb
+    type: basic
+    subdeck: EVPN
+    front: |
+      Symmetric vs. asymmetric IRB — what's the difference, and why is
+      symmetric preferred?
+    back: |
+      **Asymmetric**: the ingress leaf routes into the *destination's* VLAN and
+      bridges across. That means **every leaf must be configured with every
+      VLAN/VNI** in the fabric, even ones it has no local hosts in.
+
+      **Symmetric**: the ingress leaf routes into a shared **L3VNI** for the
+      tenant, and the egress leaf routes out of it into the local VLAN. Both
+      ends perform a routing step — hence "symmetric".
+
+      Symmetric wins because each leaf only needs its **local** VLANs plus the
+      tenant's L3VNI, so configuration and hardware table usage stop scaling
+      with the size of the whole fabric.
+    extra: |
+      Path: `host → ingress leaf (route in VRF) → VXLAN with L3VNI → egress
+      leaf (route into local VLAN) → host`.
+    tags: [datacenter, concept, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-l2vni-vs-l3vni
+    type: basic
+    subdeck: EVPN
+    front: |
+      L2VNI vs. L3VNI — what does each map to and what does it carry?
+    back: |
+      - **L2VNI** — maps to a **VLAN / bridge domain**. Carries bridged traffic
+        within one subnet, and is what type-2 MAC routes are associated with.
+      - **L3VNI** — maps to a **VRF**. Carries **routed** traffic between
+        subnets of the same tenant, and is what makes symmetric IRB work.
+
+      One L2VNI per VLAN; one L3VNI per tenant VRF.
+    tags: [datacenter, concept, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-evpn-rd-per-leaf-rt-shared
+    type: basic
+    subdeck: EVPN
+    front: |
+      In EVPN VRF configuration, the RD is usually **per-leaf** while the RT is
+      **shared across leaves**. Why that asymmetry?
+    back: |
+      **RD makes routes unique.** Per-leaf (typically `<loopback>:<vni>`) so
+      that when two leaves both advertise the same subnet — which they do, with
+      an anycast gateway — BGP treats them as **distinct paths** instead of one
+      overwriting the other. That's what preserves ECMP and multipathing to a
+      subnet.
+
+      **RT decides membership.** Shared, because every leaf hosting that tenant
+      must import the same routes. A per-leaf RT would isolate every leaf from
+      every other.
+    tags: [datacenter, concept, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-evpn-rt-mismatch-symptom
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      You change one leaf's EVPN route-target for a VLAN to a wrong value.
+      What do you see on the *other* leaves, and does connectivity break?
+    back: |
+      **Connectivity to hosts behind that leaf breaks**, and on the other
+      leaves the affected type-2 routes are **absent from the EVPN table for
+      that VNI** — they arrive over BGP but are not imported, because no local
+      EVPN instance matches the RT.
+
+      The BGP sessions stay perfectly Established throughout. This is the
+      standard EVPN failure signature: **sessions healthy, routes received,
+      nothing imported.** Always check RT match before suspecting the session.
+    tags: [datacenter, symptom-cause, evpn]
+    source: labs/vxlan-evpn
+
+  - id: dc-tenant-segmentation-mechanism
+    type: basic
+    subdeck: EVPN
+    front: |
+      Two tenants share the same fabric, same underlay, same VTEPs. What
+      actually stops tenant A reaching tenant B — a filter, or something else?
+    back: |
+      **Not a filter — the absence of a route.**
+
+      Each tenant lives in its own **VRF**, and the route-targets ensure a
+      VRF only imports its own tenant's routes. Tenant A's routing table simply
+      has **no entry** for tenant B's subnet, so the packet is dropped for lack
+      of a route, not by an ACL.
+
+      Prove it with `show ip route vrf TENANT-A 10.20.20.0/24` → not found.
+      This is why VRF segmentation is stronger than ACL segmentation: there is
+      no rule to misconfigure, and no rule ordering to get wrong.
+    tags: [datacenter, concept, evpn, security]
+    source: labs/vxlan-evpn
