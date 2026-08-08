@@ -240,6 +240,184 @@ cards:
     tags: [security, concept, urpf]
     source: labs/urpf-antispoofing
 
+# ── 802.1X / NAC ──────────────────────────────────────────────────────────
+
+  - id: sec-dot1x-three-roles
+    type: basic
+    subdeck: 802.1X
+    front: |
+      Name the three 802.1X roles and the protocol used between each pair.
+    back: |
+      - **Supplicant** — the endpoint requesting access.
+      - **Authenticator** — the switch or AP controlling the port.
+      - **Authentication server** — RADIUS (FreeRADIUS, Cisco ISE, NPS).
+
+      Supplicant ↔ Authenticator: **EAP over LAN (EAPOL)**, a Layer 2 protocol
+      that works before the endpoint has any IP address.
+      Authenticator ↔ Server: **EAP encapsulated in RADIUS** (UDP 1812/1813).
+
+      The authenticator is a **pass-through** — it relays EAP without
+      understanding the inner method, which is why adding a new EAP type only
+      requires updating the endpoints and the server.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+  - id: sec-eap-tls-vs-peap
+    type: basic
+    subdeck: 802.1X
+    front: |
+      EAP-TLS vs. PEAP/MSCHAPv2 — how do they differ, and why is EAP-TLS
+      stronger?
+    back: |
+      **EAP-TLS**: **mutual certificate** authentication. Both the client and
+      the server prove identity with certificates; there is no password to
+      phish, replay, or brute-force. Requires a PKI and per-device enrollment.
+
+      **PEAP/MSCHAPv2**: the server presents a certificate, establishing a TLS
+      tunnel, and the client authenticates with a **username and password**
+      inside it.
+
+      PEAP's weakness is operational: if clients don't **validate the server
+      certificate** (a very common misconfiguration), an attacker stands up a
+      rogue AP and RADIUS server, and harvests MSCHAPv2 challenge/response
+      pairs that can be cracked offline.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+  - id: sec-mab
+    type: basic
+    subdeck: 802.1X
+    front: |
+      What is MAB, when do you need it, and why is it weak?
+    back: |
+      **MAC Authentication Bypass.** When a device can't speak 802.1X — a
+      printer, a badge reader, an IP camera, most OT gear — the switch waits
+      for 802.1X to time out, then sends the device's **MAC address** to RADIUS
+      as both the username and password.
+
+      It is weak because a **MAC address is trivially spoofable** and is
+      transmitted in the clear on every frame. It is authentication by
+      *asserted identity* with no secret at all.
+
+      Compensate with: profiling (does it actually behave like a printer?), a
+      tightly restricted VLAN with ACLs, and MAB **only** as a fallback after
+      802.1X fails — never as the primary method.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+  - id: sec-dynamic-vlan-assignment
+    type: basic
+    subdeck: 802.1X
+    front: |
+      How does RADIUS put an authenticated endpoint into the right VLAN, and
+      why is that better than static port configuration?
+    back: |
+      The **Access-Accept** carries RADIUS tunnel attributes:
+      `Tunnel-Type = VLAN(13)`, `Tunnel-Medium-Type = 802(6)`,
+      `Tunnel-Private-Group-ID = <VLAN>`. The authenticator applies that VLAN
+      to the port for the session's duration.
+
+      Better because **policy follows the identity, not the cable**. The same
+      port gives an employee VLAN 10, a contractor VLAN 20, and an IoT device
+      VLAN 30 — with no truck roll, no port re-patching, and no stale
+      configuration when someone moves desks.
+
+      Cisco extends the same idea with **dACLs** and **SGTs** delivered in the
+      Access-Accept.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+  - id: sec-dot1x-failure-modes
+    type: basic
+    subdeck: 802.1X
+    front: |
+      Authentication fails or the RADIUS server is unreachable. What are the
+      port's options, and what's the trade-off?
+    back: |
+      - **Guest VLAN** — for endpoints that never respond to EAPOL at all
+        (no supplicant). Limited internet-only access.
+      - **Auth-fail / restricted VLAN** — for endpoints that *tried* and were
+        rejected. Quarantine.
+      - **Critical VLAN / inaccessible-authentication bypass** — for when
+        **RADIUS itself is down**. Without this, a RADIUS outage locks out your
+        entire campus, turning an authentication problem into a total outage.
+
+      The trade-off is the whole design question: **fail-open** keeps the
+      business running but admits unauthenticated devices; **fail-closed** is
+      secure but converts every RADIUS failure into an outage. Most enterprises
+      fail-open to a restricted VLAN, and monitor it loudly.
+    extra: |
+      Deployment path is the same shape: **monitor mode** (`authentication
+      open` — authenticate and log, but permit everything) → low-impact mode
+      (dACLs) → closed mode. Going straight to closed mode is how 802.1X
+      rollouts fail.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+# ── Zero trust ────────────────────────────────────────────────────────────
+
+  - id: sec-zero-trust-premise
+    type: basic
+    subdeck: Zero trust
+    front: |
+      What is the core premise of zero trust, and what does it replace?
+    back: |
+      **Network location grants no trust.** Being inside the perimeter — on the
+      corporate LAN, on the VPN — confers nothing. Every request to every
+      resource is authenticated and authorised on its own.
+
+      It replaces the **castle-and-moat** model, where a hard perimeter
+      protected a soft interior, so any foothold inside (a phished laptop, a
+      compromised printer, a contractor's VPN account) yielded broad lateral
+      movement.
+
+      The practical unit changes from **"the network you're on"** to
+      **"this identity, on this device, for this resource, right now."**
+    tags: [security, concept, zero-trust]
+    source: labs/zero-trust-secure-access
+
+  - id: sec-pep-pdp
+    type: basic
+    subdeck: Zero trust
+    front: |
+      In a zero-trust architecture, what are the PEP and the PDP, and where do
+      the protected resources sit?
+    back: |
+      - **PEP (Policy Enforcement Point)** — sits in the data path, terminates
+        the client connection, and allows or denies each request.
+      - **PDP (Policy Decision Point)** — evaluates the policy: identity claims
+        from the IdP, device posture, resource sensitivity, and context.
+
+      Protected origins are **unreachable from anywhere except the PEP** —
+      typically no route at all from the user network. So even a fully
+      compromised client can only ever reach what the PEP will proxy for it.
+
+      That reachability boundary is what makes the architecture real. Without
+      it, the PEP is just a login page users can route around.
+    tags: [security, concept, zero-trust]
+    source: labs/zero-trust-secure-access
+
+  - id: sec-ztna-device-plus-user
+    type: basic
+    subdeck: Zero trust
+    front: |
+      Why does ZTNA authenticate the **device** in addition to the user, and
+      how is device identity usually proven?
+    back: |
+      User credentials can be phished, replayed, or shared. Requiring a
+      **managed device** means a stolen password alone is not enough — the
+      attacker also needs a credential bound to hardware they don't have.
+
+      Device identity is normally an **mTLS client certificate** issued at
+      enrollment and stored in a TPM/secure enclave, so it cannot be copied off
+      the machine.
+
+      This is why a valid user on an unmanaged device gets *less* access than
+      the same user on a corporate laptop: the policy is a function of
+      **identity × device posture × resource**, not identity alone.
+    tags: [security, concept, zero-trust]
+    source: labs/zero-trust-secure-access
+
 # ── MACsec ────────────────────────────────────────────────────────────────
 
   - id: sec-macsec-scope
