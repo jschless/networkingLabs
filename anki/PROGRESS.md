@@ -23,17 +23,21 @@ what has actually been carded. Update it whenever a lab is finished.
 |---|---|---|
 | `ospf.yaml` | two-routers, ospf-multiarea, ospf-auth, ospf-nssa, ospf-summarization, ospf-default-route, ospf-virtual-link, ipv6-ospf3 | 44 |
 | `bgp.yaml` | bgp-basics, bgp-path-selection, bgp-communities, bgp-filtering, bgp-aggregation, bgp-rpki | 47 |
+| `route-control.yaml` | ospf-bgp-redist, redistribution-tags, route-maps-pbr, ip-sla-tracking | 23 |
+| `eigrp.yaml` | eigrp-basics, eigrp-stub, eigrp-variance | 19 |
+| `isis.yaml` | isis-basics, isis-multiarea | 17 |
 
-## Next up (batch 1 — routing)
+**16 of 162 labs carded, 150 cards.**
 
-- [ ] labs/ospf-bgp-redist (route-control overlap: mutual redistribution, tags)
+## Next up (batch 1 — routing, remainder)
+
 - [ ] labs/bgp-prefix-security, labs/internet-peering-ixp, labs/ipv6-bgp,
       labs/bgp-labeled-unicast
-- [ ] labs/eigrp-basics, labs/eigrp-stub, labs/eigrp-variance
-- [ ] labs/isis-basics, labs/isis-multiarea
-- [ ] labs/route-maps-pbr, labs/redistribution-tags, labs/ip-sla-tracking
 - [ ] labs/mpls-ldp, labs/mpls-sr-isis-bgp, labs/mpls-l2vpn,
       labs/carrier-ethernet-handoff, labs/ipv6-transition
+- [ ] labs/mpls-sr-srlinux (concepts only — SR-Linux CLI is out of scope)
+- [ ] labs/mpls-sr-blank (blank practice twin of mpls-sr-isis-bgp — skip,
+      no new content)
 
 Then batches 2–4 per `anki/MANIFEST.md`.
 
