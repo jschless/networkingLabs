@@ -32,6 +32,7 @@ DIST_DIR = ROOT / "dist"
 
 TOP_DECK = "Networking Labs"
 CLOZE_RE = re.compile(r"\{\{c\d+::")
+BULLET_RE = re.compile(r"^\s*(-\s|\d+\.\s)")
 
 CSS = """
 .card {
@@ -212,7 +213,17 @@ def render_table(lines: list[str]) -> str:
     return "".join(out)
 
 
+CLOZE_TOKEN = re.compile(r"\{\{c\d+::|\}\}")
+
+
 def render_inline(chunk: str) -> str:
+    """Escape HTML, then apply the inline markdown subset.
+
+    Escaping first matters: card text is full of `<` and `>` in prose
+    ("IGP < EGP < incomplete", "RD < FD"), and Anki would otherwise swallow
+    them as tags.
+    """
+    chunk = chunk.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     chunk = re.sub(r"`([^`]+)`", r"<code>\1</code>", chunk)
     chunk = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", chunk)
     return chunk
@@ -238,22 +249,29 @@ def render_block(chunk: str) -> str:
             out.append(render_table([render_inline(x) for x in lines[i:j]]))
             i = j
             continue
-        if line.strip().startswith("- "):
+        bullet = BULLET_RE.match(line)
+        if bullet:
+            tag = "ol" if bullet.group(1)[0].isdigit() else "ul"
             j = i
-            items = []
-            while j < len(lines) and (lines[j].strip().startswith("- ") or
-                                      (lines[j].startswith("  ") and lines[j].strip())):
-                if lines[j].strip().startswith("- "):
-                    items.append(lines[j].strip()[2:])
-                else:
+            items: list[str] = []
+            while j < len(lines) and lines[j].strip():
+                m = BULLET_RE.match(lines[j])
+                if m:
+                    items.append(lines[j].strip()[len(m.group(1)):].strip())
+                elif lines[j].startswith("  ") and items:
                     items[-1] += " " + lines[j].strip()
+                else:
+                    break
                 j += 1
-            out.append("<ul>" + "".join(f"<li>{render_inline(x)}</li>" for x in items) + "</ul>")
+            body = "".join(f"<li>{render_inline(x)}</li>" for x in items)
+            out.append(f"<{tag}>{body}</{tag}>")
             i = j
             continue
         j = i
         para: list[str] = []
-        while j < len(lines) and lines[j].strip() and not lines[j].strip().startswith(("|", "- ")):
+        while (j < len(lines) and lines[j].strip()
+               and not lines[j].strip().startswith("|")
+               and not BULLET_RE.match(lines[j])):
             para.append(lines[j].strip())
             j += 1
         if para:
