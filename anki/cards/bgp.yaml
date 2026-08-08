@@ -901,6 +901,209 @@ cards:
     tags: [bgp, concept, rpki, security]
     source: labs/bgp-rpki
 
+# ── Hijacking and peering security ────────────────────────────────────────
+
+  - id: bgp-longest-prefix-beats-policy
+    type: basic
+    subdeck: Prefix security
+    front: |
+      An attacker announces a /25 covering half of your legitimate /24, with a
+      *longer* AS-path than yours. Whose route wins?
+    back: |
+      **The attacker's, unconditionally.**
+
+      **Longest-prefix match happens in the forwarding table, before any BGP
+      attribute is compared.** A /25 always beats a covering /24 regardless of
+      AS-path, MED, local-pref or origin.
+
+      More-specific hijacks don't compete on BGP policy — they **bypass it**.
+      That's why real incidents (the 2008 YouTube/Pakistan Telecom outage) use
+      more-specifics.
+    tags: [bgp, concept, security]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-equal-prefix-hijack
+    type: basic
+    subdeck: Prefix security
+    front: |
+      An attacker announces the *same* prefix as the legitimate owner, with an
+      equal-length AS-path. What does the internet do?
+    back: |
+      **It splits, arbitrarily.** With AS-path length tied, the decision falls
+      to tiebreakers — oldest path, then lowest router-id — so roughly half the
+      internet may believe the hijacker and half the real owner, depending on
+      router-ids and propagation timing.
+
+      Equal-prefix hijacks produce **partial and unstable** diversion, which is
+      why attackers prefer more-specifics.
+    tags: [bgp, concept, security]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-aggregation-hijack-tension
+    type: basic
+    subdeck: Prefix security
+    front: |
+      Why does aggressive aggregation make you *more* vulnerable to hijacking,
+      and what's the counter-move?
+    back: |
+      Announcing only a large aggregate leaves all the more-specific space
+      **unclaimed** — anyone announcing a longer prefix inside it wins
+      immediately.
+
+      Counter-move: announce the more-specifics yourself so there is nothing
+      longer to beat you with. Downside: you inflate the global routing table
+      and lose the stability the aggregate provided — and someone can always
+      go one bit longer (beyond /24, most operators filter anyway, which is
+      what caps the game).
+    tags: [bgp, concept, security, aggregation]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-maximum-prefix-purpose
+    type: basic
+    subdeck: Prefix security
+    front: |
+      Does `maximum-prefix` stop a targeted two-prefix hijack? What is it
+      actually for?
+    back: |
+      **No** — a targeted hijack is one or two prefixes, far under any sane
+      limit.
+
+      `maximum-prefix` is a **circuit breaker for volume**: a peer leaking the
+      full table, or a misconfiguration announcing thousands of routes. It
+      protects your **control plane** by tearing the session down.
+
+      Necessary, but orthogonal to targeted hijacking.
+    extra: |
+      IOS-XE: `neighbor 10.1.12.2 maximum-prefix 1000 80 restart 15` — 80 is
+      the warning percentage. `warning-only` logs without tearing the session
+      down, which is the right setting on a session you can't afford to lose
+      unattended.
+    tags: [bgp, ios-xe, concept, security]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-le32-deny-sweeps-specifics
+    type: basic
+    subdeck: Prefix security
+    front: |
+      Write the prefix-list entry that rejects 192.0.2.0/24 **and every
+      more-specific of it** in one line.
+    back: |
+      ```
+      ip prefix-list HIJACKER-IN seq 5 deny 192.0.2.0/24 le 32
+      ip prefix-list HIJACKER-IN seq 10 permit 0.0.0.0/0 le 32
+      ```
+
+      `le 32` is what sweeps up the /25s, /26s and everything below. A bare
+      `deny 192.0.2.0/24` would block only the exact prefix and let every
+      more-specific hijack straight through.
+    tags: [bgp, ios-xe, syntax, security, filtering]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-defense-comparison
+    type: basic
+    subdeck: Prefix security
+    front: |
+      Compare the four prefix-security defenses and each one's limitation.
+    back: |
+      | Defense | What it does | Limitation |
+      |---|---|---|
+      | Prefix-list | Per-peer whitelist of allowed prefixes | Manual maintenance; a stale entry is how leaks happen |
+      | `maximum-prefix` | Drops the session on route-count explosion | Volume only, useless against targeted hijacks |
+      | IRR filtering | Generates the prefix-lists from registry data | Registry data is often stale or incomplete |
+      | RPKI / ROV | Cryptographic **origin** validation | Needs a validator; doesn't validate the AS-path |
+    extra: |
+      **BGPsec** signs the AS-path too, and is barely deployed. The
+      load-bearing operational principle is **"filter your customers"** — a
+      filter is most effective at the hijacker's own direct provider, which is
+      the core of MANRS.
+    tags: [bgp, concept, security]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-route-server-semantics
+    type: basic
+    subdeck: IXP
+    front: |
+      At an IXP, what makes a **route server** different from an ordinary BGP
+      peer?
+    back: |
+      It reflects routes between participants **without inserting itself into
+      the data path**: it preserves the advertising participant's **next-hop**
+      and does **not prepend its own ASN** to the AS-path.
+
+      So a route learned via the route server shows AS-path `65002` and
+      next-hop = the content peer's own IXP address — not `65010 65002` via the
+      server. The control path and the forwarding path deliberately differ.
+
+      IOS-XE has no `route-server-client`; the equivalent is
+      `neighbor X next-hop-unchanged` plus removing the local AS from the path.
+    extra: |
+      One session per participant instead of n(n−1)/2 bilateral sessions is the
+      whole reason IXPs run them. The trade: the route server becomes a control
+      -plane single point of failure, which is why every IXP runs two.
+    tags: [bgp, concept, ixp]
+    source: labs/internet-peering-ixp
+
+  - id: bgp-session-is-not-authorization
+    type: basic
+    subdeck: IXP
+    front: |
+      A peer's BGP session is Established and you are receiving a prefix from
+      them. Does that authorize the prefix?
+    back: |
+      **No.** A technically reachable port is not an authorization.
+
+      The approval boundary is the **out-of-band evidence**: the IRR object,
+      the RPKI ROA, the peering agreement, the NOC record. A session's health
+      says nothing about whether the routes crossing it are legitimate.
+
+      Corollary for troubleshooting: always separate **received** from
+      **accepted** — a session can be perfectly healthy while its import policy
+      rejects a route.
+    tags: [bgp, concept, ixp, security]
+    source: labs/internet-peering-ixp
+
+  - id: bgp-rtbh
+    type: basic
+    subdeck: IXP
+    front: |
+      What is RTBH (remotely triggered black-hole), and what makes it dangerous
+      to offer?
+    back: |
+      A community (conventionally `<ASN>:666`) that asks the receiving network
+      to discard all traffic for a tagged prefix — the standard way to drop a
+      DDoS at the edge instead of letting it saturate your link.
+
+      **Danger:** it's an unauthenticated request to *destroy reachability*. If
+      the provider honours it without checks, anyone who can inject a tagged
+      route can black-hole someone else's address.
+
+      Safeguards: accept it **only** from the prefix's authorized originator,
+      **only** for prefixes within their allocation, usually **only** as a /32,
+      and log every acceptance.
+    tags: [bgp, concept, security, ixp]
+    source: labs/internet-peering-ixp
+
+  - id: bgp-stale-irr-filter-symptom
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      A peer adds a legitimate new prefix. Their session stays Established and
+      the prefix count is non-zero, but the prefix never appears in your table.
+      Where did it stop?
+    back: |
+      At **accepted**, not received — a **stale import filter**. The
+      IRR-derived prefix-list was generated before the new object existed, so
+      the route arrives and is discarded.
+
+      Diagnose by comparing the three views in order:
+      `received-routes` (present) → BGP table (absent) → the prefix-list itself.
+
+      Repair at the **source**: add the object, regenerate the list, review the
+      diff, re-apply. Never hand-edit generated policy — the next regeneration
+      silently reverts it.
+    tags: [bgp, symptom-cause, ixp, filtering]
+    source: labs/internet-peering-ixp
+
   - id: bgp-localpref-asymmetry
     type: basic
     subdeck: Path selection
