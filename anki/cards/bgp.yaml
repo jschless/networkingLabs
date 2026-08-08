@@ -655,6 +655,252 @@ cards:
     tags: [bgp, concept, filtering, security]
     source: labs/bgp-filtering
 
+# ── Aggregation ───────────────────────────────────────────────────────────
+
+  - id: bgp-aggregate-default-behavior
+    type: basic
+    subdeck: Aggregation
+    front: |
+      You configure a plain `aggregate-address` covering four /24s. How many
+      of those prefixes does a downstream router now see, and what AS-path
+      does the aggregate carry?
+    back: |
+      **Five** — the aggregate *plus* all four components. Default aggregation
+      **adds, it doesn't replace**; `summary-only` is what suppresses the
+      specifics.
+
+      The aggregate's AS-path is just the **aggregating AS**. It is *locally
+      originated*, so the contributors' AS-path history is destroyed.
+    tags: [bgp, concept, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-aggregate-lifecycle
+    type: basic
+    subdeck: Aggregation
+    front: |
+      When does an aggregate route exist, and when is it withdrawn?
+    back: |
+      It activates while **at least one** component more-specific is in the
+      BGP table, and is withdrawn automatically when the **last** one
+      disappears.
+
+      Good edge: one flapping customer /24 never disturbs the world's view of
+      the aggregate.
+      Bad edge: while a component is down, traffic for it still follows the
+      aggregate to you and **black-holes**. Summaries trade visibility of
+      partial failure for stability.
+    tags: [bgp, concept, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-aggregate-suppressed-flag
+    type: basic
+    subdeck: Aggregation
+    front: |
+      With `summary-only` active, do the component prefixes still exist in the
+      aggregating router's own BGP table?
+    back: |
+      **Yes**, flagged `s` (suppressed):
+
+      ```
+      s> 10.1.1.0/24
+      s> 10.1.2.0/24
+      ```
+
+      Suppression is an **advertisement filter, not a table operation**. The
+      aggregator still routes on exact /24 detail internally while showing the
+      world one prefix — detail inside, summary outside.
+    tags: [bgp, concept, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-as-set-purpose
+    type: basic
+    subdeck: Aggregation
+    front: |
+      What does `as-set` do on an aggregate, and what problem does it solve?
+    back: |
+      It includes the contributors' ASNs as an **AS_SET** segment — shown in
+      braces, e.g. `65002 {65001 65003}` — and drops the `atomic-aggregate`
+      attribute, since path information is no longer lost.
+
+      Purpose: **loop prevention.** A summary whose AS_SET contains your own
+      ASN is rejected by normal AS-path loop detection. Without it, an
+      aggregate hides the origin ASes and can be re-imported into an AS that
+      contributed to it.
+    extra: |
+      IOS-XE: `aggregate-address 10.1.0.0 255.255.248.0 summary-only as-set`.
+      Note the **subnet mask**, not slash notation.
+    tags: [bgp, ios-xe, concept, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-iosxe-suppress-map
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: advertise an aggregate, suppress only 10.1.4.0/24, and let the
+      other components through.
+    back: |
+      ```
+      ip prefix-list SUPPRESS-4 seq 5 permit 10.1.4.0/24
+      !
+      route-map SUPPRESS-MAP permit 10
+       match ip address prefix-list SUPPRESS-4
+      !
+      router bgp 65002
+       address-family ipv4 unicast
+        aggregate-address 10.1.0.0 255.255.248.0 suppress-map SUPPRESS-MAP
+      ```
+
+      Routes **matching** the map are suppressed; the rest are still advertised
+      alongside the aggregate.
+    extra: |
+      Related aggregate options: `attribute-map` sets attributes on the
+      aggregate itself, `advertise-map` selects which components contribute.
+      Arista EOS has no standalone `suppress-map` and folds it into
+      `summary-only match-map`.
+    tags: [bgp, ios-xe, syntax, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-aggregate-does-not-prevent-hijack
+    type: basic
+    subdeck: Aggregation
+    front: |
+      You announce 10.1.0.0/21 `summary-only`. Someone else on the internet
+      announces 10.1.1.0/24. Who receives traffic for 10.1.1.50?
+    back: |
+      **The hijacker.** Forwarding is longest-prefix match, and their /24 is
+      more specific than your /21 — announcement order and legitimacy are
+      irrelevant.
+
+      This is the mechanism behind most BGP hijacks, and why "we're safe, we
+      aggregate" is backwards: aggregating **increases** your exposure by
+      leaving more-specific space unclaimed.
+    tags: [bgp, concept, aggregation, security]
+    source: labs/bgp-aggregation
+
+# ── RPKI / origin validation ──────────────────────────────────────────────
+
+  - id: bgp-rpki-roa-definition
+    type: basic
+    subdeck: RPKI
+    front: |
+      What is a ROA, and what three fields does it assert?
+    back: |
+      A **Route Origin Authorization** — a cryptographically signed object
+      created by the address-space holder stating:
+
+      *"Prefix X, up to maxLength Y, may be originated by AS Z."*
+
+      ROAs live in the global RPKI repository and are fetched by validator
+      software.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-rtr-architecture
+    type: basic
+    subdeck: RPKI
+    front: |
+      Routers don't speak RPKI directly. What sits between the router and the
+      RPKI repository, and what protocol connects them?
+    back: |
+      An **RPKI validator** (Routinator, FORT, rpki-client) fetches and
+      cryptographically validates the ROAs, then serves the resulting
+      prefix→origin pairs to routers over the lightweight **RTR
+      (RPKI-to-Router) protocol, RFC 8210**, on TCP.
+
+      The router caches the full validated dataset and matches received routes
+      against it **locally** — so the prefix table reflects what the validator
+      knows, entirely independent of what any BGP peer announces.
+    extra: |
+      IOS-XE: `bgp rpki server tcp 10.0.3.2 port 3323 refresh 600` under
+      `router bgp`. Check with `show ip bgp rpki servers` and
+      `show ip bgp rpki table`.
+    tags: [bgp, ios-xe, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-three-states
+    type: basic
+    subdeck: RPKI
+    front: |
+      The three RPKI validation states — define each.
+    back: |
+      | State | Meaning |
+      |---|---|
+      | **valid** | A matching ROA exists; origin AS **and** prefix length both fit |
+      | **invalid** | A ROA covers the prefix but the origin AS is wrong, **or** the announcement is longer than the ROA's maxLength |
+      | **notfound** | No ROA covers this prefix at all |
+    extra: |
+      Common policy: VALID → accept and raise local-pref; NOT-FOUND → accept
+      at normal preference; INVALID → drop.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-maxlength-trap
+    type: basic
+    subdeck: RPKI
+    front: |
+      A ROA says `10.100.0.0/24, maxLength 24, AS65100`. AS65100 itself starts
+      announcing 10.100.0.128/25. What state results?
+    back: |
+      **INVALID** — the announcement is longer than maxLength, even though the
+      origin AS is correct and legitimate.
+
+      maxLength is a powerful protection *and* an easy self-inflicted outage:
+      deaggregating for traffic engineering without first updating the ROA
+      makes the world drop your own prefix.
+    tags: [bgp, symptom-cause, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-limitation
+    type: basic
+    subdeck: RPKI
+    front: |
+      RPKI validates the route's origin AS. What attack does that leave open,
+      and what closes the gap?
+    back: |
+      **Path manipulation.** An attacker can prepend the legitimate origin ASN
+      to a forged path — the *origin* is then correct, so the route validates
+      **VALID**, while traffic still lands on the attacker.
+
+      RPKI/ROV proves *who may originate*, not *whether the path is real*.
+      **BGPsec** (RFC 8205) was designed to sign the whole AS-path, but has
+      seen almost no deployment; **ASPA** is the current lighter-weight effort.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-strict-rov-drawback
+    type: basic
+    subdeck: RPKI
+    front: |
+      "Strict ROV" drops NOT-FOUND as well as INVALID. Why doesn't anyone run
+      it on a transit AS?
+    back: |
+      Because a large share of internet prefixes still have **no ROA at all** —
+      dropping NOT-FOUND would disconnect you from a big fraction of the
+      internet.
+
+      Realistic migration: **drop INVALID** first (that's the security win),
+      keep NOT-FOUND at normal preference, and tighten only as ROA coverage
+      grows.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-drop-vs-deprefer
+    type: basic
+    subdeck: RPKI
+    front: |
+      Enforcing ROV by **dropping** INVALID vs. merely **de-preferring** it
+      with local-pref — when does the softer policy let a hijack succeed?
+    back: |
+      Whenever the legitimate route isn't there to compete: if the real
+      announcement is withdrawn, or never reaches this router, the INVALID
+      path is the *only* path — and a de-preferred route with no competition
+      still wins.
+
+      De-preferring only helps when both paths are present simultaneously.
+      Dropping is unconditional.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
   - id: bgp-localpref-asymmetry
     type: basic
     subdeck: Path selection
