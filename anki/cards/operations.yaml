@@ -1,0 +1,408 @@
+deck: Operations
+cards:
+
+# ── QoS ───────────────────────────────────────────────────────────────────
+
+  - id: ops-qos-four-stages
+    type: basic
+    subdeck: QoS
+    front: |
+      Trace a voice packet through the four QoS stages. What does each do?
+    back: |
+      1. **Classification** — decide *what this packet is*. By ACL, protocol,
+         port, incoming interface, or an existing marking. Produces an internal
+         class, changes nothing on the wire.
+      2. **Marking** — write that decision into the packet (**DSCP** in the IP
+         header, CoS in the 802.1Q tag) so every downstream device can act on
+         it **without reclassifying**.
+      3. **Queuing / scheduling** — the only stage that actually helps under
+         congestion. Puts the packet in a queue and decides transmit order.
+      4. **Policing / shaping** — enforce a rate: policing **drops**, shaping
+         **buffers**.
+
+      Key insight: **classify and mark once, at the edge; queue everywhere.**
+      Marking alone does nothing — an unqueued marked packet is just a
+      differently-labelled packet in the same FIFO.
+    tags: [operations, concept, qos]
+    source: labs/qos-enterprise
+
+  - id: ops-dscp-values
+    type: cloze
+    subdeck: QoS
+    text: |
+      Common DSCP markings: voice/real-time is {{c1::EF}} = DSCP {{c2::46}};
+      interactive video is typically {{c3::AF41}} = DSCP {{c4::34}}; call
+      signalling is {{c5::CS3}} = DSCP 24; default best-effort is DSCP
+      {{c6::0}}. DSCP occupies the upper {{c7::6}} bits of the IP ToS byte,
+      with the low 2 bits used for {{c8::ECN}}.
+    tags: [operations, cloze, qos]
+    source: labs/qos-enterprise
+
+  - id: ops-qos-trust-boundary
+    type: basic
+    subdeck: QoS
+    front: |
+      Why do you re-mark (or refuse to trust) DSCP at the access edge? What
+      attack does trusting endpoint markings enable?
+    back: |
+      Because **any host can set any DSCP value it likes.** A user whose
+      workstation marks all its traffic EF gets **priority-queue treatment**
+      network-wide — a trivially executed denial of service against the voice
+      class, which is precisely the traffic that cannot tolerate loss.
+
+      So the access edge either **re-marks everything** to a policy-derived
+      value, or trusts only a narrow, verified case (a Cisco IP phone
+      identified by CDP/LLDP, with `trust device cisco-phone`).
+
+      The general principle: **trust boundaries belong where you control the
+      device.** Inside the boundary, markings are policy; outside, they're user
+      input.
+    tags: [operations, concept, qos, security]
+    source: labs/qos-enterprise
+
+  - id: ops-policing-vs-shaping
+    type: basic
+    subdeck: QoS
+    front: |
+      Policing vs. shaping for bursty TCP over a slow WAN link — which behaves
+      better, and what does it cost?
+    back: |
+      **Shaping behaves better.** It **buffers** excess traffic and releases it
+      at the configured rate, so a TCP burst is smoothed rather than destroyed.
+      Policing **drops** the excess, and dropped TCP segments trigger
+      congestion control — the sender halves its window, so a brief burst
+      causes a sustained throughput collapse far below the policed rate.
+
+      The cost of shaping is **latency and buffering** (and memory). Buffer too
+      deep and you get **bufferbloat**: packets arrive, but so late that
+      real-time traffic is ruined.
+
+      Rule of thumb: **shape what you send, police what you receive.** You
+      control your own sending rate; you can only punish an over-sending peer.
+    tags: [operations, concept, qos]
+    source: labs/qos-enterprise
+
+  - id: ops-priority-queue-starvation
+    type: basic
+    subdeck: QoS
+    front: |
+      A strict-priority queue can starve everything else. How does that happen,
+      and what prevents it?
+    back: |
+      Strict priority means **the queue is serviced until empty** before any
+      other queue is looked at. If the priority class receives more traffic
+      than the link can carry — a misconfiguration, or spoofed EF marking —
+      every other class transmits **nothing**.
+
+      Prevention: a **policer on the priority class itself**. It gets strict
+      priority *up to* its configured rate; anything beyond is dropped rather
+      than served.
+
+      ```
+      policy-map WAN-OUT
+       class VOICE
+        priority percent 30      ! implicit policer at 30%
+       class VIDEO
+        bandwidth percent 30
+       class class-default
+        fair-queue
+      ```
+
+      That's why LLQ is "priority **with** a policer" — the policer is the
+      whole point.
+    tags: [operations, ios-xe, concept, qos]
+    source: labs/qos-enterprise
+
+  - id: ops-wred-purpose
+    type: basic
+    subdeck: QoS
+    front: |
+      What problem does WRED solve, and what happens without it?
+    back: |
+      **TCP global synchronisation.** Without active queue management, a full
+      queue **tail-drops** — it discards packets from *every* flow at the same
+      instant. All those TCP senders back off together, the link goes idle,
+      they all ramp up together, and the queue fills again. The link oscillates
+      between congested and underused.
+
+      **WRED** drops packets **probabilistically as the queue depth grows**,
+      hitting a few flows early and at random. Those back off individually,
+      relieving congestion before the queue is full and keeping the rest
+      unaffected.
+
+      "Weighted" = higher-priority markings get a lower drop probability.
+      WRED only helps **TCP** — dropping UDP/voice early just damages it, which
+      is why the priority queue uses a plain FIFO instead.
+    tags: [operations, concept, qos]
+    source: labs/qos-enterprise
+
+# ── MTU and PMTUD ─────────────────────────────────────────────────────────
+
+  - id: ops-pmtud-blackhole
+    type: basic
+    subdeck: MTU
+    front: |
+      Ping works, DNS works, SSH connects then hangs, web pages half-load.
+      What's the diagnosis?
+    back: |
+      **A PMTU black hole.** Small packets pass; full-size packets are dropped
+      by a hop with a smaller MTU, and the **ICMP "fragmentation needed"**
+      message that would tell the sender is being filtered — usually by a
+      firewall blocking "all ICMP."
+
+      The sender never learns to reduce its segment size, so it retransmits the
+      same too-large packet forever. That's the signature: **the handshake
+      completes (small packets) and the transfer dies (large packets).**
+    extra: |
+      Find the boundary by bisecting with DF-set pings:
+      `ping -M do -s <size> <dest>` (Linux) /
+      `ping <dest> size <size> df-bit` (IOS-XE).
+    tags: [operations, symptom-cause, mtu]
+    source: labs/mtu-pmtud-troubleshooting
+
+  - id: ops-mtu-vs-mss
+    type: basic
+    subdeck: MTU
+    front: |
+      `ip mtu` vs. `ip tcp adjust-mss` — what does each do, and why is the
+      second more reliable?
+    back: |
+      **`ip mtu`** sets the largest IP packet the interface will send
+      unfragmented. It affects *this* device's forwarding decision and the
+      ICMP it generates — but it depends on **PMTUD working end to end** for
+      the remote sender to adapt.
+
+      **`ip tcp adjust-mss`** rewrites the **MSS option in the TCP SYN** as it
+      passes through. Both endpoints then negotiate a smaller segment size from
+      the start, so oversized packets are **never generated** and no ICMP is
+      needed.
+
+      That independence from ICMP is why `adjust-mss` is the reliable fix on
+      any tunnel. Typical value: `ip mtu` − 40.
+    extra: |
+      It only helps **TCP**. UDP-based traffic (QUIC, IPsec, VXLAN, DNS over
+      UDP) still depends on real MTU correctness or its own PMTUD.
+    tags: [operations, ios-xe, concept, mtu]
+    source: labs/mtu-pmtud-troubleshooting
+
+  - id: ops-mtu-one-sided-regression
+    type: basic
+    subdeck: MTU
+    front: |
+      Large transfers work in one direction but fail in the other. What does
+      that asymmetry tell you?
+    back: |
+      That the MTU restriction, or the ICMP filtering, is **on one path only** —
+      and since forward and return paths can differ, you must test **each
+      direction independently**.
+
+      A one-sided `ip tcp adjust-mss`, an MTU set on only one end of a tunnel,
+      or a firewall dropping ICMP in only one direction all produce this.
+
+      Practical implication: never conclude "MTU is fine" from a test run in
+      one direction. Run the DF-bit bisection **from both ends**.
+    tags: [operations, symptom-cause, mtu]
+    source: labs/mtu-pmtud-troubleshooting
+
+# ── Automation ────────────────────────────────────────────────────────────
+
+  - id: ops-idempotence
+    type: basic
+    subdeck: Automation
+    front: |
+      What does **idempotent** mean for network automation, and why does it
+      matter more than it sounds?
+    back: |
+      Running the same operation **any number of times produces the same end
+      state** as running it once.
+
+      It matters because automation runs re-run: after a partial failure, after
+      a timeout, on a schedule, by a nervous engineer. A non-idempotent script
+      that *appends* a config line adds a duplicate every run; one that
+      *declares* the desired state converges to it.
+
+      This is the difference between **imperative** ("send these commands") and
+      **declarative** ("this is what the config should be") automation, and why
+      declarative tooling won.
+    tags: [operations, concept, automation]
+    source: labs/automation-fundamentals
+
+  - id: ops-source-of-truth
+    type: basic
+    subdeck: Automation
+    front: |
+      What is a "source of truth" in network automation, and what breaks
+      without one?
+    back: |
+      A **single authoritative system** — NetBox, an IPAM, a Git repo —
+      defining what the network *should* be. Devices are then rendered from it,
+      and drift is detected by comparing reality against it.
+
+      Without one, the **devices are the source of truth**, which means:
+      - you cannot answer "what should this be?" — only "what is it?"
+      - you cannot detect drift, because there's nothing to compare against
+      - documentation is a snapshot that is wrong the moment it's written
+      - two engineers' mental models diverge silently
+
+      The hardest part is not the tooling, it's the **discipline** that no
+      change happens outside it. One CLI hotfix and the source of truth is a
+      lie.
+    tags: [operations, concept, automation]
+    source: labs/network-automation-netbox
+
+  - id: ops-gitops-pipeline
+    type: basic
+    subdeck: Automation
+    front: |
+      What does a network GitOps change pipeline add over "run Ansible from
+      your laptop"?
+    back: |
+      - **Peer review** — the change is a pull request, read by a human before
+        it touches production.
+      - **An audit trail** — who changed what, when, and *why*, with a linked
+        ticket. Git history is the change record.
+      - **Automated validation** — lint, config render, and dry-run diff on
+        every commit, before merge.
+      - **Reproducibility and rollback** — deploy is a function of the repo, so
+        reverting a commit reverts the network.
+      - **No privileged human credentials** — the pipeline holds them, not
+        laptops.
+
+      The network change becomes a **software change**, with the same controls.
+    tags: [operations, concept, automation]
+    source: labs/network-gitops-change-pipeline
+
+  - id: ops-dry-run-diff
+    type: basic
+    subdeck: Automation
+    front: |
+      Why is a **config diff / dry-run** the single most valuable safety
+      feature in network automation?
+    back: |
+      Because it converts "I think this playbook does what I intend" into "here
+      are the exact lines that will change on this device."
+
+      Most automation outages are not tooling failures — they're **a correct
+      tool faithfully applying a wrong intent** to more devices, faster, than a
+      human ever could. The diff is the last point at which a human can catch
+      that.
+
+      It's also what makes idempotence *visible*: a second run should produce
+      an **empty diff**. A dry-run that keeps showing changes on a converged
+      network means your automation isn't actually declarative.
+    tags: [operations, concept, automation]
+    source: labs/network-gitops-change-pipeline
+
+# ── Observability ─────────────────────────────────────────────────────────
+
+  - id: ops-snmp-vs-streaming-telemetry
+    type: basic
+    subdeck: Observability
+    front: |
+      SNMP polling vs. streaming telemetry — what actually changes?
+    back: |
+      **SNMP is pull**: the collector asks each device for each OID on an
+      interval (typically 5 minutes). Cost scales with devices × OIDs, the
+      device does the work on request, and **anything between polls is
+      invisible** — a 30-second microburst or a link flap simply never
+      happened.
+
+      **Streaming telemetry is push**: the device sends subscribed data
+      continuously (sub-second is practical), structured (gNMI/YANG,
+      protobuf-encoded), over a persistent session.
+
+      The real change is **resolution**. Five-minute averages hide exactly the
+      transient events that cause user-visible problems.
+    tags: [operations, concept, observability]
+    source: labs/telemetry-monitoring-hybrid
+
+  - id: ops-state-vs-metrics
+    type: basic
+    subdeck: Observability
+    front: |
+      Why does a tool like SuzieQ (network state snapshots) complement metrics
+      dashboards rather than duplicate them?
+    back: |
+      **Metrics answer "how much?"** — bandwidth, CPU, error counters. Time
+      series, good for trends and thresholds.
+
+      **State answers "what was the network's configuration and topology at
+      time T?"** — the BGP table, the routing table, the MAC table, LLDP
+      neighbours, interface state.
+
+      Post-incident, the question is almost never "what was the CPU?" — it's
+      **"what changed?"** Snapshotting state lets you *diff* the network
+      between two points in time, which no metrics dashboard can do.
+
+      The pairing: metrics tell you **when** something went wrong; state
+      snapshots tell you **what** was different.
+    tags: [operations, concept, observability]
+    source: labs/suzieq-network-observability
+
+# ── Troubleshooting method ────────────────────────────────────────────────
+
+  - id: ops-structured-troubleshooting
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      What's the disciplined loop for troubleshooting under pressure, and which
+      step do people skip?
+    back: |
+      1. **Define the symptom precisely** — who, what, since when, and what
+         still works. "The network is down" is not a symptom.
+      2. **Form a hypothesis** that predicts something *checkable*.
+      3. **Choose the test that splits the search space** — bisect the path,
+         don't walk it.
+      4. **Change one thing**, observe, record.
+      5. **Confirm the fix and the root cause** — they are not the same thing.
+
+      The skipped step is **2**: people jump from symptom to changing config,
+      so when it starts working nobody knows why, and the same outage returns.
+
+      Corollary: **always establish what still works.** The boundary between
+      working and broken localises the fault faster than any single command.
+    tags: [operations, concept, troubleshooting]
+    source: labs/troubleshooting-range
+
+  - id: ops-received-vs-accepted-principle
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      A general diagnostic pattern that recurs across BGP, EVPN, IPsec and
+      802.1X. What is it?
+    back: |
+      **Separate "arrived" from "accepted".**
+
+      - BGP: `received-routes` vs. the BGP table → import policy.
+      - EVPN: route in the EVPN table vs. in the VRF FIB → route-target import.
+      - IPsec: IKE SA vs. child SA → Phase 1 vs. Phase 2.
+      - 802.1X: RADIUS Access-Request seen vs. Access-Accept → policy vs.
+        connectivity.
+
+      In every case the **session is healthy** and the failure is in **policy**.
+      If you only ever check "is the session up?", you will misdiagnose all
+      four the same way.
+
+      Ask two questions, always: *did it arrive?* and *did we accept it?*
+    tags: [operations, concept, troubleshooting]
+    source: labs/troubleshooting-range-advanced
+
+  - id: ops-change-correlation
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      First question to ask about any new outage, and why?
+    back: |
+      **"What changed?"**
+
+      The overwhelming majority of outages follow a change — a config push, a
+      software upgrade, a certificate expiry, a scheduled job, a new device, a
+      capacity threshold crossed. Correlating the failure's start time against
+      the change log localises the fault faster than any packet capture.
+
+      "Nothing changed" is nearly always false, and usually means *nobody who
+      is in this call changed anything.* Check: config diffs, deployment
+      pipelines, certificate expiry dates, DHCP scope exhaustion, and anything
+      driven by a timer.
+    tags: [operations, concept, troubleshooting]
+    source: labs/troubleshooting-range
