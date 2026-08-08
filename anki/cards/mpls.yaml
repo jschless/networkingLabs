@@ -365,6 +365,178 @@ cards:
     tags: [mpls, concept, l3vpn]
     source: labs/mpls-sr-isis-bgp
 
+# ── L2VPN ─────────────────────────────────────────────────────────────────
+
+  - id: mpls-l2vpn-vs-l3vpn
+    type: basic
+    subdeck: L2VPN
+    front: |
+      L3VPN vs. L2VPN/pseudowire — what is tunnelled, and what does the CE see?
+    back: |
+      | | L3VPN | L2VPN / pseudowire |
+      |---|---|---|
+      | Tunnelled | **IP packets** | **Ethernet frames** |
+      | CE runs routing with PE? | Yes — eBGP/OSPF to the PE | **No** — the PE is transparent |
+      | PE terminates L3? | Yes, the PE is the CE's next-hop | No |
+      | CE subnets | Different per site | **Same subnet across sites** |
+      | Use case | Enterprise WAN, carrier IP-VPN | Leased-line replacement, carrier Ethernet |
+
+      With an L2VPN the two CEs behave exactly like hosts on one switch — they
+      **ARP for each other directly**. The provider carries frames and has no
+      visibility into, or responsibility for, the customer's routing.
+    tags: [mpls, concept, l2vpn]
+    source: labs/mpls-l2vpn
+
+  - id: mpls-pseudowire-label-stack
+    type: basic
+    subdeck: L2VPN
+    front: |
+      A pseudowire uses two labels. What is each, who assigns it, and who acts
+      on it?
+    back: |
+      **Outer — the transport/IGP label.** Assigned by LDP (or SR) for the
+      remote PE's loopback. The **P routers** swap it; it's the only label they
+      look at.
+
+      **Inner — the PW (VC) label.** Assigned by the **remote PE** via targeted
+      LDP for this specific pseudowire ID. Only the egress PE reads it, and it
+      identifies **which attachment circuit / bridge** the frame belongs to.
+
+      Same "transport + service" split as L3VPN — the core only ever knows how
+      to reach PEs, never what service is riding on top.
+    tags: [mpls, concept, l2vpn]
+    source: labs/mpls-l2vpn
+
+  - id: mpls-targeted-ldp
+    type: basic
+    subdeck: L2VPN
+    front: |
+      What is a **targeted** LDP session, and why does a pseudowire need one?
+    back: |
+      Ordinary LDP discovers neighbours with **link-local multicast hellos**, so
+      it only ever forms sessions with directly connected routers.
+
+      Two PEs signalling a pseudowire are **not adjacent** — they're separated
+      by the core. A targeted (tLDP) session uses **unicast hellos sent to the
+      peer's transport address**, forming a session across the core to exchange
+      PW labels.
+
+      Note the dependency: the targeted session itself rides **over** the
+      transport labels the ordinary link LDP sessions distributed. So a
+      pseudowire needs **both** — link LDP for transport, targeted LDP for the
+      service.
+    tags: [mpls, concept, l2vpn]
+    source: labs/mpls-l2vpn
+
+  - id: mpls-l2vpn-signaling-options
+    type: basic
+    subdeck: L2VPN
+    front: |
+      Four ways to signal L2VPN services. What does each give you?
+    back: |
+      | Signalling | RFC | Service |
+      |---|---|---|
+      | **LDP FEC 128 (VPWS)** | 4447 | Point-to-point pseudowire. Simplest, most deployed |
+      | **LDP FEC 129 (VPLS)** | 4762 | Multipoint, needs BGP autodiscovery |
+      | **BGP VPLS** | 4761 | Multipoint with BGP autodiscovery built in |
+      | **EVPN** | 7432 | Multipoint with a real **control plane** — MAC learning in BGP |
+
+      The trajectory: VPWS is point-to-point and manual; VPLS made it
+      multipoint but still learned MACs by **flooding in the data plane**;
+      **EVPN replaced flood-and-learn with BGP**, adding multihoming, MAC
+      mobility and all-active forwarding — which is why new deployments use it
+      for L2VPN as well as for data-centre overlays.
+    tags: [mpls, concept, l2vpn, evpn]
+    source: labs/mpls-l2vpn
+
+# ── Carrier Ethernet ──────────────────────────────────────────────────────
+
+  - id: mpls-qinq
+    type: basic
+    subdeck: Carrier Ethernet
+    front: |
+      What is QinQ (802.1ad), and what problem does it solve for a carrier?
+    back: |
+      **A second VLAN tag.** The customer's tag (**C-VLAN**) is preserved, and
+      the provider pushes its own outer tag (**S-VLAN**, service tag) at the
+      UNI.
+
+      It solves two problems at once:
+      1. **Scale** — the provider's 4096 S-VLANs each carry a customer's full
+         independent 4096 C-VLANs.
+      2. **Transparency** — the customer keeps their own VLAN numbering, and
+         two customers can both use VLAN 100 without colliding.
+
+      The provider switches only on the **outer** tag and never interprets the
+      inner one.
+    extra: |
+      The tag stack costs 4 more bytes, so provider cores run a raised MTU
+      (**1600–1608 baby-giant**) to carry a full 1500-byte customer frame with
+      two tags intact.
+    tags: [mpls, concept, carrier-ethernet]
+    source: labs/carrier-ethernet-handoff
+
+  - id: mpls-eline-vs-elan
+    type: basic
+    subdeck: Carrier Ethernet
+    front: |
+      MEF service types: E-Line, E-LAN, E-Tree. What is each?
+    back: |
+      - **E-Line** — **point-to-point**. Two UNIs, one EVC. The leased-line
+        replacement, implemented as a VPWS pseudowire.
+      - **E-LAN** — **multipoint-to-multipoint**. Every site can reach every
+        other, implemented as VPLS or EVPN.
+      - **E-Tree** — **rooted multipoint**. Leaves talk to roots but **not to
+        each other** — the shape you want for a hub-and-spoke service, or for
+        keeping tenants isolated from one another while all reaching a shared
+        head end.
+
+      Vocabulary: a **UNI** is the customer-facing demarcation port, and an
+      **EVC** is the service instance connecting UNIs.
+    tags: [mpls, concept, carrier-ethernet]
+    source: labs/carrier-ethernet-handoff
+
+  - id: mpls-wrong-cross-connect
+    type: basic
+    subdeck: Carrier Ethernet
+    front: |
+      Two E-Line services are turned up and the customer reports that site A
+      reaches the wrong site. How do you prove it from tags alone?
+    back: |
+      **Capture at the UNI and read the S-VLAN.** The customer's C-VLAN is
+      unchanged end to end, so it tells you nothing about which EVC the frame
+      actually took. The **outer S-VLAN** is the provider's service identifier,
+      and a mismatch between the S-VLAN observed and the one the service order
+      specifies **is** the misconfigured cross-connect.
+
+      This is why carrier handoff troubleshooting starts with a tagged capture
+      rather than a ping: reachability tells you frames arrive somewhere, and
+      only the tag tells you **which service carried them**.
+    tags: [mpls, symptom-cause, carrier-ethernet]
+    source: labs/carrier-ethernet-handoff
+
+  - id: mpls-carrier-mtu-negotiation
+    type: basic
+    subdeck: Carrier Ethernet
+    front: |
+      Why is MTU the first thing to agree on at a carrier Ethernet handoff?
+    back: |
+      Because the provider adds tags (and possibly an MPLS stack) to every
+      frame, and the customer has no visibility into how many bytes that is.
+
+      A customer sending a standard 1500-byte frame with their own tag needs
+      the provider to carry **1518 + 4 (S-VLAN) = 1522**, and more if the
+      customer runs their own QinQ or jumbo frames.
+
+      Get it wrong and you get the **classic PMTU black hole**: small packets
+      pass, the service tests fine at turn-up, and full-size traffic silently
+      dies later — after the circuit has been accepted.
+
+      Test it explicitly at turn-up with **DF-bit frames at the agreed maximum
+      size**, in both directions.
+    tags: [mpls, symptom-cause, carrier-ethernet, mtu]
+    source: labs/carrier-ethernet-handoff
+
 # ── BGP labeled unicast ───────────────────────────────────────────────────
 
   - id: mpls-bgp-lu-what-it-is
