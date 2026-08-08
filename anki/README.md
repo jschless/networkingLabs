@@ -5,13 +5,17 @@ repo — the transferable knowledge, not the lab mechanics.
 
 ## Get the deck
 
+The built package is committed — **import
+[`anki/dist/networking-labs.apkg`](dist/networking-labs.apkg) directly** (Anki →
+File → Import). No toolchain needed. It creates a top-level **Networking Labs**
+deck with one subdeck per topic.
+
+To rebuild it after editing cards:
+
 ```bash
 python3 -m pip install --user genanki pyyaml
 python3 anki/build.py
 ```
-
-Import `anki/dist/networking-labs.apkg` into Anki. It creates a top-level
-**Networking Labs** deck with one subdeck per topic.
 
 Note GUIDs are derived from each card's stable `id`, so **rebuilding and
 re-importing updates the existing notes in place** — your review history

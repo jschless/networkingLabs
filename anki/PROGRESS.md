@@ -102,8 +102,11 @@ Nothing here is required — the deck stands on its own. In rough order of value
   prefix-list `ge`/`le` live in `bgp.yaml`; other decks reference the idea
   rather than restating it. Keep it that way to avoid drift between copies.
 - **`genanki` is a user-site install** (`pip install --user genanki pyyaml`);
-  there is no venv checked in, and `anki/dist/` is gitignored because the
-  `.apkg` is a build artifact.
+  there is no venv checked in.
+- **The built `.apkg` is committed** at `anki/dist/networking-labs.apkg` so it
+  can be imported without a toolchain. It is a ~720 KB binary that changes
+  wholesale on every rebuild, so each regeneration adds that much to git
+  history — rebuild and commit it when the cards change, not on every edit.
 
 ---
 
