@@ -1,0 +1,583 @@
+deck: Enterprise
+cards:
+
+# ── Multicast ─────────────────────────────────────────────────────────────
+
+  - id: ent-multicast-three-state-pieces
+    type: basic
+    subdeck: Multicast
+    front: |
+      Unicast between source and receiver works, but multicast fails. What
+      three independent pieces of state must all exist, and what does each
+      failure look like?
+    back: |
+      1. **IGMP membership** at the receiver edge — the last-hop router must
+         know a receiver *wants* the group. Missing → the router never even
+         asks for the traffic.
+      2. **PIM neighbours** along the path — each router must have a PIM
+         adjacency with the next hop toward the source/RP. Missing → the join
+         never propagates.
+      3. **The mroute (S,G) or (*,G) entry** with a valid incoming interface
+         and a non-empty outgoing interface list. Missing OIL → the state
+         exists but forwards nowhere.
+
+      Unicast reachability tests **none** of these. Multicast has a completely
+      separate control plane and a separate forwarding table — "ping works" is
+      irrelevant evidence.
+    tags: [enterprise, symptom-cause, multicast]
+    source: labs/enterprise-multicast
+
+  - id: ent-multicast-rp-role
+    type: basic
+    subdeck: Multicast
+    front: |
+      You remove the RP. A local receiver keeps working; a remote one fails.
+      Why the difference?
+    back: |
+      In **PIM sparse mode**, receivers join a **shared tree rooted at the
+      RP** — that's how a receiver finds a source it knows nothing about. No RP
+      means no rendezvous point, so remote receivers can never be joined to a
+      source elsewhere in the network.
+
+      A **local** receiver behind the same router as the source doesn't need
+      it: the router already has an (S,G) entry from directly seeing the source,
+      and can forward straight down the **shortest-path tree** without ever
+      consulting the RP.
+
+      **The RP solves discovery, not forwarding.** Once traffic flows, PIM-SM
+      typically switches to the SPT and the RP drops out of the data path
+      anyway — which is exactly why RP failure produces such confusing partial
+      outages.
+    tags: [enterprise, concept, multicast]
+    source: labs/enterprise-multicast
+
+  - id: ent-pim-modes
+    type: basic
+    subdeck: Multicast
+    front: |
+      PIM dense mode vs. sparse mode vs. SSM — how does each find receivers?
+    back: |
+      - **Dense mode**: **flood and prune.** Push traffic everywhere, then
+        prune branches with no receivers. Simple, and wasteful enough that it's
+        effectively obsolete.
+      - **Sparse mode**: **explicit join.** Nothing is forwarded until a
+        receiver asks, via a shared tree rooted at the **RP**. The enterprise
+        default.
+      - **SSM (Source-Specific Multicast)**: the receiver names **both** the
+        source and the group (S,G) using IGMPv3, so there is **no RP at all** —
+        the join goes straight up the shortest path to the source.
+
+      SSM removes the RP, which removes the single biggest operational
+      fragility in multicast. Where the application can specify the source
+      (most video distribution and market-data feeds), it's the better design.
+    tags: [enterprise, concept, multicast]
+    source: labs/enterprise-multicast
+
+# ── NAT and internet edge ─────────────────────────────────────────────────
+
+  - id: ent-pat-vs-static-nat
+    type: basic
+    subdeck: Internet edge
+    front: |
+      PAT vs. static NAT — what does each enable, and what does each prevent?
+    back: |
+      **PAT (NAT overload)**: many inside hosts share one public address,
+      distinguished by **port**. Sessions can only be initiated **outbound** —
+      the translation is created by the outgoing packet, so unsolicited inbound
+      traffic has no entry to match and is dropped. That implicit
+      "deny inbound" is a side effect, not a security control.
+
+      **Static NAT**: a fixed one-to-one mapping, so the outside can initiate
+      **inbound** — which is exactly what publishing a DMZ service requires.
+
+      A static NAT deliberately removes PAT's accidental protection, which is
+      why **every static NAT needs an explicit firewall policy** naming the
+      ports allowed in.
+    tags: [enterprise, concept, nat]
+    source: labs/enterprise-edge-nat-firewall
+
+  - id: ent-iosxe-nat-inside-outside
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: configure PAT for inside users plus a static NAT publishing a DMZ
+      web server.
+    back: |
+      ```
+      interface GigabitEthernet0/1
+       ip nat inside
+      interface GigabitEthernet0/0
+       ip nat outside
+      !
+      ip access-list standard INSIDE-NET
+       permit 10.10.0.0 0.0.255.255
+      !
+      ip nat inside source list INSIDE-NET interface GigabitEthernet0/0 overload
+      ip nat inside source static tcp 10.20.0.10 80 203.0.113.10 80
+      ```
+    extra: |
+      `ip nat inside` / `ip nat outside` on the interfaces is what most NAT
+      bugs come down to — NAT does nothing until the interfaces are labelled,
+      and the labels define the direction of translation. Debug with
+      `show ip nat translations` and `show ip nat statistics`.
+    tags: [enterprise, ios-xe, syntax, nat]
+    source: labs/enterprise-edge-nat-firewall
+
+  - id: ent-dmz-purpose
+    type: basic
+    subdeck: Internet edge
+    front: |
+      What is a DMZ actually for, and what is the rule that makes it work?
+    back: |
+      It holds the services that **must** be reachable from the internet — so
+      that when one of them is compromised (assume it will be), the attacker
+      lands somewhere with **no path into the internal network**.
+
+      The load-bearing rule: **the DMZ must not be able to initiate connections
+      inward.** Internal → DMZ is allowed; DMZ → internal is denied except for
+      narrowly specified, individually justified flows (one database port to
+      one host).
+
+      A DMZ that can freely reach the internal LAN is just a differently-named
+      part of the LAN. The direction of the deny is the whole design.
+    tags: [enterprise, concept, dmz, security]
+    source: labs/enterprise-dmz
+
+  - id: ent-guest-separation
+    type: basic
+    subdeck: Internet edge
+    front: |
+      Guest and corporate traffic share the same physical infrastructure. What
+      must be separated, and what's the commonly missed piece?
+    back: |
+      Separated: **VLAN/SSID**, **DHCP scope**, **routing (a VRF or a strict
+      ACL)**, **internet egress policy**, and **NAT pool** if you want guest
+      traffic distinguishable in logs.
+
+      Commonly missed: **the shared services**. Guest DNS resolving internal
+      names leaks your internal topology; a shared DHCP relay or NTP server
+      that's reachable from guest becomes a pivot point; and guest traffic
+      hairpinning through the internal firewall's *inside* interface can bypass
+      the guest policy entirely.
+
+      Separation is only as good as its **weakest shared dependency**.
+    tags: [enterprise, concept, security]
+    source: labs/enterprise-edge-nat-firewall
+
+# ── Voice ─────────────────────────────────────────────────────────────────
+
+  - id: ent-sip-signaling-vs-media
+    type: basic
+    subdeck: Voice
+    front: |
+      A call connects and both phones ring, but audio is one-way. What does
+      that tell you about the architecture?
+    back: |
+      **Signalling and media are separate flows on separate paths.**
+
+      SIP (TCP/UDP 5060, or 5061 for TLS) negotiates the call and — inside
+      **SDP** — tells each end which IP and **dynamic UDP port range** to send
+      **RTP** to. The audio then flows **directly between the endpoints**,
+      often never touching the PBX.
+
+      So call setup succeeding proves only that signalling works. One-way audio
+      means one direction of RTP is blocked — a stateful firewall that didn't
+      open the negotiated ports, NAT rewriting the SDP payload incorrectly, or
+      an asymmetric routing path.
+
+      **Green signalling is not evidence of working media**, and this is the
+      single most common voice fault.
+    tags: [enterprise, symptom-cause, voice]
+    source: labs/enterprise-voice-sip-qos
+
+  - id: ent-voice-udp-firewall-fix
+    type: basic
+    subdeck: Voice
+    front: |
+      Why is "just allow all UDP inbound" a bad repair for one-way audio?
+    back: |
+      It fixes the symptom by **removing the control**, exposing every UDP
+      service on the network to the internet — and it doesn't even address the
+      root cause, so it will recur when the port range or NAT behaviour changes.
+
+      The right repair is a **SIP-aware stateful inspection** (a SIP ALB/ALG or
+      an SBC) that reads the **SDP** and opens exactly the negotiated RTP
+      ports, for exactly that call, for exactly its duration.
+
+      General principle: when the fix is "allow more," you have almost
+      certainly identified the symptom rather than the cause.
+    tags: [enterprise, concept, voice, security]
+    source: labs/enterprise-voice-sip-qos
+
+  - id: ent-voice-requirements
+    type: basic
+    subdeck: Voice
+    front: |
+      What are the network requirements for acceptable voice quality, and which
+      one is hardest?
+    back: |
+      - **Latency** — under ~150 ms one-way mouth-to-ear.
+      - **Jitter** — under ~30 ms; absorbed by a de-jitter buffer, which itself
+        adds latency.
+      - **Loss** — under ~1%. Voice codecs conceal a little; beyond that it's
+        audible.
+
+      **Jitter is the hardest**, because it's caused by *variable* queuing
+      delay, which is exactly what congestion produces. You cannot fix it with
+      more bandwidth alone — a link at 40% utilisation with deep buffers and no
+      priority queuing will still produce unusable jitter during bursts.
+
+      That's why voice needs a **priority queue**, not merely capacity.
+    tags: [enterprise, concept, voice, qos]
+    source: labs/enterprise-voice-sip-qos
+
+  - id: ent-call-admission-control
+    type: basic
+    subdeck: Voice
+    front: |
+      Why does a voice deployment need call admission control on top of QoS?
+    back: |
+      QoS protects the voice class against *other* traffic. It cannot protect
+      voice calls against **each other**.
+
+      Reserve 256 kb/s for voice and place three calls into it, and all three
+      degrade — the priority queue does exactly what it was told, and every
+      call is unusable. That's worse than two good calls and one busy signal.
+
+      **CAC counts active calls against the reserved bandwidth and rejects the
+      one that would overrun it.** Degrading everyone equally is the wrong
+      failure mode for real-time traffic; refusing the marginal call is the
+      right one.
+    tags: [enterprise, concept, voice, qos]
+    source: labs/enterprise-voice-sip-qos
+
+# ── Wireless ──────────────────────────────────────────────────────────────
+
+  - id: ent-wireless-tunneled-vs-local
+    type: basic
+    subdeck: Wireless
+    front: |
+      Controller-based (CAPWAP-tunnelled) vs. local/bridged wireless — where
+      does client traffic decapsulate, and what follows for the wired design?
+    back: |
+      **Tunnelled (central switching)**: every client frame is encapsulated in
+      **CAPWAP** and carried to the **controller**, decapsulating there. The
+      client VLAN only needs to exist **at the controller** — access switches
+      carry just one management VLAN. Policy is enforced in one place.
+
+      **Local switching (FlexConnect / bridged)**: the AP decapsulates locally
+      and puts frames straight onto the wired VLAN. The client VLANs must exist
+      **on every access switch and trunk**.
+
+      Trade: tunnelling gives you simple wired configuration and central policy
+      at the cost of hairpinning all traffic through the controller (a
+      bandwidth and failure concentration point). Local switching gives optimal
+      paths and branch survivability at the cost of distributed VLAN and policy
+      configuration.
+    tags: [enterprise, concept, wireless]
+    source: labs/enterprise-wireless-architecture
+
+  - id: ent-wireless-roaming
+    type: basic
+    subdeck: Wireless
+    front: |
+      A client roams between APs. What must stay constant for the session to
+      survive, and which design keeps it constant?
+    back: |
+      Three things:
+      1. **The IP address** — so it must stay in the same subnet/VLAN.
+      2. **The default gateway** — same L3 boundary.
+      3. **The security association** — otherwise a full 802.1X/EAP
+         re-authentication runs, taking hundreds of milliseconds and dropping
+         calls.
+
+      **Centralised (tunnelled)** keeps all three constant by construction: the
+      L3 boundary is at the controller, so moving between APs never changes the
+      client's subnet.
+
+      Distributed designs need help: **802.11r fast transition** to carry the
+      security association across APs, plus either one stretched VLAN or a
+      mobility tunnel back to the anchor.
+    tags: [enterprise, concept, wireless]
+    source: labs/enterprise-wireless-architecture
+
+# ── Campus design ─────────────────────────────────────────────────────────
+
+  - id: ent-routed-access-vs-l2-access
+    type: basic
+    subdeck: Campus design
+    front: |
+      Routed access vs. traditional Layer 2 access — what changes, and what do
+      you give up?
+    back: |
+      **Routed access** puts the L3 boundary at the **access switch**. Uplinks
+      are routed point-to-point links, so:
+      - **No spanning tree** in the uplink path, and no blocked links — all
+        uplinks forward, via ECMP.
+      - **Convergence is an IGP event** (sub-second) rather than STP.
+      - The failure domain is a single closet.
+      - **No FHRP** needed — the access switch *is* the gateway.
+
+      What you give up: **VLANs cannot span access switches.** Anything
+      requiring L2 adjacency across the campus — some clustering, some legacy
+      appliances, and simple wireless designs — needs redesign or an overlay.
+
+      That constraint is the entire reason L2 access persists.
+    tags: [enterprise, concept, campus]
+    source: labs/enterprise-routed-access
+
+  - id: ent-collapsed-core
+    type: basic
+    subdeck: Campus design
+    front: |
+      When is a collapsed core the right design, and what is the real limit?
+    back: |
+      Collapsing the distribution and core into **one pair of switches** is
+      right for a **single building or small campus** — typically under a few
+      thousand users and a handful of closets. It halves the device count,
+      the cost, and the number of hops.
+
+      The limit isn't usually bandwidth — it's **blast radius and change
+      risk**. With one pair, every closet, every WAN circuit, every data centre
+      link, and every firewall lands on the same two boxes. An upgrade to that
+      pair is an upgrade to everything at once, and a misconfiguration has no
+      containment boundary.
+
+      You separate core from distribution when you need to **change one part of
+      the network without touching the rest**.
+    tags: [enterprise, concept, campus]
+    source: labs/enterprise-collapsed-core
+
+  - id: ent-three-tier-roles
+    type: basic
+    subdeck: Campus design
+    front: |
+      In a three-tier campus, what is each tier's job, and what rule keeps the
+      design coherent?
+    back: |
+      - **Access** — connect endpoints. Port security, 802.1X, PoE, QoS
+        marking/trust. Lots of ports, low per-port cost.
+      - **Distribution** — aggregate access, and be the **policy and L3
+        boundary**: routing, ACLs, route summarisation, FHRP.
+      - **Core** — move packets between distribution blocks **as fast as
+        possible**, and do nothing else.
+
+      The rule: **the core does no policy.** No ACLs, no filtering, no
+      services. Every feature added there is applied to all traffic in the
+      campus, becomes a shared failure domain, and is the hardest thing to
+      change safely.
+
+      Policy lives at distribution, where it's scoped to one block and can be
+      changed without touching the rest of the network.
+    tags: [enterprise, concept, campus]
+    source: labs/enterprise-campus
+
+  - id: ent-summarize-at-distribution
+    type: basic
+    subdeck: Campus design
+    front: |
+      Why summarise routes at the distribution layer specifically?
+    back: |
+      It **bounds the failure domain**. A flapping access VLAN inside one
+      distribution block causes a routing recomputation only within that block;
+      the summary the core sees never changes, so the rest of the campus
+      doesn't even observe the event.
+
+      Without it, every access-layer link flap is a campus-wide convergence
+      event — and in a large campus, that's continuous churn.
+
+      It also keeps core routing tables small and uniform, which is what lets
+      the core be simple and fast.
+
+      Price: the usual summarisation trade — a **black hole** for the part of
+      the summary range that's currently down, which is what the Null0 discard
+      route contains.
+    tags: [enterprise, concept, campus]
+    source: labs/enterprise-campus
+
+  - id: ent-wan-edge-in-vs-out
+    type: basic
+    subdeck: WAN
+    front: |
+      A dual-homed internet edge wants ISP-A primary in both directions. Which
+      knob for each direction, and which one can't you guarantee?
+    back: |
+      **Outbound** — **local-preference**, set inbound on the routes received
+      from ISP-A. Fully under your control: your AS decides its own exit.
+
+      **Inbound** — **AS-path prepending** toward ISP-B (and/or MED, and/or
+      more-specific advertisements). This is a **request**, not a command.
+
+      You cannot guarantee inbound. The remote networks' own **local-pref**
+      is evaluated before AS-path length, so any explicit policy on their side
+      silently overrides your prepending — and you have no visibility into it.
+
+      **Outbound is engineering; inbound is persuasion.**
+    tags: [enterprise, concept, wan, bgp]
+    source: labs/enterprise-wan-edge
+
+  - id: ent-wan-edge-failover-timing
+    type: basic
+    subdeck: WAN
+    front: |
+      Your primary ISP link fails. What actually determines how long the outage
+      lasts?
+    back: |
+      Three sequential terms, and the first usually dominates:
+
+      1. **Detection** — if the interface goes physically down, immediate. If
+         the circuit stays up but the path is dead (a common carrier failure),
+         you wait out the **BGP hold timer (90 s default)** unless BFD is
+         running.
+      2. **Local reconvergence** — best-path recomputation onto the backup:
+         milliseconds.
+      3. **Return-path convergence** — the internet must learn to reach you via
+         ISP-B, which is **propagation across other people's networks** and can
+         take minutes.
+
+      So outbound recovers fast and **inbound lags**, producing a period of
+      one-way connectivity. That asymmetry is why edge testing must check
+      **both directions**, not just "can I browse?"
+    tags: [enterprise, symptom-cause, wan, bgp]
+    source: labs/enterprise-wan-edge
+
+  - id: ent-services-infra-dependencies
+    type: basic
+    subdeck: Services
+    front: |
+      Which supporting services does an enterprise network depend on, and what
+      is the ordering trap?
+    back: |
+      DHCP (with **relay**), DNS, **NTP**, AAA (TACACS+/RADIUS), **syslog**,
+      and SNMPv3 / telemetry.
+
+      The trap is **circular dependency**. Examples that bite in production:
+      - **AAA depends on the network**, and troubleshooting the network needs
+        AAA to log in. Hence the break-glass local account.
+      - **Kerberos depends on NTP**, and NTP may depend on DNS, which may
+        depend on DHCP.
+      - **Syslog depends on the network** — during an outage, the evidence you
+        need may never have been delivered.
+
+      Design rule: services the network needs to **recover itself** must be
+      reachable **out of band** and must not depend on the thing they're used
+      to fix.
+    tags: [enterprise, concept, services]
+    source: labs/enterprise-services-infra
+
+  - id: ent-dhcp-relay-role
+    type: basic
+    subdeck: Services
+    front: |
+      Why does a DHCP relay exist, and what does it add to the request beyond
+      forwarding it?
+    back: |
+      DHCP DISCOVER is a **broadcast**, and routers don't forward broadcasts —
+      so without a relay you'd need a DHCP server on every VLAN.
+
+      The relay (`ip helper-address`) **unicasts** the request to the server,
+      and crucially inserts the **`giaddr`** — the relay's own interface address
+      on the client's subnet.
+
+      `giaddr` is what lets the server pick the right **scope**: it tells the
+      server which subnet the client is on, which the unicast packet's source
+      address alone would not.
+
+      So a wrong or missing `giaddr` (helper on the wrong interface, or an
+      interface with no address) means the server can't select a pool, and
+      clients get nothing — with no obvious error anywhere.
+    tags: [enterprise, ios-xe, symptom-cause, services]
+    source: labs/enterprise-services-infra
+
+  - id: ent-eap-tls-server-validation
+    type: basic
+    subdeck: Wireless
+    front: |
+      In EAP-TLS, both sides present certificates. Which validation failure is
+      more dangerous operationally — and why?
+    back: |
+      **The client failing to validate the *server's* certificate.**
+
+      If the server rejects a bad client certificate, the client simply can't
+      connect — visible, safe, self-reporting.
+
+      If the **client** doesn't validate the server (no configured CA, or "trust
+      any certificate"), an attacker stands up a rogue AP with a RADIUS server
+      of their own. The client happily completes the handshake against it —
+      and with PEAP, hands over crackable credentials.
+
+      Which is why supplicant configuration must **pin the CA and the expected
+      server name**, and why it's pushed by GPO/MDM rather than left to users.
+    tags: [enterprise, concept, wireless, security]
+    source: labs/wireless-auth-control-operations
+
+  - id: ent-radius-role-to-vlan
+    type: basic
+    subdeck: Wireless
+    front: |
+      How does a RADIUS server project an authorisation *role* onto the
+      network, and why is that better than per-port configuration?
+    back: |
+      The **Access-Accept** carries attributes the network device applies for
+      that session: VLAN assignment (`Tunnel-Private-Group-ID`), a downloadable
+      ACL, a Cisco SGT, a QoS profile, a session timeout.
+
+      Better because the **policy is defined once, centrally, against identity
+      and posture** — and applies identically on every AP, every switch port,
+      and every site. The access device holds no policy at all; it's an
+      enforcement point.
+
+      Change someone's group in the directory and their network access changes
+      everywhere on next authentication, with no device configuration touched.
+    tags: [enterprise, concept, wireless, radius]
+    source: labs/wireless-auth-control-operations
+
+  - id: ent-certificate-expiry-incident
+    type: basic
+    subdeck: Wireless
+    front: |
+      A RADIUS server certificate expires. What's the failure signature, and
+      why is it unusually painful?
+    back: |
+      **Every 802.1X client fails to authenticate at once**, campus-wide, with
+      client-side errors about the certificate — while the RADIUS server itself
+      looks healthy and reports normal rejects.
+
+      Unusually painful because:
+      - The blast radius is **everyone simultaneously**, wired and wireless.
+      - Fixing it may require **network access you no longer have**.
+      - Some clients **cache the rejection** and need manual intervention even
+        after the fix.
+
+      This is why certificate expiry belongs in **monitoring with weeks of
+      warning**, not in a calendar reminder — it is one of the few faults that
+      is entirely predictable and still routinely causes major outages.
+    tags: [enterprise, symptom-cause, wireless, pki]
+    source: labs/wireless-auth-control-operations
+
+  - id: ent-sdwan-value
+    type: basic
+    subdeck: WAN
+    front: |
+      What does SD-WAN actually add over a well-designed DMVPN + QoS + PfR
+      deployment?
+    back: |
+      Mostly **centralised orchestration and measurement**, not new forwarding
+      capability:
+
+      - **Centralised policy** — intent defined once in a controller and pushed
+        everywhere, instead of per-device templates.
+      - **Continuous per-path measurement** — loss, latency and jitter probes
+        on every transport, with **per-application** steering that reacts in
+        seconds.
+      - **Zero-touch provisioning** — a branch device fetches its config on
+        first boot.
+      - **Transport independence** — broadband and LTE treated as first-class
+        alongside MPLS, with encryption assumed.
+
+      The underlying mechanisms (tunnels, routing, QoS) are the ones you
+      already know. What's genuinely new is the **control plane and telemetry
+      loop**, which is why SD-WAN is an operational change more than a
+      technical one.
+    tags: [enterprise, concept, wan]
+    source: labs/sdwan-concepts

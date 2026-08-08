@@ -1,0 +1,834 @@
+deck: OSPF
+cards:
+
+# ── Areas and the LSDB ────────────────────────────────────────────────────
+
+  - id: ospf-abr-is-not-a-knob
+    type: basic
+    subdeck: Areas
+    front: |
+      What makes a router an ABR — a command you configure, or something else?
+    back: |
+      A **consequence of its interfaces**. Any router with interfaces in area 0
+      *and* at least one other area is automatically an ABR and starts
+      generating Type-3 summary LSAs in both directions.
+    extra: |
+      Convention puts an ABR's loopback in area 0 — otherwise the loopback is
+      advertised into the backbone as an inter-area route rather than an
+      intra-area one.
+    tags: [ospf, concept, areas]
+    source: labs/ospf-multiarea
+
+  - id: ospf-type1-never-leaves-area
+    type: basic
+    subdeck: Areas
+    front: |
+      An internal router in area 1 runs `show ip ospf database`. Will it
+      contain a Type-1 Router LSA from a router in area 2? Will it know that
+      router's loopback prefix?
+    back: |
+      **No Type-1** — Router LSAs never leave their area.
+      **Yes to the prefix** — it arrives as a **Type-3 summary LSA**,
+      advertised by the local ABR.
+    extra: |
+      This is the whole point of areas: a router runs SPF over its own area's
+      topology only and takes the ABR's word for everything beyond it.
+      Link-state *within* an area, distance-vector *between* areas.
+    tags: [ospf, concept, lsdb]
+    source: labs/ospf-multiarea
+
+  - id: ospf-lsa-type-table
+    type: cloze
+    subdeck: LSA types
+    text: |
+      OSPFv2 LSA types — Type-1 is the {{c1::Router}} LSA (flooded within an
+      area), Type-2 is the {{c2::Network}} LSA (originated by the
+      {{c3::DR}}), Type-3 is the {{c4::Summary}} LSA (originated by the
+      {{c5::ABR}}), Type-4 locates the {{c6::ASBR}}, and Type-5 is the
+      {{c7::AS External}} LSA (originated by the {{c8::ASBR}}, flooded to the
+      entire domain).
+    tags: [ospf, cloze, lsdb]
+    source: labs/ospf-summarization
+
+  - id: ospf-type5-scope
+    type: basic
+    subdeck: LSA types
+    front: |
+      What is the flooding scope of a Type-5 external LSA, and why does that
+      make ASBR-side summarization important?
+    back: |
+      Type-5 LSAs flood to the **entire OSPF domain** (every area except stub
+      and NSSA areas) — they do not stop at area boundaries.
+
+      So one noisy redistribution source, e.g. leaking a partial BGP table,
+      puts thousands of Type-5 LSAs in *every* router's database.
+    tags: [ospf, concept, lsdb]
+    source: labs/ospf-summarization
+
+  - id: ospf-area-type-matrix
+    type: basic
+    subdeck: Areas
+    front: |
+      For each area type — regular, stub, totally stub, NSSA, totally NSSA —
+      which of Type-3, Type-5, Type-7 are allowed in, and can an ASBR live
+      inside?
+    back: |
+      | Area type | Type-3 | Type-5 | Type-7 | ASBR inside? |
+      |---|---|---|---|---|
+      | Regular | Yes | Yes | No | Yes |
+      | Stub | Yes | No | No | No |
+      | Totally stub | Default only | No | No | No |
+      | NSSA | Yes | No | Yes | **Yes** |
+      | Totally NSSA | Default only | No | Yes | Yes |
+    extra: |
+      "Totally" always means the same thing: the ABR also stops Type-3 and
+      sends a single default instead.
+    tags: [ospf, concept, areas]
+    source: labs/ospf-nssa
+
+  - id: ospf-stub-mismatch-drops-adjacency
+    type: basic
+    subdeck: Areas
+    front: |
+      You configure `area 2 stub` on the ABR but not yet on the internal
+      router. What happens to the adjacency — stays up, flaps, or drops?
+    back: |
+      It **drops and stays down**. The stub flag rides in the hello packet's
+      options field (the **E-bit**), and hellos with mismatched options are
+      rejected outright — the routers refuse to be neighbors at all.
+    extra: |
+      Same mechanism as an area-ID mismatch, different field. "Stub mismatch"
+      is a classic real-world adjacency failure. NSSA uses the N-bit the same
+      way.
+    tags: [ospf, symptom-cause, areas]
+    source: labs/ospf-multiarea
+
+  - id: ospf-area-mismatch-partitions-network
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      A backbone link's area is mistyped on one end only. Your local adjacency
+      to that router is still `Full`, yet routes beyond it vanish. Why?
+    back: |
+      Both ends of a link must agree on the area ID or the hello is rejected,
+      so the **mistyped link's adjacency drops**. Your neighbor keeps its
+      adjacency with *you* but has no working backbone neighbor of its own, so
+      everything it used to learn from beyond that link disappears.
+    extra: |
+      A one-interface area typo on a backbone link partitions the network even
+      though the local adjacency looks perfectly healthy. Always check the
+      neighbor table on the *far* router, not just your own.
+    tags: [ospf, symptom-cause, areas]
+    source: labs/ospf-multiarea
+
+# ── IOS-XE configuration ──────────────────────────────────────────────────
+
+  - id: ospf-iosxe-enable-area-two-ways
+    type: basic
+    subdeck: Config (IOS-XE)
+    reverse: false   # asks for two forms; one code block can't answer it
+    front: |
+      IOS-XE: two ways to put an interface into an OSPF area?
+    back: |
+      Under the process, with a **wildcard mask**:
+
+      ```
+      router ospf 1
+       router-id 10.0.0.1
+       network 10.1.12.0 0.0.0.3 area 1
+       passive-interface Loopback0
+      ```
+
+      Or per-interface (preferred on modern IOS-XE):
+
+      ```
+      interface GigabitEthernet0/0
+       ip ospf 1 area 1
+      ```
+    extra: |
+      The `network` statement's argument is a wildcard mask, not a subnet
+      mask: a /30 is `0.0.0.3`, a /24 is `0.0.0.255`, a /32 is `0.0.0.0`.
+    tags: [ospf, ios-xe, syntax]
+    source: labs/ospf-multiarea
+
+  - id: ospf-iosxe-stub-commands
+    type: basic
+    subdeck: Config (IOS-XE)
+    reverse: false   # stub and totally-stubby are two commands
+    front: |
+      IOS-XE: make area 2 a stub area, then a totally stubby area. Which
+      routers get which command?
+    back: |
+      Stub — on **every** router in area 2, ABR included:
+
+      ```
+      router ospf 1
+       area 2 stub
+      ```
+
+      Totally stubby — add `no-summary` on the **ABR only**:
+
+      ```
+      router ospf 1
+       area 2 stub no-summary
+      ```
+    extra: |
+      `no-summary` is an ABR-only keyword because only the ABR generates the
+      Type-3 LSAs being suppressed. Internal routers keep plain `area 2 stub`.
+    tags: [ospf, ios-xe, syntax, areas]
+    source: labs/ospf-multiarea
+
+  - id: ospf-iosxe-nssa-commands
+    type: basic
+    subdeck: Config (IOS-XE)
+    reverse: false   # NSSA and totally-NSSA are two commands
+    front: |
+      IOS-XE: configure area 1 as an NSSA, then as a totally NSSA.
+    back: |
+      NSSA — on **every** router touching area 1:
+
+      ```
+      router ospf 1
+       area 1 nssa
+      ```
+
+      Totally NSSA — on the **ABR only**:
+
+      ```
+      router ospf 1
+       area 1 nssa no-summary
+      ```
+    tags: [ospf, ios-xe, syntax, areas]
+    source: labs/ospf-nssa
+
+  - id: ospf-iosxe-show-commands-lsdb
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: which `show ip ospf database` variant shows each of Type-1,
+      Type-2, Type-3, Type-5, Type-7?
+    back: |
+      ```
+      show ip ospf database router          ! Type-1
+      show ip ospf database network         ! Type-2
+      show ip ospf database summary         ! Type-3
+      show ip ospf database external        ! Type-5
+      show ip ospf database nssa-external   ! Type-7
+      ```
+    extra: |
+      `show ip ospf border-routers` lists the ABRs and ASBRs this router
+      knows about, and how it reaches them.
+    tags: [ospf, ios-xe, syntax]
+    source: labs/ospf-nssa
+
+# ── NSSA ──────────────────────────────────────────────────────────────────
+
+  - id: ospf-nssa-why-it-exists
+    type: basic
+    subdeck: NSSA
+    front: |
+      Why does NSSA exist — what problem with stub areas does it solve?
+    back: |
+      A stub area blocks Type-5 LSAs, which also makes it **illegal to put an
+      ASBR inside one** — there'd be no LSA type to carry its redistributed
+      routes.
+
+      NSSA is "almost stub": still no Type-5, but externals redistributed
+      *inside* the area travel as **Type-7** LSAs, which the ABR translates
+      into Type-5 on the way out.
+    tags: [ospf, concept, nssa]
+    source: labs/ospf-nssa
+
+  - id: ospf-nssa-advertising-router-changes
+    type: basic
+    subdeck: NSSA
+    front: |
+      An ASBR inside an NSSA redistributes a prefix. What LSA type and
+      advertising router does a router in a *different* area see — and how
+      does that differ from redistribution in a regular area?
+    back: |
+      It sees a **Type-5** LSA whose advertising router is the **NSSA ABR**,
+      not the ASBR — the ABR re-originated (translated) it.
+
+      In a regular area the Type-5 comes straight from the ASBR and floods
+      unchanged, so the advertising router *is* the ASBR.
+    extra: |
+      Routers outside the NSSA cannot tell an NSSA was ever involved.
+    tags: [ospf, concept, nssa]
+    source: labs/ospf-nssa
+
+  - id: ospf-nssa-pbit-and-forward-address
+    type: basic
+    subdeck: NSSA
+    front: |
+      In the Type-7 → Type-5 pipeline, what do the **P-bit** and the
+      **Forward Address** each do?
+    back: |
+      **P-bit** ("Propagate"): set by the originating ASBR, it is what
+      *permits* the ABR to translate the Type-7 into a Type-5. No P-bit, no
+      translation.
+
+      **Forward Address**: carries the ASBR's external-segment IP and is
+      preserved through translation, so downstream routers forward toward the
+      real exit point instead of just toward the translator.
+    tags: [ospf, concept, nssa]
+    source: labs/ospf-nssa
+
+  - id: ospf-nssa-translator-election
+    type: basic
+    subdeck: NSSA
+    front: |
+      An NSSA has two ABRs. Which one translates Type-7 to Type-5, and why
+      only one?
+    back: |
+      The ABR with the **highest router-id** wins the translator role.
+
+      Exactly one translates so the same external prefix isn't re-originated
+      as two competing Type-5 LSAs from different advertising routers —
+      which would duplicate the route and risk loops.
+    tags: [ospf, concept, nssa]
+    source: labs/ospf-nssa
+
+  - id: ospf-nssa-default-route-code
+    type: cloze
+    subdeck: NSSA
+    text: |
+      In a **totally NSSA** area, the ABR's injected default route appears on
+      internal routers with the route code {{c1::O N2}} — not `O IA` and not
+      `O E2`, because it is delivered through the {{c2::NSSA (Type-7)}}
+      mechanism.
+    tags: [ospf, cloze, nssa]
+    source: labs/ospf-nssa
+
+# ── Summarization ─────────────────────────────────────────────────────────
+
+  - id: ospf-summarization-abr-vs-asbr
+    type: basic
+    subdeck: Summarization
+    reverse: false   # the point is contrasting two commands, not recalling one
+    front: |
+      Two summarization commands, two different routers. Which is which, and
+      why can't one do the other's job?
+    back: |
+      **ABR**, compressing Type-3 inter-area routes:
+
+      ```
+      router ospf 1
+       area 1 range 10.1.0.0 255.255.252.0
+      ```
+
+      **ASBR**, compressing Type-5 externals:
+
+      ```
+      router ospf 1
+       summary-address 192.168.100.0 255.255.255.0
+      ```
+
+      `area range` acts on LSAs an ABR generates *at an area boundary* — but
+      Type-5s never cross an area boundary, they flood domain-wide straight
+      from the ASBR. The only place to compress them is at their source.
+    extra: |
+      "Which LSA type, generated where" is the question that picks the tool.
+      Note IOS-XE takes a **subnet mask** here, not a wildcard mask.
+    tags: [ospf, ios-xe, syntax, summarization]
+    source: labs/ospf-summarization
+
+  - id: ospf-summarization-null0-discard
+    type: basic
+    subdeck: Summarization
+    front: |
+      After you configure `area 1 range 10.1.0.0 255.255.252.0`, the ABR
+      installs a route for 10.1.0.0/22 pointing at **Null0**. Why is that
+      deliberate and not a bug?
+    back: |
+      The ABR now claims reachability for 1024 addresses but can really reach
+      only the few component prefixes. Packets for the non-existent ones must
+      be **dropped at the ABR** rather than following a default route back
+      out and looping.
+
+      Summarization always trades routing detail for a black-hole zone behind
+      the summary; the discard route is what keeps that zone from becoming a
+      loop.
+    tags: [ospf, concept, summarization]
+    source: labs/ospf-summarization
+
+  - id: ospf-summarization-not-advertise
+    type: basic
+    subdeck: Summarization
+    front: |
+      What does the `not-advertise` keyword do on an `area range` statement?
+    back: |
+      It **suppresses** the range instead of summarizing it — the component
+      prefixes are filtered out and no summary replaces them. Other areas lose
+      those routes entirely.
+
+      ```
+      router ospf 1
+       area 1 range 10.1.0.0 255.255.252.0 not-advertise
+      ```
+    tags: [ospf, ios-xe, syntax, summarization]
+    source: labs/ospf-summarization
+
+# ── Externals and redistribution ──────────────────────────────────────────
+
+  - id: ospf-e1-vs-e2
+    type: basic
+    subdeck: Externals
+    front: |
+      E1 vs E2 external routes: how does each compute its metric, and when do
+      you pick E1?
+    back: |
+      **E2 (the default)**: the cost stamped at the ASBR is the *only* cost —
+      it never accumulates, so every router in the domain sees the same metric.
+
+      **E1**: external cost **plus** the internal cost to reach the ASBR.
+
+      Use E1 when several ASBRs redistribute the *same* prefix and routers
+      should prefer the topologically closest exit. With E2 the metrics tie
+      and a distant ASBR can win.
+    tags: [ospf, concept, redistribution]
+    source: labs/ospf-summarization
+
+  - id: ospf-iosxe-metric-type
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: redistribute static routes into OSPF as **E1** instead of the
+      default E2.
+    back: |
+      ```
+      router ospf 1
+       redistribute static subnets metric-type 1
+      ```
+    extra: |
+      IOS-XE sets metric type inline on the `redistribute` statement. Arista
+      EOS has no inline keyword and requires a route-map with
+      `set metric-type type-1` — worth knowing if you move between them.
+    tags: [ospf, ios-xe, syntax, redistribution]
+    source: labs/ospf-summarization
+
+  - id: ospf-iosxe-redistribute-subnets
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      Classic IOS gotcha: you configure `redistribute static` into OSPF and
+      only some routes appear. What keyword is missing?
+    back: |
+      **`subnets`**. Without it OSPF redistributes only **classful** networks,
+      silently dropping every subnetted prefix.
+
+      ```
+      router ospf 1
+       redistribute static subnets
+      ```
+    extra: |
+      Modern IOS-XE applies `subnets` implicitly and may not even display the
+      keyword, but the habit of typing it costs nothing and saves you on older
+      images. OSPF is the protocol with this quirk — EIGRP and BGP do not have it.
+    tags: [ospf, ios-xe, syntax, redistribution]
+    source: labs/ospf-summarization
+
+# ── Default route injection ───────────────────────────────────────────────
+
+  - id: ospf-static-default-does-not-propagate
+    type: basic
+    subdeck: Default route
+    front: |
+      You add `ip route 0.0.0.0 0.0.0.0 203.0.113.2` on the edge router. What
+      changes in the core router's table?
+    back: |
+      **Nothing.** A static route is purely local — OSPF advertises nothing
+      from the routing table unless explicitly told to.
+
+      Bridging "the edge knows the way out" to "the domain knows the way out"
+      is exactly what `default-information originate` does.
+    tags: [ospf, concept, default-route]
+    source: labs/ospf-default-route
+
+  - id: ospf-default-information-modes
+    type: basic
+    subdeck: Default route
+    front: |
+      Three modes of `default-information originate`. What triggers the
+      advertisement in each, and what's the risk?
+    back: |
+      | Mode | Advertises when | Risk |
+      |---|---|---|
+      | `default-information originate` | 0.0.0.0/0 is actually in the RIB | Safe — conditional on real reachability |
+      | `... originate always` | Always, regardless of the RIB | Black-hole if the upstream is down |
+      | `... originate always route-map MAP` | Only while the route-map matches | Best of both — explicit, tunable condition |
+    tags: [ospf, ios-xe, concept, default-route]
+    source: labs/ospf-default-route
+
+  - id: ospf-default-self-withdraw
+    type: basic
+    subdeck: Default route
+    front: |
+      With plain `default-information originate`, the ASBR loses its static
+      default. What withdraws the default from the rest of the domain — a
+      timer, an LSA flush, or the adjacency dropping?
+    back: |
+      An **LSA flush**. The adjacency never drops; the ASBR max-ages its own
+      Type-5 LSA the moment its local default leaves the FIB, because
+      conditional origination keeps re-checking.
+
+      That self-withdrawal is the feature: when the edge loses the internet,
+      the domain *finds out* instead of black-holing at the edge.
+    tags: [ospf, concept, default-route]
+    source: labs/ospf-default-route
+
+  - id: ospf-default-always-blackhole
+    type: basic
+    subdeck: Default route
+    front: |
+      Why is `default-information originate always` described as strictly
+      worse than the conditional form when the upstream fails?
+    back: |
+      The domain keeps its `O E2 0.0.0.0/0` and keeps forwarding to the ASBR,
+      which drops the traffic **silently** — it has no route for the
+      destination.
+
+      The failure moved from *visible at every router* (default disappears) to
+      *invisible inside one router*. Same outage, much harder to find.
+    extra: |
+      `always` is legitimate when the ASBR's own default flaps for reasons
+      OSPF shouldn't track, or when paired with a route-map that supplies a
+      smarter condition.
+    tags: [ospf, concept, default-route]
+    source: labs/ospf-default-route
+
+  - id: ospf-iosxe-conditional-default
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: originate a default into OSPF only while the internet-facing
+      subnet 203.0.113.0/30 is in the routing table.
+    back: |
+      ```
+      ip prefix-list INTERNET-UP seq 5 permit 203.0.113.0/30
+      !
+      route-map CHECK-INTERNET permit 10
+       match ip address prefix-list INTERNET-UP
+      !
+      router ospf 1
+       default-information originate always route-map CHECK-INTERNET
+      ```
+    extra: |
+      `always` + route-map is the intended pairing: the route-map, not the
+      FIB check, decides. In production track a far-end /32 learned from the
+      provider rather than your own connected subnet — that also catches
+      "link up but provider dead".
+    tags: [ospf, ios-xe, syntax, default-route]
+    source: labs/ospf-default-route
+
+  - id: ospf-default-is-type5
+    type: basic
+    subdeck: Default route
+    front: |
+      Which LSA type carries an injected default route, and what does that
+      imply for stub areas?
+    back: |
+      A **Type-5 external** LSA, shown as `O E2 0.0.0.0/0`.
+
+      Stub areas forbid Type-5 — so `default-information originate` can't
+      reach them. They get their default from the **ABR** instead, generated
+      automatically as a Type-3, precisely because they've been cut off from
+      externals.
+    tags: [ospf, concept, default-route]
+    source: labs/ospf-default-route
+
+# ── Authentication ────────────────────────────────────────────────────────
+
+  - id: ospf-iosxe-md5-auth
+    type: basic
+    subdeck: Authentication
+    front: |
+      IOS-XE: enable OSPF MD5 authentication on an interface with key ID 1 and
+      key `SecretKey123`.
+    back: |
+      ```
+      interface GigabitEthernet0/0
+       ip ospf authentication message-digest
+       ip ospf message-digest-key 1 md5 SecretKey123
+      ```
+    extra: |
+      Both the key **string** and the key **ID** must match on each end of the
+      link. The alternative is enabling it area-wide with
+      `area 0 authentication message-digest` under the process, then supplying
+      only the key per interface.
+    tags: [ospf, ios-xe, syntax, security]
+    source: labs/ospf-auth
+
+  - id: ospf-auth-failure-signature
+    type: basic
+    subdeck: Authentication
+    front: |
+      An OSPF key is mistyped on one end. What does the neighbor table on the
+      other end show — a broken neighbor state, or something else?
+    back: |
+      The neighbor **disappears entirely**. There is no "auth-failed" state:
+      packets failing MD5 verification are dropped *before* the neighbor state
+      machine ever sees them.
+
+      **A silently missing neighbor with both interfaces up is the classic
+      authentication-failure signature.**
+    extra: |
+      The only direct evidence is in debugging — on IOS-XE,
+      `debug ip ospf adj` logs the mismatched digest. Remember to turn it off.
+    tags: [ospf, symptom-cause, security]
+    source: labs/ospf-auth
+
+  - id: ospf-key-rollover-order
+    type: basic
+    subdeck: Authentication
+    front: |
+      Zero-downtime OSPF key rollover from key ID 1 to key ID 2. What is the
+      order of operations, and why that order?
+    back: |
+      **Phase 1** — add key 2 on *every* interface of *every* router, leaving
+      key 1 in place.
+      **Phase 2** — only once phase 1 is complete everywhere, remove key 1
+      everywhere.
+
+      **Add everywhere, then remove anywhere.** A router accepts packets signed
+      with any configured key, so during phase 1 every link still has a key in
+      common. Remove key 1 before the far end has key 2 and that link has no
+      shared key — it drops.
+    tags: [ospf, concept, security]
+    source: labs/ospf-auth
+
+  - id: ospf-auth-drop-timing
+    type: basic
+    subdeck: Authentication
+    front: |
+      You enable OSPF authentication on one end of a live link. How quickly
+      does the adjacency drop?
+    back: |
+      Not instantly — the neighbor is flushed when the **dead interval**
+      expires (40 s by default, 4× the 10 s hello). Hellos are rejected
+      immediately, but the neighbor entry survives until it ages out.
+    extra: |
+      This is why auth rollouts are sequenced link by link, far end first.
+    tags: [ospf, concept, security]
+    source: labs/ospf-auth
+
+# ── Virtual links ─────────────────────────────────────────────────────────
+
+  - id: ospf-virtual-link-why
+    type: basic
+    subdeck: Virtual links
+    front: |
+      Area 2 connects to area 1, which connects to area 0. All adjacencies are
+      `Full`. Why do area 2's prefixes never reach area 0?
+    back: |
+      An ABR only generates Type-3 summaries **into and out of the backbone**.
+      The router between areas 1 and 2 has no area 0 interface, so there is no
+      backbone for it to summarize into.
+
+      OSPF inter-area routing is hub-and-spoke through area 0 by construction —
+      this topology hangs a spoke off a spoke.
+    tags: [ospf, concept, virtual-link]
+    source: labs/ospf-virtual-link
+
+  - id: ospf-iosxe-virtual-link
+    type: basic
+    subdeck: Virtual links
+    front: |
+      IOS-XE: build a virtual link across transit area 1 between ABRs
+      10.0.0.2 and 10.0.0.3. What identifies the far end?
+    back: |
+      The peer's **router-id**, not any interface IP:
+
+      ```
+      ! on the ABR with router-id 10.0.0.2
+      router ospf 1
+       area 1 virtual-link 10.0.0.3
+
+      ! on the ABR with router-id 10.0.0.3
+      router ospf 1
+       area 1 virtual-link 10.0.0.2
+      ```
+
+      Each end locates that router-id through the **transit area's** LSDB, so
+      area 1 must already be converged for the link to form.
+    extra: |
+      Verify with `show ip ospf virtual-links`. The peer then appears
+      **twice** in `show ip ospf neighbor` — once on the physical area 1
+      interface, once on the logical `OSPF_VL0` area 0 interface.
+    tags: [ospf, ios-xe, syntax, virtual-link]
+    source: labs/ospf-virtual-link
+
+  - id: ospf-virtual-link-constraints
+    type: basic
+    subdeck: Virtual links
+    front: |
+      List the constraints on an OSPF virtual link.
+    back: |
+      - Both endpoints must be **ABRs** sharing the same transit area.
+      - The transit area **cannot be stub or NSSA**.
+      - The peer is named by **router-id**, reachable through the transit
+        area's converged LSDB.
+      - It is an **area 0 interface**, so area 0 authentication settings apply
+        to it.
+      - RFC 2328 positions it as a temporary workaround, not a design.
+    extra: |
+      Permanent fixes, in order of preference: a real link to area 0,
+      renumbering the area, or a GRE tunnel into area 0.
+    tags: [ospf, concept, virtual-link]
+    source: labs/ospf-virtual-link
+
+  - id: ospf-virtual-link-not-over-stub
+    type: basic
+    subdeck: Virtual links
+    front: |
+      Why can't a virtual link transit a stub or NSSA area?
+    back: |
+      A virtual link **is an area 0 adjacency**, and stub areas exist
+      precisely to *exclude* backbone-scale information. RFC 2328 forbids the
+      combination.
+
+      The transit area has to stay a regular area — one of the operational
+      taxes of using virtual links at all.
+    tags: [ospf, concept, virtual-link]
+    source: labs/ospf-virtual-link
+
+# ── OSPFv3 ────────────────────────────────────────────────────────────────
+
+  - id: ospfv3-vs-ospfv2-differences
+    type: basic
+    subdeck: OSPFv3
+    front: |
+      Name four things OSPFv3 changed from OSPFv2.
+    back: |
+      - **Transport**: IPv6, with neighbors and next-hops on **link-local**
+        (`fe80::`) addresses; hellos go to `ff02::5` / `ff02::6`.
+      - **Configuration**: per-interface enablement, no `network` statements.
+      - **Authentication**: delegated to IPsec (AH/ESP) instead of built into
+        the protocol.
+      - **Addressing split out of the Router-LSA** into new LSA types (8 and 9).
+
+      The router-id stays a **32-bit dotted-decimal** value.
+    tags: [ospf, ipv6, concept]
+    source: labs/ipv6-ospf3
+
+  - id: ospfv3-router-id-required
+    type: basic
+    subdeck: OSPFv3
+    front: |
+      Why does an IPv6-only routing protocol still need a 32-bit
+      dotted-decimal router-id, and what happens on an IPv6-only router if you
+      don't set one?
+    back: |
+      It was never an address — it is just a unique **identifier**: LSAs are
+      keyed by it and DR election uses it. OSPFv3 kept the dotted-decimal form
+      from OSPFv2.
+
+      With no IPv4 address to borrow and no explicit router-id, **the process
+      refuses to start.** On IPv6-only devices, setting it is mandatory, not
+      hygiene.
+    tags: [ospf, ipv6, concept]
+    source: labs/ipv6-ospf3
+
+  - id: ospfv3-linklocal-nexthop
+    type: basic
+    subdeck: OSPFv3
+    front: |
+      In an OSPFv3 routing table, what next-hop appears for a remote prefix —
+      the neighbor's global address or something else? Why does it matter?
+    back: |
+      A **link-local `fe80::` address**. Global prefixes appear only as
+      *payload* — reachability carried inside LSAs.
+
+      This means the adjacency and the forwarding next-hop keep working even
+      if global addressing is renumbered, which is exactly the flexibility
+      IPv6 renumbering was designed around.
+    tags: [ospf, ipv6, concept]
+    source: labs/ipv6-ospf3
+
+  - id: ospfv3-lsa-8-and-9
+    type: basic
+    subdeck: OSPFv3
+    front: |
+      OSPFv3 Router-LSAs carry no prefixes. Which LSA types carry the
+      addressing, and what does that separation buy you?
+    back: |
+      - **Type-8 Link-LSA** — link-local address and prefixes on one link.
+      - **Type-9 Intra-Area-Prefix-LSA** — the global IPv6 prefixes.
+
+      Because the Router-LSA describes pure topology, changing an address
+      reflows only a prefix LSA — **no SPF run** on other routers. In OSPFv2
+      the same change rewrites the Router-LSA and triggers domain-wide SPF.
+    tags: [ospf, ipv6, concept]
+    source: labs/ipv6-ospf3
+
+  - id: ospfv3-iosxe-enable
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: enable OSPFv3 for IPv6 in area 0 on an interface, with an
+      explicit router-id.
+    back: |
+      ```
+      ipv6 unicast-routing
+      !
+      ipv6 router ospf 1
+       router-id 10.0.0.1
+       passive-interface Loopback0
+      !
+      interface GigabitEthernet0/0
+       ipv6 ospf 1 area 0
+      ```
+    extra: |
+      Verify with `show ipv6 ospf neighbor`, `show ipv6 route ospf`,
+      `show ipv6 ospf database`. Newer IOS-XE also offers the address-family
+      form, `router ospfv3 1`, which carries IPv4 and IPv6 in one process.
+    tags: [ospf, ipv6, ios-xe, syntax]
+    source: labs/ipv6-ospf3
+
+# ── Basics / timers ───────────────────────────────────────────────────────
+
+  - id: ospf-hello-dead-default
+    type: cloze
+    subdeck: Basics
+    text: |
+      On a broadcast OSPF segment the default hello interval is
+      {{c1::10}} seconds and the dead interval is {{c2::40}} seconds, i.e.
+      {{c3::4}}× the hello. A neighbor whose link fails without the interface
+      going down is only flushed after the {{c4::dead}} interval expires —
+      which is the motivation for {{c5::BFD}}.
+    tags: [ospf, cloze, basics]
+    source: labs/two-routers
+
+  - id: ospf-full-state-meaning
+    type: basic
+    subdeck: Basics
+    front: |
+      What does OSPF neighbor state `Full` actually mean, and what does it
+      mean if an adjacency sits in `Init`, `2-Way`, or `ExStart`?
+    back: |
+      `Full` means the two routers' **link-state databases are synchronized**.
+
+      Anything less means the adjacency is stuck partway through the state
+      machine:
+      - `Init` — hellos received but not yet seeing itself in the neighbor's hello
+      - `2-Way` — mutual hellos, but no DBD exchange (normal between two DROTHERs)
+      - `ExStart` / `Exchange` — DBD negotiation stalled, classically an **MTU mismatch**
+    tags: [ospf, concept, basics]
+    source: labs/two-routers
+
+  - id: ospf-passive-interface-effect
+    type: basic
+    subdeck: Basics
+    front: |
+      What exactly does `passive-interface` do in OSPF, and why does putting
+      it on a transit link break routing in a way that's easy to misread?
+    back: |
+      It stops **sending hellos** on that interface while still **advertising
+      the interface's prefix**.
+
+      On a transit link the neighbor survives until the dead interval expires,
+      then vanishes — but the prefix is still in the LSDB. Reachability
+      information without an adjacency is useless, which is why passive belongs
+      on loopbacks and edge/host-facing ports only.
+    tags: [ospf, concept, basics]
+    source: labs/ipv6-ospf3

@@ -1,0 +1,455 @@
+deck: Route Control
+cards:
+
+# ── Administrative distance ───────────────────────────────────────────────
+
+  - id: rc-admin-distance-table
+    type: cloze
+    subdeck: Administrative distance
+    text: |
+      Default administrative distances on IOS-XE: connected {{c1::0}},
+      static {{c2::1}}, eBGP {{c3::20}}, EIGRP internal {{c4::90}},
+      OSPF {{c5::110}}, IS-IS {{c6::115}}, RIP {{c7::120}},
+      EIGRP external {{c8::170}}, iBGP {{c9::200}}.
+    extra: |
+      AD picks between *protocols* offering the same prefix; the metric picks
+      between paths *within* one protocol. Lower AD wins.
+    tags: [route-control, ios-xe, cloze]
+    source: labs/ip-sla-tracking
+
+  - id: rc-ebgp-vs-ibgp-ad-asymmetry
+    type: basic
+    subdeck: Administrative distance
+    front: |
+      Why is eBGP's administrative distance 20 while iBGP's is 200 — lower
+      than and higher than OSPF respectively?
+    back: |
+      **eBGP (20)** carries routes from outside your control; you want them to
+      beat your IGP, because your IGP has no business claiming external
+      destinations.
+
+      **iBGP (200)** carries routes that are *already* inside your AS. If it
+      beat the IGP (110) you'd risk routing loops — the IGP is the
+      authoritative source for internal reachability, and iBGP must never
+      override it.
+    tags: [route-control, concept]
+    source: labs/ip-sla-tracking
+
+# ── Redistribution ────────────────────────────────────────────────────────
+
+  - id: rc-mutual-redistribution-loop
+    type: basic
+    subdeck: Redistribution
+    front: |
+      Two ASBRs both run mutual redistribution between the same OSPF and EIGRP
+      domains. What goes wrong, and why doesn't the protocol catch it?
+    back: |
+      A prefix originating in OSPF is redistributed into EIGRP by ASBR-1,
+      carried across, pushed back into OSPF by ASBR-2, and fed around again —
+      a **redistribution loop**, often with climbing metrics.
+
+      Mutual redistribution has **no built-in split horizon**. Each protocol
+      only knows "I learned this from the other one"; nothing marks *where it
+      originally came from*.
+    extra: |
+      Live symptom that distinguishes a redistribution loop from a flapping
+      link: prefixes appearing as *externals* on the side that owns them
+      natively, with metrics that climb monotonically rather than oscillate.
+    tags: [route-control, symptom-cause, redistribution]
+    source: labs/redistribution-tags
+
+  - id: rc-redistribution-tag-scheme
+    type: basic
+    subdeck: Redistribution
+    front: |
+      Write the tag-based loop-prevention scheme for mutual OSPF↔EIGRP
+      redistribution. What does each stanza do?
+    back: |
+      Convention: tag 100 = "was OSPF, now in EIGRP"; tag 200 = "was EIGRP,
+      now in OSPF".
+
+      ```
+      route-map EIGRP-TO-OSPF deny 10
+       match tag 100
+      route-map EIGRP-TO-OSPF permit 20
+       set tag 200
+      !
+      route-map OSPF-TO-EIGRP deny 10
+       match tag 200
+      route-map OSPF-TO-EIGRP permit 20
+       set tag 100
+      ```
+
+      The **deny stanza is the whole defense**: a route tagged 100 already
+      entered EIGRP from OSPF once, so refuse to send it back.
+    extra: |
+      Tags are the manual split-horizon that mutual redistribution lacks.
+    tags: [route-control, ios-xe, syntax, redistribution]
+    source: labs/redistribution-tags
+
+  - id: rc-tags-need-every-asbr
+    type: basic
+    subdeck: Redistribution
+    front: |
+      One ASBR has correct tag filtering, the other has none. Is one
+      correctly-configured redistribution point enough to stop the loop?
+    back: |
+      **No.** The good ASBR dutifully tags and denies, but the other happily
+      re-injects whatever it sees, so the bounce path simply reopens through it.
+
+      Redistribution policy is a property of the **whole boundary**, not a
+      single router. Apply a consistent tag scheme — usually templated
+      identically — at *every* mutual-redistribution point.
+    tags: [route-control, concept, redistribution]
+    source: labs/redistribution-tags
+
+  - id: rc-tag-survives-which-protocols
+    type: basic
+    subdeck: Redistribution
+    front: |
+      Where does a route tag live in OSPF and in EIGRP, and what happens to it
+      across a multi-protocol redistribution chain?
+    back: |
+      OSPF carries it in the **external (Type-5/Type-7) LSA**; EIGRP carries it
+      in the **topology table**. Both preserve a 32-bit tag.
+
+      But a protocol in the middle that doesn't carry tags **drops it
+      silently** — your loop prevention evaporates and you won't see an error.
+      Tag-based schemes only hold across protocols that all preserve the tag.
+    tags: [route-control, concept, redistribution]
+    source: labs/redistribution-tags
+
+  - id: rc-iosxe-seed-metric
+    type: basic
+    subdeck: Redistribution
+    front: |
+      IOS-XE: you redistribute OSPF into EIGRP and nothing appears. What's
+      missing?
+    back: |
+      **A seed metric.** EIGRP cannot compute a composite metric for a route
+      that arrived from another protocol, so it assigns infinity and installs
+      nothing.
+
+      ```
+      router eigrp 100
+       redistribute ospf 1 metric 10000 100 255 1 1500
+      ```
+
+      Order: bandwidth (Kbps), delay (tens of µs), reliability, load, MTU.
+      Or set a process-wide fallback with `default-metric`.
+    extra: |
+      Protocols that **require** a metric on redistribution: EIGRP and RIP.
+      OSPF and BGP supply a default. Redistribution between EIGRP processes of
+      the same AS number is the one case that carries the metric across.
+    tags: [route-control, ios-xe, syntax, redistribution]
+    source: labs/redistribution-tags
+
+  - id: rc-iosxe-ospf-default-metrics
+    type: basic
+    subdeck: Redistribution
+    front: |
+      IOS-XE: what default metric do routes get when redistributed **into**
+      OSPF?
+    back: |
+      **20** — except **BGP** routes, which default to **1**.
+
+      Both arrive as E2 (non-accumulating) unless you set `metric-type 1`.
+    extra: |
+      A default of 1 for BGP is a trap when several ASBRs redistribute: every
+      external looks equally cheap, so the tiebreak lands somewhere arbitrary.
+      Set metrics explicitly at each boundary.
+    tags: [route-control, ios-xe, concept, redistribution]
+    source: labs/ospf-bgp-redist
+
+  - id: rc-redistribution-one-way-symptom
+    type: basic
+    subdeck: Redistribution
+    front: |
+      You redistribute OSPF into BGP but not the reverse. The far side can see
+      the prefixes. Does traffic work?
+    back: |
+      **No — traffic dies in both directions.** The far side has a route
+      *toward* the OSPF domain, but the OSPF domain has no **return path**, so
+      replies are dropped.
+
+      Half-done mutual redistribution looks exactly like this: routes visible
+      on one side, traffic dead both ways. Always verify the return path
+      separately.
+    tags: [route-control, symptom-cause, redistribution]
+    source: labs/ospf-bgp-redist
+
+  - id: rc-redistribute-vs-network
+    type: basic
+    subdeck: Redistribution
+    front: |
+      `redistribute ospf` vs. individual `network` statements to get prefixes
+      into BGP — what actually differs?
+    back: |
+      **`network`**: origin code **IGP (i)**, advertises only prefixes you
+      explicitly list, and requires an exact matching route in the RIB.
+      Stable and deliberate — an unexpected new OSPF prefix never leaks.
+
+      **`redistribute`**: origin code **incomplete (?)**, and everything the
+      IGP learns flows into BGP automatically — including transit links and
+      anything a neighbour injects. Convenient, but the blast radius is the
+      whole IGP.
+
+      Production uses `network` for a known prefix set, `redistribute` only
+      with a tight route-map.
+    tags: [route-control, concept, redistribution]
+    source: labs/ospf-bgp-redist
+
+  - id: rc-redistribute-route-map-boundary
+    type: basic
+    subdeck: Redistribution
+    front: |
+      IOS-XE: redistribute OSPF into BGP, but block the transit subnet
+      10.0.12.0/30 and tag everything else with community 65100:100.
+    back: |
+      ```
+      ip prefix-list NO-TRANSIT seq 5 deny 10.0.12.0/30
+      ip prefix-list NO-TRANSIT seq 10 permit 0.0.0.0/0 le 32
+      !
+      route-map OSPF-TO-BGP permit 10
+       match ip address prefix-list NO-TRANSIT
+       set community 65100:100
+      !
+      router bgp 65100
+       address-family ipv4 unicast
+        redistribute ospf 1 route-map OSPF-TO-BGP
+      ```
+    extra: |
+      Deny-then-catch-all is the standard prefix-list idiom. The community is
+      **provenance marking** — it lets the downstream AS recognise "these
+      entered at that boundary" and write policy against them later.
+    tags: [route-control, ios-xe, syntax, redistribution]
+    source: labs/ospf-bgp-redist
+
+# ── Policy-based routing ──────────────────────────────────────────────────
+
+  - id: rc-pbr-what-it-breaks
+    type: basic
+    subdeck: PBR
+    front: |
+      What can policy-based routing express that the routing table cannot?
+    back: |
+      Forwarding decisions based on anything **other than destination** —
+      source address, protocol, port, packet size, DSCP.
+
+      A routing table entry says "everything for X goes this way." PBR can say
+      "**this source** goes that way," which destination-based forwarding is
+      structurally incapable of expressing.
+    tags: [route-control, concept, pbr]
+    source: labs/route-maps-pbr
+
+  - id: rc-pbr-why-inbound
+    type: basic
+    subdeck: PBR
+    front: |
+      Why is PBR applied **inbound** on the ingress interface rather than
+      outbound?
+    back: |
+      Because it must intercept the packet **before the destination-based
+      routing lookup**. PBR is a pre-lookup override on the interface where the
+      packet arrives.
+
+      Outbound would be too late — by then the routing decision that PBR is
+      meant to replace has already been made.
+    tags: [route-control, concept, pbr]
+    source: labs/route-maps-pbr
+
+  - id: rc-iosxe-pbr-config
+    type: basic
+    subdeck: PBR
+    front: |
+      IOS-XE: send traffic sourced from 192.168.2.0/30 out next-hop 10.0.2.2,
+      leaving everything else on normal routing.
+    back: |
+      ```
+      ip access-list extended HOST-B
+       permit ip 192.168.2.0 0.0.0.3 any
+      !
+      route-map PBR-ISP2 permit 10
+       match ip address HOST-B
+       set ip next-hop 10.0.2.2
+      !
+      interface GigabitEthernet0/1
+       ip policy route-map PBR-ISP2
+      ```
+    extra: |
+      Traffic not matching any permit stanza falls through to normal routing —
+      PBR's fall-through is *permissive*, unlike a route-map used for
+      filtering. Verify with `show ip policy` and the hit counters in
+      `show route-map`.
+    tags: [route-control, ios-xe, syntax, pbr]
+    source: labs/route-maps-pbr
+
+  - id: rc-pbr-invisible-in-rib
+    type: basic
+    subdeck: PBR
+    front: |
+      After configuring PBR, how many new entries appear in `show ip route`?
+      Why does that matter for troubleshooting?
+    back: |
+      **Zero.** PBR lives entirely outside the RIB — it forces a next-hop
+      per-packet and the table is none the wiser.
+
+      That makes it the notorious "the routes look fine but traffic goes
+      somewhere weird" trap. `show ip policy` is the only place it surfaces.
+    tags: [route-control, symptom-cause, pbr]
+    source: labs/route-maps-pbr
+
+  - id: rc-pbr-blackhole-and-verify
+    type: basic
+    subdeck: PBR
+    front: |
+      A plain `set ip next-hop` points at a next-hop that goes unreachable.
+      Does traffic fall back to the routing table?
+    back: |
+      **No — it is black-holed.** PBR forces the next-hop whether or not it is
+      reachable, and because it bypasses the RIB it never falls back to a
+      working default. The classic PBR outage.
+
+      Mitigations:
+      - `set ip next-hop verify-availability` — use the next-hop only if it's
+        reachable (optionally tracked by an IP SLA object)
+      - `set ip default next-hop` — apply the policy next-hop *only* when the
+        RIB has no route, i.e. normal routing wins
+
+      PBR's RIB-bypass is the feature **and** the failure mode.
+    tags: [route-control, ios-xe, symptom-cause, pbr]
+    source: labs/route-maps-pbr
+
+  - id: rc-pbr-local-policy
+    type: basic
+    subdeck: PBR
+    front: |
+      Interface PBR doesn't affect the router's own management and routing
+      traffic. Why, and what's the fix?
+    back: |
+      `ip policy route-map` matches packets **arriving on an interface**.
+      Router-originated traffic never arrives on one — it's generated
+      internally.
+
+      ```
+      ip local policy route-map MAP
+      ```
+    tags: [route-control, ios-xe, syntax, pbr]
+    source: labs/route-maps-pbr
+
+# ── Tracking and failover ─────────────────────────────────────────────────
+
+  - id: rc-floating-static
+    type: basic
+    subdeck: Tracking
+    front: |
+      What is a floating static route, and where does the backup "live" while
+      it isn't installed?
+    back: |
+      A backup static configured with a **higher administrative distance** than
+      the primary:
+
+      ```
+      ip route 0.0.0.0 0.0.0.0 10.0.1.2 5
+      ip route 0.0.0.0 0.0.0.0 10.0.2.2 10
+      ```
+
+      Only the AD-5 route is in the RIB. The AD-10 route sits **in the
+      configuration only** — it is offered to the RIB but loses, and installs
+      the moment the primary is withdrawn.
+    tags: [route-control, ios-xe, concept, tracking]
+    source: labs/ip-sla-tracking
+
+  - id: rc-floating-static-blind-spot
+    type: basic
+    subdeck: Tracking
+    front: |
+      What failure does a plain floating static route **not** detect?
+    back: |
+      A **brownout past the next-hop**. The static is withdrawn only when the
+      next-hop itself becomes unreachable — so if your link to the ISP stays
+      up but the ISP's upstream is dead, the route stays happily installed and
+      traffic black-holes.
+
+      The gap between "link up" and "path working" is the entire reason IP SLA
+      tracking exists.
+    tags: [route-control, symptom-cause, tracking]
+    source: labs/ip-sla-tracking
+
+  - id: rc-iosxe-ip-sla-track
+    type: basic
+    subdeck: Tracking
+    front: |
+      IOS-XE: probe 10.99.0.1 every 5 s and withdraw the primary default route
+      when the probe stops succeeding.
+    back: |
+      ```
+      ip sla 1
+       icmp-echo 10.99.0.1 source-interface GigabitEthernet0/0
+       frequency 5
+      ip sla schedule 1 life forever start-time now
+      !
+      track 1 ip sla 1 reachability
+      !
+      ip route 0.0.0.0 0.0.0.0 10.0.1.2 5 track 1
+      ip route 0.0.0.0 0.0.0.0 10.0.2.2 10
+      ```
+    extra: |
+      Verify with `show ip sla statistics`, `show track 1`, `show ip route`.
+      The same track object can drive HSRP priority, PBR next-hop
+      verification, and route-map decisions.
+    tags: [route-control, ios-xe, syntax, tracking]
+    source: labs/ip-sla-tracking
+
+  - id: rc-track-object-role
+    type: basic
+    subdeck: Tracking
+    front: |
+      What is a **track object's** job, given that the IP SLA probe already
+      produces results?
+    back: |
+      **Translation.** It turns a continuous stream of probe results into a
+      single binary **Up/Down** signal that other features can consume — a
+      static route, HSRP/VRRP priority, PBR verification, an EEM applet.
+
+      The probe measures; the track decides; the consumer reacts. Decoupling
+      those lets one probe drive many behaviours.
+    tags: [route-control, concept, tracking]
+    source: labs/ip-sla-tracking
+
+  - id: rc-sla-failover-timing
+    type: basic
+    subdeck: Tracking
+    front: |
+      How fast does IP SLA failover happen, and what's the tuning trade-off?
+    back: |
+      **Not instant** — bounded by the probe `frequency` plus any failure
+      threshold. With `frequency 5` you wait up to ~5 s per missed probe.
+
+      Trade-off: a tighter frequency and single-failure threshold detects fast
+      but **oscillates on transient loss**; a longer threshold is stable but
+      slow. Real designs require several consecutive failures before flipping,
+      and often a longer dampening delay before flipping back.
+    tags: [route-control, concept, tracking]
+    source: labs/ip-sla-tracking
+
+  - id: rc-sla-probe-target-choice
+    type: basic
+    subdeck: Tracking
+    front: |
+      Why is probing your ISP's directly-connected interface a poor SLA
+      target, and what's the risk of probing something far away instead?
+    back: |
+      A directly-connected target only proves the **link** is up — the same
+      thing the floating static already knew. It cannot detect an upstream
+      brownout.
+
+      But probing something distant (a public resolver, a well-known anycast
+      address) means **their** outage, or any path in between, triggers *your*
+      failover. You've made your availability depend on a third party you
+      don't control.
+
+      Practical compromise: probe a target reachable *only* through the path
+      you're testing, ideally one the provider commits to.
+    tags: [route-control, concept, tracking]
+    source: labs/ip-sla-tracking

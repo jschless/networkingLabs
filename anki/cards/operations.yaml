@@ -1,0 +1,765 @@
+deck: Operations
+cards:
+
+# ── QoS ───────────────────────────────────────────────────────────────────
+
+  - id: ops-qos-four-stages
+    type: basic
+    subdeck: QoS
+    front: |
+      Trace a voice packet through the four QoS stages. What does each do?
+    back: |
+      1. **Classification** — decide *what this packet is*. By ACL, protocol,
+         port, incoming interface, or an existing marking. Produces an internal
+         class, changes nothing on the wire.
+      2. **Marking** — write that decision into the packet (**DSCP** in the IP
+         header, CoS in the 802.1Q tag) so every downstream device can act on
+         it **without reclassifying**.
+      3. **Queuing / scheduling** — the only stage that actually helps under
+         congestion. Puts the packet in a queue and decides transmit order.
+      4. **Policing / shaping** — enforce a rate: policing **drops**, shaping
+         **buffers**.
+
+      Key insight: **classify and mark once, at the edge; queue everywhere.**
+      Marking alone does nothing — an unqueued marked packet is just a
+      differently-labelled packet in the same FIFO.
+    tags: [operations, concept, qos]
+    source: labs/qos-enterprise
+
+  - id: ops-dscp-values
+    type: cloze
+    subdeck: QoS
+    text: |
+      Common DSCP markings: voice/real-time is {{c1::EF}} = DSCP {{c2::46}};
+      interactive video is typically {{c3::AF41}} = DSCP {{c4::34}}; call
+      signalling is {{c5::CS3}} = DSCP 24; default best-effort is DSCP
+      {{c6::0}}. DSCP occupies the upper {{c7::6}} bits of the IP ToS byte,
+      with the low 2 bits used for {{c8::ECN}}.
+    tags: [operations, cloze, qos]
+    source: labs/qos-enterprise
+
+  - id: ops-qos-trust-boundary
+    type: basic
+    subdeck: QoS
+    front: |
+      Why do you re-mark (or refuse to trust) DSCP at the access edge? What
+      attack does trusting endpoint markings enable?
+    back: |
+      Because **any host can set any DSCP value it likes.** A user whose
+      workstation marks all its traffic EF gets **priority-queue treatment**
+      network-wide — a trivially executed denial of service against the voice
+      class, which is precisely the traffic that cannot tolerate loss.
+
+      So the access edge either **re-marks everything** to a policy-derived
+      value, or trusts only a narrow, verified case (a Cisco IP phone
+      identified by CDP/LLDP, with `trust device cisco-phone`).
+
+      The general principle: **trust boundaries belong where you control the
+      device.** Inside the boundary, markings are policy; outside, they're user
+      input.
+    tags: [operations, concept, qos, security]
+    source: labs/qos-enterprise
+
+  - id: ops-policing-vs-shaping
+    type: basic
+    subdeck: QoS
+    front: |
+      Policing vs. shaping for bursty TCP over a slow WAN link — which behaves
+      better, and what does it cost?
+    back: |
+      **Shaping behaves better.** It **buffers** excess traffic and releases it
+      at the configured rate, so a TCP burst is smoothed rather than destroyed.
+      Policing **drops** the excess, and dropped TCP segments trigger
+      congestion control — the sender halves its window, so a brief burst
+      causes a sustained throughput collapse far below the policed rate.
+
+      The cost of shaping is **latency and buffering** (and memory). Buffer too
+      deep and you get **bufferbloat**: packets arrive, but so late that
+      real-time traffic is ruined.
+
+      Rule of thumb: **shape what you send, police what you receive.** You
+      control your own sending rate; you can only punish an over-sending peer.
+    tags: [operations, concept, qos]
+    source: labs/qos-enterprise
+
+  - id: ops-priority-queue-starvation
+    type: basic
+    subdeck: QoS
+    front: |
+      A strict-priority queue can starve everything else. How does that happen,
+      and what prevents it?
+    back: |
+      Strict priority means **the queue is serviced until empty** before any
+      other queue is looked at. If the priority class receives more traffic
+      than the link can carry — a misconfiguration, or spoofed EF marking —
+      every other class transmits **nothing**.
+
+      Prevention: a **policer on the priority class itself**. It gets strict
+      priority *up to* its configured rate; anything beyond is dropped rather
+      than served.
+
+      ```
+      policy-map WAN-OUT
+       class VOICE
+        priority percent 30      ! implicit policer at 30%
+       class VIDEO
+        bandwidth percent 30
+       class class-default
+        fair-queue
+      ```
+
+      That's why LLQ is "priority **with** a policer" — the policer is the
+      whole point.
+    tags: [operations, ios-xe, concept, qos]
+    source: labs/qos-enterprise
+
+  - id: ops-wred-purpose
+    type: basic
+    subdeck: QoS
+    front: |
+      What problem does WRED solve, and what happens without it?
+    back: |
+      **TCP global synchronisation.** Without active queue management, a full
+      queue **tail-drops** — it discards packets from *every* flow at the same
+      instant. All those TCP senders back off together, the link goes idle,
+      they all ramp up together, and the queue fills again. The link oscillates
+      between congested and underused.
+
+      **WRED** drops packets **probabilistically as the queue depth grows**,
+      hitting a few flows early and at random. Those back off individually,
+      relieving congestion before the queue is full and keeping the rest
+      unaffected.
+
+      "Weighted" = higher-priority markings get a lower drop probability.
+      WRED only helps **TCP** — dropping UDP/voice early just damages it, which
+      is why the priority queue uses a plain FIFO instead.
+    tags: [operations, concept, qos]
+    source: labs/qos-enterprise
+
+# ── MTU and PMTUD ─────────────────────────────────────────────────────────
+
+  - id: ops-pmtud-blackhole
+    type: basic
+    subdeck: MTU
+    front: |
+      Ping works, DNS works, SSH connects then hangs, web pages half-load.
+      What's the diagnosis?
+    back: |
+      **A PMTU black hole.** Small packets pass; full-size packets are dropped
+      by a hop with a smaller MTU, and the **ICMP "fragmentation needed"**
+      message that would tell the sender is being filtered — usually by a
+      firewall blocking "all ICMP."
+
+      The sender never learns to reduce its segment size, so it retransmits the
+      same too-large packet forever. That's the signature: **the handshake
+      completes (small packets) and the transfer dies (large packets).**
+    extra: |
+      Find the boundary by bisecting with DF-set pings:
+      `ping -M do -s <size> <dest>` (Linux) /
+      `ping <dest> size <size> df-bit` (IOS-XE).
+    tags: [operations, symptom-cause, mtu]
+    source: labs/mtu-pmtud-troubleshooting
+
+  - id: ops-mtu-vs-mss
+    type: basic
+    subdeck: MTU
+    front: |
+      `ip mtu` vs. `ip tcp adjust-mss` — what does each do, and why is the
+      second more reliable?
+    back: |
+      **`ip mtu`** sets the largest IP packet the interface will send
+      unfragmented. It affects *this* device's forwarding decision and the
+      ICMP it generates — but it depends on **PMTUD working end to end** for
+      the remote sender to adapt.
+
+      **`ip tcp adjust-mss`** rewrites the **MSS option in the TCP SYN** as it
+      passes through. Both endpoints then negotiate a smaller segment size from
+      the start, so oversized packets are **never generated** and no ICMP is
+      needed.
+
+      That independence from ICMP is why `adjust-mss` is the reliable fix on
+      any tunnel. Typical value: `ip mtu` − 40.
+    extra: |
+      It only helps **TCP**. UDP-based traffic (QUIC, IPsec, VXLAN, DNS over
+      UDP) still depends on real MTU correctness or its own PMTUD.
+    tags: [operations, ios-xe, concept, mtu]
+    source: labs/mtu-pmtud-troubleshooting
+
+  - id: ops-mtu-one-sided-regression
+    type: basic
+    subdeck: MTU
+    front: |
+      Large transfers work in one direction but fail in the other. What does
+      that asymmetry tell you?
+    back: |
+      That the MTU restriction, or the ICMP filtering, is **on one path only** —
+      and since forward and return paths can differ, you must test **each
+      direction independently**.
+
+      A one-sided `ip tcp adjust-mss`, an MTU set on only one end of a tunnel,
+      or a firewall dropping ICMP in only one direction all produce this.
+
+      Practical implication: never conclude "MTU is fine" from a test run in
+      one direction. Run the DF-bit bisection **from both ends**.
+    tags: [operations, symptom-cause, mtu]
+    source: labs/mtu-pmtud-troubleshooting
+
+# ── Automation ────────────────────────────────────────────────────────────
+
+  - id: ops-idempotence
+    type: basic
+    subdeck: Automation
+    front: |
+      What does **idempotent** mean for network automation, and why does it
+      matter more than it sounds?
+    back: |
+      Running the same operation **any number of times produces the same end
+      state** as running it once.
+
+      It matters because automation runs re-run: after a partial failure, after
+      a timeout, on a schedule, by a nervous engineer. A non-idempotent script
+      that *appends* a config line adds a duplicate every run; one that
+      *declares* the desired state converges to it.
+
+      This is the difference between **imperative** ("send these commands") and
+      **declarative** ("this is what the config should be") automation, and why
+      declarative tooling won.
+    tags: [operations, concept, automation]
+    source: labs/automation-fundamentals
+
+  - id: ops-source-of-truth
+    type: basic
+    subdeck: Automation
+    front: |
+      What is a "source of truth" in network automation, and what breaks
+      without one?
+    back: |
+      A **single authoritative system** — NetBox, an IPAM, a Git repo —
+      defining what the network *should* be. Devices are then rendered from it,
+      and drift is detected by comparing reality against it.
+
+      Without one, the **devices are the source of truth**, which means:
+      - you cannot answer "what should this be?" — only "what is it?"
+      - you cannot detect drift, because there's nothing to compare against
+      - documentation is a snapshot that is wrong the moment it's written
+      - two engineers' mental models diverge silently
+
+      The hardest part is not the tooling, it's the **discipline** that no
+      change happens outside it. One CLI hotfix and the source of truth is a
+      lie.
+    tags: [operations, concept, automation]
+    source: labs/network-automation-netbox
+
+  - id: ops-gitops-pipeline
+    type: basic
+    subdeck: Automation
+    front: |
+      What does a network GitOps change pipeline add over "run Ansible from
+      your laptop"?
+    back: |
+      - **Peer review** — the change is a pull request, read by a human before
+        it touches production.
+      - **An audit trail** — who changed what, when, and *why*, with a linked
+        ticket. Git history is the change record.
+      - **Automated validation** — lint, config render, and dry-run diff on
+        every commit, before merge.
+      - **Reproducibility and rollback** — deploy is a function of the repo, so
+        reverting a commit reverts the network.
+      - **No privileged human credentials** — the pipeline holds them, not
+        laptops.
+
+      The network change becomes a **software change**, with the same controls.
+    tags: [operations, concept, automation]
+    source: labs/network-gitops-change-pipeline
+
+  - id: ops-dry-run-diff
+    type: basic
+    subdeck: Automation
+    front: |
+      Why is a **config diff / dry-run** the single most valuable safety
+      feature in network automation?
+    back: |
+      Because it converts "I think this playbook does what I intend" into "here
+      are the exact lines that will change on this device."
+
+      Most automation outages are not tooling failures — they're **a correct
+      tool faithfully applying a wrong intent** to more devices, faster, than a
+      human ever could. The diff is the last point at which a human can catch
+      that.
+
+      It's also what makes idempotence *visible*: a second run should produce
+      an **empty diff**. A dry-run that keeps showing changes on a converged
+      network means your automation isn't actually declarative.
+    tags: [operations, concept, automation]
+    source: labs/network-gitops-change-pipeline
+
+# ── AAA ───────────────────────────────────────────────────────────────────
+
+  - id: ops-aaa-three-failure-modes
+    type: basic
+    subdeck: AAA
+    front: |
+      An admin can't log in via TACACS+. Distinguish the three failure modes
+      and what pins each.
+    back: |
+      1. **Server unreachable** — no TCP session on port 49. The device times
+         out and (if configured) falls back to local. Nothing appears in the
+         server's log at all.
+      2. **Reachable but rejecting** — the server logs an
+         **authentication failure** for that username. The conversation
+         happened; the answer was no.
+      3. **Shared-key mismatch** — the device logs something like
+         *"invalid packet / bad authenticator"*. TCP connects, but the payload
+         can't be decrypted, so **the server usually logs nothing useful**.
+
+      **The discriminator is whose log has the evidence**: nothing anywhere =
+      unreachable; a clean reject on the server = credentials or policy;
+      garbage on the client with silence on the server = the key.
+    tags: [operations, symptom-cause, aaa]
+    source: labs/aaa-ops-troubleshooting
+
+  - id: ops-aaa-local-fallback
+    type: basic
+    subdeck: AAA
+    front: |
+      What *should* happen when the AAA server is down, and what
+      misconfiguration locks everyone out instead?
+    back: |
+      Should: the method list falls through to **local** authentication, and a
+      break-glass local account still works.
+
+      ```
+      aaa authentication login default group tacacs+ local
+      ```
+
+      The lockout: writing `group tacacs+` with **no fallback method**, or
+      having a fallback but **no local account that actually exists** (or one
+      whose password nobody has). Then a server outage is a total
+      administrative outage on every device simultaneously.
+
+      Second trap: fallback to local triggers only when the server is
+      **unreachable** — not when it **rejects**. A reject is a valid answer,
+      and the method list stops there.
+    extra: |
+      Keep a tested break-glass local account, store its password in a vault
+      **not** dependent on the network, and verify it after every AAA change —
+      from a second session you haven't closed.
+    tags: [operations, ios-xe, symptom-cause, aaa]
+    source: labs/aaa-ops-troubleshooting
+
+  - id: ops-aaa-separate-a-a-a
+    type: basic
+    subdeck: AAA
+    front: |
+      Authentication, authorization and accounting are configured separately.
+      Give a case where each fails independently.
+    back: |
+      - **Authentication fails** — you can't log in at all.
+      - **Authentication succeeds, authorization fails** — you log in but every
+        command is rejected, or you land in a lower privilege level than
+        expected. Very confusing: the login worked, so it "can't be AAA."
+      - **Both succeed, accounting fails** — everything works normally and
+        **nothing is logged**. Invisible until an audit asks who made a change,
+        and there is no record.
+
+      The last is the dangerous one, because there is no symptom. Accounting
+      failures need **active monitoring** of the AAA server's record volume,
+      not a user complaint.
+    extra: |
+      TACACS+ separates the three (and encrypts the whole payload), which is
+      why it's preferred for **device administration**. RADIUS combines
+      authentication and authorization and encrypts only the password, which is
+      why it's used for **network access**.
+    tags: [operations, concept, aaa]
+    source: labs/aaa-ops-troubleshooting
+
+# ── Management plane ──────────────────────────────────────────────────────
+
+  - id: ops-management-plane-acl
+    type: basic
+    subdeck: Management
+    front: |
+      Why protect management services with a control-plane policy rather than
+      an interface ACL?
+    back: |
+      An interface ACL only filters traffic crossing **that** interface. A
+      router with several interfaces, an out-of-band port, and a loopback has
+      **many** paths to its own SSH daemon — and you'd have to get the ACL
+      right on every one, forever.
+
+      A control-plane / management-plane policy applies to traffic **destined
+      to the device itself**, regardless of arrival interface. One policy, one
+      place to audit, and new interfaces are covered automatically.
+
+      Same reasoning as CoPP, one layer up: protect the **service**, not each
+      **path** to it.
+    tags: [operations, ios-xe, concept, management, security]
+    source: labs/management-access-control
+
+  - id: ops-management-lockout-procedure
+    type: basic
+    subdeck: Management
+    front: |
+      You must change the management ACL while SSH through that same ACL is
+      your only access. What's the safe procedure?
+    back: |
+      **Add before you remove, and verify from a new session.**
+
+      1. **Add** the new permit (the new admin subnet) while the old one is
+         still in place.
+      2. **Open a second, independent session** through the new path and
+         confirm it works. Never test from the session you're already in — it's
+         an established flow and may survive a policy that blocks new ones.
+      3. Only then **remove** the old permit.
+      4. Keep the first session open until the change is fully verified.
+
+      Same shape as the OSPF key rollover: **add everywhere, then remove
+      anywhere.** And on real gear, arm `reload in 10` before you start, so a
+      lockout self-recovers.
+    tags: [operations, concept, management]
+    source: labs/management-access-control
+
+  - id: ops-acl-counters-as-evidence
+    type: basic
+    subdeck: Management
+    front: |
+      How do you prove a management ACL is doing what you intended, rather than
+      just observing that things seem to work?
+    back: |
+      **Read the per-entry hit counters** (`show ip access-lists`), and test
+      both the **permit** and the **deny** case.
+
+      "I can still SSH" proves only that some rule permitted you. It doesn't
+      prove the deny rule works, that it's in the right order, or that it isn't
+      shadowed by a broader permit above it.
+
+      Positive **and** negative tests, with counters incrementing on the rule
+      you expect: that's evidence. Anything else is a guess that happened to
+      match reality.
+    tags: [operations, concept, management, acl]
+    source: labs/management-access-control
+
+# ── Provisioning ──────────────────────────────────────────────────────────
+
+  - id: ops-ztp-mechanism
+    type: basic
+    subdeck: Provisioning
+    front: |
+      Walk through what happens when a factory-reset switch is cabled and
+      powered on a ZTP-enabled network.
+    back: |
+      1. The switch boots with **no configuration** and enters ZTP mode.
+      2. It **DHCPs** on its management (and often front-panel) ports.
+      3. The DHCP reply carries **option 67 (bootfile-name)** — a URL pointing
+         at its configuration or a provisioning script.
+      4. It fetches that over HTTP/TFTP, applies it, and **reboots into the
+         real configuration**.
+
+      No console cable, no field engineer. The whole design rests on **DHCP
+      option 67**, which is why ZTP debugging almost always starts at the DHCP
+      server.
+    tags: [operations, concept, ztp]
+    source: labs/ztp-basics
+
+  - id: ops-ztp-per-device-config
+    type: basic
+    subdeck: Provisioning
+    front: |
+      One config file and 400 switches. What breaks, and what do you key
+      per-device config on?
+    back: |
+      A single file gives every switch the **same hostname, management address
+      and identity** — duplicate IPs, and no way to tell the devices apart.
+
+      Key on something the device **presents during DHCP** and that is
+      **printed on the box**, so it can be pre-registered before it ships:
+      - **MAC address** — always available, but requires capturing it per unit.
+      - **Serial number** (DHCP option 61 / client-identifier, or a vendor
+        option) — the best key, because it's on the shipping label and the
+        purchase record.
+
+      Implementation: DHCP matches the client and hands back a **per-device
+      URL**, or the provisioning server runs a script that reads the requester's
+      identity and renders the config from the source of truth.
+    tags: [operations, concept, ztp]
+    source: labs/ztp-basics
+
+  - id: ops-ztp-rogue-dhcp
+    type: basic
+    subdeck: Provisioning
+    front: |
+      During ZTP a switch trusts whichever DHCP server answers first. What's
+      the risk, and how is it contained?
+    back: |
+      A rogue DHCP server on the provisioning segment can serve its **own
+      option 67**, so a brand-new switch fetches and applies an
+      **attacker-supplied configuration** — before any credentials, ACLs or
+      monitoring exist. Complete device compromise at day zero.
+
+      Containment:
+      - Run provisioning on a **dedicated, physically controlled segment**.
+      - **DHCP snooping** on it, so only the real server's offers are trusted.
+      - **Serve over HTTPS** and validate the server certificate where the
+        platform supports it.
+      - **Signed configuration images** where available.
+
+      The general lesson: **bootstrap is the least protected moment in a
+      device's life** — no config means no security controls yet.
+    tags: [operations, concept, ztp, security]
+    source: labs/ztp-basics
+
+# ── Packet analysis ───────────────────────────────────────────────────────
+
+  - id: ops-where-to-capture
+    type: basic
+    subdeck: Packet analysis
+    front: |
+      A client→server flow crosses two routers. Where do you capture to prove
+      (a) the client sent, (b) the server received, (c) where the drop was?
+    back: |
+      - **(a) On the client itself** (or its access port) — proves the packet
+        left the host, and rules out an application or local firewall problem.
+      - **(b) On the server itself** — proves arrival. If (a) shows sent and
+        (b) shows nothing, the loss is in the network.
+      - **(c) Bisect.** Capture at the midpoint — between the two routers. The
+        packet's presence or absence there halves the search space, then repeat.
+
+      **Capturing at the wrong point hides the problem**: a capture only on the
+      client shows a healthy-looking retransmitting flow and tells you nothing
+      about where it died. Always capture at **both ends first**, then bisect.
+    tags: [operations, concept, packet-analysis]
+    source: labs/packet-analysis-basics
+
+  - id: ops-slow-tcp-from-capture
+    type: basic
+    subdeck: Packet analysis
+    front: |
+      A TCP connection is "slow." From a capture, how do you tell loss from
+      latency from a window limit — and what does each imply?
+    back: |
+      - **Loss** — duplicate ACKs, retransmissions, fast-retransmit or RTO
+        events. Fix the **path**: errors, congestion, a policer dropping bursts.
+      - **Latency** — a healthy flow with a large delta between data and its
+        ACK. Fix the **distance or queuing**; no amount of bandwidth helps.
+      - **Window limit** — the sender stops with unacknowledged data well below
+        the link's capacity, and the receiver's advertised window is the
+        ceiling. Fix **buffers and window scaling** on the hosts.
+
+      The diagnostic value is that all three feel identical to the user and
+      have **completely different fixes**. A "slow network" complaint resolved
+      by adding bandwidth, when the cause was a 64 KB window over a 100 ms RTT,
+      is the classic wasted upgrade.
+    tags: [operations, symptom-cause, packet-analysis]
+    source: labs/packet-analysis-basics
+
+  - id: ops-metadata-despite-encryption
+    type: basic
+    subdeck: Packet analysis
+    front: |
+      TLS hides the payload. What can you still learn from the capture?
+    back: |
+      A great deal:
+      - **Who talked to whom, when, for how long** — the five-tuple and timing.
+      - **Volume and direction** — an upload looks nothing like a download.
+      - **The TLS handshake**, which is in the clear: the **SNI** (the hostname
+        requested), certificate details, the offered cipher suites and the TLS
+        version.
+      - **The JA3/JA4 fingerprint** of the client's `ClientHello`, which often
+        identifies the *application* — a browser vs. a particular malware
+        family.
+      - **Traffic patterns** — regular small beacons at a fixed interval look
+        like C2 regardless of what's inside them.
+
+      This is exactly why Zeek logs remain valuable on an encrypted network:
+      **metadata alone supports most detection**, and encryption doesn't remove
+      it.
+    tags: [operations, concept, packet-analysis, security]
+    source: labs/packet-analysis-basics
+
+# ── Observability ─────────────────────────────────────────────────────────
+
+  - id: ops-snmp-vs-streaming-telemetry
+    type: basic
+    subdeck: Observability
+    front: |
+      SNMP polling vs. streaming telemetry — what actually changes?
+    back: |
+      **SNMP is pull**: the collector asks each device for each OID on an
+      interval (typically 5 minutes). Cost scales with devices × OIDs, the
+      device does the work on request, and **anything between polls is
+      invisible** — a 30-second microburst or a link flap simply never
+      happened.
+
+      **Streaming telemetry is push**: the device sends subscribed data
+      continuously (sub-second is practical), structured (gNMI/YANG,
+      protobuf-encoded), over a persistent session.
+
+      The real change is **resolution**. Five-minute averages hide exactly the
+      transient events that cause user-visible problems.
+    tags: [operations, concept, observability]
+    source: labs/telemetry-monitoring-hybrid
+
+  - id: ops-state-vs-metrics
+    type: basic
+    subdeck: Observability
+    front: |
+      Why does a tool like SuzieQ (network state snapshots) complement metrics
+      dashboards rather than duplicate them?
+    back: |
+      **Metrics answer "how much?"** — bandwidth, CPU, error counters. Time
+      series, good for trends and thresholds.
+
+      **State answers "what was the network's configuration and topology at
+      time T?"** — the BGP table, the routing table, the MAC table, LLDP
+      neighbours, interface state.
+
+      Post-incident, the question is almost never "what was the CPU?" — it's
+      **"what changed?"** Snapshotting state lets you *diff* the network
+      between two points in time, which no metrics dashboard can do.
+
+      The pairing: metrics tell you **when** something went wrong; state
+      snapshots tell you **what** was different.
+    tags: [operations, concept, observability]
+    source: labs/suzieq-network-observability
+
+  - id: ops-assurance-shared-failure-domain
+    type: basic
+    subdeck: Observability
+    front: |
+      You monitor an event with SNMP counters, a SPAN session, and NetFlow.
+      Why might three "independent" sources not be independent at all?
+    back: |
+      Because they can **share plumbing**. If the flow sensor consumes the
+      **SPAN feed**, then SPAN and NetFlow have a common failure domain: the
+      mirror session breaks and *both* go blind together, while the dashboards
+      still show three green sources.
+
+      SNMP counters, read from the device itself, are genuinely independent
+      here.
+
+      The general principle: **redundant telemetry is only redundant if it has
+      a different collection path.** Map the dependency chain of each source
+      before you count it as corroboration — otherwise you'll trust two views
+      that are really one.
+    tags: [operations, concept, observability]
+    source: labs/network-assurance
+
+  - id: ops-assurance-mechanism-match
+    type: basic
+    subdeck: Observability
+    front: |
+      Match the assurance mechanism to the question it answers: SNMP counters,
+      SPAN, NetFlow, syslog, reachability probes.
+    back: |
+      - **SNMP counters** — *how much?* Aggregate volume and errors per
+        interface, polled. Cheap; low resolution.
+      - **SPAN / mirroring** — *exactly what?* Full packets, for deep analysis.
+        Expensive, and can't run everywhere at once.
+      - **NetFlow / IPFIX** — *who talked to whom?* Summarised per-flow
+        records. The middle tier: far cheaper than packets, far richer than
+        counters.
+      - **Syslog** — *what did the device decide?* State transitions,
+        adjacency changes, config events. The only source of **why**.
+      - **Reachability probes** — *does it work from where the user is?* The
+        only outside-in view.
+
+      No single one answers an incident. The skill is knowing which to reach
+      for first: syslog for *what changed*, flows for *what moved*, packets for
+      *why it failed*.
+    tags: [operations, concept, observability]
+    source: labs/network-assurance
+
+  - id: ops-dhcp-failure-domains
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      A user has "no network." How do you split DHCP failure from DNS failure
+      in one step?
+    back: |
+      **Check whether they have an IP address.**
+
+      - **No address** (or a 169.254.x APIPA address) → DHCP. Look at the
+        relay/`ip helper-address`, the scope, pool exhaustion, and whether
+        DHCP snooping is dropping the server's offers.
+      - **Has an address, can ping by IP, can't resolve names** → DNS. Look at
+        which resolver was handed out, whether it answers, and what status code
+        it returns.
+
+      These are **separate failure domains with separate daemons and logs**,
+      and treating "no network" as one problem is what makes the ticket take an
+      hour instead of a minute.
+    extra: |
+      A third case worth recognising: **address and DNS both fine, still
+      broken** → the DHCP options were wrong (bad default gateway, wrong
+      domain-search), which looks like a network problem and is a scope
+      configuration problem.
+    tags: [operations, symptom-cause, troubleshooting, dhcp]
+    source: labs/dhcp-dns-troubleshooting
+
+# ── Troubleshooting method ────────────────────────────────────────────────
+
+  - id: ops-structured-troubleshooting
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      What's the disciplined loop for troubleshooting under pressure, and which
+      step do people skip?
+    back: |
+      1. **Define the symptom precisely** — who, what, since when, and what
+         still works. "The network is down" is not a symptom.
+      2. **Form a hypothesis** that predicts something *checkable*.
+      3. **Choose the test that splits the search space** — bisect the path,
+         don't walk it.
+      4. **Change one thing**, observe, record.
+      5. **Confirm the fix and the root cause** — they are not the same thing.
+
+      The skipped step is **2**: people jump from symptom to changing config,
+      so when it starts working nobody knows why, and the same outage returns.
+
+      Corollary: **always establish what still works.** The boundary between
+      working and broken localises the fault faster than any single command.
+    tags: [operations, concept, troubleshooting]
+    source: labs/troubleshooting-range
+
+  - id: ops-received-vs-accepted-principle
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      A general diagnostic pattern that recurs across BGP, EVPN, IPsec and
+      802.1X. What is it?
+    back: |
+      **Separate "arrived" from "accepted".**
+
+      - BGP: `received-routes` vs. the BGP table → import policy.
+      - EVPN: route in the EVPN table vs. in the VRF FIB → route-target import.
+      - IPsec: IKE SA vs. child SA → Phase 1 vs. Phase 2.
+      - 802.1X: RADIUS Access-Request seen vs. Access-Accept → policy vs.
+        connectivity.
+
+      In every case the **session is healthy** and the failure is in **policy**.
+      If you only ever check "is the session up?", you will misdiagnose all
+      four the same way.
+
+      Ask two questions, always: *did it arrive?* and *did we accept it?*
+    tags: [operations, concept, troubleshooting]
+    source: labs/troubleshooting-range-advanced
+
+  - id: ops-change-correlation
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      First question to ask about any new outage, and why?
+    back: |
+      **"What changed?"**
+
+      The overwhelming majority of outages follow a change — a config push, a
+      software upgrade, a certificate expiry, a scheduled job, a new device, a
+      capacity threshold crossed. Correlating the failure's start time against
+      the change log localises the fault faster than any packet capture.
+
+      "Nothing changed" is nearly always false, and usually means *nobody who
+      is in this call changed anything.* Check: config diffs, deployment
+      pipelines, certificate expiry dates, DHCP scope exhaustion, and anything
+      driven by a timer.
+    tags: [operations, concept, troubleshooting]
+    source: labs/troubleshooting-range

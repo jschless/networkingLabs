@@ -1,0 +1,579 @@
+deck: MPLS
+cards:
+
+# ── Fundamentals ──────────────────────────────────────────────────────────
+
+  - id: mpls-ler-vs-lsr
+    type: basic
+    subdeck: Fundamentals
+    front: |
+      Define LER, LSR, FEC, LIB and LFIB.
+    back: |
+      - **LER (Label Edge Router)** — imposes (pushes) the label at ingress and
+        removes it at egress. Sometimes called PE.
+      - **LSR (Label Switching Router)** — a transit router that swaps labels.
+        Sometimes called P.
+      - **FEC (Forwarding Equivalence Class)** — the set of packets treated
+        identically; in plain MPLS/LDP, usually "everything for this prefix".
+      - **LIB (Label Information Base)** — *every* binding learned from every
+        neighbour, plus the local one.
+      - **LFIB (Label Forwarding Information Base)** — the subset actually
+        programmed into the forwarding plane.
+    tags: [mpls, concept]
+    source: labs/mpls-ldp
+
+  - id: mpls-label-operations
+    type: cloze
+    subdeck: Fundamentals
+    text: |
+      The three MPLS label operations are {{c1::push}} (impose a label at the
+      ingress LER), {{c2::swap}} (replace the label at a transit LSR), and
+      {{c3::pop}} (remove it). An MPLS label is {{c4::32}} bits total, of which
+      the label value is {{c5::20}} bits, plus 3 bits of {{c6::EXP/TC}} for
+      QoS, 1 {{c7::bottom-of-stack (S)}} bit, and 8 bits of {{c8::TTL}}.
+    tags: [mpls, cloze]
+    source: labs/mpls-ldp
+
+  - id: mpls-labels-locally-significant
+    type: basic
+    subdeck: Fundamentals
+    front: |
+      Why must an MPLS label be re-signalled at every hop under LDP?
+    back: |
+      Because labels are **locally significant** — each router allocates its
+      own label for a given FEC and tells its neighbours "send me *this* value
+      for that destination."
+
+      There is no network-wide agreement, so every hop's binding must be
+      learned separately. Pull any single advertisement and the chain snaps.
+    extra: |
+      This is exactly what SR-MPLS changes: a node SID is derived from a
+      globally agreed SRGB and means the same thing everywhere.
+    tags: [mpls, concept]
+    source: labs/bgp-labeled-unicast
+
+# ── LDP ───────────────────────────────────────────────────────────────────
+
+  - id: mpls-ldp-discovery-vs-session
+    type: basic
+    subdeck: LDP
+    front: |
+      LDP uses two different transports. What are they, and why does that
+      distinction matter when troubleshooting?
+    back: |
+      - **Discovery** — UDP **multicast hellos**, link-scoped, port 646.
+      - **Session** — **TCP** port 646, between the two routers' **transport
+        addresses** (normally loopbacks).
+
+      They fail independently. Hellos keep arriving over link multicast
+      regardless of routing, so `show mpls ldp discovery` can still list a
+      neighbour whose session is dead — because the *loopback* became
+      unreachable.
+    extra: |
+      The **higher transport address opens the TCP connection**; the lower one
+      listens on 646.
+    tags: [mpls, concept, ldp]
+    source: labs/mpls-ldp
+
+  - id: mpls-ldp-follows-igp
+    type: basic
+    subdeck: LDP
+    front: |
+      A transit LSR holds three bindings for one FEC (one local, two remote)
+      but installs only one. Why?
+    back: |
+      **Liberal label retention** — LDP keeps every binding it is ever told,
+      including useless ones, so it can switch instantly if the IGP moves.
+
+      But **LDP always follows the IGP**: only the binding from the neighbour
+      that is the routing table's current next-hop gets programmed into the
+      LFIB. The others sit unused until SPF changes its mind.
+    extra: |
+      Corollary: **LDP cannot do traffic engineering.** It labels the IGP's
+      best path and nothing else — which is why carriers historically ran
+      RSVP-TE alongside it.
+    tags: [mpls, concept, ldp]
+    source: labs/mpls-ldp
+
+  - id: mpls-php-implicit-null
+    type: basic
+    subdeck: LDP
+    front: |
+      What is penultimate-hop popping, which label signals it, and what does it
+      save?
+    back: |
+      The egress router advertises the reserved label **implicit-null (3)** for
+      its own FECs. That instructs the **penultimate** router to **pop** the
+      label instead of swapping it, so the egress receives plain IP.
+
+      Saving: the egress does **one IP lookup** instead of a label lookup
+      *plus* an IP lookup.
+    extra: |
+      On the wire: the second-to-last link carries an MPLS header, the last
+      link does not.
+    tags: [mpls, concept, ldp]
+    source: labs/mpls-ldp
+
+  - id: mpls-explicit-null
+    type: basic
+    subdeck: LDP
+    front: |
+      When would you use **explicit-null (label 0)** instead of PHP, and what
+      does it cost?
+    back: |
+      When you need the egress router to still see the **EXP/TC bits** — the
+      QoS marking lives in the label header, and PHP throws it away one hop
+      early.
+
+      With explicit-null the penultimate hop swaps to label 0 ("bottom of
+      stack, route the IP underneath"), so the header survives the last hop and
+      QoS classification is preserved end to end.
+
+      Cost: the egress does a label lookup it didn't need to do.
+    tags: [mpls, concept, ldp]
+    source: labs/mpls-ldp
+
+  - id: mpls-ldp-mid-path-blackhole
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      End-to-end ping fails, but OSPF is `Full` everywhere, the ingress route
+      looks healthy, and LDP discovery still lists every neighbour. What
+      happened, and where do the packets die?
+    back: |
+      A **mid-path LDP session died** (its transport address became
+      unreachable). Because of liberal retention the ingress **keeps its stale
+      binding** and happily labels every packet.
+
+      But the transit LSR, having lost its downstream binding, removed that
+      FEC's LFIB entry — so labeled packets **arrive and are dropped on
+      arrival**. A hard black-hole while every IP-level display reports green.
+
+      Diagnose by walking the path: compare the pushed label
+      (`show ip route <FEC>`) against each hop's `show mpls forwarding-table`.
+    extra: |
+      Geometry matters: had the session **adjacent to the ingress** died
+      instead, the ingress would have lost its binding and fallen back to
+      unlabeled IP forwarding — traffic survives. Whether an LDP failure
+      black-holes or silently degrades depends on *where* in the path it broke.
+    tags: [mpls, symptom-cause, ldp]
+    source: labs/mpls-ldp
+
+  - id: mpls-ldp-slow-failure
+    type: basic
+    subdeck: LDP
+    front: |
+      Why does an LDP session failure take minutes to show up, while recovery
+      takes seconds?
+    back: |
+      Teardown waits for the **180-second hold timer** to expire — LDP has no
+      fast liveness detection of its own.
+
+      Recovery is **hello-triggered**: the moment hellos are exchanged again
+      the session re-establishes, with no timer to wait out.
+
+      Slow down, fast up. Pair LDP with **BFD** if you need failure detection
+      that matches the IGP's.
+    tags: [mpls, concept, ldp]
+    source: labs/mpls-ldp
+
+  - id: mpls-ldp-igp-sync
+    type: basic
+    subdeck: LDP
+    front: |
+      A link comes back up. What race does **LDP-IGP synchronization** solve?
+    back: |
+      The IGP converges onto the restored link in **milliseconds to seconds**,
+      but LDP needs longer to re-establish its session and exchange bindings.
+      In that window the router forwards traffic over a link with **no label
+      bindings** — black-holing anything that must stay labeled.
+
+      LDP-IGP sync makes the IGP advertise the link at **maximum metric** until
+      LDP reports the session is up and bindings are exchanged, so traffic
+      doesn't move there prematurely.
+    tags: [mpls, concept, ldp]
+    source: labs/mpls-ldp
+
+  - id: mpls-iosxe-ldp-config
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: enable LDP on a core interface with the loopback as transport
+      address.
+    back: |
+      ```
+      mpls label protocol ldp
+      mpls ldp router-id Loopback0 force
+      !
+      interface GigabitEthernet0/0
+       mpls ip
+      ```
+
+      Verify:
+      ```
+      show mpls ldp discovery
+      show mpls ldp neighbor
+      show mpls ldp bindings
+      show mpls forwarding-table
+      ```
+    extra: |
+      `mpls ip` on the interface does both jobs on IOS-XE — enables MPLS
+      forwarding *and* starts LDP there. On FRR those are two separate steps
+      (`mpls enable` on the interface plus an `interface` line in the
+      `mpls ldp` block), and forgetting the first is a classic silent failure.
+    tags: [mpls, ios-xe, syntax, ldp]
+    source: labs/mpls-ldp
+
+# ── Segment Routing ───────────────────────────────────────────────────────
+
+  - id: mpls-sr-label-derivation
+    type: basic
+    subdeck: Segment Routing
+    front: |
+      The SRGB starts at 16000 and a node advertises Node SID index 3. What
+      label does *any* router push to reach it, and why does that matter?
+    back: |
+      **16003** — SRGB base + SID index.
+
+      It matters because the label is **derived deterministically** from a
+      globally agreed range plus an index flooded in the IGP. There is no
+      signalling protocol, no per-LSP setup, and **no per-hop label state to
+      maintain**.
+
+      Contrast LDP, where every router picks arbitrary local labels and must
+      signal them hop by hop.
+    tags: [mpls, concept, sr]
+    source: labs/mpls-sr-isis-bgp
+
+  - id: mpls-sr-label-names-destination
+    type: basic
+    subdeck: Segment Routing
+    front: |
+      You raise the IGP metric on a core link. Does the SR label for a
+      destination change, does the path change, or both?
+    back: |
+      **The path changes; the label does not.**
+
+      A node SID is bound to the *destination router*, not to a path. SR
+      forwarding rides the IGP's SPF result, so a topology change reconverges
+      automatically with **no label re-signalling** — where LDP would have to
+      redistribute new bindings.
+
+      "The label names a destination; the IGP decides the route."
+    extra: |
+      To override SPF you use **SR-TE**: push a *stack* of SIDs that pins an
+      explicit path, hop by hop, from the ingress. That's source routing — only
+      the ingress holds the path state.
+    tags: [mpls, concept, sr]
+    source: labs/mpls-sr-isis-bgp
+
+  - id: mpls-ldp-vs-sr-comparison
+    type: basic
+    subdeck: Segment Routing
+    front: |
+      Compare LDP and SR-MPLS on label distribution, allocation, transit state,
+      and traffic engineering.
+    back: |
+      | | LDP | SR-MPLS |
+      |---|---|---|
+      | Distribution | separate LDP sessions | IGP (IS-IS/OSPF) extensions |
+      | Allocation | per-LSP, dynamic, local | per-prefix index from a global SRGB |
+      | Transit state | per-hop bindings | **stateless** |
+      | TE | RSVP-TE alongside | SR-TE, source-routed |
+
+      SR deletes an entire protocol. On a 100-router core that's 100 fewer
+      LDP configurations, no session mesh to keep alive, and no second
+      convergence event after the IGP's.
+    tags: [mpls, concept, sr]
+    source: labs/mpls-sr-isis-bgp
+
+  - id: mpls-node-sid-vs-adj-sid
+    type: basic
+    subdeck: Segment Routing
+    front: |
+      Node SID vs. adjacency SID — what does each identify and what is its
+      scope?
+    back: |
+      - **Node (prefix) SID** — identifies a *router*. **Globally significant**,
+        flooded domain-wide, and forwarded along the IGP shortest path. This is
+        the workhorse.
+      - **Adjacency SID** — identifies a *specific link* out of one router.
+        **Locally significant**, allocated automatically, and means "send this
+        out that interface, ignoring SPF."
+
+      A SID stack of node SIDs gives loose source routing; adding adjacency
+      SIDs pins exact hops.
+    tags: [mpls, concept, sr]
+    source: labs/mpls-sr-isis-bgp
+
+# ── L3VPN ─────────────────────────────────────────────────────────────────
+
+  - id: mpls-l3vpn-two-label-stack
+    type: basic
+    subdeck: L3VPN
+    front: |
+      A PE sends a customer packet across an MPLS core. How many labels does
+      it push, what does each do, and who removes which?
+    back: |
+      **Two** — `[VPN label][transport label][IP]`:
+
+      - **Outer transport label** — gets the packet to the far PE. P routers
+        swap only this one; the penultimate hop pops it (PHP).
+      - **Inner VPN label** — tells the egress PE **which VRF/CE** to deliver
+        to. Only the egress PE ever reads it.
+
+      The core therefore never needs to know a single customer route — it only
+      carries transport labels. That transport/service separation is the whole
+      idea of MPLS L3VPN.
+    tags: [mpls, concept, l3vpn]
+    source: labs/mpls-sr-isis-bgp
+
+  - id: mpls-rd-vs-rt
+    type: basic
+    subdeck: L3VPN
+    front: |
+      RD vs. RT — what does each actually do? (They are commonly written the
+      same and confused constantly.)
+    back: |
+      - **RD (Route Distinguisher)** — 8 bytes prepended to the IPv4 prefix to
+        make it a unique **VPNv4** prefix. It exists purely so two customers
+        using 192.168.10.0/24 don't collide in BGP. It carries **no policy
+        meaning** whatsoever.
+      - **RT (Route Target)** — an **extended community** that controls
+        **import and export**: which VRFs a route is placed into at the far
+        end. All the VPN topology (hub-and-spoke, extranet, full mesh) is
+        expressed with RTs.
+
+      **RD makes routes unique; RT decides where they go.**
+    tags: [mpls, concept, l3vpn]
+    source: labs/mpls-sr-isis-bgp
+
+  - id: mpls-vpn-label-significance
+    type: basic
+    subdeck: L3VPN
+    front: |
+      Why is the VPN label locally significant to the egress PE while an SR
+      transport label is globally meaningful?
+    back: |
+      The **VPN label** is allocated by the egress PE and advertised in its own
+      BGP VPNv4 update — it is a private index into that PE's own VRF/CE
+      tables. No other router interprets it.
+
+      The **SR transport label** is derived from the domain-wide SRGB plus a
+      SID index, so every router in the domain computes the same value for the
+      same destination and agrees on its meaning.
+    tags: [mpls, concept, l3vpn]
+    source: labs/mpls-sr-isis-bgp
+
+# ── L2VPN ─────────────────────────────────────────────────────────────────
+
+  - id: mpls-l2vpn-vs-l3vpn
+    type: basic
+    subdeck: L2VPN
+    front: |
+      L3VPN vs. L2VPN/pseudowire — what is tunnelled, and what does the CE see?
+    back: |
+      | | L3VPN | L2VPN / pseudowire |
+      |---|---|---|
+      | Tunnelled | **IP packets** | **Ethernet frames** |
+      | CE runs routing with PE? | Yes — eBGP/OSPF to the PE | **No** — the PE is transparent |
+      | PE terminates L3? | Yes, the PE is the CE's next-hop | No |
+      | CE subnets | Different per site | **Same subnet across sites** |
+      | Use case | Enterprise WAN, carrier IP-VPN | Leased-line replacement, carrier Ethernet |
+
+      With an L2VPN the two CEs behave exactly like hosts on one switch — they
+      **ARP for each other directly**. The provider carries frames and has no
+      visibility into, or responsibility for, the customer's routing.
+    tags: [mpls, concept, l2vpn]
+    source: labs/mpls-l2vpn
+
+  - id: mpls-pseudowire-label-stack
+    type: basic
+    subdeck: L2VPN
+    front: |
+      A pseudowire uses two labels. What is each, who assigns it, and who acts
+      on it?
+    back: |
+      **Outer — the transport/IGP label.** Assigned by LDP (or SR) for the
+      remote PE's loopback. The **P routers** swap it; it's the only label they
+      look at.
+
+      **Inner — the PW (VC) label.** Assigned by the **remote PE** via targeted
+      LDP for this specific pseudowire ID. Only the egress PE reads it, and it
+      identifies **which attachment circuit / bridge** the frame belongs to.
+
+      Same "transport + service" split as L3VPN — the core only ever knows how
+      to reach PEs, never what service is riding on top.
+    tags: [mpls, concept, l2vpn]
+    source: labs/mpls-l2vpn
+
+  - id: mpls-targeted-ldp
+    type: basic
+    subdeck: L2VPN
+    front: |
+      What is a **targeted** LDP session, and why does a pseudowire need one?
+    back: |
+      Ordinary LDP discovers neighbours with **link-local multicast hellos**, so
+      it only ever forms sessions with directly connected routers.
+
+      Two PEs signalling a pseudowire are **not adjacent** — they're separated
+      by the core. A targeted (tLDP) session uses **unicast hellos sent to the
+      peer's transport address**, forming a session across the core to exchange
+      PW labels.
+
+      Note the dependency: the targeted session itself rides **over** the
+      transport labels the ordinary link LDP sessions distributed. So a
+      pseudowire needs **both** — link LDP for transport, targeted LDP for the
+      service.
+    tags: [mpls, concept, l2vpn]
+    source: labs/mpls-l2vpn
+
+  - id: mpls-l2vpn-signaling-options
+    type: basic
+    subdeck: L2VPN
+    front: |
+      Four ways to signal L2VPN services. What does each give you?
+    back: |
+      | Signalling | RFC | Service |
+      |---|---|---|
+      | **LDP FEC 128 (VPWS)** | 4447 | Point-to-point pseudowire. Simplest, most deployed |
+      | **LDP FEC 129 (VPLS)** | 4762 | Multipoint, needs BGP autodiscovery |
+      | **BGP VPLS** | 4761 | Multipoint with BGP autodiscovery built in |
+      | **EVPN** | 7432 | Multipoint with a real **control plane** — MAC learning in BGP |
+
+      The trajectory: VPWS is point-to-point and manual; VPLS made it
+      multipoint but still learned MACs by **flooding in the data plane**;
+      **EVPN replaced flood-and-learn with BGP**, adding multihoming, MAC
+      mobility and all-active forwarding — which is why new deployments use it
+      for L2VPN as well as for data-centre overlays.
+    tags: [mpls, concept, l2vpn, evpn]
+    source: labs/mpls-l2vpn
+
+# ── Carrier Ethernet ──────────────────────────────────────────────────────
+
+  - id: mpls-qinq
+    type: basic
+    subdeck: Carrier Ethernet
+    front: |
+      What is QinQ (802.1ad), and what problem does it solve for a carrier?
+    back: |
+      **A second VLAN tag.** The customer's tag (**C-VLAN**) is preserved, and
+      the provider pushes its own outer tag (**S-VLAN**, service tag) at the
+      UNI.
+
+      It solves two problems at once:
+      1. **Scale** — the provider's 4096 S-VLANs each carry a customer's full
+         independent 4096 C-VLANs.
+      2. **Transparency** — the customer keeps their own VLAN numbering, and
+         two customers can both use VLAN 100 without colliding.
+
+      The provider switches only on the **outer** tag and never interprets the
+      inner one.
+    extra: |
+      The tag stack costs 4 more bytes, so provider cores run a raised MTU
+      (**1600–1608 baby-giant**) to carry a full 1500-byte customer frame with
+      two tags intact.
+    tags: [mpls, concept, carrier-ethernet]
+    source: labs/carrier-ethernet-handoff
+
+  - id: mpls-eline-vs-elan
+    type: basic
+    subdeck: Carrier Ethernet
+    front: |
+      MEF service types: E-Line, E-LAN, E-Tree. What is each?
+    back: |
+      - **E-Line** — **point-to-point**. Two UNIs, one EVC. The leased-line
+        replacement, implemented as a VPWS pseudowire.
+      - **E-LAN** — **multipoint-to-multipoint**. Every site can reach every
+        other, implemented as VPLS or EVPN.
+      - **E-Tree** — **rooted multipoint**. Leaves talk to roots but **not to
+        each other** — the shape you want for a hub-and-spoke service, or for
+        keeping tenants isolated from one another while all reaching a shared
+        head end.
+
+      Vocabulary: a **UNI** is the customer-facing demarcation port, and an
+      **EVC** is the service instance connecting UNIs.
+    tags: [mpls, concept, carrier-ethernet]
+    source: labs/carrier-ethernet-handoff
+
+  - id: mpls-wrong-cross-connect
+    type: basic
+    subdeck: Carrier Ethernet
+    front: |
+      Two E-Line services are turned up and the customer reports that site A
+      reaches the wrong site. How do you prove it from tags alone?
+    back: |
+      **Capture at the UNI and read the S-VLAN.** The customer's C-VLAN is
+      unchanged end to end, so it tells you nothing about which EVC the frame
+      actually took. The **outer S-VLAN** is the provider's service identifier,
+      and a mismatch between the S-VLAN observed and the one the service order
+      specifies **is** the misconfigured cross-connect.
+
+      This is why carrier handoff troubleshooting starts with a tagged capture
+      rather than a ping: reachability tells you frames arrive somewhere, and
+      only the tag tells you **which service carried them**.
+    tags: [mpls, symptom-cause, carrier-ethernet]
+    source: labs/carrier-ethernet-handoff
+
+  - id: mpls-carrier-mtu-negotiation
+    type: basic
+    subdeck: Carrier Ethernet
+    front: |
+      Why is MTU the first thing to agree on at a carrier Ethernet handoff?
+    back: |
+      Because the provider adds tags (and possibly an MPLS stack) to every
+      frame, and the customer has no visibility into how many bytes that is.
+
+      A customer sending a standard 1500-byte frame with their own tag needs
+      the provider to carry **1518 + 4 (S-VLAN) = 1522**, and more if the
+      customer runs their own QinQ or jumbo frames.
+
+      Get it wrong and you get the **classic PMTU black hole**: small packets
+      pass, the service tests fine at turn-up, and full-size traffic silently
+      dies later — after the circuit has been accepted.
+
+      Test it explicitly at turn-up with **DF-bit frames at the agreed maximum
+      size**, in both directions.
+    tags: [mpls, symptom-cause, carrier-ethernet, mtu]
+    source: labs/carrier-ethernet-handoff
+
+# ── BGP labeled unicast ───────────────────────────────────────────────────
+
+  - id: mpls-bgp-lu-what-it-is
+    type: basic
+    subdeck: BGP-LU
+    front: |
+      What does a BGP labeled-unicast (RFC 8277) update carry that a plain
+      BGP update does not, and which address family is it?
+    back: |
+      A **label bound to the prefix** — "to reach X, use label Y". Each router
+      allocates its own local label and programs a **swap** on transit.
+
+      The address family is `ipv4 labeled-unicast`, **distinct from**
+      `ipv4 unicast` — neighbours must be activated in it explicitly.
+    extra: |
+      Stitching labeled routes across an AS boundary at the ASBRs is
+      **Inter-AS Option C** (RFC 4364). It scales better than Option A
+      (per-VRF sub-interfaces between ASBRs) but requires far more trust: the
+      two ASes exchange loopback reachability and labels directly.
+    tags: [mpls, concept, bgp-lu]
+    source: labs/bgp-labeled-unicast
+
+  - id: mpls-bgp-lu-peering-source
+    type: basic
+    subdeck: BGP-LU
+    front: |
+      Why does iBGP-LU peer on loopbacks with `update-source Loopback0` while
+      eBGP-LU between ASBRs peers on the link addresses?
+    back: |
+      **iBGP** — the IGP inside the AS makes loopbacks mutually reachable, so
+      loopback peering survives any single link failure.
+
+      **eBGP** across the AS boundary — there is **no IGP between the two
+      ASes**, so a loopback would be an unreachable address and the session
+      would never establish. The directly-connected link is the only thing both
+      sides can resolve.
+
+      A loopback-peered BGP session is only as alive as the IGP beneath it.
+    tags: [mpls, concept, bgp-lu]
+    source: labs/bgp-labeled-unicast

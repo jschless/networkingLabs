@@ -1,0 +1,1123 @@
+deck: BGP
+cards:
+
+# ── Sessions and next-hop ─────────────────────────────────────────────────
+
+  - id: bgp-ebgp-vs-ibgp-nexthop
+    type: basic
+    subdeck: Next-hop
+    front: |
+      How does eBGP treat the NEXT_HOP attribute when it re-advertises a
+      route? How does iBGP treat it?
+    back: |
+      **eBGP** rewrites NEXT_HOP to its own peering address at every hop — so
+      the receiver's next-hop is directly connected and immediately usable.
+
+      **iBGP** forwards the route with the NEXT_HOP **untouched**. An interior
+      router receives the *original* external next-hop, on a subnet it may
+      know nothing about.
+    tags: [bgp, concept, next-hop]
+    source: labs/bgp-basics
+
+  - id: bgp-nexthop-inaccessible-symptom
+    type: basic
+    subdeck: Next-hop
+    front: |
+      A prefix is present in `show ip bgp` but has no `>` best-path marker and
+      never reaches the routing table. What is the most likely cause, and how
+      do you confirm it?
+    back: |
+      **The next-hop is unreachable** — BGP will not select a path whose
+      NEXT_HOP cannot be resolved in the RIB.
+
+      Confirm with `show ip bgp <prefix>`: the path is flagged
+      *inaccessible*. Then check whether the next-hop address itself is in
+      `show ip route`.
+    extra: |
+      Classic on iBGP: an interior router learns an external prefix whose
+      next-hop is an eBGP link subnet no IGP carries.
+    tags: [bgp, symptom-cause, next-hop]
+    source: labs/bgp-basics
+
+  - id: bgp-next-hop-self-scope
+    type: basic
+    subdeck: Next-hop
+    front: |
+      Two fixes for the iBGP next-hop problem. Which is more common, and is
+      `next-hop-self` configured once per AS or once per advertising router?
+    back: |
+      Fixes: (1) `next-hop-self` on the border router's iBGP sessions, or
+      (2) run an IGP that also carries the eBGP link subnets.
+
+      (1) is the more common, more contained choice.
+
+      **Per advertising router, not per AS.** Next-hop rewriting is done by
+      whichever router sends the UPDATE — every border router needs it on its
+      own iBGP sessions.
+    tags: [bgp, ios-xe, concept, next-hop]
+    source: labs/bgp-basics
+
+  - id: bgp-iosxe-basic-session
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: build an eBGP session to 10.1.12.2 in AS 65002 and advertise
+      your loopback 10.0.0.1/32.
+    back: |
+      ```
+      router bgp 65001
+       bgp router-id 10.0.0.1
+       neighbor 10.1.12.2 remote-as 65002
+       !
+       address-family ipv4 unicast
+        neighbor 10.1.12.2 activate
+        network 10.0.0.1 mask 255.255.255.255
+      ```
+    extra: |
+      Two IOS-XE specifics: `network` takes a **`mask`** keyword (there's no
+      slash notation), and a `network` statement only advertises the prefix if
+      an **exactly matching route already exists in the RIB** — matching both
+      the address *and* the mask. A `network 10.0.0.0 mask 255.0.0.0` with only
+      a /32 in the table advertises nothing.
+    tags: [bgp, ios-xe, syntax]
+    source: labs/bgp-basics
+
+  - id: bgp-fsm-states
+    type: cloze
+    subdeck: Sessions
+    text: |
+      The BGP finite state machine walks {{c1::Idle}} → {{c2::Connect}} /
+      {{c3::Active}} → {{c4::OpenSent}} → {{c5::OpenConfirm}} →
+      {{c6::Established}}. The underlying transport is TCP port {{c7::179}}.
+    tags: [bgp, cloze, sessions]
+    source: labs/bgp-basics
+
+  - id: bgp-triage-active-vs-flapping
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      Triage rule: a BGP session **parked in Active** vs. a session
+      **flapping with NOTIFICATION messages**. What does each tell you?
+    back: |
+      **Parked in Active, silently** — TCP itself can't connect. Wrong
+      neighbor IP, no route to the peer, an ACL or firewall blocking 179.
+      No notification, because no BGP conversation ever happened.
+
+      **Flapping with notifications** — TCP connects and OPEN is exchanged,
+      then the peers *disagree* about something in it. Classic: wrong
+      `remote-as`, which logs `OPEN Message Error / Bad Peer AS`.
+
+      **Can't reach the peer = Active. Config disagreement = flapping.**
+    tags: [bgp, symptom-cause, sessions]
+    source: labs/bgp-basics
+
+  - id: bgp-ebgp-ttl-default
+    type: basic
+    subdeck: Sessions
+    front: |
+      What TTL does an eBGP session use by default, what does iBGP use, and
+      what breaks when you peer eBGP between loopbacks?
+    back: |
+      **eBGP defaults to TTL 1** (peers assumed directly connected);
+      **iBGP uses 255**.
+
+      Loopback-to-loopback eBGP is more than one hop away, so the packets are
+      discarded. Fix with `neighbor <ip> ebgp-multihop <n>` or
+      `neighbor <ip> ttl-security hops <n>`.
+    tags: [bgp, ios-xe, concept, sessions]
+    source: labs/bgp-basics
+
+  - id: bgp-loopback-peering-requirements
+    type: basic
+    subdeck: Sessions
+    front: |
+      To peer iBGP between loopbacks instead of link addresses, what two
+      things must be true — and what failure does loopback peering protect
+      against?
+    back: |
+      1. Each router must have a **route to the peer's loopback** (via the IGP).
+      2. The session must source from the loopback:
+         `neighbor <ip> update-source Loopback0`.
+
+      It protects against **single-link failure**: with multiple paths between
+      the routers, the loopback stays up and the session survives a link going
+      down, instead of resetting.
+    tags: [bgp, ios-xe, concept, sessions]
+    source: labs/bgp-basics
+
+  - id: bgp-ibgp-split-horizon
+    type: basic
+    subdeck: Sessions
+    front: |
+      Why does iBGP require a full mesh, and what are the two ways out of it?
+    back: |
+      **iBGP split-horizon**: a router never re-advertises an iBGP-learned
+      route to another iBGP peer (loop prevention — there's no AS-path to
+      detect loops inside one AS). So every iBGP speaker must peer with every
+      other: **n(n−1)/2** sessions.
+
+      Escapes: **route reflectors** and **confederations**.
+    extra: |
+      5 routers = 10 sessions; 20 routers = 190. The scaling problem is why
+      route reflectors are near-universal in real networks.
+    tags: [bgp, concept, sessions]
+    source: labs/bgp-basics
+
+# ── Path selection ────────────────────────────────────────────────────────
+
+  - id: bgp-path-selection-order-full
+    type: cloze
+    subdeck: Path selection
+    text: |
+      BGP best-path order, stopping at the first difference:
+      1. highest {{c1::weight}} (local to the router, never advertised)
+      2. highest {{c2::local-preference}} (AS-wide, default 100)
+      3. prefer {{c3::locally originated}} routes
+      4. shortest {{c4::AS-path}}
+      5. lowest {{c5::origin}} code (IGP < EGP < incomplete)
+      6. lowest {{c6::MED}} (only between paths from the same AS)
+      7. prefer {{c7::eBGP over iBGP}}
+      8. lowest {{c8::IGP metric to the next-hop}}
+      9. oldest {{c9::eBGP path}}
+      10. lowest {{c10::router-id}}
+    tags: [bgp, cloze, path-selection]
+    source: labs/bgp-path-selection
+
+  - id: bgp-weight-scope
+    type: basic
+    subdeck: Path selection
+    front: |
+      What is BGP **weight**, what is its scope, and what's the operational
+      danger of using it?
+    back: |
+      A **Cisco-proprietary**, purely **local** attribute — highest wins, and
+      it is **never advertised to any peer**. It only steers this one router's
+      outbound choice.
+
+      The danger: because it's invisible from every other router, a weight
+      nobody documented *will* surprise the next engineer debugging why
+      traffic takes an odd path.
+    extra: |
+      IOS-XE: `neighbor 10.1.11.2 weight 200` — under `router bgp`, and it
+      takes effect for all address families.
+    tags: [bgp, ios-xe, concept, path-selection]
+    source: labs/bgp-path-selection
+
+  - id: bgp-localpref-vs-weight
+    type: basic
+    subdeck: Path selection
+    front: |
+      Local-preference vs. weight: what can local-pref do that weight cannot?
+    back: |
+      Local-pref is carried in **iBGP UPDATEs**, so setting it on one border
+      router makes the **whole AS** agree on which exit to use. Weight stops
+      at the box it's configured on.
+
+      Local-pref is how an AS speaks with one voice about egress; weight is
+      one router's private opinion.
+    extra: |
+      Both steer **outbound** traffic only. Default local-pref is 100, and
+      higher wins.
+    tags: [bgp, concept, path-selection]
+    source: labs/bgp-path-selection
+
+  - id: bgp-localpref-beats-ebgp-over-ibgp
+    type: basic
+    subdeck: Path selection
+    front: |
+      A router has its own direct eBGP path (local-pref 100) and an iBGP path
+      via a neighbor (local-pref 200) for the same prefix. Which wins?
+    back: |
+      **The iBGP path**, on local-preference.
+
+      Rule 2 (local-pref) is evaluated long before rule 7 (prefer eBGP over
+      iBGP) — and rule 7 only ever applies when everything above it ties. The
+      router will deliberately haul traffic across the internal link to exit
+      elsewhere. That's the point of local-pref.
+    tags: [bgp, concept, path-selection]
+    source: labs/bgp-path-selection
+
+  - id: bgp-inbound-vs-outbound-levers
+    type: basic
+    subdeck: Path selection
+    front: |
+      Which BGP attributes steer **outbound** traffic, and which attempt to
+      influence **inbound**?
+    back: |
+      **Outbound (yours to decide):** weight, local-preference — applied
+      *inbound* on routes you receive.
+
+      **Inbound (a request to others):** AS-path prepending, MED — applied
+      *outbound* on routes you advertise.
+
+      You can only edit attributes on routes **you send**; what the remote AS
+      does with them is their decision.
+    tags: [bgp, concept, path-selection]
+    source: labs/bgp-path-selection
+
+  - id: bgp-prepending-is-a-request
+    type: basic
+    subdeck: Path selection
+    front: |
+      You prepend your AS three times toward ISP-B and inbound traffic doesn't
+      move. Why can prepending fail, structurally?
+    back: |
+      Because the remote AS's **local-preference (rule 2) is evaluated before
+      AS-path length (rule 4)**. Any explicit local-pref policy on their side
+      silently overrides your prepending, no matter how many times you prepend.
+
+      Prepending is a **request, not a command** — the fundamental asymmetry
+      of inter-domain traffic engineering.
+    extra: |
+      IOS-XE: `route-map PREPEND permit 10` / `set as-path prepend 65001 65001`
+      applied `neighbor <ip> route-map PREPEND out`.
+    tags: [bgp, concept, path-selection]
+    source: labs/bgp-path-selection
+
+  - id: bgp-med-conditions
+    type: basic
+    subdeck: Path selection
+    front: |
+      Why is MED the weakest traffic-engineering tool, and under what
+      condition is it even compared?
+    back: |
+      MED is compared **only between paths received from the same neighbouring
+      AS** — different ASes, and it's skipped entirely.
+
+      And five rules run before it (weight, local-pref, local origination,
+      AS-path, origin), so the receiving AS overrides it trivially and is free
+      to ignore or reset it.
+
+      In practice MED is honoured between organizations with an explicit
+      agreement, and beaten by local-pref everywhere else.
+    extra: |
+      `bgp always-compare-med` forces comparison across ASes — rarely used,
+      because it can cause route oscillation.
+    tags: [bgp, concept, path-selection]
+    source: labs/bgp-path-selection
+
+  - id: bgp-unpolicied-dualhome-instability
+    type: basic
+    subdeck: Path selection
+    front: |
+      A dual-homed site has two identical paths and no policy anywhere. Which
+      rule decides, and why is that a problem?
+    back: |
+      It falls all the way to the tiebreakers — **oldest eBGP path** (rule 9),
+      then **lowest router-id** (rule 10).
+
+      "Oldest path" means a session flap can silently relocate all your
+      traffic, and nothing in the config explains why. An unpolicied
+      dual-homed setup chooses **arbitrarily and unstably**.
+    extra: |
+      Rule 9 exists to *dampen* churn — once a path wins it keeps winning —
+      but it also means verifying a policy change may require clearing the
+      session to see the new decision.
+    tags: [bgp, concept, path-selection]
+    source: labs/bgp-path-selection
+
+  - id: bgp-iosxe-soft-clear
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      You changed an inbound route-map. How do you make BGP re-evaluate
+      without tearing down the session?
+    back: |
+      ```
+      clear ip bgp * soft in
+      clear ip bgp * soft out
+      clear ip bgp *  soft      ! both directions
+      ```
+
+      A hard `clear ip bgp *` resets the TCP sessions and causes a real
+      outage — almost never what you want.
+    extra: |
+      Inbound soft-reconfiguration works without stored updates as long as
+      both peers support the **route-refresh** capability (universal on modern
+      gear). The legacy alternative,
+      `neighbor <ip> soft-reconfiguration inbound`, stores every received
+      update in memory and should be avoided.
+    tags: [bgp, ios-xe, syntax]
+    source: labs/bgp-path-selection
+
+  - id: bgp-community-formats
+    type: basic
+    subdeck: Communities
+    front: |
+      Three BGP community formats — name each, its size and its typical use.
+    back: |
+      | Type | Format | Size | Use |
+      |---|---|---|---|
+      | Standard | `AA:NN` | 32-bit | General tagging |
+      | Extended | `type:AA:NN` | 64-bit | MPLS VPN route-targets |
+      | Large | `AA:NN1:NN2` | 96-bit | 4-byte ASNs, more granular values |
+    extra: |
+      Communities are **optional transitive**: they may cross eBGP boundaries.
+      Their meaning is operator agreement — except the well-known ones.
+    tags: [bgp, concept, communities]
+    source: labs/bgp-communities
+
+  - id: bgp-wellknown-communities
+    type: basic
+    subdeck: Communities
+    front: |
+      `no-export` vs. `no-advertise` — what boundary does each stop at?
+    back: |
+      **`no-export`** — do not advertise **beyond the local AS**. iBGP peers
+      inside the receiving AS still learn it; it just never leaves via eBGP.
+
+      **`no-advertise`** — do not advertise to **any** BGP peer at all, iBGP
+      included. It stops at the receiving router.
+
+      Also well-known: `local-AS` (don't leave the confederation sub-AS) and
+      `internet` (advertise to all — the default).
+    extra: |
+      In a chain of single-router ASes the two look identical. The difference
+      only shows when the receiving AS has more than one router.
+    tags: [bgp, concept, communities]
+    source: labs/bgp-communities
+
+  - id: bgp-community-who-enforces
+    type: basic
+    subdeck: Communities
+    front: |
+      Router A tags a prefix `no-export` and sends it to router B in another
+      AS. Which router actually suppresses the onward advertisement?
+    back: |
+      **The receiving router (B).** A only *asked*; B honours the tag by
+      excluding the prefix from its own eBGP advertisements.
+
+      Well-known communities are the ones a router acts on with **zero
+      configuration**. Arbitrary tags like `65001:100` do nothing until
+      someone writes matching policy.
+    tags: [bgp, concept, communities]
+    source: labs/bgp-communities
+
+  - id: bgp-send-community-required
+    type: basic
+    subdeck: Communities
+    front: |
+      You set a community with an outbound route-map, but the neighbor never
+      sees it. Communities are supposed to be transitive — what's missing?
+    back: |
+      **`neighbor <ip> send-community`.** The attribute is attached locally but
+      not transmitted until sending is enabled on that neighbor.
+
+      "Transitive" describes what routers *may* propagate, not what they are
+      configured to. One missing `send-community` on an intermediate session
+      silently severs every community-based agreement downstream.
+    extra: |
+      IOS-XE: `send-community` alone sends standard communities; use
+      `send-community both` (or `send-community extended`) when you also need
+      extended communities — which EVPN and MPLS VPN route-targets require.
+      Diagnose from the far end: the Community line is simply absent, which
+      looks identical to an explicit `set community none` upstream.
+    tags: [bgp, ios-xe, symptom-cause, communities]
+    source: labs/bgp-communities
+
+  - id: bgp-set-community-additive
+    type: basic
+    subdeck: Communities
+    front: |
+      A route already carries `65001:100`. Your route-map says
+      `set community 65001:200`. What does the route carry afterwards?
+    back: |
+      **Only `65001:200`.** Plain `set community` **replaces** the entire set.
+
+      To append instead:
+
+      ```
+      route-map SET-COMM permit 10
+       set community 65001:200 additive
+      ```
+    extra: |
+      Forgetting `additive` is a common way to silently destroy a peer's
+      traffic-engineering tags mid-path. `set community none` strips them all.
+    tags: [bgp, ios-xe, syntax, communities]
+    source: labs/bgp-communities
+
+  - id: bgp-community-menu-pattern
+    type: basic
+    subdeck: Communities
+    front: |
+      What is the "community menu" pattern that ISPs offer customers, and why
+      is it operationally elegant?
+    back: |
+      The provider publishes tags with defined actions ("send us `65002:80` and
+      we set local-pref 80 on your route"). The **customer tags**, the
+      **provider's inbound policy acts**.
+
+      The customer steers policy inside the provider's network without anyone
+      touching the provider's config per request — sender-tags / receiver-acts.
+    extra: |
+      Implementation: `ip community-list standard PREF-TAG permit 65002:80`,
+      then a route-map stanza with `match community PREF-TAG` and
+      `set local-preference 80` — plus a bare permit stanza as catch-all.
+    tags: [bgp, concept, communities]
+    source: labs/bgp-communities
+
+  - id: bgp-strip-communities-at-boundary
+    type: basic
+    subdeck: Communities
+    front: |
+      Why do operators strip or rewrite inbound communities at a trust
+      boundary, and what does that cost?
+    back: |
+      So outsiders can't trigger the AS's internal "menu" actions — an
+      unfiltered community from a stranger is an unauthenticated policy
+      command into your network.
+
+      The cost: communities are only as durable as every AS in the path
+      allows, so legitimate signals must be **re-agreed hop by hop**. A tag
+      that vanishes five ASes away was stripped by someone, and you can't tell
+      whom from the outside.
+    tags: [bgp, concept, communities, security]
+    source: labs/bgp-communities
+
+# ── Filtering ─────────────────────────────────────────────────────────────
+
+  - id: bgp-prefix-list-ge-le
+    type: basic
+    subdeck: Filtering
+    front: |
+      In an IP prefix-list, what do bare, `le N`, `ge N`, and `ge M le N`
+      each match?
+    back: |
+      | Form | Matches |
+      |---|---|
+      | (none) | Exact prefix **and** exact length |
+      | `le N` | Prefix matches and length ≤ N |
+      | `ge N` | Prefix matches and length ≥ N |
+      | `ge M le N` | Prefix matches and M ≤ length ≤ N |
+
+      `permit 0.0.0.0/0 le 32` is the standard "permit everything" catch-all.
+    extra: |
+      Entries evaluate in sequence order, first match wins, and there is an
+      **implicit deny-all** at the end — the single most common prefix-list bug.
+    tags: [bgp, ios-xe, syntax, filtering]
+    source: labs/bgp-filtering
+
+  - id: bgp-as-path-regex-tokens
+    type: basic
+    subdeck: Filtering
+    front: |
+      AS-path regex: what do `^$`, `^65001$`, `_65001$`, `_65001_`, and
+      `^65001_` each match?
+    back: |
+      | Pattern | Matches |
+      |---|---|
+      | `^$` | Empty AS-path — locally originated, or from a direct peer inside your AS |
+      | `^65001$` | Exactly 65001 — originated there, no transit |
+      | `_65001$` | Ends in 65001 — 65001 originated it, any number of transits |
+      | `_65001_` | 65001 appears anywhere (as transit) |
+      | `^65001_` | 65001 is the first AS — i.e. the peer's own AS |
+
+      `_` matches a separator (start, space, end) — it stops `65001` matching
+      inside `650012`.
+    extra: |
+      `^$` applied inbound on every customer session is one of the strongest
+      anti-route-leak tools an ISP has: it accepts only what the customer
+      originated.
+    tags: [bgp, concept, filtering]
+    source: labs/bgp-filtering
+
+  - id: bgp-iosxe-filter-list
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: accept from a neighbor only routes originated in AS 65001.
+    back: |
+      ```
+      ip as-path access-list 1 permit _65001$
+      !
+      router bgp 65003
+       address-family ipv4 unicast
+        neighbor 10.1.23.1 filter-list 1 in
+      ```
+    extra: |
+      `filter-list` applies an AS-path ACL directly — Arista EOS has no such
+      command and forces you through `route-map` + `match as-path`, which also
+      works on IOS-XE when you need to combine conditions.
+      Test a regex live with `show ip bgp regexp _65001$`.
+    tags: [bgp, ios-xe, syntax, filtering]
+    source: labs/bgp-filtering
+
+  - id: bgp-iosxe-prefix-list-filter
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: on an inbound session, reject 172.16.2.0/24 and accept
+      everything else.
+    back: |
+      ```
+      ip prefix-list BLOCK-172-16-2 seq 5 deny 172.16.2.0/24
+      ip prefix-list BLOCK-172-16-2 seq 10 permit 0.0.0.0/0 le 32
+      !
+      router bgp 65002
+       address-family ipv4 unicast
+        neighbor 10.1.12.1 prefix-list BLOCK-172-16-2 in
+      !
+      clear ip bgp 10.1.12.1 soft in
+      ```
+    extra: |
+      The `permit 0.0.0.0/0 le 32` line is mandatory — without it the implicit
+      deny drops every other prefix too.
+    tags: [bgp, ios-xe, syntax, filtering]
+    source: labs/bgp-filtering
+
+  - id: bgp-received-vs-accepted-routes
+    type: basic
+    subdeck: Filtering
+    front: |
+      Which two show commands distinguish "what the neighbor sent me" from
+      "what I accepted", and how do they differ after an *inbound* filter vs.
+      the neighbor's *outbound* filter?
+    back: |
+      ```
+      show ip bgp neighbors <ip> received-routes    ! pre-filter
+      show ip bgp neighbors <ip> routes             ! post-filter
+      show ip bgp neighbors <ip> advertised-routes  ! what I send
+      ```
+
+      **My inbound filter**: `received-routes` still shows the prefix,
+      `routes` doesn't — it arrived and was discarded.
+
+      **Their outbound filter**: *both* views lose it — it was never sent.
+
+      That difference tells you which side of the session to go fix.
+    extra: |
+      `received-routes` needs the route-refresh capability or
+      `soft-reconfiguration inbound` on the neighbor.
+    tags: [bgp, ios-xe, symptom-cause, filtering]
+    source: labs/bgp-filtering
+
+  - id: bgp-inbound-vs-outbound-filtering
+    type: basic
+    subdeck: Filtering
+    front: |
+      Filter outbound at the source or inbound at the receiver — which is
+      right?
+    back: |
+      **Both, always.**
+
+      Outbound at the source is cleaner: less wasted advertisement, and the
+      origin controls its own exposure.
+
+      Inbound at the receiver is **self-defense that doesn't depend on the
+      neighbor behaving**. Never trust the other side to filter for you.
+    extra: |
+      One inbound filter at a transit point shadows everything downstream — a
+      route you didn't accept is a route you can't re-advertise. That is both
+      the power and the danger of filtering at transit.
+    tags: [bgp, concept, filtering]
+    source: labs/bgp-filtering
+
+  - id: bgp-route-map-implicit-deny
+    type: basic
+    subdeck: Filtering
+    front: |
+      A route matches none of your route-map's `match` clauses. What happens
+      to it, and what's the fix?
+    back: |
+      **It is dropped** — every route-map ends in an implicit deny.
+
+      The fix is a bare permit stanza with no match clause as the last entry:
+
+      ```
+      route-map FROM-R1 permit 10
+       match ip address prefix-list WANTED
+       set local-preference 150
+      route-map FROM-R1 deny 20
+       match ip address prefix-list UNWANTED
+      route-map FROM-R1 permit 30
+      ```
+
+      Forgetting stanza 30 is the single most common route-map authoring bug.
+    extra: |
+      Route-maps evaluate in sequence order, first match wins. Within one
+      stanza, multiple `match` clauses of different types are ANDed.
+    tags: [bgp, ios-xe, concept, filtering]
+    source: labs/bgp-filtering
+
+  - id: bgp-origin-based-filtering-purpose
+    type: basic
+    subdeck: Filtering
+    front: |
+      Why does a provider filter customer sessions on route *origin* rather
+      than just on prefix?
+    back: |
+      It enforces "my customer may only send me routes their own AS
+      originated" — the real-world defense against a customer accidentally
+      becoming **transit for the whole internet** by re-advertising one
+      provider's routes to another.
+
+      Prefix filters bound *what* they announce; origin filters bound *whose*
+      routes they may announce at all.
+    tags: [bgp, concept, filtering, security]
+    source: labs/bgp-filtering
+
+# ── Aggregation ───────────────────────────────────────────────────────────
+
+  - id: bgp-aggregate-default-behavior
+    type: basic
+    subdeck: Aggregation
+    front: |
+      You configure a plain `aggregate-address` covering four /24s. How many
+      of those prefixes does a downstream router now see, and what AS-path
+      does the aggregate carry?
+    back: |
+      **Five** — the aggregate *plus* all four components. Default aggregation
+      **adds, it doesn't replace**; `summary-only` is what suppresses the
+      specifics.
+
+      The aggregate's AS-path is just the **aggregating AS**. It is *locally
+      originated*, so the contributors' AS-path history is destroyed.
+    tags: [bgp, concept, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-aggregate-lifecycle
+    type: basic
+    subdeck: Aggregation
+    front: |
+      When does an aggregate route exist, and when is it withdrawn?
+    back: |
+      It activates while **at least one** component more-specific is in the
+      BGP table, and is withdrawn automatically when the **last** one
+      disappears.
+
+      Good edge: one flapping customer /24 never disturbs the world's view of
+      the aggregate.
+      Bad edge: while a component is down, traffic for it still follows the
+      aggregate to you and **black-holes**. Summaries trade visibility of
+      partial failure for stability.
+    tags: [bgp, concept, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-aggregate-suppressed-flag
+    type: basic
+    subdeck: Aggregation
+    front: |
+      With `summary-only` active, do the component prefixes still exist in the
+      aggregating router's own BGP table?
+    back: |
+      **Yes**, flagged `s` (suppressed):
+
+      ```
+      s> 10.1.1.0/24
+      s> 10.1.2.0/24
+      ```
+
+      Suppression is an **advertisement filter, not a table operation**. The
+      aggregator still routes on exact /24 detail internally while showing the
+      world one prefix — detail inside, summary outside.
+    tags: [bgp, concept, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-as-set-purpose
+    type: basic
+    subdeck: Aggregation
+    front: |
+      What does `as-set` do on an aggregate, and what problem does it solve?
+    back: |
+      It includes the contributors' ASNs as an **AS_SET** segment — shown in
+      braces, e.g. `65002 {65001 65003}` — and drops the `atomic-aggregate`
+      attribute, since path information is no longer lost.
+
+      Purpose: **loop prevention.** A summary whose AS_SET contains your own
+      ASN is rejected by normal AS-path loop detection. Without it, an
+      aggregate hides the origin ASes and can be re-imported into an AS that
+      contributed to it.
+    extra: |
+      IOS-XE: `aggregate-address 10.1.0.0 255.255.248.0 summary-only as-set`.
+      Note the **subnet mask**, not slash notation.
+    tags: [bgp, ios-xe, concept, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-iosxe-suppress-map
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: advertise an aggregate, suppress only 10.1.4.0/24, and let the
+      other components through.
+    back: |
+      ```
+      ip prefix-list SUPPRESS-4 seq 5 permit 10.1.4.0/24
+      !
+      route-map SUPPRESS-MAP permit 10
+       match ip address prefix-list SUPPRESS-4
+      !
+      router bgp 65002
+       address-family ipv4 unicast
+        aggregate-address 10.1.0.0 255.255.248.0 suppress-map SUPPRESS-MAP
+      ```
+
+      Routes **matching** the map are suppressed; the rest are still advertised
+      alongside the aggregate.
+    extra: |
+      Related aggregate options: `attribute-map` sets attributes on the
+      aggregate itself, `advertise-map` selects which components contribute.
+      Arista EOS has no standalone `suppress-map` and folds it into
+      `summary-only match-map`.
+    tags: [bgp, ios-xe, syntax, aggregation]
+    source: labs/bgp-aggregation
+
+  - id: bgp-aggregate-does-not-prevent-hijack
+    type: basic
+    subdeck: Aggregation
+    front: |
+      You announce 10.1.0.0/21 `summary-only`. Someone else on the internet
+      announces 10.1.1.0/24. Who receives traffic for 10.1.1.50?
+    back: |
+      **The hijacker.** Forwarding is longest-prefix match, and their /24 is
+      more specific than your /21 — announcement order and legitimacy are
+      irrelevant.
+
+      This is the mechanism behind most BGP hijacks, and why "we're safe, we
+      aggregate" is backwards: aggregating **increases** your exposure by
+      leaving more-specific space unclaimed.
+    tags: [bgp, concept, aggregation, security]
+    source: labs/bgp-aggregation
+
+# ── RPKI / origin validation ──────────────────────────────────────────────
+
+  - id: bgp-rpki-roa-definition
+    type: basic
+    subdeck: RPKI
+    front: |
+      What is a ROA, and what three fields does it assert?
+    back: |
+      A **Route Origin Authorization** — a cryptographically signed object
+      created by the address-space holder stating:
+
+      *"Prefix X, up to maxLength Y, may be originated by AS Z."*
+
+      ROAs live in the global RPKI repository and are fetched by validator
+      software.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-rtr-architecture
+    type: basic
+    subdeck: RPKI
+    front: |
+      Routers don't speak RPKI directly. What sits between the router and the
+      RPKI repository, and what protocol connects them?
+    back: |
+      An **RPKI validator** (Routinator, FORT, rpki-client) fetches and
+      cryptographically validates the ROAs, then serves the resulting
+      prefix→origin pairs to routers over the lightweight **RTR
+      (RPKI-to-Router) protocol, RFC 8210**, on TCP.
+
+      The router caches the full validated dataset and matches received routes
+      against it **locally** — so the prefix table reflects what the validator
+      knows, entirely independent of what any BGP peer announces.
+    extra: |
+      IOS-XE: `bgp rpki server tcp 10.0.3.2 port 3323 refresh 600` under
+      `router bgp`. Check with `show ip bgp rpki servers` and
+      `show ip bgp rpki table`.
+    tags: [bgp, ios-xe, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-three-states
+    type: basic
+    subdeck: RPKI
+    front: |
+      The three RPKI validation states — define each.
+    back: |
+      | State | Meaning |
+      |---|---|
+      | **valid** | A matching ROA exists; origin AS **and** prefix length both fit |
+      | **invalid** | A ROA covers the prefix but the origin AS is wrong, **or** the announcement is longer than the ROA's maxLength |
+      | **notfound** | No ROA covers this prefix at all |
+    extra: |
+      Common policy: VALID → accept and raise local-pref; NOT-FOUND → accept
+      at normal preference; INVALID → drop.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-maxlength-trap
+    type: basic
+    subdeck: RPKI
+    front: |
+      A ROA says `10.100.0.0/24, maxLength 24, AS65100`. AS65100 itself starts
+      announcing 10.100.0.128/25. What state results?
+    back: |
+      **INVALID** — the announcement is longer than maxLength, even though the
+      origin AS is correct and legitimate.
+
+      maxLength is a powerful protection *and* an easy self-inflicted outage:
+      deaggregating for traffic engineering without first updating the ROA
+      makes the world drop your own prefix.
+    tags: [bgp, symptom-cause, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-limitation
+    type: basic
+    subdeck: RPKI
+    front: |
+      RPKI validates the route's origin AS. What attack does that leave open,
+      and what closes the gap?
+    back: |
+      **Path manipulation.** An attacker can prepend the legitimate origin ASN
+      to a forged path — the *origin* is then correct, so the route validates
+      **VALID**, while traffic still lands on the attacker.
+
+      RPKI/ROV proves *who may originate*, not *whether the path is real*.
+      **BGPsec** (RFC 8205) was designed to sign the whole AS-path, but has
+      seen almost no deployment; **ASPA** is the current lighter-weight effort.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-strict-rov-drawback
+    type: basic
+    subdeck: RPKI
+    front: |
+      "Strict ROV" drops NOT-FOUND as well as INVALID. Why doesn't anyone run
+      it on a transit AS?
+    back: |
+      Because a large share of internet prefixes still have **no ROA at all** —
+      dropping NOT-FOUND would disconnect you from a big fraction of the
+      internet.
+
+      Realistic migration: **drop INVALID** first (that's the security win),
+      keep NOT-FOUND at normal preference, and tighten only as ROA coverage
+      grows.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+  - id: bgp-rpki-drop-vs-deprefer
+    type: basic
+    subdeck: RPKI
+    front: |
+      Enforcing ROV by **dropping** INVALID vs. merely **de-preferring** it
+      with local-pref — when does the softer policy let a hijack succeed?
+    back: |
+      Whenever the legitimate route isn't there to compete: if the real
+      announcement is withdrawn, or never reaches this router, the INVALID
+      path is the *only* path — and a de-preferred route with no competition
+      still wins.
+
+      De-preferring only helps when both paths are present simultaneously.
+      Dropping is unconditional.
+    tags: [bgp, concept, rpki, security]
+    source: labs/bgp-rpki
+
+# ── Hijacking and peering security ────────────────────────────────────────
+
+  - id: bgp-longest-prefix-beats-policy
+    type: basic
+    subdeck: Prefix security
+    front: |
+      An attacker announces a /25 covering half of your legitimate /24, with a
+      *longer* AS-path than yours. Whose route wins?
+    back: |
+      **The attacker's, unconditionally.**
+
+      **Longest-prefix match happens in the forwarding table, before any BGP
+      attribute is compared.** A /25 always beats a covering /24 regardless of
+      AS-path, MED, local-pref or origin.
+
+      More-specific hijacks don't compete on BGP policy — they **bypass it**.
+      That's why real incidents (the 2008 YouTube/Pakistan Telecom outage) use
+      more-specifics.
+    tags: [bgp, concept, security]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-equal-prefix-hijack
+    type: basic
+    subdeck: Prefix security
+    front: |
+      An attacker announces the *same* prefix as the legitimate owner, with an
+      equal-length AS-path. What does the internet do?
+    back: |
+      **It splits, arbitrarily.** With AS-path length tied, the decision falls
+      to tiebreakers — oldest path, then lowest router-id — so roughly half the
+      internet may believe the hijacker and half the real owner, depending on
+      router-ids and propagation timing.
+
+      Equal-prefix hijacks produce **partial and unstable** diversion, which is
+      why attackers prefer more-specifics.
+    tags: [bgp, concept, security]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-aggregation-hijack-tension
+    type: basic
+    subdeck: Prefix security
+    front: |
+      Why does aggressive aggregation make you *more* vulnerable to hijacking,
+      and what's the counter-move?
+    back: |
+      Announcing only a large aggregate leaves all the more-specific space
+      **unclaimed** — anyone announcing a longer prefix inside it wins
+      immediately.
+
+      Counter-move: announce the more-specifics yourself so there is nothing
+      longer to beat you with. Downside: you inflate the global routing table
+      and lose the stability the aggregate provided — and someone can always
+      go one bit longer (beyond /24, most operators filter anyway, which is
+      what caps the game).
+    tags: [bgp, concept, security, aggregation]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-maximum-prefix-purpose
+    type: basic
+    subdeck: Prefix security
+    front: |
+      Does `maximum-prefix` stop a targeted two-prefix hijack? What is it
+      actually for?
+    back: |
+      **No** — a targeted hijack is one or two prefixes, far under any sane
+      limit.
+
+      `maximum-prefix` is a **circuit breaker for volume**: a peer leaking the
+      full table, or a misconfiguration announcing thousands of routes. It
+      protects your **control plane** by tearing the session down.
+
+      Necessary, but orthogonal to targeted hijacking.
+    extra: |
+      IOS-XE: `neighbor 10.1.12.2 maximum-prefix 1000 80 restart 15` — 80 is
+      the warning percentage. `warning-only` logs without tearing the session
+      down, which is the right setting on a session you can't afford to lose
+      unattended.
+    tags: [bgp, ios-xe, concept, security]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-le32-deny-sweeps-specifics
+    type: basic
+    subdeck: Prefix security
+    front: |
+      Write the prefix-list entry that rejects 192.0.2.0/24 **and every
+      more-specific of it** in one line.
+    back: |
+      ```
+      ip prefix-list HIJACKER-IN seq 5 deny 192.0.2.0/24 le 32
+      ip prefix-list HIJACKER-IN seq 10 permit 0.0.0.0/0 le 32
+      ```
+
+      `le 32` is what sweeps up the /25s, /26s and everything below. A bare
+      `deny 192.0.2.0/24` would block only the exact prefix and let every
+      more-specific hijack straight through.
+    tags: [bgp, ios-xe, syntax, security, filtering]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-defense-comparison
+    type: basic
+    subdeck: Prefix security
+    front: |
+      Compare the four prefix-security defenses and each one's limitation.
+    back: |
+      | Defense | What it does | Limitation |
+      |---|---|---|
+      | Prefix-list | Per-peer whitelist of allowed prefixes | Manual maintenance; a stale entry is how leaks happen |
+      | `maximum-prefix` | Drops the session on route-count explosion | Volume only, useless against targeted hijacks |
+      | IRR filtering | Generates the prefix-lists from registry data | Registry data is often stale or incomplete |
+      | RPKI / ROV | Cryptographic **origin** validation | Needs a validator; doesn't validate the AS-path |
+    extra: |
+      **BGPsec** signs the AS-path too, and is barely deployed. The
+      load-bearing operational principle is **"filter your customers"** — a
+      filter is most effective at the hijacker's own direct provider, which is
+      the core of MANRS.
+    tags: [bgp, concept, security]
+    source: labs/bgp-prefix-security
+
+  - id: bgp-route-server-semantics
+    type: basic
+    subdeck: IXP
+    front: |
+      At an IXP, what makes a **route server** different from an ordinary BGP
+      peer?
+    back: |
+      It reflects routes between participants **without inserting itself into
+      the data path**: it preserves the advertising participant's **next-hop**
+      and does **not prepend its own ASN** to the AS-path.
+
+      So a route learned via the route server shows AS-path `65002` and
+      next-hop = the content peer's own IXP address — not `65010 65002` via the
+      server. The control path and the forwarding path deliberately differ.
+
+      IOS-XE has no `route-server-client`; the equivalent is
+      `neighbor X next-hop-unchanged` plus removing the local AS from the path.
+    extra: |
+      One session per participant instead of n(n−1)/2 bilateral sessions is the
+      whole reason IXPs run them. The trade: the route server becomes a control
+      -plane single point of failure, which is why every IXP runs two.
+    tags: [bgp, concept, ixp]
+    source: labs/internet-peering-ixp
+
+  - id: bgp-session-is-not-authorization
+    type: basic
+    subdeck: IXP
+    front: |
+      A peer's BGP session is Established and you are receiving a prefix from
+      them. Does that authorize the prefix?
+    back: |
+      **No.** A technically reachable port is not an authorization.
+
+      The approval boundary is the **out-of-band evidence**: the IRR object,
+      the RPKI ROA, the peering agreement, the NOC record. A session's health
+      says nothing about whether the routes crossing it are legitimate.
+
+      Corollary for troubleshooting: always separate **received** from
+      **accepted** — a session can be perfectly healthy while its import policy
+      rejects a route.
+    tags: [bgp, concept, ixp, security]
+    source: labs/internet-peering-ixp
+
+  - id: bgp-rtbh
+    type: basic
+    subdeck: IXP
+    front: |
+      What is RTBH (remotely triggered black-hole), and what makes it dangerous
+      to offer?
+    back: |
+      A community (conventionally `<ASN>:666`) that asks the receiving network
+      to discard all traffic for a tagged prefix — the standard way to drop a
+      DDoS at the edge instead of letting it saturate your link.
+
+      **Danger:** it's an unauthenticated request to *destroy reachability*. If
+      the provider honours it without checks, anyone who can inject a tagged
+      route can black-hole someone else's address.
+
+      Safeguards: accept it **only** from the prefix's authorized originator,
+      **only** for prefixes within their allocation, usually **only** as a /32,
+      and log every acceptance.
+    tags: [bgp, concept, security, ixp]
+    source: labs/internet-peering-ixp
+
+  - id: bgp-stale-irr-filter-symptom
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      A peer adds a legitimate new prefix. Their session stays Established and
+      the prefix count is non-zero, but the prefix never appears in your table.
+      Where did it stop?
+    back: |
+      At **accepted**, not received — a **stale import filter**. The
+      IRR-derived prefix-list was generated before the new object existed, so
+      the route arrives and is discarded.
+
+      Diagnose by comparing the three views in order:
+      `received-routes` (present) → BGP table (absent) → the prefix-list itself.
+
+      Repair at the **source**: add the object, regenerate the list, review the
+      diff, re-apply. Never hand-edit generated policy — the next regeneration
+      silently reverts it.
+    tags: [bgp, symptom-cause, ixp, filtering]
+    source: labs/internet-peering-ixp
+
+  - id: bgp-localpref-asymmetry
+    type: basic
+    subdeck: Path selection
+    front: |
+      Why does local-preference tend to create **asymmetric** paths through a
+      transit AS?
+    back: |
+      Local-pref decides where traffic **exits** the AS, independently of
+      where it **entered**. Traffic can arrive at one border router and be
+      hauled internally to leave via another.
+
+      It matters when you have stateful middleboxes (firewalls, NAT, DPI) that
+      need to see both directions of a flow, and for latency-sensitive traffic
+      taking a longer internal path.
+    tags: [bgp, concept, path-selection]
+    source: labs/bgp-path-selection

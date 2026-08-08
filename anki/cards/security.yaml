@@ -1,0 +1,604 @@
+deck: Security
+cards:
+
+# ── ACLs ──────────────────────────────────────────────────────────────────
+
+  - id: sec-acl-first-match-implicit-deny
+    type: basic
+    subdeck: ACLs
+    front: |
+      Two rules about ACL evaluation that cause most ACL bugs.
+    back: |
+      1. **First match wins, top to bottom.** Evaluation stops at the first
+         matching entry — so a broad permit above a specific deny makes the
+         deny unreachable. Order is the policy.
+      2. **There is an implicit `deny ip any any` at the end.** An ACL that
+         only permits what you want silently drops everything else, including
+         the return traffic and control protocols you forgot about.
+
+      Verify with per-entry hit counters: `show access-lists`. Zero hits on a
+      rule you expect to match means it's shadowed or attached in the wrong
+      place.
+    tags: [security, ios-xe, concept, acl]
+    source: labs/acl-basics
+
+  - id: sec-acl-direction-and-placement
+    type: basic
+    subdeck: ACLs
+    front: |
+      Your ACL is correct but blocks nothing — or blocks everything. What are
+      the two placement mistakes?
+    back: |
+      1. **Wrong interface.** An ACL only sees traffic crossing *that*
+         interface. Applied to the wrong one, matching traffic never reaches it
+         — hit counters stay at zero, which is the tell.
+      2. **Wrong direction.** `in` filters traffic entering the router from the
+         wire; `out` filters traffic leaving toward it. The same rule as `in`
+         on one interface and `out` on another matches opposite flows.
+
+      The classic design rule: **extended ACLs close to the source**, so
+      unwanted traffic dies before consuming the network; **standard ACLs close
+      to the destination**, because they can only match source addresses and
+      would over-block anywhere else.
+    tags: [security, symptom-cause, acl]
+    source: labs/acl-basics
+
+  - id: sec-iosxe-extended-acl
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: permit the trusted subnet to reach TCP/8080 on a server, deny
+      everything else from an untrusted subnet, and log the denies.
+    back: |
+      ```
+      ip access-list extended TRANSIT-POLICY
+       permit tcp 192.168.10.0 0.0.0.255 host 192.168.30.10 eq 8080
+       deny   ip  192.168.20.0 0.0.0.255 any log
+       permit ip  any any
+      !
+      interface GigabitEthernet0/0
+       ip access-group TRANSIT-POLICY in
+      ```
+    extra: |
+      Named ACLs let you insert and delete individual lines by sequence number
+      (`no 20`, `15 permit ...`) — numbered ACLs historically forced you to
+      rebuild the whole list. Use `log` sparingly: it punts matching packets to
+      the CPU.
+    tags: [security, ios-xe, syntax, acl]
+    source: labs/acl-basics
+
+  - id: sec-acl-stateless
+    type: basic
+    subdeck: ACLs
+    front: |
+      Why does a "permit outbound, deny inbound" ACL break ordinary TCP, and
+      what are the fixes?
+    back: |
+      A basic ACL is **stateless** — it has no idea a packet is a reply. It
+      sees only the inbound direction and blocks the return traffic of
+      connections you deliberately allowed out.
+
+      Fixes, in increasing order of correctness:
+      - `permit tcp any any established` — matches only packets with ACK/RST
+        set. Cheap, but trivially spoofable and useless for UDP.
+      - **Reflexive ACLs** — dynamically mirror outbound flows.
+      - **A real stateful firewall / zone-based policy firewall** — tracks
+        connection state properly, and handles UDP and ICMP.
+    tags: [security, concept, acl]
+    source: labs/acl-basics
+
+# ── Control plane protection ──────────────────────────────────────────────
+
+  - id: sec-copp-what-it-polices
+    type: basic
+    subdeck: CoPP
+    front: |
+      Which of these are subject to CoPP: a ping *through* the router, a ping
+      *to* the router, an OSPF hello, an SSH session to the router?
+    back: |
+      CoPP polices only traffic **punted to the CPU** — destined to the router
+      itself.
+
+      - Ping **through** the router → **not** subject; it's forwarded in
+        hardware and never touches the control plane.
+      - Ping **to** the router → **yes**.
+      - OSPF hello → **yes** (addressed to the router / a protocol multicast
+        group it listens on).
+      - SSH to the router → **yes**.
+
+      CoPP protects the CPU, not the data path. ACLs on interfaces do the
+      opposite job.
+    tags: [security, concept, copp]
+    source: labs/copp-basics
+
+  - id: sec-copp-why
+    type: basic
+    subdeck: CoPP
+    front: |
+      Why does a router need CoPP at all — isn't the CPU fast enough?
+    back: |
+      Because the **forwarding plane is orders of magnitude faster than the
+      CPU**. A line-rate flood of packets that must be punted — ICMP to the
+      router, TTL-expired packets, ARP, unknown-protocol traffic — will saturate
+      the control plane long before it saturates any link.
+
+      When the CPU is starved, **routing adjacencies drop**, and the resulting
+      reconvergence generates more control-plane work. A modest attack, or even
+      an accidental loop, becomes a network-wide outage.
+
+      CoPP puts each class of control traffic in its own policer, so a flood of
+      one type can't starve the others.
+    tags: [security, concept, copp]
+    source: labs/copp-basics
+
+  - id: sec-copp-class-tiers
+    type: basic
+    subdeck: CoPP
+    front: |
+      How should CoPP classes be tiered, and what's the danger of getting the
+      rates wrong?
+    back: |
+      Roughly, from most to least protected:
+      1. **Routing protocols** (BGP, OSPF, IS-IS) and BFD — generous rate;
+         starving these causes the exact outage CoPP exists to prevent.
+      2. **Management** (SSH, SNMP, NTP) — moderate.
+      3. **Diagnostics** (ICMP, traceroute) — tight; nice to have, never
+         critical.
+      4. **Everything else** — a catch-all with a low rate, which is where an
+         unclassified attack lands.
+
+      **The danger cuts both ways.** Too tight on class 1 and you drop your own
+      hellos under load, causing flaps that look like a network problem.
+      Too loose on the catch-all and CoPP isn't protecting anything. Always
+      build and verify CoPP against *live* adjacencies and watch the drop
+      counters.
+    tags: [security, concept, copp]
+    source: labs/copp-basics
+
+# ── uRPF ──────────────────────────────────────────────────────────────────
+
+  - id: sec-urpf-strict-vs-loose
+    type: basic
+    subdeck: uRPF
+    front: |
+      Strict vs. loose uRPF — what does each check?
+    back: |
+      **Strict**: the best reverse route for the packet's source must point
+      back out **the same interface the packet arrived on**. Drops spoofing
+      *and* asymmetric traffic.
+
+      **Loose**: the source only has to be **in the FIB at all**, via any
+      interface. Drops only sources that are completely unrouted — "does this
+      address exist anywhere in my routing table?"
+
+      Note the strict definition carefully: it is **not** "the source belongs
+      to the connected subnet." It's a reverse-path lookup, so any source
+      routed back out that interface passes.
+    tags: [security, concept, urpf]
+    source: labs/urpf-antispoofing
+
+  - id: sec-urpf-loose-default-route
+    type: basic
+    subdeck: uRPF
+    front: |
+      A router runs loose uRPF and then receives a default route. What happens
+      to its anti-spoofing protection?
+    back: |
+      **It stops working entirely.** A default route makes *every* address
+      present in the FIB, so every source passes the loose check — including
+      completely bogus ones.
+
+      This is the central caveat of loose uRPF: on any router with a default
+      route (which is most edge routers), it is a **no-op**.
+
+      Use loose uRPF only where there is genuinely no default — typically a
+      DFZ router with a full table — and use **strict** on single-homed
+      customer-facing edges, where it actually bites.
+    tags: [security, symptom-cause, urpf]
+    source: labs/urpf-antispoofing
+
+  - id: sec-urpf-where-to-deploy
+    type: basic
+    subdeck: uRPF
+    front: |
+      Why can't strict uRPF simply be turned on everywhere?
+    back: |
+      It **drops legitimate asymmetric traffic**. Any multihomed site, any
+      network where the forward and return paths differ — including normal BGP
+      hot-potato routing — will have packets arriving on an interface that
+      isn't the reverse-path best route, and strict mode discards them.
+
+      Deploy **strict** at single-homed customer edges and access-layer ports,
+      where the traffic is genuinely symmetric by construction. Use **loose**
+      (or feasible-path uRPF, or plain ACLs) where multihoming makes strict
+      unusable.
+
+      This asymmetry problem is why source validation, despite BCP 38 being
+      decades old, is still not universal.
+    tags: [security, concept, urpf]
+    source: labs/urpf-antispoofing
+
+  - id: sec-urpf-verify-forwarding-not-reply
+    type: basic
+    subdeck: uRPF
+    front: |
+      Testing anti-spoofing: why is "the spoofed ping got no reply" weak
+      evidence?
+    back: |
+      A spoofed ping **never gets a reply anyway** — the reply is sent to the
+      forged source address, not back to you. So a failed ping proves nothing
+      about whether your filter worked.
+
+      The question is whether the edge **forwarded the request at all**. Prove
+      it with:
+      - a **packet capture downstream** of the filtering device (did the echo
+        request appear?), and
+      - the **rule/drop counters** on the device itself.
+
+      General principle: verify the control you built, not the symptom you hope
+      it causes.
+    tags: [security, concept, urpf]
+    source: labs/urpf-antispoofing
+
+# ── 802.1X / NAC ──────────────────────────────────────────────────────────
+
+  - id: sec-dot1x-three-roles
+    type: basic
+    subdeck: 802.1X
+    front: |
+      Name the three 802.1X roles and the protocol used between each pair.
+    back: |
+      - **Supplicant** — the endpoint requesting access.
+      - **Authenticator** — the switch or AP controlling the port.
+      - **Authentication server** — RADIUS (FreeRADIUS, Cisco ISE, NPS).
+
+      Supplicant ↔ Authenticator: **EAP over LAN (EAPOL)**, a Layer 2 protocol
+      that works before the endpoint has any IP address.
+      Authenticator ↔ Server: **EAP encapsulated in RADIUS** (UDP 1812/1813).
+
+      The authenticator is a **pass-through** — it relays EAP without
+      understanding the inner method, which is why adding a new EAP type only
+      requires updating the endpoints and the server.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+  - id: sec-eap-tls-vs-peap
+    type: basic
+    subdeck: 802.1X
+    front: |
+      EAP-TLS vs. PEAP/MSCHAPv2 — how do they differ, and why is EAP-TLS
+      stronger?
+    back: |
+      **EAP-TLS**: **mutual certificate** authentication. Both the client and
+      the server prove identity with certificates; there is no password to
+      phish, replay, or brute-force. Requires a PKI and per-device enrollment.
+
+      **PEAP/MSCHAPv2**: the server presents a certificate, establishing a TLS
+      tunnel, and the client authenticates with a **username and password**
+      inside it.
+
+      PEAP's weakness is operational: if clients don't **validate the server
+      certificate** (a very common misconfiguration), an attacker stands up a
+      rogue AP and RADIUS server, and harvests MSCHAPv2 challenge/response
+      pairs that can be cracked offline.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+  - id: sec-mab
+    type: basic
+    subdeck: 802.1X
+    front: |
+      What is MAB, when do you need it, and why is it weak?
+    back: |
+      **MAC Authentication Bypass.** When a device can't speak 802.1X — a
+      printer, a badge reader, an IP camera, most OT gear — the switch waits
+      for 802.1X to time out, then sends the device's **MAC address** to RADIUS
+      as both the username and password.
+
+      It is weak because a **MAC address is trivially spoofable** and is
+      transmitted in the clear on every frame. It is authentication by
+      *asserted identity* with no secret at all.
+
+      Compensate with: profiling (does it actually behave like a printer?), a
+      tightly restricted VLAN with ACLs, and MAB **only** as a fallback after
+      802.1X fails — never as the primary method.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+  - id: sec-dynamic-vlan-assignment
+    type: basic
+    subdeck: 802.1X
+    front: |
+      How does RADIUS put an authenticated endpoint into the right VLAN, and
+      why is that better than static port configuration?
+    back: |
+      The **Access-Accept** carries RADIUS tunnel attributes:
+      `Tunnel-Type = VLAN(13)`, `Tunnel-Medium-Type = 802(6)`,
+      `Tunnel-Private-Group-ID = <VLAN>`. The authenticator applies that VLAN
+      to the port for the session's duration.
+
+      Better because **policy follows the identity, not the cable**. The same
+      port gives an employee VLAN 10, a contractor VLAN 20, and an IoT device
+      VLAN 30 — with no truck roll, no port re-patching, and no stale
+      configuration when someone moves desks.
+
+      Cisco extends the same idea with **dACLs** and **SGTs** delivered in the
+      Access-Accept.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+  - id: sec-dot1x-failure-modes
+    type: basic
+    subdeck: 802.1X
+    front: |
+      Authentication fails or the RADIUS server is unreachable. What are the
+      port's options, and what's the trade-off?
+    back: |
+      - **Guest VLAN** — for endpoints that never respond to EAPOL at all
+        (no supplicant). Limited internet-only access.
+      - **Auth-fail / restricted VLAN** — for endpoints that *tried* and were
+        rejected. Quarantine.
+      - **Critical VLAN / inaccessible-authentication bypass** — for when
+        **RADIUS itself is down**. Without this, a RADIUS outage locks out your
+        entire campus, turning an authentication problem into a total outage.
+
+      The trade-off is the whole design question: **fail-open** keeps the
+      business running but admits unauthenticated devices; **fail-closed** is
+      secure but converts every RADIUS failure into an outage. Most enterprises
+      fail-open to a restricted VLAN, and monitor it loudly.
+    extra: |
+      Deployment path is the same shape: **monitor mode** (`authentication
+      open` — authenticate and log, but permit everything) → low-impact mode
+      (dACLs) → closed mode. Going straight to closed mode is how 802.1X
+      rollouts fail.
+    tags: [security, concept, dot1x]
+    source: labs/dot1x-nac
+
+# ── Zero trust ────────────────────────────────────────────────────────────
+
+  - id: sec-zero-trust-premise
+    type: basic
+    subdeck: Zero trust
+    front: |
+      What is the core premise of zero trust, and what does it replace?
+    back: |
+      **Network location grants no trust.** Being inside the perimeter — on the
+      corporate LAN, on the VPN — confers nothing. Every request to every
+      resource is authenticated and authorised on its own.
+
+      It replaces the **castle-and-moat** model, where a hard perimeter
+      protected a soft interior, so any foothold inside (a phished laptop, a
+      compromised printer, a contractor's VPN account) yielded broad lateral
+      movement.
+
+      The practical unit changes from **"the network you're on"** to
+      **"this identity, on this device, for this resource, right now."**
+    tags: [security, concept, zero-trust]
+    source: labs/zero-trust-secure-access
+
+  - id: sec-pep-pdp
+    type: basic
+    subdeck: Zero trust
+    front: |
+      In a zero-trust architecture, what are the PEP and the PDP, and where do
+      the protected resources sit?
+    back: |
+      - **PEP (Policy Enforcement Point)** — sits in the data path, terminates
+        the client connection, and allows or denies each request.
+      - **PDP (Policy Decision Point)** — evaluates the policy: identity claims
+        from the IdP, device posture, resource sensitivity, and context.
+
+      Protected origins are **unreachable from anywhere except the PEP** —
+      typically no route at all from the user network. So even a fully
+      compromised client can only ever reach what the PEP will proxy for it.
+
+      That reachability boundary is what makes the architecture real. Without
+      it, the PEP is just a login page users can route around.
+    tags: [security, concept, zero-trust]
+    source: labs/zero-trust-secure-access
+
+  - id: sec-ztna-device-plus-user
+    type: basic
+    subdeck: Zero trust
+    front: |
+      Why does ZTNA authenticate the **device** in addition to the user, and
+      how is device identity usually proven?
+    back: |
+      User credentials can be phished, replayed, or shared. Requiring a
+      **managed device** means a stolen password alone is not enough — the
+      attacker also needs a credential bound to hardware they don't have.
+
+      Device identity is normally an **mTLS client certificate** issued at
+      enrollment and stored in a TPM/secure enclave, so it cannot be copied off
+      the machine.
+
+      This is why a valid user on an unmanaged device gets *less* access than
+      the same user on a corporate laptop: the policy is a function of
+      **identity × device posture × resource**, not identity alone.
+    tags: [security, concept, zero-trust]
+    source: labs/zero-trust-secure-access
+
+# ── Architecture ──────────────────────────────────────────────────────────
+
+  - id: sec-black-core
+    type: basic
+    subdeck: Architecture
+    front: |
+      What is a **black core** design, and what does the core know?
+    back: |
+      **Red (plaintext)** networks sit behind inline encryptors; the **black
+      (ciphertext)** core carries only encrypted traffic between them.
+
+      The core knows **transport reachability only** — how to get from encryptor
+      to encryptor. It has no visibility into red addressing, red routing, or
+      red services, and no red prefix ever appears in its routing table.
+
+      The security property: **the transport can be untrusted**. A compromised
+      core router, a leased circuit, or a third-party carrier learns nothing
+      beyond "these two endpoints exchange traffic."
+
+      Verify it the same way the lab does: a **capture in the core showing
+      ciphertext**, plus **core routing tables containing no red prefixes.**
+    tags: [security, concept, architecture]
+    source: labs/black-core-routing
+
+  - id: sec-red-black-routing-separation
+    type: basic
+    subdeck: Architecture
+    front: |
+      In a red/black design, why must the red overlay run its **own** routing
+      protocol rather than redistributing into the core?
+    back: |
+      Redistributing red prefixes into the black core would put the plaintext
+      topology **into the untrusted transport's routing table** — defeating the
+      entire design. An attacker with core access could then enumerate every
+      internal network without decrypting a byte.
+
+      So the red side runs a routing protocol **over the encrypted tunnels**,
+      and the black core carries only encryptor-to-encryptor reachability. The
+      two control planes never exchange routes.
+
+      This is also why the **transport prefixes must be filtered out of the red
+      protocol** — otherwise you get recursive routing, the same failure as
+      routing a tunnel destination through its own tunnel.
+    tags: [security, concept, architecture]
+    source: labs/black-core-routing
+
+  - id: sec-defense-in-depth-layers
+    type: basic
+    subdeck: Architecture
+    front: |
+      Name the layers of a defended enterprise path from internet edge to
+      server, and what each one uniquely contributes.
+    back: |
+      1. **Stateful firewall + NAT** — connection-level policy; blocks
+         unsolicited inbound by construction.
+      2. **IDS/IPS** — content inspection; catches known-bad *inside* permitted
+         connections.
+      3. **WAF / resource PEP** — application-layer policy and identity-aware
+         authorisation for a specific service.
+      4. **VRF separation** — users and servers in different routing domains,
+         so lateral movement needs a route that doesn't exist.
+      5. **Controlled egress** (DNS and web proxy) — constrains what a
+         compromised host can reach *outward*, which is where exfiltration and
+         C2 live.
+      6. **OOB management** — administration doesn't traverse the data path.
+      7. **Centralised evidence** — logs off-box, for detection and forensics.
+
+      Each layer catches what the others structurally cannot: a firewall can't
+      see intent inside a permitted flow, and a WAF can't stop a port scan.
+    tags: [security, concept, architecture]
+    source: labs/advanced-security-architecture
+
+  - id: sec-firewall-permit-vs-ips-decision
+    type: basic
+    subdeck: Architecture
+    front: |
+      A packet is permitted by the firewall and dropped by the IPS. What does
+      that tell you about the two controls?
+    back: |
+      They answer **different questions**.
+
+      The firewall asks *"is this connection allowed?"* — a decision about the
+      **five-tuple and session state**. TCP/443 to a published web server is
+      allowed; that's the whole point of publishing it.
+
+      The IPS asks *"is the content of this allowed connection malicious?"* —
+      a decision about **payload**.
+
+      So they aren't redundant and they aren't in conflict: **almost every real
+      attack arrives through a permitted connection.** A firewall log showing
+      "permit" and an IPS log showing "drop" for the same flow is the system
+      working exactly as designed.
+    tags: [security, concept, architecture]
+    source: labs/opnsense-ngfw-basics
+
+  - id: sec-egress-filtering-value
+    type: basic
+    subdeck: Architecture
+    front: |
+      Most firewall effort goes into inbound rules. Why does **outbound**
+      filtering matter more than it gets credit for?
+    back: |
+      Inbound rules stop the initial intrusion — but you have to assume some
+      will succeed (phishing, a supply-chain compromise, an unpatched service).
+
+      **Everything after that initial foothold is outbound**: C2 callback,
+      tool download, credential exfiltration, lateral reconnaissance to the
+      internet. A permissive `any → internet` egress rule means the attacker's
+      post-exploitation phase is entirely unconstrained.
+
+      Constrained egress — a **proxy** for web, a **controlled resolver** for
+      DNS, and explicit rules for everything else — turns each of those steps
+      into either a blocked action or a **logged anomaly**.
+
+      DNS especially: DNS-based exfiltration and C2 work precisely because
+      `udp/53 → anywhere` is so often left open.
+    tags: [security, concept, architecture]
+    source: labs/advanced-security-architecture
+
+  - id: sec-expiring-response
+    type: basic
+    subdeck: Architecture
+    front: |
+      Why should an automated defensive response (a block, an RTBH route, a
+      quarantine) carry an expiry?
+    back: |
+      Because **automated responses accumulate**, and nobody removes them.
+
+      A permanent block from a false positive silently breaks a legitimate
+      service months later, when its origin is untraceable. Scale that across
+      thousands of automated actions and your policy becomes an archaeological
+      record nobody dares touch.
+
+      An expiry makes the response **self-cleaning**: if the threat persists,
+      the detection fires again and re-applies it; if it doesn't, the state
+      disappears on its own.
+
+      The same argument applies to IDS suppressions, temporary firewall
+      exceptions, and "just for today" ACL entries — **every emergency change
+      needs a deadline attached at the moment it's made.**
+    tags: [security, concept, architecture]
+    source: labs/advanced-security-architecture
+
+# ── MACsec ────────────────────────────────────────────────────────────────
+
+  - id: sec-macsec-scope
+    type: basic
+    subdeck: MACsec
+    front: |
+      What does IEEE 802.1AE MACsec protect, and how is its scope different
+      from IPsec's?
+    back: |
+      MACsec encrypts and authenticates at **Layer 2, hop by hop** — a single
+      Ethernet link between two directly connected devices. Each frame is
+      decrypted at the far end of the link and re-encrypted on the next one.
+
+      IPsec protects **end to end** across many hops, at Layer 3.
+
+      Consequences of the L2 scope: MACsec protects **everything** on the wire,
+      including ARP, LLDP, STP BPDUs and the L2 headers themselves — traffic
+      IPsec can't touch. But it gives you nothing beyond the local link, and
+      every intermediate device sees plaintext.
+    tags: [security, concept, macsec]
+    source: labs/macsec-basics
+
+  - id: sec-macsec-use-cases
+    type: basic
+    subdeck: MACsec
+    front: |
+      When is MACsec the right tool rather than IPsec?
+    back: |
+      - **Leased dark fibre or a carrier Ethernet circuit** between sites — you
+        don't control the physical path and must assume it can be tapped.
+      - **Campus access ports** — encrypting the wire between a host and its
+        switch, typically negotiated by **802.1X/MKA** as part of
+        authentication.
+      - **Data centre interconnect at line rate** — MACsec is implemented in
+        the PHY, so it runs at 100G+ with essentially no latency cost, where
+        IPsec would need dedicated crypto hardware.
+
+      Rule of thumb: MACsec protects the **wire**; IPsec protects the
+      **conversation**.
+    tags: [security, concept, macsec]
+    source: labs/macsec-basics
