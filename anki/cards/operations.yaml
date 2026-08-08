@@ -293,6 +293,289 @@ cards:
     tags: [operations, concept, automation]
     source: labs/network-gitops-change-pipeline
 
+# ── AAA ───────────────────────────────────────────────────────────────────
+
+  - id: ops-aaa-three-failure-modes
+    type: basic
+    subdeck: AAA
+    front: |
+      An admin can't log in via TACACS+. Distinguish the three failure modes
+      and what pins each.
+    back: |
+      1. **Server unreachable** — no TCP session on port 49. The device times
+         out and (if configured) falls back to local. Nothing appears in the
+         server's log at all.
+      2. **Reachable but rejecting** — the server logs an
+         **authentication failure** for that username. The conversation
+         happened; the answer was no.
+      3. **Shared-key mismatch** — the device logs something like
+         *"invalid packet / bad authenticator"*. TCP connects, but the payload
+         can't be decrypted, so **the server usually logs nothing useful**.
+
+      **The discriminator is whose log has the evidence**: nothing anywhere =
+      unreachable; a clean reject on the server = credentials or policy;
+      garbage on the client with silence on the server = the key.
+    tags: [operations, symptom-cause, aaa]
+    source: labs/aaa-ops-troubleshooting
+
+  - id: ops-aaa-local-fallback
+    type: basic
+    subdeck: AAA
+    front: |
+      What *should* happen when the AAA server is down, and what
+      misconfiguration locks everyone out instead?
+    back: |
+      Should: the method list falls through to **local** authentication, and a
+      break-glass local account still works.
+
+      ```
+      aaa authentication login default group tacacs+ local
+      ```
+
+      The lockout: writing `group tacacs+` with **no fallback method**, or
+      having a fallback but **no local account that actually exists** (or one
+      whose password nobody has). Then a server outage is a total
+      administrative outage on every device simultaneously.
+
+      Second trap: fallback to local triggers only when the server is
+      **unreachable** — not when it **rejects**. A reject is a valid answer,
+      and the method list stops there.
+    extra: |
+      Keep a tested break-glass local account, store its password in a vault
+      **not** dependent on the network, and verify it after every AAA change —
+      from a second session you haven't closed.
+    tags: [operations, ios-xe, symptom-cause, aaa]
+    source: labs/aaa-ops-troubleshooting
+
+  - id: ops-aaa-separate-a-a-a
+    type: basic
+    subdeck: AAA
+    front: |
+      Authentication, authorization and accounting are configured separately.
+      Give a case where each fails independently.
+    back: |
+      - **Authentication fails** — you can't log in at all.
+      - **Authentication succeeds, authorization fails** — you log in but every
+        command is rejected, or you land in a lower privilege level than
+        expected. Very confusing: the login worked, so it "can't be AAA."
+      - **Both succeed, accounting fails** — everything works normally and
+        **nothing is logged**. Invisible until an audit asks who made a change,
+        and there is no record.
+
+      The last is the dangerous one, because there is no symptom. Accounting
+      failures need **active monitoring** of the AAA server's record volume,
+      not a user complaint.
+    extra: |
+      TACACS+ separates the three (and encrypts the whole payload), which is
+      why it's preferred for **device administration**. RADIUS combines
+      authentication and authorization and encrypts only the password, which is
+      why it's used for **network access**.
+    tags: [operations, concept, aaa]
+    source: labs/aaa-ops-troubleshooting
+
+# ── Management plane ──────────────────────────────────────────────────────
+
+  - id: ops-management-plane-acl
+    type: basic
+    subdeck: Management
+    front: |
+      Why protect management services with a control-plane policy rather than
+      an interface ACL?
+    back: |
+      An interface ACL only filters traffic crossing **that** interface. A
+      router with several interfaces, an out-of-band port, and a loopback has
+      **many** paths to its own SSH daemon — and you'd have to get the ACL
+      right on every one, forever.
+
+      A control-plane / management-plane policy applies to traffic **destined
+      to the device itself**, regardless of arrival interface. One policy, one
+      place to audit, and new interfaces are covered automatically.
+
+      Same reasoning as CoPP, one layer up: protect the **service**, not each
+      **path** to it.
+    tags: [operations, ios-xe, concept, management, security]
+    source: labs/management-access-control
+
+  - id: ops-management-lockout-procedure
+    type: basic
+    subdeck: Management
+    front: |
+      You must change the management ACL while SSH through that same ACL is
+      your only access. What's the safe procedure?
+    back: |
+      **Add before you remove, and verify from a new session.**
+
+      1. **Add** the new permit (the new admin subnet) while the old one is
+         still in place.
+      2. **Open a second, independent session** through the new path and
+         confirm it works. Never test from the session you're already in — it's
+         an established flow and may survive a policy that blocks new ones.
+      3. Only then **remove** the old permit.
+      4. Keep the first session open until the change is fully verified.
+
+      Same shape as the OSPF key rollover: **add everywhere, then remove
+      anywhere.** And on real gear, arm `reload in 10` before you start, so a
+      lockout self-recovers.
+    tags: [operations, concept, management]
+    source: labs/management-access-control
+
+  - id: ops-acl-counters-as-evidence
+    type: basic
+    subdeck: Management
+    front: |
+      How do you prove a management ACL is doing what you intended, rather than
+      just observing that things seem to work?
+    back: |
+      **Read the per-entry hit counters** (`show ip access-lists`), and test
+      both the **permit** and the **deny** case.
+
+      "I can still SSH" proves only that some rule permitted you. It doesn't
+      prove the deny rule works, that it's in the right order, or that it isn't
+      shadowed by a broader permit above it.
+
+      Positive **and** negative tests, with counters incrementing on the rule
+      you expect: that's evidence. Anything else is a guess that happened to
+      match reality.
+    tags: [operations, concept, management, acl]
+    source: labs/management-access-control
+
+# ── Provisioning ──────────────────────────────────────────────────────────
+
+  - id: ops-ztp-mechanism
+    type: basic
+    subdeck: Provisioning
+    front: |
+      Walk through what happens when a factory-reset switch is cabled and
+      powered on a ZTP-enabled network.
+    back: |
+      1. The switch boots with **no configuration** and enters ZTP mode.
+      2. It **DHCPs** on its management (and often front-panel) ports.
+      3. The DHCP reply carries **option 67 (bootfile-name)** — a URL pointing
+         at its configuration or a provisioning script.
+      4. It fetches that over HTTP/TFTP, applies it, and **reboots into the
+         real configuration**.
+
+      No console cable, no field engineer. The whole design rests on **DHCP
+      option 67**, which is why ZTP debugging almost always starts at the DHCP
+      server.
+    tags: [operations, concept, ztp]
+    source: labs/ztp-basics
+
+  - id: ops-ztp-per-device-config
+    type: basic
+    subdeck: Provisioning
+    front: |
+      One config file and 400 switches. What breaks, and what do you key
+      per-device config on?
+    back: |
+      A single file gives every switch the **same hostname, management address
+      and identity** — duplicate IPs, and no way to tell the devices apart.
+
+      Key on something the device **presents during DHCP** and that is
+      **printed on the box**, so it can be pre-registered before it ships:
+      - **MAC address** — always available, but requires capturing it per unit.
+      - **Serial number** (DHCP option 61 / client-identifier, or a vendor
+        option) — the best key, because it's on the shipping label and the
+        purchase record.
+
+      Implementation: DHCP matches the client and hands back a **per-device
+      URL**, or the provisioning server runs a script that reads the requester's
+      identity and renders the config from the source of truth.
+    tags: [operations, concept, ztp]
+    source: labs/ztp-basics
+
+  - id: ops-ztp-rogue-dhcp
+    type: basic
+    subdeck: Provisioning
+    front: |
+      During ZTP a switch trusts whichever DHCP server answers first. What's
+      the risk, and how is it contained?
+    back: |
+      A rogue DHCP server on the provisioning segment can serve its **own
+      option 67**, so a brand-new switch fetches and applies an
+      **attacker-supplied configuration** — before any credentials, ACLs or
+      monitoring exist. Complete device compromise at day zero.
+
+      Containment:
+      - Run provisioning on a **dedicated, physically controlled segment**.
+      - **DHCP snooping** on it, so only the real server's offers are trusted.
+      - **Serve over HTTPS** and validate the server certificate where the
+        platform supports it.
+      - **Signed configuration images** where available.
+
+      The general lesson: **bootstrap is the least protected moment in a
+      device's life** — no config means no security controls yet.
+    tags: [operations, concept, ztp, security]
+    source: labs/ztp-basics
+
+# ── Packet analysis ───────────────────────────────────────────────────────
+
+  - id: ops-where-to-capture
+    type: basic
+    subdeck: Packet analysis
+    front: |
+      A client→server flow crosses two routers. Where do you capture to prove
+      (a) the client sent, (b) the server received, (c) where the drop was?
+    back: |
+      - **(a) On the client itself** (or its access port) — proves the packet
+        left the host, and rules out an application or local firewall problem.
+      - **(b) On the server itself** — proves arrival. If (a) shows sent and
+        (b) shows nothing, the loss is in the network.
+      - **(c) Bisect.** Capture at the midpoint — between the two routers. The
+        packet's presence or absence there halves the search space, then repeat.
+
+      **Capturing at the wrong point hides the problem**: a capture only on the
+      client shows a healthy-looking retransmitting flow and tells you nothing
+      about where it died. Always capture at **both ends first**, then bisect.
+    tags: [operations, concept, packet-analysis]
+    source: labs/packet-analysis-basics
+
+  - id: ops-slow-tcp-from-capture
+    type: basic
+    subdeck: Packet analysis
+    front: |
+      A TCP connection is "slow." From a capture, how do you tell loss from
+      latency from a window limit — and what does each imply?
+    back: |
+      - **Loss** — duplicate ACKs, retransmissions, fast-retransmit or RTO
+        events. Fix the **path**: errors, congestion, a policer dropping bursts.
+      - **Latency** — a healthy flow with a large delta between data and its
+        ACK. Fix the **distance or queuing**; no amount of bandwidth helps.
+      - **Window limit** — the sender stops with unacknowledged data well below
+        the link's capacity, and the receiver's advertised window is the
+        ceiling. Fix **buffers and window scaling** on the hosts.
+
+      The diagnostic value is that all three feel identical to the user and
+      have **completely different fixes**. A "slow network" complaint resolved
+      by adding bandwidth, when the cause was a 64 KB window over a 100 ms RTT,
+      is the classic wasted upgrade.
+    tags: [operations, symptom-cause, packet-analysis]
+    source: labs/packet-analysis-basics
+
+  - id: ops-metadata-despite-encryption
+    type: basic
+    subdeck: Packet analysis
+    front: |
+      TLS hides the payload. What can you still learn from the capture?
+    back: |
+      A great deal:
+      - **Who talked to whom, when, for how long** — the five-tuple and timing.
+      - **Volume and direction** — an upload looks nothing like a download.
+      - **The TLS handshake**, which is in the clear: the **SNI** (the hostname
+        requested), certificate details, the offered cipher suites and the TLS
+        version.
+      - **The JA3/JA4 fingerprint** of the client's `ClientHello`, which often
+        identifies the *application* — a browser vs. a particular malware
+        family.
+      - **Traffic patterns** — regular small beacons at a fixed interval look
+        like C2 regardless of what's inside them.
+
+      This is exactly why Zeek logs remain valuable on an encrypted network:
+      **metadata alone supports most detection**, and encryption doesn't remove
+      it.
+    tags: [operations, concept, packet-analysis, security]
+    source: labs/packet-analysis-basics
+
 # ── Observability ─────────────────────────────────────────────────────────
 
   - id: ops-snmp-vs-streaming-telemetry
