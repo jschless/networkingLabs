@@ -1,0 +1,525 @@
+deck: Tunnels and VPN
+cards:
+
+# ── GRE ───────────────────────────────────────────────────────────────────
+
+  - id: tun-gre-line-protocol-up
+    type: basic
+    subdeck: GRE
+    front: |
+      A GRE tunnel interface's line protocol comes up based on what — the far
+      *tunnel* IP being reachable, or the far *WAN* IP?
+    back: |
+      **The far WAN (transport) IP** — the tunnel destination. The tunnel is up
+      as soon as the router has a route to that address; it never verifies the
+      far end even exists.
+
+      That's why a GRE tunnel can be "up/up" while completely broken: the peer
+      may be off, misconfigured, or firewalled. GRE has **no keepalive by
+      default** and no negotiation of any kind.
+    extra: |
+      `keepalive 10 3` on the tunnel interface adds liveness detection —
+      without it, routing protocols over the tunnel are your only failure
+      detector, and they're much slower.
+    tags: [vpn, concept, gre]
+    source: labs/gre-basics
+
+  - id: tun-gre-recursive-routing
+    type: basic
+    subdeck: GRE
+    front: |
+      You add a route to the tunnel's **destination** address that points
+      *through the tunnel*. What happens, and what's the general rule?
+    back: |
+      **Recursive routing** — the tunnel flaps and traffic dies. To encapsulate
+      a packet the router must reach the tunnel destination, but the route to
+      that destination says "go via the tunnel," which requires already having
+      reached it. Infinite recursion; IOS logs
+      `%TUN-5-RECURDOWN: ... temporarily disabled due to recursive routing`.
+
+      **The rule for every tunnel: the far endpoint's address must always
+      resolve via the physical underlay, never via the tunnel itself.**
+    extra: |
+      The realistic version isn't a hand-typed static — it's redistributing the
+      WAN subnet into the routing protocol that runs *over* the tunnel, so the
+      tunnel's own destination becomes reachable through itself. Filter the
+      transport network out of the overlay protocol.
+    tags: [vpn, symptom-cause, gre]
+    source: labs/gre-basics
+
+  - id: tun-gre-ospf-network-type
+    type: basic
+    subdeck: GRE
+    front: |
+      You run OSPF over a GRE tunnel and leave the default network type. What
+      goes wrong?
+    back: |
+      IOS treats a GRE tunnel as **point-to-point** by default, so this
+      particular case is fine — but on any tunnel type that defaults to
+      **broadcast** or NBMA (and on other vendors' GRE), OSPF keeps trying to
+      elect a **DR/BDR** on a two-router link, adding a 40-second wait state
+      and, on multipoint tunnels, failing entirely because there's no
+      broadcast capability.
+
+      ```
+      interface Tunnel0
+       ip ospf network point-to-point
+      ```
+
+      Set it explicitly. Both ends must agree on network type and timers.
+    tags: [vpn, ios-xe, concept, gre]
+    source: labs/gre-basics
+
+  - id: tun-gre-mtu-overhead
+    type: basic
+    subdeck: GRE
+    front: |
+      What is GRE's overhead, and why do large packets fail while ping
+      succeeds?
+    back: |
+      **24 bytes** — a 20-byte outer IP header plus a 4-byte GRE header. So a
+      1500-byte path leaves 1476 for the inner packet.
+
+      Small packets (ping's default 64 bytes) fit fine. Full-size TCP segments
+      exceed the path MTU once encapsulated and are dropped, or fragmented, or
+      black-holed if PMTUD's ICMP messages are filtered. The classic symptom:
+      **ping works, SSH connects then hangs, web pages half-load.**
+
+      ```
+      interface Tunnel0
+       ip mtu 1476
+       ip tcp adjust-mss 1436      ! 1476 - 40 for TCP/IP headers
+      ```
+    extra: |
+      `ip tcp adjust-mss` is the reliable fix because it rewrites the MSS in
+      the TCP handshake rather than depending on PMTUD's ICMP getting through.
+      Add IPsec on top and the overhead grows again — recompute, don't guess.
+    tags: [vpn, ios-xe, symptom-cause, gre]
+    source: labs/gre-basics
+
+  - id: tun-iosxe-gre-config
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: build a GRE tunnel from 203.0.113.1 to 203.0.113.6 with tunnel
+      address 172.16.0.1/30.
+    back: |
+      ```
+      interface Tunnel0
+       ip address 172.16.0.1 255.255.255.252
+       ip mtu 1476
+       ip tcp adjust-mss 1436
+       tunnel source GigabitEthernet0/0
+       tunnel destination 203.0.113.6
+       keepalive 10 3
+      ```
+    extra: |
+      `tunnel mode gre ip` is the default and usually omitted. Prefer
+      `tunnel source <interface>` over an IP address — it survives
+      renumbering.
+    tags: [vpn, ios-xe, syntax, gre]
+    source: labs/gre-basics
+
+  - id: tun-gre-vs-ipsec-on-the-wire
+    type: basic
+    subdeck: GRE
+    front: |
+      You capture on the WAN between two sites. How do a GRE tunnel and an
+      IPsec tunnel differ in what you can see?
+    back: |
+      **GRE**: the inner packet is fully visible — original source and
+      destination IPs, protocol, payload. GRE **encapsulates but does not
+      encrypt**. It is a routing tool, not a security one.
+
+      **IPsec**: you see IKE on UDP/500 (or 4500) during negotiation, then
+      **ESP** packets whose payload is opaque. The inner addresses are
+      invisible.
+
+      "Tunneled" and "protected" are different properties — which is exactly
+      why GRE-over-IPsec exists.
+    tags: [vpn, concept, gre, ipsec]
+    source: labs/ipsec-basics
+
+  - id: tun-why-gre-over-ipsec
+    type: basic
+    subdeck: IPsec
+    front: |
+      Plain IPsec can't carry multicast or routing protocols. Why, and what are
+      the two standard workarounds?
+    back: |
+      Classic (policy-based) IPsec matches traffic against **traffic
+      selectors** — unicast IP ranges. It has no interface to run a protocol
+      on, and multicast/broadcast simply doesn't fit the selector model. So no
+      OSPF, no EIGRP, no multicast applications.
+
+      Workarounds:
+      1. **GRE over IPsec** — GRE provides the routable interface and carries
+         multicast; IPsec protects the resulting unicast GRE stream.
+      2. **Route-based IPsec (VTI)** — a virtual tunnel interface you can route
+         over and run protocols on directly, with encryption applied by the
+         interface rather than by selectors.
+
+      VTI is the modern answer; GRE-over-IPsec persists for multi-vendor
+      interop and where GRE features are needed.
+    tags: [vpn, concept, ipsec]
+    source: labs/gre-ipsec
+
+  - id: tun-tunnel-vs-transport-mode
+    type: basic
+    subdeck: IPsec
+    front: |
+      IPsec **tunnel** mode vs. **transport** mode — what does each protect,
+      and when do you use transport?
+    back: |
+      **Tunnel mode**: encrypts the entire original IP packet and adds a **new**
+      outer IP header. Used for site-to-site VPNs where the endpoints are
+      gateways and the real addresses must be hidden.
+
+      **Transport mode**: keeps the original IP header and protects only the
+      payload. Only valid when the IPsec endpoints *are* the communicating
+      hosts.
+
+      Transport's use case is **GRE over IPsec**: GRE has already added its own
+      outer header, so tunnel mode would add a redundant third IP header.
+      Transport mode saves 20 bytes of overhead per packet.
+    tags: [vpn, concept, ipsec]
+    source: labs/gre-ipsec
+
+# ── IPsec ─────────────────────────────────────────────────────────────────
+
+  - id: tun-ipsec-phase1-vs-phase2-triage
+    type: basic
+    subdeck: IPsec
+    front: |
+      The single most useful IPsec triage signal: what do you conclude from
+      "no IKE SA" vs. "IKE SA up but no child SA"?
+    back: |
+      **No IKE SA at all → a Phase 1 problem.** The two ends can't agree on the
+      IKE proposal: encryption, hash, DH group, IKE version, lifetime — or the
+      **PSK/certificate** doesn't match, or the peer identity is wrong.
+
+      **IKE SA up, no child SA → a Phase 2 problem.** Phase 1 succeeded, so
+      auth and reachability are fine. The mismatch is in the ESP proposal or,
+      most often, the **traffic selectors / crypto ACL**.
+
+      **Third case: both SAs up but traffic doesn't flow** → the selectors
+      formed but don't match your actual traffic, or routing never sends the
+      traffic to the crypto engine.
+    extra: |
+      IOS-XE: `show crypto ikev2 sa` (or `show crypto isakmp sa` for IKEv1)
+      then `show crypto ipsec sa`. Read them in that order, always.
+    tags: [vpn, ios-xe, symptom-cause, ipsec]
+    source: labs/ipsec-basics
+
+  - id: tun-ipsec-selectors-must-mirror
+    type: basic
+    subdeck: IPsec
+    front: |
+      Why must the traffic selectors (crypto ACLs) on two IPsec peers be exact
+      **mirror images**, and what happens if they aren't?
+    back: |
+      Each side proposes its selectors during Phase 2 and the other must find
+      an exact match. A→B `192.168.1.0/24 → 192.168.2.0/24` requires B to have
+      `192.168.2.0/24 → 192.168.1.0/24`.
+
+      If they don't mirror, either the child SA **fails to negotiate**, or —
+      worse — a broader-than-intended SA forms and traffic you expected to be
+      protected silently isn't.
+
+      This rigidity is the core weakness of **policy-based** IPsec: adding a
+      site means editing ACLs on every existing peer. Route-based (VTI) IPsec
+      replaces the whole problem with a routing table.
+    tags: [vpn, concept, ipsec]
+    source: labs/ipsec-basics
+
+  - id: tun-ipsec-nat-t
+    type: basic
+    subdeck: IPsec
+    front: |
+      What does NAT-T solve, and what changes on the wire when it activates?
+    back: |
+      **ESP is IP protocol 50 — it has no port numbers**, so a NAT device has
+      nothing to build a translation table on and simply drops or mangles it.
+      AH is worse: it authenticates the IP header, which NAT rewrites by
+      definition, so AH cannot traverse NAT at all.
+
+      NAT-T detects NAT in the path during IKE (by comparing hashes of the
+      addresses each side sees) and **encapsulates ESP in UDP port 4500**,
+      giving NAT a port to work with.
+
+      On the wire: IKE starts on **UDP/500**, then both IKE and ESP move to
+      **UDP/4500**.
+    extra: |
+      NAT-T also adds keepalives so the NAT translation doesn't age out during
+      idle periods.
+    tags: [vpn, concept, ipsec]
+    source: labs/ipsec-basics
+
+  - id: tun-ipsec-two-lifetimes
+    type: basic
+    subdeck: IPsec
+    front: |
+      Why does IPsec have two separate SA lifetimes, and why is the child SA's
+      shorter?
+    back: |
+      **Phase 1 (IKE SA)** protects the negotiation channel; **Phase 2 (child /
+      IPsec SA)** protects the actual data.
+
+      The child SA's lifetime is shorter because it encrypts **volume** — the
+      more data under one key, the more material an attacker has, and the worse
+      the damage if that key is ever recovered. Rekeying often gives **perfect
+      forward secrecy** in practice: compromising one key exposes only that
+      window.
+
+      Rekeying the cheap child SA frequently is affordable because it reuses
+      the already-authenticated IKE SA. Re-authenticating Phase 1 is the
+      expensive operation, so it happens rarely.
+    extra: |
+      A botched rekey shows up as **periodic, regular** connectivity blips —
+      dropouts on a fixed interval matching the lifetime. That periodicity is
+      the diagnostic.
+    tags: [vpn, concept, ipsec]
+    source: labs/ipsec-basics
+
+  - id: tun-psk-vs-certificates
+    type: basic
+    subdeck: IPsec
+    front: |
+      Why doesn't PSK authentication scale to hundreds of spokes?
+    back: |
+      A PSK is **symmetric and shared** — every holder can both prove and
+      impersonate the identity. With one shared secret across N spokes, a
+      single compromised branch router lets an attacker impersonate **any**
+      site, and rotating the key means touching all N devices simultaneously.
+
+      Certificates are **asymmetric**: each device holds its own private key,
+      which never leaves it. A compromised spoke exposes only that spoke, and
+      it's revoked via CRL/OCSP without touching anyone else.
+
+      The cost is running a PKI — enrollment, renewal, revocation checking, and
+      clock sync, since certificate validation depends on accurate time.
+    tags: [vpn, concept, ipsec, security]
+    source: labs/ipsec-basics
+
+  - id: tun-policy-vs-route-based-vpn
+    type: basic
+    subdeck: IPsec
+    front: |
+      Policy-based vs. route-based (VTI) IPsec — what decides which traffic is
+      encrypted in each, and which supports routing protocols?
+    back: |
+      **Policy-based**: **traffic selectors / a crypto ACL** decide. There is no
+      tunnel interface, so there's nothing to run OSPF or BGP over, and adding
+      a site means editing ACLs everywhere.
+
+      **Route-based (VTI)**: the **routing table** decides — anything routed out
+      the tunnel interface gets encrypted. Because it's a real interface you
+      can run routing protocols over it, apply QoS and ACLs to it, and add a
+      site by adding a route.
+
+      Route-based is the default choice for anything beyond a couple of static
+      sites.
+    tags: [vpn, concept, ipsec]
+    source: labs/ipsec-basics
+
+# ── DMVPN ─────────────────────────────────────────────────────────────────
+
+  - id: tun-dmvpn-components
+    type: basic
+    subdeck: DMVPN
+    front: |
+      What three technologies make up DMVPN, and what does each contribute?
+    back: |
+      1. **mGRE** — one multipoint tunnel interface per router instead of N
+         point-to-point tunnels, so adding a spoke doesn't touch the hub.
+      2. **NHRP** — the mapping service: resolves a tunnel (overlay) address to
+         a peer's NBMA (real, underlay) address. Spokes **register** with the
+         hub, which acts as the **NHS**.
+      3. **IPsec profile** — encryption applied to the tunnel *profile*, so
+         dynamically-formed spoke-to-spoke tunnels are protected automatically.
+         Per-peer static crypto maps cannot work here, because the peers aren't
+         known in advance.
+    tags: [vpn, concept, dmvpn]
+    source: labs/dmvpn-phase1
+
+  - id: tun-dmvpn-phases
+    type: basic
+    subdeck: DMVPN
+    front: |
+      Compare DMVPN phases 1, 2 and 3 on spoke-to-spoke traffic and spoke
+      routing table size.
+    back: |
+      | | Data path | Spoke routing table |
+      |---|---|---|
+      | **Phase 1** | Always **via the hub** | Summary/default from hub — small |
+      | **Phase 2** | Direct spoke-to-spoke | **Full specific routes** for every spoke — O(N) |
+      | **Phase 3** | Direct, via **NHRP redirect + shortcut** | Summary only — small, with specifics injected on demand |
+
+      Phase 2 needed full routes because the spoke had to already know the
+      remote spoke's next-hop to build the tunnel — which is exactly what
+      stopped it scaling.
+
+      **Phase 3 is the only one that scales**, because it decouples routing
+      table size from spoke count.
+    tags: [vpn, concept, dmvpn]
+    source: labs/dmvpn-phase3
+
+  - id: tun-dmvpn-phase3-redirect
+    type: basic
+    subdeck: DMVPN
+    front: |
+      In DMVPN Phase 3, a spoke only has a summary route via the hub. How does
+      traffic end up going direct?
+    back: |
+      1. The first packet follows the **summary** to the hub.
+      2. The hub forwards it *and* sends an **NHRP redirect** — "you two could
+         talk directly."
+      3. The originating spoke resolves the remote spoke's NBMA address via
+         NHRP and installs a **more-specific route** pointing at the remote
+         spoke's tunnel IP.
+      4. **Longest-prefix match** means that specific now beats the summary, so
+         subsequent traffic goes direct — the hub drops out of the path.
+
+      Idle shortcuts age out and the table shrinks back to the summary.
+
+      Routing carries only a summary; NHRP injects specifics exactly where
+      traffic demands them.
+    extra: |
+      `ip nhrp redirect` on the hub, `ip nhrp shortcut` on the spokes.
+    tags: [vpn, ios-xe, concept, dmvpn]
+    source: labs/dmvpn-phase3
+
+  - id: tun-dmvpn-missing-shortcut
+    type: basic
+    subdeck: DMVPN
+    front: |
+      A Phase 3 spoke is missing `ip nhrp shortcut`. Is that an outage?
+    back: |
+      **No — it's a silent performance bug.** The spoke still has the summary
+      route via the hub, so traffic flows perfectly well, just **hub-routed**
+      (Phase 1 behaviour) forever.
+
+      `shortcut` controls **optimization, not connectivity**. Nothing alarms,
+      nothing logs, every ping succeeds — you only notice when latency between
+      two branches is inexplicably double what it should be, and the hub's WAN
+      link is carrying traffic that has no business being there.
+
+      `traceroute` between spokes is the check.
+    tags: [vpn, symptom-cause, dmvpn]
+    source: labs/dmvpn-phase3
+
+  - id: tun-dmvpn-hub-summary-null0
+    type: basic
+    subdeck: DMVPN
+    front: |
+      The DMVPN hub's summary route is typically a **Null0** static
+      redistributed into the routing protocol. Why Null0 rather than a real
+      route?
+    back: |
+      The summary must exist in the hub's own table for it to be advertised,
+      but the hub should **not forward** traffic for parts of the summary it
+      has no specific route for — that traffic would either loop back out or
+      follow a default toward the internet.
+
+      Null0 makes it a **discard route**: the summary is advertised, specifics
+      win by longest-prefix match when they exist, and anything else is dropped
+      cleanly at the hub.
+
+      Same pattern as OSPF `area range` and BGP `aggregate-address` — every
+      summarization mechanism needs a discard route behind it.
+    tags: [vpn, concept, dmvpn]
+    source: labs/dmvpn-phase3
+
+  - id: tun-dmvpn-ospf-network-type
+    type: basic
+    subdeck: DMVPN
+    front: |
+      Why does the OSPF network type on a DMVPN tunnel matter so much, and
+      which do the phases use?
+    back: |
+      An mGRE tunnel is **NBMA** — many peers on one interface, with no
+      broadcast capability, and spokes that cannot reach each other directly at
+      the start.
+
+      - **Phase 1 / Phase 3**: `point-to-multipoint`. Every peer is treated as
+        a separate p2p neighbour, no DR election, and — crucially — the hub
+        advertises the next-hop as **itself**, which is what Phase 1 and 3
+        want.
+      - **Phase 2**: `broadcast` with the hub forced as **DR** (spokes set
+        `ip ospf priority 0`). Broadcast preserves the **original spoke's
+        next-hop**, which Phase 2 needs so a spoke can build the direct tunnel.
+
+      The next-hop preservation behaviour is the real reason the types differ —
+      not DR election.
+    tags: [vpn, ios-xe, concept, dmvpn]
+    source: labs/dmvpn-phase2
+
+  - id: tun-nhrp-stale-shortcut
+    type: basic
+    subdeck: DMVPN
+    front: |
+      A spoke's LAN is renumbered while another spoke holds an NHRP shortcut
+      for the old prefix. What happens, and what tunes it?
+    back: |
+      The stale, more-specific shortcut **keeps winning over the summary** until
+      its **holdtime** expires — so traffic for the old prefix is sent directly
+      to a spoke that no longer owns it, and is dropped. A partial black-hole
+      that fixes itself, eventually.
+
+      `ip nhrp holdtime <seconds>` is the trade-off: a short holdtime converges
+      fast but forces constant re-resolution across every spoke pair (control-
+      plane churn that scales with N²); a long one is quiet but leaves stale
+      entries around for longer.
+    tags: [vpn, symptom-cause, dmvpn]
+    source: labs/dmvpn-phase3
+
+# ── WireGuard and VRF-lite ────────────────────────────────────────────────
+
+  - id: tun-wireguard-model
+    type: basic
+    subdeck: WireGuard
+    front: |
+      How does WireGuard's design differ fundamentally from IPsec?
+    back: |
+      - **No negotiation.** No IKE, no proposals, no phases. The crypto suite
+        is **fixed** (Curve25519, ChaCha20-Poly1305, BLAKE2s) — there is
+        nothing to mismatch, which removes the entire category of "proposal
+        mismatch" failures.
+      - **Identity is the public key.** Peers are named by key, not by IP.
+      - **Cryptokey routing.** A peer's `AllowedIPs` list serves as *both* the
+        access-control list and the routing table — a packet is only accepted
+        from a peer if its source is in that peer's AllowedIPs.
+      - **Stateless and roaming-friendly.** UDP only, silent unless there's
+        traffic, and a peer's endpoint updates automatically when it moves.
+
+      Trade-off: no algorithm agility (a break means a protocol version bump)
+      and far fewer enterprise features — no per-user policy, no PKI
+      integration.
+    tags: [vpn, concept, wireguard]
+    source: labs/wireguard
+
+  - id: tun-vrf-lite-what-it-is
+    type: basic
+    subdeck: VRF
+    front: |
+      What is VRF-lite, and how does it differ from MPLS L3VPN?
+    back: |
+      **Multiple independent routing tables on one router**, each with its own
+      interfaces, routes and (optionally) routing protocol instances.
+
+      **VRF-lite** carries that separation hop by hop — every router in the path
+      needs the VRFs configured, and each link between them needs a
+      subinterface or link per VRF. Simple, but the link and config count grows
+      with (routers × VRFs).
+
+      **MPLS L3VPN** carries the separation **inside a label**, so only the PEs
+      know the VRFs and the core carries one transport table. That's what makes
+      it scale to hundreds of VPNs.
+    extra: |
+      IOS-XE: `vrf definition RED` + `address-family ipv4`, then
+      `vrf forwarding RED` on the interface. Note that setting `vrf forwarding`
+      **clears the interface's IP address** — re-apply it after.
+      Commands need the VRF too: `ping vrf RED 10.1.1.1`,
+      `show ip route vrf RED`.
+    tags: [vpn, ios-xe, concept, vrf]
+    source: labs/vrf-lite
