@@ -324,6 +324,50 @@ cards:
     tags: [ha, ios-xe, concept, anycast, security]
     source: labs/anycast-dns
 
+  - id: ha-stateful-failover-two-things
+    type: basic
+    subdeck: Stateful HA
+    front: |
+      An active/backup firewall pair fails over. Two things must move — what
+      are they, and what happens if only one does?
+    back: |
+      1. **The address** — so clients keep sending to the same place. Handled by
+         VRRP/keepalived with a virtual IP.
+      2. **The connection state** — so flows already in progress survive.
+         Handled by replicating the **connection-tracking table** to the standby
+         (conntrackd, or a vendor's state-sync link).
+
+      With only the address moving, a **long-lived TCP flow dies on failover**:
+      packets arrive at the new active, which has no state entry for them, and
+      a stateful firewall drops any non-SYN packet it has no session for.
+
+      Short-lived HTTP recovers invisibly — the client just reconnects. Long
+      flows (SSH, database connections, uploads, VoIP) break, so the outage
+      looks intermittent and application-dependent.
+    tags: [ha, concept, firewall]
+    source: labs/service-ha
+
+  - id: ha-state-sync-cost
+    type: basic
+    subdeck: Stateful HA
+    front: |
+      What does state synchronisation cost, and when is it not worth it?
+    back: |
+      - **Bandwidth and CPU** on a dedicated sync link, proportional to
+        **connection setup rate** — not to throughput. A firewall doing many
+        short connections syncs harder than one doing few large ones.
+      - **A window of inconsistency**: state is replicated asynchronously, so
+        connections established in the last moments before failover may not
+        have made it.
+      - **Coupling**: the two units now share state, so a corrupt or malformed
+        entry can affect both — the failure mode a standby was meant to prevent.
+
+      Not worth it where **all flows are short** and clients reconnect
+      transparently. It's essential where flows are long-lived or the
+      application can't reconnect cleanly.
+    tags: [ha, concept, firewall]
+    source: labs/service-ha
+
   - id: ha-detection-vs-recovery
     type: basic
     subdeck: Concepts

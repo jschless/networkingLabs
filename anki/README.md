@@ -1,6 +1,6 @@
 # Anki flashcards from the lab corpus
 
-387 spaced-repetition cards distilled from the 162 labs in this repo — the
+467 spaced-repetition cards distilled from the 162 labs in this repo — the
 transferable knowledge, not the lab mechanics.
 
 ## Get the deck
@@ -23,22 +23,29 @@ survives. It never creates duplicates.
 |---|---:|---|
 | BGP | 57 | sessions, next-hop, path selection, communities, filtering, aggregation, RPKI, prefix security, IXP |
 | OSPF | 44 | areas, LSA types, NSSA, summarization, default origination, auth, virtual links, OSPFv3 |
-| Tunnels and VPN | 25 | GRE, IPsec, DMVPN phases, WireGuard, VRF-lite |
-| Data Center | 25 | CLOS underlay, VXLAN, BGP EVPN, DCI, storage, Kubernetes fabric |
+| Enterprise IT | 39 | Active Directory, Kerberos, PKI, DNS, SMB, mail, proxy, backup, monitoring |
+| Operations | 33 | QoS, MTU/PMTUD, AAA, automation, observability, packet analysis, troubleshooting method |
+| MPLS | 28 | LDP, segment routing, L3VPN, BGP-LU, L2VPN, carrier Ethernet |
+| Data Center | 27 | CLOS underlay, VXLAN, BGP EVPN, border leaf, DCI, storage, Kubernetes fabric |
+| Security | 27 | ACLs, CoPP, uRPF, 802.1X/NAC, zero trust, MACsec, architecture |
+| Enterprise | 25 | multicast, NAT/DMZ, voice, wireless, campus and WAN design, services |
+| Tunnels and VPN | 27 | GRE, IPsec, DMVPN, WireGuard, remote access, VRF-lite |
 | Layer 2 | 24 | VLANs and trunks, STP, EtherChannel, edge hardening |
-| Enterprise IT | 23 | Active Directory, Kerberos, PKI, DHCP/DDNS, GPO, SSO, RADIUS |
 | Route Control | 23 | administrative distance, redistribution, PBR, IP SLA tracking |
-| Security | 21 | ACLs, CoPP, uRPF, 802.1X/NAC, zero trust, MACsec |
-| MPLS | 20 | LDP, segment routing, L3VPN, BGP-LU |
 | EIGRP | 19 | DUAL, metrics, variance, stub |
-| Operations | 18 | QoS, MTU/PMTUD, automation, observability, troubleshooting method |
+| High Availability | 17 | FHRP, BFD, graceful restart, anycast, stateful failover |
+| IPv6 | 17 | ND/SLAAC, first-hop security, MP-BGP, transition mechanisms |
 | IS-IS | 17 | NET addressing, levels, attached bit, metrics |
-| Enterprise | 16 | multicast, NAT/DMZ, voice, wireless, campus design |
+| SOC Operations | 16 | detection, threat intel, incident response, SIEM, ATT&CK coverage |
 | Troubleshooting Drills | 14 | symptom → cause, from the `debug-*` labs |
-| SOC Operations | 13 | detection, threat intel, incident response, SIEM |
 | Services and Delivery | 13 | load balancing, global delivery, OT/ICS, hybrid cloud |
 
-271 concept cards, 68 symptom→cause, 38 syntax, 10 cloze.
+Roughly 300 concept cards, 80 symptom→cause, 45 syntax, 11 cloze.
+
+Drawn from **135 of the 162 labs**. The 27 without cards are capstones (which
+recombine concepts already carded), platform variants of a lab whose concepts
+are covered, and repo scaffolding — see `PROGRESS.md` for the list and the
+reasoning.
 
 ## Two decisions worth knowing
 

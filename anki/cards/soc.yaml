@@ -279,6 +279,72 @@ cards:
     tags: [soc, concept, siem]
     source: labs/soc-arkime-pcap
 
+  - id: soc-attack-coverage-mapping
+    type: basic
+    subdeck: Detection
+    front: |
+      What does mapping detections to MITRE ATT&CK give you that a rule count
+      does not?
+    back: |
+      **A map of what you cannot see.** "We have 4,000 rules" says nothing
+      about coverage; mapping them to techniques shows which **tactics** —
+      initial access, persistence, lateral movement, exfiltration — have no
+      detection at all.
+
+      It also gives a **shared vocabulary** between red and blue ("we tested
+      T1046, network service discovery"), and makes coverage gaps arguable in
+      terms of adversary behaviour rather than tool inventory.
+
+      The honest caveat: a technique marked "covered" may be covered by one
+      brittle signature that any variation evades. **Coverage maps measure
+      intent, not efficacy** — which is what adversary simulation is for.
+    tags: [soc, concept, detection]
+    source: labs/soc-adversary-simulation
+
+  - id: soc-purple-team-value
+    type: basic
+    subdeck: Detection
+    front: |
+      Why run a controlled adversary simulation rather than waiting for a real
+      incident to test detections?
+    back: |
+      Because a real incident tests your detections **once, under pressure,
+      with real consequences** — and a detection that didn't fire is invisible.
+      You learn nothing from the attacks you missed.
+
+      A simulation makes the test **deliberate and repeatable**: you know
+      exactly what was executed and when, so "no alert" is a **measurable
+      result** rather than an absence of evidence.
+
+      That's the difference between red team (prove you can get in) and
+      **purple team** (measure and improve detection) — the latter's output is
+      a list of gaps and new rules, not a compromise report.
+    tags: [soc, concept, detection]
+    source: labs/soc-adversary-simulation
+
+  - id: soc-sensor-placement
+    type: basic
+    subdeck: Tooling
+    front: |
+      Where you place a sensor determines what you can ever detect. What does
+      each position see and miss?
+    back: |
+      - **Internet edge (outside the firewall)** — sees all inbound scanning
+        and attack attempts, most of which the firewall drops. High volume, low
+        signal.
+      - **Inside the firewall / DMZ segment** — sees only what was **permitted**,
+        which is where real compromise happens. Much better signal-to-noise.
+      - **Between internal segments** — the only place you see **lateral
+        movement**, and the position most networks lack.
+      - **On the host** (EDR) — sees process execution and anything the network
+        can't, including encrypted and loopback traffic.
+
+      The common blind spot: sensors only at the perimeter, so an attacker who
+      is already inside moves **entirely unobserved**. East-west visibility is
+      what turns a foothold into a detected intrusion.
+    tags: [soc, concept, detection]
+    source: labs/soc-dmz-foundation
+
   - id: soc-yara-file-pipeline
     type: basic
     subdeck: Detection

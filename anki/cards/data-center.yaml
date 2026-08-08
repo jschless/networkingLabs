@@ -325,6 +325,49 @@ cards:
     tags: [datacenter, symptom-cause, evpn]
     source: labs/vxlan-evpn
 
+  - id: dc-border-leaf-role
+    type: basic
+    subdeck: EVPN
+    front: |
+      What is a **border leaf**, and how does external connectivity reach only
+      one tenant?
+    back: |
+      A leaf that connects the EVPN fabric to the outside world — an internet
+      router, a WAN edge, or a firewall — usually by running **eBGP inside a
+      tenant VRF** toward the external peer.
+
+      Selectivity comes from the **VRF**: the external session lives in
+      Tenant-A's VRF, so routes learned from it are only ever imported into
+      Tenant-A. Tenant-B has no session, no route, and therefore no path out —
+      not by a filter, but by absence.
+
+      To share those external routes with the rest of the fabric, the border
+      leaf **redistributes them into EVPN as type-5** prefix routes, and the
+      other leaves import them via the tenant's route-target.
+    tags: [datacenter, concept, evpn]
+    source: labs/evpn-border-ceos
+
+  - id: dc-default-route-into-fabric
+    type: basic
+    subdeck: EVPN
+    front: |
+      Why advertise a **default route** into the fabric from the border leaf
+      instead of the full external table?
+    back: |
+      Every leaf's hardware tables are sized for **tenant routes**, not for an
+      internet-scale table. Injecting a full table would exhaust TCAM on
+      hardware that has no reason to hold it — every leaf only ever needs
+      "send it to the border."
+
+      A single type-5 default gives correct forwarding at negligible cost.
+
+      The trade is the usual one for defaults: if the border leaf loses its
+      external connectivity but **keeps advertising the default**, the fabric
+      black-holes. So the default's origination must be **conditional** on the
+      external session actually being up.
+    tags: [datacenter, concept, evpn]
+    source: labs/evpn-border-ceos
+
 # ── DCI / multisite ───────────────────────────────────────────────────────
 
   - id: dc-dci-border-gateway

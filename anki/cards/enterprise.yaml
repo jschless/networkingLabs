@@ -348,6 +348,213 @@ cards:
     tags: [enterprise, concept, campus]
     source: labs/enterprise-collapsed-core
 
+  - id: ent-three-tier-roles
+    type: basic
+    subdeck: Campus design
+    front: |
+      In a three-tier campus, what is each tier's job, and what rule keeps the
+      design coherent?
+    back: |
+      - **Access** — connect endpoints. Port security, 802.1X, PoE, QoS
+        marking/trust. Lots of ports, low per-port cost.
+      - **Distribution** — aggregate access, and be the **policy and L3
+        boundary**: routing, ACLs, route summarisation, FHRP.
+      - **Core** — move packets between distribution blocks **as fast as
+        possible**, and do nothing else.
+
+      The rule: **the core does no policy.** No ACLs, no filtering, no
+      services. Every feature added there is applied to all traffic in the
+      campus, becomes a shared failure domain, and is the hardest thing to
+      change safely.
+
+      Policy lives at distribution, where it's scoped to one block and can be
+      changed without touching the rest of the network.
+    tags: [enterprise, concept, campus]
+    source: labs/enterprise-campus
+
+  - id: ent-summarize-at-distribution
+    type: basic
+    subdeck: Campus design
+    front: |
+      Why summarise routes at the distribution layer specifically?
+    back: |
+      It **bounds the failure domain**. A flapping access VLAN inside one
+      distribution block causes a routing recomputation only within that block;
+      the summary the core sees never changes, so the rest of the campus
+      doesn't even observe the event.
+
+      Without it, every access-layer link flap is a campus-wide convergence
+      event — and in a large campus, that's continuous churn.
+
+      It also keeps core routing tables small and uniform, which is what lets
+      the core be simple and fast.
+
+      Price: the usual summarisation trade — a **black hole** for the part of
+      the summary range that's currently down, which is what the Null0 discard
+      route contains.
+    tags: [enterprise, concept, campus]
+    source: labs/enterprise-campus
+
+  - id: ent-wan-edge-in-vs-out
+    type: basic
+    subdeck: WAN
+    front: |
+      A dual-homed internet edge wants ISP-A primary in both directions. Which
+      knob for each direction, and which one can't you guarantee?
+    back: |
+      **Outbound** — **local-preference**, set inbound on the routes received
+      from ISP-A. Fully under your control: your AS decides its own exit.
+
+      **Inbound** — **AS-path prepending** toward ISP-B (and/or MED, and/or
+      more-specific advertisements). This is a **request**, not a command.
+
+      You cannot guarantee inbound. The remote networks' own **local-pref**
+      is evaluated before AS-path length, so any explicit policy on their side
+      silently overrides your prepending — and you have no visibility into it.
+
+      **Outbound is engineering; inbound is persuasion.**
+    tags: [enterprise, concept, wan, bgp]
+    source: labs/enterprise-wan-edge
+
+  - id: ent-wan-edge-failover-timing
+    type: basic
+    subdeck: WAN
+    front: |
+      Your primary ISP link fails. What actually determines how long the outage
+      lasts?
+    back: |
+      Three sequential terms, and the first usually dominates:
+
+      1. **Detection** — if the interface goes physically down, immediate. If
+         the circuit stays up but the path is dead (a common carrier failure),
+         you wait out the **BGP hold timer (90 s default)** unless BFD is
+         running.
+      2. **Local reconvergence** — best-path recomputation onto the backup:
+         milliseconds.
+      3. **Return-path convergence** — the internet must learn to reach you via
+         ISP-B, which is **propagation across other people's networks** and can
+         take minutes.
+
+      So outbound recovers fast and **inbound lags**, producing a period of
+      one-way connectivity. That asymmetry is why edge testing must check
+      **both directions**, not just "can I browse?"
+    tags: [enterprise, symptom-cause, wan, bgp]
+    source: labs/enterprise-wan-edge
+
+  - id: ent-services-infra-dependencies
+    type: basic
+    subdeck: Services
+    front: |
+      Which supporting services does an enterprise network depend on, and what
+      is the ordering trap?
+    back: |
+      DHCP (with **relay**), DNS, **NTP**, AAA (TACACS+/RADIUS), **syslog**,
+      and SNMPv3 / telemetry.
+
+      The trap is **circular dependency**. Examples that bite in production:
+      - **AAA depends on the network**, and troubleshooting the network needs
+        AAA to log in. Hence the break-glass local account.
+      - **Kerberos depends on NTP**, and NTP may depend on DNS, which may
+        depend on DHCP.
+      - **Syslog depends on the network** — during an outage, the evidence you
+        need may never have been delivered.
+
+      Design rule: services the network needs to **recover itself** must be
+      reachable **out of band** and must not depend on the thing they're used
+      to fix.
+    tags: [enterprise, concept, services]
+    source: labs/enterprise-services-infra
+
+  - id: ent-dhcp-relay-role
+    type: basic
+    subdeck: Services
+    front: |
+      Why does a DHCP relay exist, and what does it add to the request beyond
+      forwarding it?
+    back: |
+      DHCP DISCOVER is a **broadcast**, and routers don't forward broadcasts —
+      so without a relay you'd need a DHCP server on every VLAN.
+
+      The relay (`ip helper-address`) **unicasts** the request to the server,
+      and crucially inserts the **`giaddr`** — the relay's own interface address
+      on the client's subnet.
+
+      `giaddr` is what lets the server pick the right **scope**: it tells the
+      server which subnet the client is on, which the unicast packet's source
+      address alone would not.
+
+      So a wrong or missing `giaddr` (helper on the wrong interface, or an
+      interface with no address) means the server can't select a pool, and
+      clients get nothing — with no obvious error anywhere.
+    tags: [enterprise, ios-xe, symptom-cause, services]
+    source: labs/enterprise-services-infra
+
+  - id: ent-eap-tls-server-validation
+    type: basic
+    subdeck: Wireless
+    front: |
+      In EAP-TLS, both sides present certificates. Which validation failure is
+      more dangerous operationally — and why?
+    back: |
+      **The client failing to validate the *server's* certificate.**
+
+      If the server rejects a bad client certificate, the client simply can't
+      connect — visible, safe, self-reporting.
+
+      If the **client** doesn't validate the server (no configured CA, or "trust
+      any certificate"), an attacker stands up a rogue AP with a RADIUS server
+      of their own. The client happily completes the handshake against it —
+      and with PEAP, hands over crackable credentials.
+
+      Which is why supplicant configuration must **pin the CA and the expected
+      server name**, and why it's pushed by GPO/MDM rather than left to users.
+    tags: [enterprise, concept, wireless, security]
+    source: labs/wireless-auth-control-operations
+
+  - id: ent-radius-role-to-vlan
+    type: basic
+    subdeck: Wireless
+    front: |
+      How does a RADIUS server project an authorisation *role* onto the
+      network, and why is that better than per-port configuration?
+    back: |
+      The **Access-Accept** carries attributes the network device applies for
+      that session: VLAN assignment (`Tunnel-Private-Group-ID`), a downloadable
+      ACL, a Cisco SGT, a QoS profile, a session timeout.
+
+      Better because the **policy is defined once, centrally, against identity
+      and posture** — and applies identically on every AP, every switch port,
+      and every site. The access device holds no policy at all; it's an
+      enforcement point.
+
+      Change someone's group in the directory and their network access changes
+      everywhere on next authentication, with no device configuration touched.
+    tags: [enterprise, concept, wireless, radius]
+    source: labs/wireless-auth-control-operations
+
+  - id: ent-certificate-expiry-incident
+    type: basic
+    subdeck: Wireless
+    front: |
+      A RADIUS server certificate expires. What's the failure signature, and
+      why is it unusually painful?
+    back: |
+      **Every 802.1X client fails to authenticate at once**, campus-wide, with
+      client-side errors about the certificate — while the RADIUS server itself
+      looks healthy and reports normal rejects.
+
+      Unusually painful because:
+      - The blast radius is **everyone simultaneously**, wired and wireless.
+      - Fixing it may require **network access you no longer have**.
+      - Some clients **cache the rejection** and need manual intervention even
+        after the fix.
+
+      This is why certificate expiry belongs in **monitoring with weeks of
+      warning**, not in a calendar reminder — it is one of the few faults that
+      is entirely predictable and still routinely causes major outages.
+    tags: [enterprise, symptom-cause, wireless, pki]
+    source: labs/wireless-auth-control-operations
+
   - id: ent-sdwan-value
     type: basic
     subdeck: WAN

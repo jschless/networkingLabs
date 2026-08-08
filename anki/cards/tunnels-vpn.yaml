@@ -539,6 +539,52 @@ cards:
     tags: [vpn, concept, wireguard]
     source: labs/wireguard
 
+  - id: tun-split-tunneling-tradeoff
+    type: basic
+    subdeck: Remote access
+    front: |
+      Split tunnelling vs. full tunnelling for remote access — what's the
+      trade?
+    back: |
+      **Split tunnel**: only corporate destinations go through the VPN; the
+      rest goes direct. Less concentrator bandwidth, better user experience for
+      video calls and SaaS. But the endpoint is **simultaneously on the
+      internet and on your network**, so your egress controls, proxy and
+      inspection never see most of its traffic.
+
+      **Full tunnel**: everything traverses the concentrator. All policy,
+      logging and inspection apply uniformly — at the cost of hairpinning all
+      internet traffic through the corporate edge and being a hard capacity
+      ceiling.
+
+      The modern middle ground is **ZTNA**: per-application access, so there's
+      no "on the network" state at all and the question stops applying.
+    tags: [vpn, concept, remote-access]
+    source: labs/opnsense-remote-access-concentrator
+
+  - id: tun-concentrator-is-a-policy-point
+    type: basic
+    subdeck: Remote access
+    front: |
+      Two remote users terminate on the same VPN concentrator. What makes it a
+      *concentrator* rather than just a tunnel endpoint?
+    back: |
+      That it **authorises differently once they're inside**. A tunnel gives
+      connectivity; a concentrator gives **per-identity policy**:
+
+      - Distinct **tunnel addresses** per user, so firewall rules and logs can
+        distinguish them.
+      - **Firewall enforcement** on the tunnel interface — not everyone who
+        connects reaches the same resources.
+      - **Logging keyed to identity**, so "who accessed what" is answerable.
+      - **Selective revocation** — removing one user without disturbing others.
+
+      The design rule: **a VPN that grants flat network access is a lateral
+      movement path.** Terminating the tunnel is the beginning of policy, not
+      the end of it.
+    tags: [vpn, concept, remote-access, security]
+    source: labs/opnsense-remote-access-concentrator
+
   - id: tun-vrf-lite-what-it-is
     type: basic
     subdeck: VRF

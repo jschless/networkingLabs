@@ -418,6 +418,149 @@ cards:
     tags: [security, concept, zero-trust]
     source: labs/zero-trust-secure-access
 
+# ── Architecture ──────────────────────────────────────────────────────────
+
+  - id: sec-black-core
+    type: basic
+    subdeck: Architecture
+    front: |
+      What is a **black core** design, and what does the core know?
+    back: |
+      **Red (plaintext)** networks sit behind inline encryptors; the **black
+      (ciphertext)** core carries only encrypted traffic between them.
+
+      The core knows **transport reachability only** — how to get from encryptor
+      to encryptor. It has no visibility into red addressing, red routing, or
+      red services, and no red prefix ever appears in its routing table.
+
+      The security property: **the transport can be untrusted**. A compromised
+      core router, a leased circuit, or a third-party carrier learns nothing
+      beyond "these two endpoints exchange traffic."
+
+      Verify it the same way the lab does: a **capture in the core showing
+      ciphertext**, plus **core routing tables containing no red prefixes.**
+    tags: [security, concept, architecture]
+    source: labs/black-core-routing
+
+  - id: sec-red-black-routing-separation
+    type: basic
+    subdeck: Architecture
+    front: |
+      In a red/black design, why must the red overlay run its **own** routing
+      protocol rather than redistributing into the core?
+    back: |
+      Redistributing red prefixes into the black core would put the plaintext
+      topology **into the untrusted transport's routing table** — defeating the
+      entire design. An attacker with core access could then enumerate every
+      internal network without decrypting a byte.
+
+      So the red side runs a routing protocol **over the encrypted tunnels**,
+      and the black core carries only encryptor-to-encryptor reachability. The
+      two control planes never exchange routes.
+
+      This is also why the **transport prefixes must be filtered out of the red
+      protocol** — otherwise you get recursive routing, the same failure as
+      routing a tunnel destination through its own tunnel.
+    tags: [security, concept, architecture]
+    source: labs/black-core-routing
+
+  - id: sec-defense-in-depth-layers
+    type: basic
+    subdeck: Architecture
+    front: |
+      Name the layers of a defended enterprise path from internet edge to
+      server, and what each one uniquely contributes.
+    back: |
+      1. **Stateful firewall + NAT** — connection-level policy; blocks
+         unsolicited inbound by construction.
+      2. **IDS/IPS** — content inspection; catches known-bad *inside* permitted
+         connections.
+      3. **WAF / resource PEP** — application-layer policy and identity-aware
+         authorisation for a specific service.
+      4. **VRF separation** — users and servers in different routing domains,
+         so lateral movement needs a route that doesn't exist.
+      5. **Controlled egress** (DNS and web proxy) — constrains what a
+         compromised host can reach *outward*, which is where exfiltration and
+         C2 live.
+      6. **OOB management** — administration doesn't traverse the data path.
+      7. **Centralised evidence** — logs off-box, for detection and forensics.
+
+      Each layer catches what the others structurally cannot: a firewall can't
+      see intent inside a permitted flow, and a WAF can't stop a port scan.
+    tags: [security, concept, architecture]
+    source: labs/advanced-security-architecture
+
+  - id: sec-firewall-permit-vs-ips-decision
+    type: basic
+    subdeck: Architecture
+    front: |
+      A packet is permitted by the firewall and dropped by the IPS. What does
+      that tell you about the two controls?
+    back: |
+      They answer **different questions**.
+
+      The firewall asks *"is this connection allowed?"* — a decision about the
+      **five-tuple and session state**. TCP/443 to a published web server is
+      allowed; that's the whole point of publishing it.
+
+      The IPS asks *"is the content of this allowed connection malicious?"* —
+      a decision about **payload**.
+
+      So they aren't redundant and they aren't in conflict: **almost every real
+      attack arrives through a permitted connection.** A firewall log showing
+      "permit" and an IPS log showing "drop" for the same flow is the system
+      working exactly as designed.
+    tags: [security, concept, architecture]
+    source: labs/opnsense-ngfw-basics
+
+  - id: sec-egress-filtering-value
+    type: basic
+    subdeck: Architecture
+    front: |
+      Most firewall effort goes into inbound rules. Why does **outbound**
+      filtering matter more than it gets credit for?
+    back: |
+      Inbound rules stop the initial intrusion — but you have to assume some
+      will succeed (phishing, a supply-chain compromise, an unpatched service).
+
+      **Everything after that initial foothold is outbound**: C2 callback,
+      tool download, credential exfiltration, lateral reconnaissance to the
+      internet. A permissive `any → internet` egress rule means the attacker's
+      post-exploitation phase is entirely unconstrained.
+
+      Constrained egress — a **proxy** for web, a **controlled resolver** for
+      DNS, and explicit rules for everything else — turns each of those steps
+      into either a blocked action or a **logged anomaly**.
+
+      DNS especially: DNS-based exfiltration and C2 work precisely because
+      `udp/53 → anywhere` is so often left open.
+    tags: [security, concept, architecture]
+    source: labs/advanced-security-architecture
+
+  - id: sec-expiring-response
+    type: basic
+    subdeck: Architecture
+    front: |
+      Why should an automated defensive response (a block, an RTBH route, a
+      quarantine) carry an expiry?
+    back: |
+      Because **automated responses accumulate**, and nobody removes them.
+
+      A permanent block from a false positive silently breaks a legitimate
+      service months later, when its origin is untraceable. Scale that across
+      thousands of automated actions and your policy becomes an archaeological
+      record nobody dares touch.
+
+      An expiry makes the response **self-cleaning**: if the threat persists,
+      the detection fires again and re-applies it; if it doesn't, the state
+      disappears on its own.
+
+      The same argument applies to IDS suppressions, temporary firewall
+      exceptions, and "just for today" ACL entries — **every emergency change
+      needs a deadline attached at the moment it's made.**
+    tags: [security, concept, architecture]
+    source: labs/advanced-security-architecture
+
 # ── MACsec ────────────────────────────────────────────────────────────────
 
   - id: sec-macsec-scope

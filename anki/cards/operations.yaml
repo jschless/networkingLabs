@@ -622,6 +622,80 @@ cards:
     tags: [operations, concept, observability]
     source: labs/suzieq-network-observability
 
+  - id: ops-assurance-shared-failure-domain
+    type: basic
+    subdeck: Observability
+    front: |
+      You monitor an event with SNMP counters, a SPAN session, and NetFlow.
+      Why might three "independent" sources not be independent at all?
+    back: |
+      Because they can **share plumbing**. If the flow sensor consumes the
+      **SPAN feed**, then SPAN and NetFlow have a common failure domain: the
+      mirror session breaks and *both* go blind together, while the dashboards
+      still show three green sources.
+
+      SNMP counters, read from the device itself, are genuinely independent
+      here.
+
+      The general principle: **redundant telemetry is only redundant if it has
+      a different collection path.** Map the dependency chain of each source
+      before you count it as corroboration — otherwise you'll trust two views
+      that are really one.
+    tags: [operations, concept, observability]
+    source: labs/network-assurance
+
+  - id: ops-assurance-mechanism-match
+    type: basic
+    subdeck: Observability
+    front: |
+      Match the assurance mechanism to the question it answers: SNMP counters,
+      SPAN, NetFlow, syslog, reachability probes.
+    back: |
+      - **SNMP counters** — *how much?* Aggregate volume and errors per
+        interface, polled. Cheap; low resolution.
+      - **SPAN / mirroring** — *exactly what?* Full packets, for deep analysis.
+        Expensive, and can't run everywhere at once.
+      - **NetFlow / IPFIX** — *who talked to whom?* Summarised per-flow
+        records. The middle tier: far cheaper than packets, far richer than
+        counters.
+      - **Syslog** — *what did the device decide?* State transitions,
+        adjacency changes, config events. The only source of **why**.
+      - **Reachability probes** — *does it work from where the user is?* The
+        only outside-in view.
+
+      No single one answers an incident. The skill is knowing which to reach
+      for first: syslog for *what changed*, flows for *what moved*, packets for
+      *why it failed*.
+    tags: [operations, concept, observability]
+    source: labs/network-assurance
+
+  - id: ops-dhcp-failure-domains
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      A user has "no network." How do you split DHCP failure from DNS failure
+      in one step?
+    back: |
+      **Check whether they have an IP address.**
+
+      - **No address** (or a 169.254.x APIPA address) → DHCP. Look at the
+        relay/`ip helper-address`, the scope, pool exhaustion, and whether
+        DHCP snooping is dropping the server's offers.
+      - **Has an address, can ping by IP, can't resolve names** → DNS. Look at
+        which resolver was handed out, whether it answers, and what status code
+        it returns.
+
+      These are **separate failure domains with separate daemons and logs**,
+      and treating "no network" as one problem is what makes the ticket take an
+      hour instead of a minute.
+    extra: |
+      A third case worth recognising: **address and DNS both fine, still
+      broken** → the DHCP options were wrong (bad default gateway, wrong
+      domain-search), which looks like a network problem and is a scope
+      configuration problem.
+    tags: [operations, symptom-cause, troubleshooting, dhcp]
+    source: labs/dhcp-dns-troubleshooting
+
 # ── Troubleshooting method ────────────────────────────────────────────────
 
   - id: ops-structured-troubleshooting

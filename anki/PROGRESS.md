@@ -58,23 +58,49 @@ Then batches 2–4 per `anki/MANIFEST.md`.
 
 ## Status: complete
 
-387 cards across 17 decks, drawn from 105 of the 162 labs. The 57 labs with no
-cards are capstones, blank practice twins, and platform-specific variants whose
-concepts are already carded from their source lab — see "Labs deliberately not
-carded" below.
+**467 cards across 18 decks, drawn from 135 of the 162 labs (83%).**
 
-### Labs deliberately not carded
+Run `python3 anki/build.py --stats` for the current per-deck breakdown and
+`python3 anki/audit.py` for coverage and quality checks.
 
-- **Capstones** (`*-capstone`, `enterprise-grand-capstone`,
-  `troubleshooting-range-*`): recombine concepts already carded from the labs
-  they build on. Their value is integration practice, which spaced repetition
-  doesn't serve.
-- **Blank practice twins** (`mpls-sr-blank`): same content as the built version.
-- **Platform variants** (`*-srlinux`, `*-ceos`, `opnsense-*`, `dot1x-ceos-practice`):
-  the protocol concepts are carded from the primary lab; the platform-specific
-  CLI is out of scope given the IOS-XE decision.
-- **Infrastructure** (`soc-common`, `templates`, `fixtures`): not content.
-- **`dmvpn-ceos`**: broken by design — cEOS 4.35.2F has no `ip nhrp`.
+### The 27 labs deliberately not carded
+
+- **Capstones** (10) — `enterprise-*-capstone`, `enterprise-grand-capstone`,
+  `dmvpn-phase3-ipsec-capstone`, `troubleshooting-range-*`,
+  `enterprise-it-101/16-capstone`. These recombine concepts already carded from
+  the labs they build on. Their value is integration practice, which spaced
+  repetition doesn't serve.
+- **Platform variants** (6) — `mpls-sr-srlinux`, `vxlan-evpn-srlinux`,
+  `ha-network-design-ceos`, `dot1x-ceos-practice`, `opnsense-ipsec-nat-t`,
+  `orchestrated-wan-overlay`. The protocol concepts are carded from the primary
+  lab; the platform-specific CLI is out of scope under the IOS-XE decision.
+- **Blank practice twin** — `mpls-sr-blank` is `mpls-sr-isis-bgp` with the
+  config removed.
+- **Already covered by pattern cards** — `debug-ospf-auth` and
+  `debug-dmvpn-phase1` (their faults are carded as the auth-failure signature
+  and the DMVPN shortcut card), `enterprise-access-security`
+  (campus-l2-hardening + 802.1X), `soc-zeek-analysis` and
+  `soc-kibana-hvt-dashboard` (carded from the Suricata and SIEM labs).
+- **Repo scaffolding** — `soc-common`, `templates`, `fixtures`.
+- **`dmvpn-ceos`** — broken by design; cEOS 4.35.2F has no `ip nhrp`.
+
+### Second pass: gaps filled after the first build
+
+The first pass reached 105 labs / 387 cards. A coverage check found several
+uncarded labs with genuinely distinct content, added in a second pass:
+
+- **IPv6** was the weakest area — a whole deck was missing. Added ND/SLAAC,
+  RA-based host config, first-hop security, MP-BGP AFI/SAFI, and the transition
+  mechanisms (6PE, NAT64/DNS64, DS-Lite).
+- **MPLS L2VPN** — pseudowires, targeted LDP, VPWS/VPLS/EVPN signalling, QinQ
+  and carrier Ethernet handoff.
+- **Windows/AD** — the second half of the enterprise-it-101 track: enterprise
+  DNS, SMB permission layers, mail (SPF/DKIM/DMARC), the Kerberos web proxy,
+  backup/RPO/RTO, monitoring and log centralisation.
+- **Operations** — AAA failure modes, management-plane policy, ZTP, packet
+  analysis, network assurance.
+- **Security and enterprise** — black core, defence-in-depth layering, stateful
+  firewall HA, three-tier campus, WAN edge failover, EAP-TLS server validation.
 
 ## Resolved QA items
 
