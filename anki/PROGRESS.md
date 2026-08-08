@@ -26,15 +26,15 @@ what has actually been carded. Update it whenever a lab is finished.
 | `route-control.yaml` | ospf-bgp-redist, redistribution-tags, route-maps-pbr, ip-sla-tracking | 23 |
 | `eigrp.yaml` | eigrp-basics, eigrp-stub, eigrp-variance | 19 |
 | `isis.yaml` | isis-basics, isis-multiarea | 17 |
+| `mpls.yaml` | mpls-ldp, mpls-sr-isis-bgp, bgp-labeled-unicast | 20 |
+| `bgp.yaml` (+) | bgp-prefix-security, internet-peering-ixp | +10 |
 
-**16 of 162 labs carded, 150 cards.**
+**21 of 162 labs carded, 180 cards.**
 
 ## Next up (batch 1 — routing, remainder)
 
-- [ ] labs/bgp-prefix-security, labs/internet-peering-ixp, labs/ipv6-bgp,
-      labs/bgp-labeled-unicast
-- [ ] labs/mpls-ldp, labs/mpls-sr-isis-bgp, labs/mpls-l2vpn,
-      labs/carrier-ethernet-handoff, labs/ipv6-transition
+- [ ] labs/ipv6-bgp
+- [ ] labs/mpls-l2vpn, labs/carrier-ethernet-handoff, labs/ipv6-transition
 - [ ] labs/mpls-sr-srlinux (concepts only — SR-Linux CLI is out of scope)
 - [ ] labs/mpls-sr-blank (blank practice twin of mpls-sr-isis-bgp — skip,
       no new content)
