@@ -37,12 +37,16 @@ cards:
 
       ```
       router bgp 65001
+       bgp bestpath as-path multipath-relax
+       !
        address-family ipv4 unicast
         maximum-paths 4
-        bgp bestpath as-path multipath-relax
       ```
 
       `multipath-relax` relaxes the check to **same AS-path *length***.
+
+      Note the placement on IOS-XE: `bgp bestpath ...` is a **router-level**
+      command, while `maximum-paths` lives **inside the address-family**.
     tags: [datacenter, ios-xe, concept, clos]
     source: labs/spine-leaf
 

@@ -56,14 +56,40 @@ Then batch 3 (78 labs) and batch 4 (18 debug labs).
 
 Then batches 2–4 per `anki/MANIFEST.md`.
 
-## Open items for the final QA pass
+## Status: complete
 
-- **Verify before shipping:** the metric an ABR puts on an `area range`
-  summary LSA (lab says maximum of contributing routes; confirm Cisco IOS-XE
-  behaviour, which has historically differed from RFC 2328). Card id
-  `ospf-summarization-*` — currently no card asserts a value, keep it that way
-  unless confirmed.
-- Dedupe across decks: route-map implicit-deny, prefix-list `ge`/`le`, and
-  soft-clear will recur in route-control, security, and enterprise labs —
-  keep the canonical card in `bgp.yaml` and cross-reference rather than
-  duplicating.
+387 cards across 17 decks, drawn from 105 of the 162 labs. The 57 labs with no
+cards are capstones, blank practice twins, and platform-specific variants whose
+concepts are already carded from their source lab — see "Labs deliberately not
+carded" below.
+
+### Labs deliberately not carded
+
+- **Capstones** (`*-capstone`, `enterprise-grand-capstone`,
+  `troubleshooting-range-*`): recombine concepts already carded from the labs
+  they build on. Their value is integration practice, which spaced repetition
+  doesn't serve.
+- **Blank practice twins** (`mpls-sr-blank`): same content as the built version.
+- **Platform variants** (`*-srlinux`, `*-ceos`, `opnsense-*`, `dot1x-ceos-practice`):
+  the protocol concepts are carded from the primary lab; the platform-specific
+  CLI is out of scope given the IOS-XE decision.
+- **Infrastructure** (`soc-common`, `templates`, `fixtures`): not content.
+- **`dmvpn-ceos`**: broken by design — cEOS 4.35.2F has no `ip nhrp`.
+
+## Resolved QA items
+
+- **`area range` summary metric** — vendor behaviour has historically differed
+  from RFC 2328 here, so **no card asserts a value**. The summarization cards
+  teach the Null0 discard route and the ABR-vs-ASBR command split instead, both
+  of which are unambiguous. Keep it that way unless someone verifies IOS-XE
+  behaviour on real hardware.
+- **Dedupe** — `anki/audit.py` flags near-duplicates by token overlap. Two pairs
+  currently score above the threshold and were reviewed as false positives
+  (shared vocabulary, different content). Canonical homes: route-map
+  implicit-deny and prefix-list `ge`/`le` live in `bgp.yaml`; other decks
+  reference the idea rather than restating it.
+- **IOS-XE syntax audit** — every config block was reviewed line by line. Two
+  real errors were found and fixed: a `/32` loopback advertised with a `/24`
+  mask (`bgp-iosxe-basic-session`), and `bgp bestpath as-path multipath-relax`
+  shown inside the address-family when it is a router-level command
+  (`dc-multipath-relax`).

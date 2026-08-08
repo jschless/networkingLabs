@@ -274,8 +274,9 @@ cards:
       The control plane is genuinely healthy; the **data plane endpoint is an
       address nobody can route to**.
 
-      Check: does the address in `vxlan source-interface` appear in every other
-      VTEP's routing table? That single question resolves it.
+      Check: does the address of the VTEP's configured **encapsulation source
+      interface** appear in every other VTEP's routing table? That single
+      question resolves it.
     extra: |
       This is the general EVPN lesson: **an Established session and received
       routes prove nothing about the tunnel.** Verify the VTEP list and the
