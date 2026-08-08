@@ -19,6 +19,26 @@ cards:
     source: labs/bgp-communities
 ```
 
+## Reverse cards
+
+A card tagged `syntax` automatically gets a **second, reverse card**: the first
+fenced code block from `back:` is shown, prompting *"What does this
+configuration do?"*, with `front:` as the answer. Command→meaning is a different
+skill from meaning→command, and it's free to generate.
+
+Opt out with `reverse: false` when the question asks for **several** commands —
+one code block can't answer "configure X, then Y":
+
+```yaml
+  - id: ospf-iosxe-stub-commands
+    reverse: false   # stub and totally-stubby are two commands
+    tags: [ospf, ios-xe, syntax]
+```
+
+Cards whose `back:` has no code block (a reference table, say) get no reverse
+either way. `reverse: true` is the default and is rejected as dead config, as is
+`reverse:` on a card that isn't tagged `syntax`.
+
 Cloze cards use `text:` instead of `front`/`back`:
 
 ```yaml

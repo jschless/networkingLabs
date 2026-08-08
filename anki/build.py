@@ -32,6 +32,7 @@ DIST_DIR = ROOT / "dist"
 
 TOP_DECK = "Networking Labs"
 CLOZE_RE = re.compile(r"\{\{c\d+::")
+CLOZE_INDEX_RE = re.compile(r"\{\{c(\d+)::")
 BULLET_RE = re.compile(r"^\s*(-\s|\d+\.\s)")
 
 CSS = """
@@ -84,6 +85,12 @@ li { margin: 3px 0; }
   margin-top: 16px;
   font-family: "SF Mono", Menlo, monospace;
 }
+.prompt {
+  font-size: 0.9em;
+  opacity: .75;
+  margin-bottom: 8px;
+  font-style: italic;
+}
 .tag-platform {
   display: inline-block;
   font-size: 0.68em;
@@ -105,6 +112,10 @@ BASIC_MODEL = genanki.Model(
         {"name": "Back"},
         {"name": "Extra"},
         {"name": "Source"},
+        # Populated only for `syntax` cards: the first code block from Back.
+        # Anki skips a card template whose question would be empty, so the
+        # reverse card exists only where this field has content.
+        {"name": "Config"},
     ],
     templates=[
         {
@@ -115,7 +126,22 @@ BASIC_MODEL = genanki.Model(
                 '{{#Extra}}<div class="extra">{{Extra}}</div>{{/Extra}}'
                 '{{#Source}}<div class="src">{{Source}}</div>{{/Source}}'
             ),
-        }
+        },
+        {
+            # Reverse direction: read the configuration, say what it does.
+            "name": "Identify",
+            "qfmt": (
+                "{{#Config}}"
+                '<div class="prompt">What does this configuration do?</div>'
+                "{{Config}}"
+                "{{/Config}}"
+            ),
+            "afmt": (
+                '{{FrontSide}}<hr id="answer">{{Front}}'
+                '{{#Extra}}<div class="extra">{{Extra}}</div>{{/Extra}}'
+                '{{#Source}}<div class="src">{{Source}}</div>{{/Source}}'
+            ),
+        },
     ],
     css=CSS,
 )
@@ -194,6 +220,13 @@ def validate(path: pathlib.Path, data: dict, seen: dict[str, pathlib.Path]) -> l
             errors.append(f"{loc}: unknown type {ctype!r}")
         if not card.get("source"):
             errors.append(f"{loc}: missing `source`")
+        if "reverse" in card:
+            if not isinstance(card["reverse"], bool):
+                errors.append(f"{loc}: `reverse` must be true or false")
+            elif card["reverse"] or "syntax" not in card.get("tags", []):
+                # `reverse: true` is the default, and the key is meaningless on
+                # a card that is not tagged `syntax` — flag it as dead config.
+                errors.append(f"{loc}: `reverse` only has effect as `false` on a `syntax` card")
     return errors
 
 
@@ -305,6 +338,19 @@ def render(text: str) -> str:
     return "".join(out)
 
 
+def first_code_block(text: str) -> str:
+    """Return the first fenced code block of `text`, rendered as HTML.
+
+    Used to build the reverse ("what does this configuration do?") card. Only
+    the first block is taken: a card whose answer shows several alternatives
+    would otherwise ask about all of them at once.
+    """
+    match = re.search(r"```(?:\w+)?\n(.*?)```", str(text or ""), re.DOTALL)
+    if not match:
+        return ""
+    return render(f"```\n{match.group(1)}```")
+
+
 def platform_badge(tags: list[str]) -> str:
     for tag in tags:
         if tag in ("ios-xe", "nx-os", "frr", "eos", "srlinux", "vyos", "linux", "windows"):
@@ -333,7 +379,9 @@ def build(check_only: bool = False, stats: bool = False) -> int:
 
     decks: dict[str, genanki.Deck] = {}
     counts: dict[str, Counter] = defaultdict(Counter)
-    total = 0
+    total = 0       # notes
+    reverse = 0     # notes that also generate an "Identify" reverse card
+    cards_out = 0   # actual cards Anki will create (cloze notes make one per deletion)
 
     for path, data in sources:
         deck_name = f"{TOP_DECK}::{data['deck']}"
@@ -347,6 +395,8 @@ def build(check_only: bool = False, stats: bool = False) -> int:
             src_html = f"↳ {source}" if source else ""
             ctype = card.get("type", "basic")
             if ctype == "cloze":
+                # A cloze note yields one card per distinct deletion index.
+                cards_out += len(set(CLOZE_INDEX_RE.findall(card["text"])))
                 note = genanki.Note(
                     model=CLOZE_MODEL,
                     fields=[render(card["text"]), render(card.get("extra", "")), src_html],
@@ -354,6 +404,15 @@ def build(check_only: bool = False, stats: bool = False) -> int:
                     guid=genanki.guid_for(card["id"]),
                 )
             else:
+                # Reverse cards are only meaningful for command recall, and
+                # only when the answer actually contains a config block.
+                # `reverse: false` opts out cards whose question asks for
+                # several commands — showing one block would not match.
+                want_reverse = "syntax" in tags and card.get("reverse", True)
+                config = first_code_block(card["back"]) if want_reverse else ""
+                cards_out += 2 if config else 1
+                if config:
+                    reverse += 1
                 note = genanki.Note(
                     model=BASIC_MODEL,
                     fields=[
@@ -361,6 +420,7 @@ def build(check_only: bool = False, stats: bool = False) -> int:
                         render(card["back"]),
                         render(card.get("extra", "")),
                         src_html,
+                        config,
                     ],
                     tags=tags,
                     guid=genanki.guid_for(card["id"]),
@@ -378,16 +438,23 @@ def build(check_only: bool = False, stats: bool = False) -> int:
         print("-" * 58)
         print(f"{'ALL':<34} {sum(c['basic'] for c in counts.values()):>7} "
               f"{sum(c['cloze'] for c in counts.values()):>7} {total:>7}")
+        cloze_cards = cards_out - (total - sum(c["cloze"] for c in counts.values())) - reverse
+        print(f"\n{total} notes → {cards_out} cards:")
+        print(f"  {reverse} syntax notes add a reverse "
+              f'"what does this configuration do?" card')
+        print(f"  {sum(c['cloze'] for c in counts.values())} cloze notes "
+              f"expand to {cloze_cards} cards (one per deletion)")
 
     if check_only:
-        print(f"OK: {total} cards across {len(decks)} decks, no errors")
+        print(f"OK: {total} notes → {cards_out} cards "
+              f"across {len(decks)} decks, no errors")
         return 0
 
     DIST_DIR.mkdir(exist_ok=True)
     out = DIST_DIR / "networking-labs.apkg"
     package = genanki.Package(list(decks.values()))
     package.write_to_file(out)
-    print(f"wrote {out} — {total} cards, {len(decks)} decks")
+    print(f"wrote {out} — {total} notes, {cards_out} cards, {len(decks)} decks")
     return 0
 
 

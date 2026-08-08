@@ -126,6 +126,7 @@ cards:
   - id: ospf-iosxe-enable-area-two-ways
     type: basic
     subdeck: Config (IOS-XE)
+    reverse: false   # asks for two forms; one code block can't answer it
     front: |
       IOS-XE: two ways to put an interface into an OSPF area?
     back: |
@@ -153,6 +154,7 @@ cards:
   - id: ospf-iosxe-stub-commands
     type: basic
     subdeck: Config (IOS-XE)
+    reverse: false   # stub and totally-stubby are two commands
     front: |
       IOS-XE: make area 2 a stub area, then a totally stubby area. Which
       routers get which command?
@@ -179,6 +181,7 @@ cards:
   - id: ospf-iosxe-nssa-commands
     type: basic
     subdeck: Config (IOS-XE)
+    reverse: false   # NSSA and totally-NSSA are two commands
     front: |
       IOS-XE: configure area 1 as an NSSA, then as a totally NSSA.
     back: |
@@ -302,6 +305,7 @@ cards:
   - id: ospf-summarization-abr-vs-asbr
     type: basic
     subdeck: Summarization
+    reverse: false   # the point is contrasting two commands, not recalling one
     front: |
       Two summarization commands, two different routers. Which is which, and
       why can't one do the other's job?

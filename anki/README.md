@@ -1,7 +1,7 @@
 # Anki flashcards from the lab corpus
 
-467 spaced-repetition cards distilled from the 162 labs in this repo — the
-transferable knowledge, not the lab mechanics.
+467 spaced-repetition notes (564 cards) distilled from the 162 labs in this
+repo — the transferable knowledge, not the lab mechanics.
 
 ## Get the deck
 
@@ -40,12 +40,30 @@ survives. It never creates duplicates.
 | Troubleshooting Drills | 14 | symptom → cause, from the `debug-*` labs |
 | Services and Delivery | 13 | load balancing, global delivery, OT/ICS, hybrid cloud |
 
-Roughly 300 concept cards, 80 symptom→cause, 45 syntax, 11 cloze.
+**467 notes → 564 cards to study.** Roughly 300 concept, 84 symptom→cause and
+39 syntax notes, plus **33 reverse cards** on the syntax set (see below) and 11
+cloze notes that expand to 75 cards (one per deletion).
 
 Drawn from **135 of the 162 labs**. The 27 without cards are capstones (which
 recombine concepts already carded), platform variants of a lab whose concepts
 are covered, and repo scaffolding — see `PROGRESS.md` for the list and the
 reasoning.
+
+## Reverse cards on the syntax set
+
+Every `syntax` card is studied in **both directions**:
+
+- **Recall** — "IOS-XE: enable OSPF MD5 authentication on an interface" → the config
+- **Identify** — the config → "What does this configuration do?"
+
+Both directions live on one note, so a reworded card stays in sync. 33 of the 39
+syntax cards qualify; the rest either answer with a reference table rather than a
+config block, or ask for two commands at once (opted out with `reverse: false`).
+
+> **Re-importing over an earlier build:** this added a `Config` field and a
+> second template to the *existing* `ContainerLab Basic` note type. Anki will
+> update the note type on import — existing cards keep their scheduling, and the
+> new reverse cards arrive as fresh cards.
 
 ## Two decisions worth knowing
 

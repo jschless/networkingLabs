@@ -1,7 +1,8 @@
 # Extraction progress and handoff notes
 
 **Status: the deck is complete and shippable.**
-467 cards across 18 decks, drawn from **135 of the 162 labs (83%)**.
+467 notes (**564 cards**) across 18 decks, drawn from **135 of the 162 labs
+(83%)**.
 
 `anki/MANIFEST.md` is the full lab→track work list. This file records what was
 carded, what wasn't and why, and what a future pass could still do.
@@ -70,9 +71,11 @@ Nothing here is required — the deck stands on its own. In rough order of value
   `level:` tag (fundamentals / intermediate / advanced) would let Anki build a
   filtered deck that follows `docs/study-paths.md` instead of firing advanced
   EVPN cards in week one.
-- **Reverse cards for the syntax set.** The 39 `syntax` cards are all
-  recall-the-command. Command→meaning in the other direction is a genuinely
-  different skill and is cheap to generate from the same YAML.
+- ~~**Reverse cards for the syntax set.**~~ **Done.** A second `Identify`
+  template on the Basic note type shows the config and asks what it does; 33 of
+  39 syntax notes qualify. Cards opt out with `reverse: false` when the question
+  asks for two commands, and cards whose answer is a reference table rather than
+  a config block are skipped automatically.
 - **Verify the `area range` metric** (see caveats below) and add the card if
   IOS-XE behaviour is confirmed on real hardware.
 - **Card the capstones as scenario cards.** They were skipped as
