@@ -1,0 +1,301 @@
+deck: SOC Operations
+cards:
+
+# ── Detection tooling ─────────────────────────────────────────────────────
+
+  - id: soc-ids-vs-nsm
+    type: basic
+    subdeck: Tooling
+    front: |
+      Suricata and Zeek both watch the same traffic. What does each actually
+      produce, and why do SOCs run both?
+    back: |
+      **Suricata** is an **IDS**: it matches traffic against signatures and
+      protocol-anomaly logic and emits **alerts** — "this looks bad." It
+      answers *"did something known-bad happen?"*
+
+      **Zeek** is **network security monitoring**: it emits structured
+      **transaction logs** for every connection, DNS query, HTTP request, TLS
+      handshake and transferred file — with almost no opinion about badness. It
+      answers *"what happened?"*
+
+      You need both because an alert without context can't be triaged, and
+      context without alerts gives you nothing to look at. **Suricata tells you
+      where to look; Zeek tells you what you're looking at.**
+    tags: [soc, concept, detection]
+    source: labs/soc-suricata-ids
+
+  - id: soc-suricata-alert-fields
+    type: basic
+    subdeck: Tooling
+    front: |
+      Triaging a Suricata EVE JSON alert — which fields do you read first, and
+      in what order?
+    back: |
+      1. **`src_ip` / `dest_ip` / `dest_port`** — who talked to whom. Establishes
+         whether this is internal→external, external→DMZ, or lateral.
+      2. **`alert.signature`** — *what* fired. Read the actual rule, not just
+         the name.
+      3. **`alert.category`** and **`alert.severity`** — how the rule author
+         classified it.
+      4. **`flow_id`** — pivot to every other event in the same connection.
+
+      ```bash
+      jq -r 'select(.event_type=="alert") |
+        [.src_ip,.dest_ip,.dest_port,.alert.signature,.alert.severity] | @tsv' \
+        /var/log/suricata/eve.json
+      ```
+    tags: [soc, concept, detection]
+    source: labs/soc-suricata-ids
+
+  - id: soc-signature-limits
+    type: basic
+    subdeck: Detection
+    front: |
+      Give an attack a signature catches and one it misses. What does that
+      imply about IDS alerts?
+    back: |
+      **Caught**: anything with a stable, distinctive byte pattern — a known
+      exploit payload, a specific malware User-Agent, a hard-coded C2 domain.
+
+      **Missed**: anything without one — a valid credential used by an
+      attacker, living-off-the-land activity (PowerShell, `certutil`, SSH), a
+      novel exploit, or **anything inside TLS** the sensor can't decrypt.
+
+      Implication: IDS alerts are a **starting point for triage, never a
+      verdict**. A quiet IDS is not evidence of a quiet network — it is
+      evidence that nothing matched a signature someone already wrote.
+    tags: [soc, concept, detection]
+    source: labs/soc-suricata-ids
+
+  - id: soc-alert-tuning-threshold-vs-suppress
+    type: basic
+    subdeck: Detection
+    front: |
+      A noisy rule fires hundreds of times. What are your tuning options, and
+      which is safest?
+    back: |
+      - **`threshold`** — alert once per N events, or after N events in a
+        window. **Keeps the detection**, reduces the volume. Safest.
+      - **`suppress`** — stop alerting for a specific source/destination.
+        Surgical, but you are now blind to that pair.
+      - **Disable the rule** — last resort; you've deleted a detection for
+        everyone.
+
+      The safety ranking is about **what you lose**. Threshold loses only
+      duplicate notifications; suppression loses a scope; disabling loses the
+      detection entirely.
+
+      Every suppression should carry an expiry and a documented reason —
+      untracked tuning is how SOCs go quietly blind.
+    tags: [soc, concept, detection]
+    source: labs/soc-suricata-ids
+
+# ── Threat intel ──────────────────────────────────────────────────────────
+
+  - id: soc-ioc-decay
+    type: basic
+    subdeck: Threat intel
+    front: |
+      Why does an IP or hash IOC have a short shelf life, and what's the risk
+      of alerting on stale intel?
+    back: |
+      Attackers **rotate infrastructure constantly** — a C2 IP is burned once
+      published, and a file hash changes with a single byte. Worse, IP
+      addresses are **reassigned**: today's malicious VPS is tomorrow's
+      legitimate SaaS host, and cloud IP ranges recycle in days.
+
+      Stale intel therefore produces **false positives on legitimate traffic**,
+      which trains analysts to ignore that feed — the real damage, because the
+      cost is paid later when a true positive arrives and is dismissed.
+
+      Mitigations: **expiry dates** on every indicator, **confidence scores**
+      that decay with age, and a hard rule that low-confidence matches go to a
+      hunting queue rather than a paging alert.
+    tags: [soc, concept, threat-intel]
+    source: labs/soc-threat-intel-misp
+
+  - id: soc-pyramid-of-pain
+    type: basic
+    subdeck: Threat intel
+    front: |
+      Rank IOC types by how costly they are for an attacker to change, and what
+      follows for detection strategy.
+    back: |
+      From trivial to painful (the **Pyramid of Pain**):
+
+      1. **Hashes** — one byte changes them. Nearly free to evade.
+      2. **IP addresses** — rotate a VPS.
+      3. **Domain names** — cheap, but require registration.
+      4. **Network/host artifacts** — User-Agent strings, mutex names, registry
+         keys. Requires changing the tool.
+      5. **Tools** — requires adopting or writing new ones.
+      6. **TTPs** — behaviour. Requires the attacker to **change how they
+         operate**.
+
+      Implication: hash and IP detections are cheap to deploy and cheap to
+      evade. **Behavioural detections** (TTPs) are expensive to build but
+      genuinely hurt an adversary — which is why detection engineering has
+      moved toward them.
+    tags: [soc, concept, threat-intel]
+    source: labs/soc-threat-intel-misp
+
+  - id: soc-ioc-operationalization
+    type: basic
+    subdeck: Threat intel
+    front: |
+      Which IOC types are safe to operationalise directly into blocking rules,
+      and which are not?
+    back: |
+      **Reasonably safe to alert or block on**: file hashes (exact, no
+      collateral), specific full URLs, and precise host artifacts. A match is
+      unambiguous.
+
+      **Dangerous to block directly**:
+      - **IP addresses** on shared hosting or CDNs — one malicious site behind
+        Cloudflare means blocking thousands of legitimate ones.
+      - **Domains** that are also legitimate services (`pastebin`,
+        `github.io`, dynamic-DNS providers).
+      - Anything from an **unscored, unaged feed**.
+
+      Rule of thumb: **alert on low-confidence, block on high-confidence**, and
+      always keep the path from indicator → rule → alert traceable so an
+      analyst can see *why* something fired and who vouched for it.
+    tags: [soc, concept, threat-intel]
+    source: labs/soc-threat-intel-misp
+
+# ── Incident response ─────────────────────────────────────────────────────
+
+  - id: soc-true-vs-false-positive
+    type: basic
+    subdeck: Incident response
+    front: |
+      An alert fires. What single step most reliably separates a true positive
+      from a false positive?
+    back: |
+      **Corroborate from an independent data source.** The alert tells you a
+      rule matched; it does not tell you the activity was real or malicious.
+
+      Pivot from the alert to the **connection record** — Zeek `conn.log`, a
+      firewall log, NetFlow. Ask: did the session actually complete, how much
+      data moved, in which direction, and did the host do anything unusual
+      afterwards?
+
+      A signature match on a connection that was **reset immediately with zero
+      bytes transferred** is a very different finding from one on a 40-minute
+      session that exfiltrated 2 GB. One detection source is a hypothesis; two
+      independent ones is evidence.
+    tags: [soc, concept, incident-response]
+    source: labs/soc-ir-case-management
+
+  - id: soc-preserve-before-contain
+    type: basic
+    subdeck: Incident response
+    front: |
+      You have a confirmed compromise. What must you preserve **before**
+      containing, and why does the order matter?
+    back: |
+      Preserve **volatile evidence first**, because containment destroys it:
+
+      - Memory image, running processes, network connections
+      - Full packet capture of the current session
+      - Current logs, before rotation
+
+      Then contain — usually **network isolation** (move the port to a
+      quarantine VLAN, or a firewall block) rather than powering the host off.
+      Isolation stops the damage while keeping RAM, live processes, and
+      established state intact.
+
+      **Pulling the plug destroys exactly the evidence that explains what
+      happened.** The instinct to "just shut it down" is why so many incidents
+      end without root cause.
+    tags: [soc, concept, incident-response]
+    source: labs/soc-ir-case-management
+
+  - id: soc-chain-of-custody
+    type: basic
+    subdeck: Incident response
+    front: |
+      What makes an incident investigation **reproducible** by a second
+      analyst?
+    back: |
+      - **Timestamps in one timezone (UTC)**, from sources whose clocks are
+        NTP-synced. Correlation across systems is impossible otherwise — this
+        is the most common practical failure.
+      - **A timeline** of observations with the *source* of each entry, not
+        just conclusions.
+      - **Hashed evidence artifacts**, so anyone can prove the file they're
+        analysing is the file that was collected.
+      - **Every query recorded verbatim**, so the same filter can be re-run.
+      - **Observables (IPs, hashes, domains) recorded as structured data**, not
+        buried in prose.
+
+      The test: another analyst reaches the same conclusion from your artifacts
+      **without talking to you**.
+    tags: [soc, concept, incident-response]
+    source: labs/soc-ir-case-management
+
+  - id: soc-siem-normalization
+    type: basic
+    subdeck: SIEM
+    front: |
+      Why does a SIEM normalise fields from different sources into a common
+      schema, and what does that cost?
+    back: |
+      Because otherwise every source names the same thing differently —
+      Suricata's `src_ip`, Zeek's `id.orig_h`, a firewall's `srcaddr`. Without
+      normalisation you cannot write **one** query that pivots on "source
+      address" across all of them, which is the entire point of centralising
+      logs.
+
+      Common schemas: **ECS** (Elastic) or **OCSF**.
+
+      The cost: normalisation is **lossy and effortful**. Source-specific
+      fields that don't map get dropped or dumped into an unsearchable blob,
+      and every new log source needs parser work. Keeping the **raw original
+      event** alongside the normalised one is the standard mitigation.
+    tags: [soc, concept, siem]
+    source: labs/soc-elk-ingest
+
+  - id: soc-full-pcap-tradeoff
+    type: basic
+    subdeck: SIEM
+    front: |
+      Full packet capture answers any question about the past. Why doesn't
+      everyone keep it?
+    back: |
+      **Storage and retention.** Full PCAP at any real link rate consumes
+      terabytes per day, so retention is typically hours to days — often
+      shorter than the time it takes to *discover* an intrusion (frequently
+      weeks). By the time you know to look, the packets are gone.
+
+      Cost tiers, cheapest to most expensive:
+      **flow records (NetFlow)** → **protocol logs (Zeek)** → **full PCAP**.
+
+      The usual design: keep flow and Zeek logs for months, keep full PCAP for
+      a short rolling window, and **trigger targeted long-term capture** on
+      alerts. That's the "what additional visibility, and why isn't it free"
+      trade in one sentence.
+    tags: [soc, concept, siem]
+    source: labs/soc-arkime-pcap
+
+  - id: soc-yara-file-pipeline
+    type: basic
+    subdeck: Detection
+    front: |
+      How does a network sensor end up running YARA rules, and what does that
+      chain give you that a hash blocklist doesn't?
+    back: |
+      Zeek **extracts files** from the traffic it observes (HTTP downloads,
+      SMB transfers, email attachments) and writes them to disk with a
+      `files.log` entry linking each back to its connection. YARA then scans
+      those extracted files.
+
+      Advantage over hashes: a YARA rule matches on **content patterns and
+      structure** — strings, byte sequences, PE characteristics — so it catches
+      **variants and repacked samples** that have a completely different hash.
+
+      The pivot is what makes it useful: a YARA hit gives you a file, and
+      `files.log` gives you the connection, host, and time it arrived on.
+    tags: [soc, concept, detection]
+    source: labs/soc-yara-file-pipeline
