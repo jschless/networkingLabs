@@ -1,121 +1,122 @@
-# Extraction progress
+# Extraction progress and handoff notes
 
-Working file. `anki/MANIFEST.md` is the full 162-lab work list; this tracks
-what has actually been carded. Update it whenever a lab is finished.
+**Status: the deck is complete and shippable.**
+467 cards across 18 decks, drawn from **135 of the 162 labs (83%)**.
 
-## Decisions already made (don't re-litigate)
+`anki/MANIFEST.md` is the full lab→track work list. This file records what was
+carded, what wasn't and why, and what a future pass could still do.
 
-- **CLI syntax cards are Cisco IOS-XE only.** The labs run FRR / cEOS /
-  SR-Linux / VyOS. Translate the concept to IOS-XE; where there is no IOS-XE
-  equivalent (Linux VRF plumbing, `vtysh -b`, `net.mpls.platform_labels`,
-  SR-Linux CLI, cEOS container quirks), write the concept card and **skip the
-  syntax card** rather than invent a command.
-- Debug-lab symptom→cause cards are kept when the symptom is protocol-level,
-  and dropped when it is purely a container artifact.
-- Excluded as non-content: `labs/soc-common`, `labs/templates`,
-  `labs/dmvpn-ceos` (broken by design — cEOS 4.35.2F has no `ip nhrp`).
-- One YAML file per deck in `anki/cards/`. Card `id` is permanent (it is the
-  Anki GUID) — reword freely, never renumber.
+```bash
+python3 anki/build.py --stats   # per-deck breakdown
+python3 anki/audit.py           # coverage, duplicates, syntax leakage
+```
 
-## Done
+---
 
-| Deck file | Labs carded | Cards |
-|---|---|---|
-| `ospf.yaml` | two-routers, ospf-multiarea, ospf-auth, ospf-nssa, ospf-summarization, ospf-default-route, ospf-virtual-link, ipv6-ospf3 | 44 |
-| `bgp.yaml` | bgp-basics, bgp-path-selection, bgp-communities, bgp-filtering, bgp-aggregation, bgp-rpki | 47 |
-| `route-control.yaml` | ospf-bgp-redist, redistribution-tags, route-maps-pbr, ip-sla-tracking | 23 |
-| `eigrp.yaml` | eigrp-basics, eigrp-stub, eigrp-variance | 19 |
-| `isis.yaml` | isis-basics, isis-multiarea | 17 |
-| `mpls.yaml` | mpls-ldp, mpls-sr-isis-bgp, bgp-labeled-unicast | 20 |
-| `bgp.yaml` (+) | bgp-prefix-security, internet-peering-ixp | +10 |
+## Decisions already made — don't re-litigate these
 
-| `layer2.yaml` | stp-operations, vlan-trunks-switchport-basics, lacp-etherchannel, campus-l2-hardening | 24 |
-| `data-center.yaml` | spine-leaf, vxlan-evpn | 17 |
-| `tunnels-vpn.yaml` | gre-basics, gre-ipsec, ipsec-basics, dmvpn-phase1/2/3, wireguard, vrf-lite | 23 |
-| `high-availability.yaml` | vrrp, bfd-ospf, bfd-bgp, graceful-restart, anycast-dns | 15 |
+1. **CLI syntax cards are Cisco IOS-XE only.** The labs run FRR, Arista cEOS,
+   SR-Linux and VyOS. Translate the concept to IOS-XE. Where there is no IOS-XE
+   equivalent (Linux VRF plumbing, `vtysh -b`, `net.mpls.platform_labels`,
+   SR-Linux CLI, cEOS container quirks), write the **concept card and skip the
+   syntax card** rather than invent a command. Where the platforms differ in an
+   interesting way, say so explicitly on the card.
+2. **No lab-local trivia.** Node names, lab IP addressing, task numbers and
+   `lab.sh` mechanics are scaffolding. Every card must make sense to someone who
+   has never opened this repo.
+3. **Debug-lab cards** are kept when the symptom is protocol-level, dropped when
+   it is purely a container artifact.
+4. **A card `id` is permanent** — it generates the Anki GUID. Reword freely;
+   renumbering orphans the note and destroys its review history.
+5. **One YAML file per deck** in `anki/cards/`. Schema in `cards/README.md`.
+6. **Density is ~9 cards per lab**, favouring depth: each card carries the
+   *why*, not just the fact. This was an explicit choice, confirmed with the
+   requester.
 
-**40 of 162 labs carded, 259 cards.**
+---
 
-## Next up
+## The 27 labs deliberately not carded
 
-Batch 1 stragglers (low new-content — fold in opportunistically):
-- [ ] labs/ipv6-bgp, labs/mpls-l2vpn, labs/carrier-ethernet-handoff,
-      labs/ipv6-transition
-- [ ] labs/mpls-sr-srlinux, labs/vxlan-evpn-srlinux (concepts only —
-      SR-Linux CLI is out of scope)
-- [ ] labs/mpls-sr-blank (blank twin of mpls-sr-isis-bgp — skip, no new content)
-
-Batch 2 remainder (genuinely new concepts):
-- [ ] labs/dci-evpn-multisite, labs/dc-storage-networking, labs/k8s-fabric
-- [ ] labs/flexvpn-basics, labs/service-ha
-- [ ] labs/evpn-border-ceos, labs/ha-network-design-ceos,
-      labs/dmvpn-phase3-ipsec-capstone (capstones — check for new content only)
-- [ ] labs/opnsense-* (OPNsense-specific — concepts only)
-
-Then batch 3 (78 labs) and batch 4 (18 debug labs).
-
-Then batches 2–4 per `anki/MANIFEST.md`.
-
-## Status: complete
-
-**467 cards across 18 decks, drawn from 135 of the 162 labs (83%).**
-
-Run `python3 anki/build.py --stats` for the current per-deck breakdown and
-`python3 anki/audit.py` for coverage and quality checks.
-
-### The 27 labs deliberately not carded
-
-- **Capstones** (10) — `enterprise-*-capstone`, `enterprise-grand-capstone`,
+- **Capstones (10)** — `enterprise-*-capstone`, `enterprise-grand-capstone`,
   `dmvpn-phase3-ipsec-capstone`, `troubleshooting-range-*`,
-  `enterprise-it-101/16-capstone`. These recombine concepts already carded from
-  the labs they build on. Their value is integration practice, which spaced
+  `enterprise-it-101/16-capstone`. They recombine concepts already carded from
+  the labs they build on; their value is integration practice, which spaced
   repetition doesn't serve.
-- **Platform variants** (6) — `mpls-sr-srlinux`, `vxlan-evpn-srlinux`,
+- **Platform variants (6)** — `mpls-sr-srlinux`, `vxlan-evpn-srlinux`,
   `ha-network-design-ceos`, `dot1x-ceos-practice`, `opnsense-ipsec-nat-t`,
-  `orchestrated-wan-overlay`. The protocol concepts are carded from the primary
-  lab; the platform-specific CLI is out of scope under the IOS-XE decision.
-- **Blank practice twin** — `mpls-sr-blank` is `mpls-sr-isis-bgp` with the
+  `orchestrated-wan-overlay`. Protocol concepts are carded from the primary
+  lab; platform-specific CLI is out of scope under decision 1.
+- **Blank practice twin (1)** — `mpls-sr-blank` is `mpls-sr-isis-bgp` with the
   config removed.
-- **Already covered by pattern cards** — `debug-ospf-auth` and
-  `debug-dmvpn-phase1` (their faults are carded as the auth-failure signature
-  and the DMVPN shortcut card), `enterprise-access-security`
-  (campus-l2-hardening + 802.1X), `soc-zeek-analysis` and
-  `soc-kibana-hvt-dashboard` (carded from the Suricata and SIEM labs).
-- **Repo scaffolding** — `soc-common`, `templates`, `fixtures`.
-- **`dmvpn-ceos`** — broken by design; cEOS 4.35.2F has no `ip nhrp`.
+- **Already covered by pattern cards (5)** — `debug-ospf-auth` and
+  `debug-dmvpn-phase1` (carded as the auth-failure signature and the DMVPN
+  shortcut card), `enterprise-access-security` (campus-l2-hardening + 802.1X),
+  `soc-zeek-analysis` and `soc-kibana-hvt-dashboard` (carded from the Suricata
+  and SIEM labs).
+- **Repo scaffolding (3)** — `soc-common`, `templates`, `fixtures`.
+- **`dmvpn-ceos` (1)** — broken by design; cEOS 4.35.2F has no `ip nhrp`.
 
-### Second pass: gaps filled after the first build
+To re-derive this list at any time, diff the `source:` fields in
+`anki/cards/*.yaml` against `anki/MANIFEST.md` — `anki/audit.py` prints the
+carded count, and the snippet in the git history of this file prints the names.
 
-The first pass reached 105 labs / 387 cards. A coverage check found several
-uncarded labs with genuinely distinct content, added in a second pass:
+---
 
-- **IPv6** was the weakest area — a whole deck was missing. Added ND/SLAAC,
-  RA-based host config, first-hop security, MP-BGP AFI/SAFI, and the transition
-  mechanisms (6PE, NAT64/DNS64, DS-Lite).
-- **MPLS L2VPN** — pseudowires, targeted LDP, VPWS/VPLS/EVPN signalling, QinQ
-  and carrier Ethernet handoff.
-- **Windows/AD** — the second half of the enterprise-it-101 track: enterprise
-  DNS, SMB permission layers, mail (SPF/DKIM/DMARC), the Kerberos web proxy,
-  backup/RPO/RTO, monitoring and log centralisation.
-- **Operations** — AAA failure modes, management-plane policy, ZTP, packet
-  analysis, network assurance.
-- **Security and enterprise** — black core, defence-in-depth layering, stateful
-  firewall HA, three-tier campus, WAN edge failover, EAP-TLS server validation.
+## If you want to take it further
 
-## Resolved QA items
+Nothing here is required — the deck stands on its own. In rough order of value:
 
-- **`area range` summary metric** — vendor behaviour has historically differed
-  from RFC 2328 here, so **no card asserts a value**. The summarization cards
-  teach the Null0 discard route and the ABR-vs-ASBR command split instead, both
-  of which are unambiguous. Keep it that way unless someone verifies IOS-XE
-  behaviour on real hardware.
-- **Dedupe** — `anki/audit.py` flags near-duplicates by token overlap. Two pairs
-  currently score above the threshold and were reviewed as false positives
-  (shared vocabulary, different content). Canonical homes: route-map
-  implicit-deny and prefix-list `ge`/`le` live in `bgp.yaml`; other decks
-  reference the idea rather than restating it.
-- **IOS-XE syntax audit** — every config block was reviewed line by line. Two
-  real errors were found and fixed: a `/32` loopback advertised with a `/24`
-  mask (`bgp-iosxe-basic-session`), and `bgp bestpath as-path multipath-relax`
-  shown inside the address-family when it is a router-level command
+- **Study-order tags.** The decks are topic-shaped, not difficulty-shaped. A
+  `level:` tag (fundamentals / intermediate / advanced) would let Anki build a
+  filtered deck that follows `docs/study-paths.md` instead of firing advanced
+  EVPN cards in week one.
+- **Reverse cards for the syntax set.** The 39 `syntax` cards are all
+  recall-the-command. Command→meaning in the other direction is a genuinely
+  different skill and is cheap to generate from the same YAML.
+- **Verify the `area range` metric** (see caveats below) and add the card if
+  IOS-XE behaviour is confirmed on real hardware.
+- **Card the capstones as scenario cards.** They were skipped as
+  concept-duplicates, but a small number of "given this design, what breaks
+  first" cards would exercise integration rather than recall. Different card
+  shape; would want its own subdeck.
+- **Images.** Several topics (CLOS fabric, EVPN label stack, DMVPN phases,
+  OSPF LSA flooding scopes) would carry better as a diagram. `build.py` would
+  need media-file support in `genanki.Package`.
+
+---
+
+## Known caveats
+
+- **`area range` summary metric** — vendor behaviour has historically diverged
+  from RFC 2328, so **no card asserts a value**. The summarization cards teach
+  the Null0 discard route and the ABR-vs-ASBR command split instead, both
+  unambiguous. Leave it that way unless someone verifies IOS-XE on real gear.
+- **Near-duplicate detector** — `audit.py` flags pairs by token overlap. One
+  pair currently trips the threshold (`bgp-as-set-purpose` ↔ `mpls-qinq`) and
+  was reviewed as a **false positive**: shared vocabulary (provider, customer,
+  tag), unrelated content. Re-review rather than assume if it changes.
+- **Canonical homes for cross-cutting ideas** — route-map implicit-deny and
+  prefix-list `ge`/`le` live in `bgp.yaml`; other decks reference the idea
+  rather than restating it. Keep it that way to avoid drift between copies.
+- **`genanki` is a user-site install** (`pip install --user genanki pyyaml`);
+  there is no venv checked in, and `anki/dist/` is gitignored because the
+  `.apkg` is a build artifact.
+
+---
+
+## Audit history
+
+Both passes were verified, not assumed:
+
+- **IOS-XE syntax audit** — every config block reviewed line by line. Two real
+  errors found and fixed: a `/32` loopback advertised with a `/24` mask
+  (`bgp-iosxe-basic-session`), and `bgp bestpath as-path multipath-relax` shown
+  inside the address-family when it is a router-level command on IOS-XE
   (`dc-multipath-relax`).
+- **Renderer bug** — prose containing `<` ("IGP < EGP < incomplete", "RD < FD")
+  was being swallowed by Anki as HTML. Fixed by escaping before applying inline
+  markdown; ordered-list rendering added at the same time.
+- **Coverage check after the first build** — the first pass reached 105 labs /
+  387 cards. Diffing sources against the manifest showed IPv6 was missing
+  almost entirely, along with MPLS L2VPN, half the Windows/AD track, and
+  several operations labs. The second pass closed those, +80 cards.
