@@ -479,6 +479,370 @@ cards:
     tags: [enterprise-it, symptom-cause, sso]
     source: enterprise-it-101/labs/10-sso-federation
 
+# ── Enterprise DNS ────────────────────────────────────────────────────────
+
+  - id: eit-layered-enterprise-dns
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      Why do enterprises point clients at a recursive resolver rather than
+      directly at the AD DNS servers?
+    back: |
+      So clients know about **one** resolver and it routes per query. The
+      recursive resolver (BIND, Unbound, Infoblox) **conditionally forwards**
+      the AD domain to the domain controllers and **recurses** everything else
+      to the internet.
+
+      This keeps the DCs from having to be internet resolvers — which is both a
+      load and a security problem — while giving you one place to apply
+      filtering, logging, split-horizon views and caching.
+
+      ```
+      zone "lab.corp" { type forward; forwarders { 10.100.1.10; }; };
+      ```
+    tags: [enterprise-it, concept, dns]
+    source: enterprise-it-101/labs/05-dns-deep-dive
+
+  - id: eit-open-resolver-risk
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      What is `allow-recursion` for, and what happens if you leave it open?
+    back: |
+      It restricts **recursive** service to your own clients. Leave it open and
+      you have an **open resolver** — an amplifier for **DNS reflection DDoS**:
+      an attacker spoofs a victim's source address, sends you a small query, and
+      you send the victim a much larger answer.
+
+      Your server becomes an unwitting weapon, and your bandwidth pays for it.
+
+      The distinction matters: an **authoritative** server should answer the
+      world for **its own zones**; a **recursive resolver** should answer
+      **only your clients** for anything. Combining both roles on one server is
+      the configuration that gets it wrong.
+    tags: [enterprise-it, concept, dns, security]
+    source: enterprise-it-101/labs/05-dns-deep-dive
+
+  - id: eit-dig-status-codes
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      `dig` returns NOERROR, SERVFAIL, or NXDOMAIN. What layer does each point
+      at?
+    back: |
+      - **NOERROR** — the query was answered. (An empty answer section still
+        counts: the name exists but has no record of that *type*.)
+      - **NXDOMAIN** — **authoritative**: this name does not exist. The
+        resolution chain worked; the name is genuinely absent.
+      - **SERVFAIL** — the **resolver failed**: it couldn't reach the
+        authoritative server, or **DNSSEC validation failed**, or a forwarder
+        is broken. Nothing about the name itself.
+
+      **NXDOMAIN is a successful answer; SERVFAIL is an infrastructure fault.**
+      Confusing them sends you looking for a missing record when the real
+      problem is a dead forwarder.
+    extra: |
+      `dig +trace` walks the delegation from the root, which localises *which*
+      server in the chain is failing. Internal unsigned zones under a validating
+      resolver need `validate-except` or they SERVFAIL.
+    tags: [enterprise-it, symptom-cause, dns]
+    source: enterprise-it-101/labs/05-dns-deep-dive
+
+# ── File services ─────────────────────────────────────────────────────────
+
+  - id: eit-share-vs-filesystem-permissions
+    type: basic
+    subdeck: File services
+    front: |
+      A user connects to a file share but can't read any files. Which of the
+      two permission layers is denying them?
+    back: |
+      **The filesystem layer.** There are two, and a request must satisfy
+      **both**:
+
+      | Layer | Set by | Controls |
+      |---|---|---|
+      | **Share ACL** | `valid users`, `read only`, `write list` (or Share Permissions) | Who may **connect**, and in what mode |
+      | **Filesystem** | POSIX owner/group/mode, ACLs, NTFS ACLs | Who may **read or write the actual files** |
+
+      "Connects but can't read" means the share layer admitted them and the
+      filesystem denied — so you look at ownership and ACLs on the directory,
+      not at the share definition.
+
+      Common practice: leave the share permissive and do all real access control
+      at the **filesystem** layer, so there is one place to audit.
+    tags: [enterprise-it, symptom-cause, smb]
+    source: enterprise-it-101/labs/07-file-shares
+
+  - id: eit-file-server-sees-no-passwords
+    type: basic
+    subdeck: File services
+    front: |
+      A domain-joined file server authenticates users without ever seeing their
+      passwords. How?
+    back: |
+      **Kerberos service tickets.** The client obtains a ticket for the file
+      server's SPN from the **DC**, and the file server validates it using its
+      own **machine key** (its keytab). The user's password never travels to,
+      or through, the file server.
+
+      Security consequence: **compromising a file server yields no user
+      credentials.** Contrast with NTLM or any password-forwarding scheme,
+      where every authenticating server handles material an attacker can
+      capture and replay.
+
+      This is the same reason a member server holds **no user database** — it
+      trusts the DC for identity and maps AD users to local UIDs on the fly.
+    tags: [enterprise-it, concept, smb, kerberos]
+    source: enterprise-it-101/labs/07-file-shares
+
+# ── Mail ──────────────────────────────────────────────────────────────────
+
+  - id: eit-email-two-protocols
+    type: basic
+    subdeck: Mail
+    front: |
+      "Email is broken." What's the first distinction to draw, and why?
+    back: |
+      **Sending vs. receiving — they are different protocols that fail
+      independently.**
+
+      - **SMTP** (25 server-to-server, 587 submission) *moves* mail.
+      - **IMAP** (143, 993) *reads* mailboxes.
+
+      "Can't send" points at SMTP, the MX chain, or relay policy. "Can't
+      receive" points at IMAP, the mailbox store, or delivery. Diagnosing them
+      as one problem wastes most of the time.
+
+      The exception worth knowing: when **everything** mail-related fails at
+      once, suspect the shared dependency — usually the **LDAP bind account**
+      that both the MTA (for recipient lookup) and the IMAP server (for
+      authentication) rely on.
+    tags: [enterprise-it, symptom-cause, mail]
+    source: enterprise-it-101/labs/09-email-gateway
+
+  - id: eit-spf-dkim-dmarc
+    type: basic
+    subdeck: Mail
+    front: |
+      SPF, DKIM and DMARC — what does each check, and why do you need all
+      three?
+    back: |
+      - **SPF** — a DNS record listing which **IP addresses** may send for your
+        domain. Checks the **envelope sender**. Breaks on forwarding, because
+        the forwarder's IP isn't in your list.
+      - **DKIM** — a **cryptographic signature** over the message, with the
+        public key in DNS. Survives forwarding, because it doesn't depend on the
+        path.
+      - **DMARC** — the **policy** layer: requires that SPF or DKIM pass **and
+        align** with the visible `From:` header, tells receivers what to do on
+        failure (none/quarantine/reject), and requests **reports**.
+
+      DMARC is the piece that matters: SPF and DKIM each validate something
+      the user never sees, and only alignment ties the result to the **From
+      address a human actually reads**.
+    tags: [enterprise-it, concept, mail, security]
+    source: enterprise-it-101/labs/09-email-gateway
+
+  - id: eit-mail-starttls
+    type: basic
+    subdeck: Mail
+    front: |
+      What does STARTTLS do, and what is its structural weakness?
+    back: |
+      It **upgrades an already-open plaintext connection** to TLS, rather than
+      starting encrypted. The client connects on port 25/143, issues
+      `STARTTLS`, and the session becomes encrypted from that point.
+
+      The weakness: an active attacker can **strip the STARTTLS advertisement**
+      from the server's greeting, and the client — seeing no TLS offered —
+      falls back to plaintext. A downgrade attack the user never sees.
+
+      Mitigations: **implicit TLS** on dedicated ports (465 submission, 993
+      IMAPS), plus **MTA-STS** and **DANE** to let a domain publish "always
+      require TLS for my mail."
+    tags: [enterprise-it, concept, mail, security]
+    source: enterprise-it-101/labs/09-email-gateway
+
+# ── Web proxy ─────────────────────────────────────────────────────────────
+
+  - id: eit-proxy-kerberos-sso
+    type: basic
+    subdeck: Web proxy
+    front: |
+      How does a web proxy authenticate a domain user without prompting them,
+      and what identity does it use?
+    back: |
+      **Kerberos Negotiate (SPNEGO).** The client trades its **TGT** for a
+      service ticket for the proxy's SPN (`HTTP/proxy1.lab.corp`) and presents
+      it in the `Proxy-Authorization` header. The proxy validates it with its
+      own **keytab**.
+
+      No password reaches the proxy and there's no prompt — single sign-on for
+      web access.
+
+      Two distinct identities are in play: the **SPN + keytab** is the proxy's
+      *acceptor* identity for validating client tickets; the proxy's **machine
+      account** is what it uses to bind to LDAP for group lookups.
+    extra: |
+      `curl --proxy-negotiate` authenticates to the **proxy**; `--negotiate`
+      authenticates to the **origin server**. Using the wrong one produces an
+      endless 407.
+    tags: [enterprise-it, concept, proxy, kerberos]
+    source: enterprise-it-101/labs/11-web-proxy
+
+  - id: eit-proxy-as-audit-point
+    type: basic
+    subdeck: Web proxy
+    front: |
+      Beyond filtering, what is the proxy's most valuable property?
+    back: |
+      **It is the audit point.** Every request is logged against a
+      **cryptographically proven user identity** — not an IP address that could
+      be shared, NATted, or reassigned — together with the allow/deny verdict
+      that was applied.
+
+      That's the foundation of web-access compliance and of any forensic
+      question of the form "who fetched this, when."
+
+      A firewall log gives you `10.1.2.3 → 93.184.216.34:443`. A
+      Kerberos-authenticated proxy log gives you
+      `alice@lab.corp → example.com/path, DENIED by rule 4`.
+    extra: |
+      `http_access` rules are **first match wins** — the rule *order* is the
+      policy, exactly as with ACLs and route-maps.
+    tags: [enterprise-it, concept, proxy, security]
+    source: enterprise-it-101/labs/11-web-proxy
+
+# ── Backup and recovery ───────────────────────────────────────────────────
+
+  - id: eit-rpo-vs-rto
+    type: basic
+    subdeck: Backup
+    front: |
+      RPO vs. RTO — define each and say what sets it.
+    back: |
+      - **RPO — Recovery *Point* Objective**: how much data you may lose. Set by
+        **backup frequency** (and retention). Hourly backups ⇒ up to an hour of
+        loss.
+      - **RTO — Recovery *Time* Objective**: how long until you are working
+        again. Set by **restore speed and practice**.
+
+      Every schedule decision is one of these in disguise, and they're bought
+      separately: more frequent backups improve RPO and do **nothing** for RTO.
+      Cutting RTO needs faster media, pre-staged infrastructure, and rehearsal.
+    tags: [enterprise-it, concept, backup]
+    source: enterprise-it-101/labs/15-backup-recovery
+
+  - id: eit-untested-backup
+    type: basic
+    subdeck: Backup
+    front: |
+      Why is "the backup job succeeded" almost worthless as evidence?
+    back: |
+      **Nobody needs backups; everybody needs restores.** A successful job says
+      the data was written somewhere — not that it can be read back, that the
+      encryption key still exists, that the archive is complete, or that the
+      restored system actually functions.
+
+      An untested backup is a hope.
+
+      And verify against **known data** — a specific record you deliberately
+      created — not against service liveness. A restored service can start
+      cleanly while containing the wrong data entirely, passing every health
+      check.
+    extra: |
+      **3-2-1**: three copies, two media types, one offsite. Practice with
+      `--dry-run` restores routinely and full recovery drills periodically.
+    tags: [enterprise-it, concept, backup]
+    source: enterprise-it-101/labs/15-backup-recovery
+
+  - id: eit-crash-vs-application-consistent
+    type: basic
+    subdeck: Backup
+    front: |
+      Crash-consistent vs. application-consistent backup — what's the
+      difference and when does it matter?
+    back: |
+      **Crash-consistent**: you copied the files as they were at an instant —
+      exactly the state after a power cut. Fine for a filesystem, and often
+      recoverable for a database with a journal, but you're relying on crash
+      recovery to work.
+
+      **Application-consistent**: the application was asked to produce a
+      coherent snapshot — `pg_dump`, VSS, `samba-tool domain backup offline`.
+      No mid-write state, no torn transactions.
+
+      It matters for **anything with internal state spanning multiple files**:
+      databases, AD, mail stores. Copying live database files is the classic
+      way to end up with backups that restore successfully and are subtly
+      corrupt.
+    tags: [enterprise-it, concept, backup]
+    source: enterprise-it-101/labs/15-backup-recovery
+
+  - id: eit-deferred-outage
+    type: basic
+    subdeck: Backup
+    front: |
+      You delete a service's on-disk state and the service keeps working. What
+      does that tell you?
+    back: |
+      **Nothing about the disk.** Services run from **in-memory state and open
+      file handles** — a KDC with its database deleted keeps issuing tickets, a
+      CA with no key file keeps signing from a loaded key.
+
+      This is a **deferred outage**: the bill arrives at the next restart, which
+      may be weeks later, long after anyone connects it to the change.
+
+      Practical rules: never treat "it still works" as verification of a
+      storage or configuration change, and **restart the service deliberately**
+      as part of validating one.
+    tags: [enterprise-it, symptom-cause, backup]
+    source: enterprise-it-101/labs/15-backup-recovery
+
+  - id: eit-monitoring-alert-quality
+    type: basic
+    subdeck: Monitoring
+    front: |
+      What separates a useful alert from noise?
+    back: |
+      A useful alert is **actionable, symptom-based, and rare**:
+
+      - **Actionable** — there is something a human should do *now*. If the
+        response is "acknowledge and move on," it should be a dashboard, not a
+        page.
+      - **Symptom-based** — alert on "users can't log in," not on "CPU is 85%."
+        Cause-based alerts fire constantly and miss the failures you didn't
+        anticipate.
+      - **Rare** — every non-actionable page erodes trust in every future one.
+        Alert fatigue is how real incidents get acknowledged and ignored.
+
+      The reliable test: **would you want to be woken at 3 a.m. for this?** If
+      not, it isn't an alert.
+    tags: [enterprise-it, concept, monitoring]
+    source: enterprise-it-101/labs/13-monitoring
+
+  - id: eit-log-centralization
+    type: basic
+    subdeck: Monitoring
+    front: |
+      Why centralise logs rather than reading them on each host?
+    back: |
+      - **Correlation** — an incident touches several systems, and the story
+        only exists when their logs are interleaved on one timeline.
+      - **Survivability** — an attacker's first move on a compromised host is
+        to clear its logs. Shipped-off-box logs are already out of reach.
+      - **Retention** — local logs rotate away in days; the incident is often
+        discovered in weeks.
+      - **Access** — investigating shouldn't require production shell access on
+        every machine.
+
+      The hard prerequisite is **synchronised clocks**. Without NTP the
+      centralised timeline is fiction, and correlation — the main reason you
+      built it — silently produces wrong answers.
+    tags: [enterprise-it, concept, monitoring, siem]
+    source: enterprise-it-101/labs/14-siem-logging
+
   - id: eit-radius-vs-ldap-auth
     type: basic
     subdeck: Federation
