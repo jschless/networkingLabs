@@ -8,9 +8,9 @@ catalog.
 - Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
 - Inventory date: 2026-07-31
 - Topology-backed labs: 143
-- Completed labs: 14 of 143
-- Remaining pending labs: 129
-- Completed type mix: 10 Build, 2 Guided Debug, 1 Reference / Observation,
+- Completed labs: 15 of 143
+- Remaining pending labs: 128
+- Completed type mix: 11 Build, 2 Guided Debug, 1 Reference / Observation,
   and 1 Capstone
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -103,7 +103,7 @@ catalog.
 | global-application-delivery | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | graceful-restart | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | gre-basics | changed | Build | Answer-leaking startup configs; rejected tunnel-source and passive-interface syntax; false broadcast-failure and immediate recursive-flap claims; early `EOS_FORWARD` race; weak four-check checker; incomplete task anatomy and fault lifecycle | Native `ceos:4.35.2F` on critical `gw-a`/`gw-b`; `ops-lab:local` Linux for incidental hosts/transit | Linux only under category (c) for incidental roles; no critical-role exception | Clean learner walk; broadcast `FULL/DR` and `FULL/BDR`, then point-to-point `FULL`; readable outer GRE and inner ICMP capture; repeated **49/0** healthy; focused **48/1** atomics; causal **45/4** and **41/8**; recursive **42/7** twice plus forced-TERM rollback and post-fix normal fault/repair; active-load samples; two accepted clean deploys and destroys; full repository gates; AUTHORING fallback and same-reviewer closure with no findings | `gw-a`/`gw-b` 1.13 GiB each; hosts 664/644 KiB; transit 1.949 MiB; about 2.263 GiB total | 89b57ad10ccafb3096a86f6712324a25bf7cee1b | lab-tutor unavailable; arm64 not live-tested; licensed cEOS required; software/container validation only, not hardware/ASIC; GRE intentionally unencrypted; memory/CPU samples are point-in-time |
-| gre-ipsec | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| gre-ipsec | changed | Build | Incomplete mirrored answer and task anatomy; false fail-closed claim; unbounded captures; stale strongSwan scripts and heavyweight FRR/cEOS incidental roles; six-check grader; exposed nontransactional fault | Native `vyos:local` on critical `gw-a`/`gw-b`; `ops-lab:local` Linux for incidental hosts/transit | Linux only under category (c) for incidental roles; no critical-role exception | Exact naked-GRE baseline; exact learned solution and polluted-state/precondition behavior; final correlated **128/0** healthy; focused **126/2** extra tunnel-address and **127/1** saved-route-leaf negatives; final deliberate **91/37** with IKE retained, child/XFRM absent, forwarding green, raw-GRE leak, and fresh `NO_PROPOSAL_CHOSEN`; repair/idempotence and forced-TERM rollback; protected/tun0 captures; active resources; two accepted fresh cycles plus post-review cycle and clean destroys; full repository gates; AUTHORING fallback and same-reviewer closure with no findings | About 538.2 MiB point-in-time aggregate: `gw-a` max 267.8 MiB, `gw-b` max 268.3 MiB, hosts 756 KiB each, transit 652 KiB | eafd37e999af05f11b7919843d9c480a32a1947d | lab-tutor unavailable; amd64 only; documented VyOS missing-GRUB health quirk; physical/hardware crypto and offload, NAT-T, long rekey, induced loss, and scale untested; resources are point-in-time |
 | ha-network-design-ceos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | internet-peering-ixp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | ip-sla-tracking | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
