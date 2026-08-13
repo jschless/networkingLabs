@@ -8,9 +8,9 @@ catalog.
 - Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
 - Inventory date: 2026-07-31
 - Topology-backed labs: 143
-- Completed labs: 13 of 143
-- Remaining pending labs: 130
-- Completed type mix: 9 Build, 2 Guided Debug, 1 Reference / Observation,
+- Completed labs: 14 of 143
+- Remaining pending labs: 129
+- Completed type mix: 10 Build, 2 Guided Debug, 1 Reference / Observation,
   and 1 Capstone
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -107,7 +107,7 @@ catalog.
 | ha-network-design-ceos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | internet-peering-ixp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | ip-sla-tracking | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| ipsec-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| ipsec-basics | changed | Build | Incomplete mirrored solution and task anatomy; route/selector conflation; stale strongSwan gateway scripts and unnecessary endpoint image; answer-exposed nontransactional fault; weak six-check checker; unbounded capture | Native `vyos:local` on critical `gw-a`/`gw-b`; pinned `ops-lab:local` Linux for incidental hosts/transit | Linux only under category (c) for incidental roles; no critical-role exception | Exact baseline containment; exact full solution and polluted-state convergence; repeated **114/0** healthy; focused **113/1** negatives; stable deliberate **81/33** with reciprocal public underlay and `NO_PROPOSAL_CHOSEN`; repair/idempotence and forced-TERM rollback; ESP-only captures; active samples; two accepted final cycles plus a post-review clean cycle and clean destroys; full repository gates; AUTHORING fallback and same-reviewer approval | About 537.03 MiB point-in-time total: `gw-a` 266.6–267.4 MiB, `gw-b` 266.5–267.3 MiB, hosts 636 KiB each, transit 1.086 MiB | 307633f14571bfa5852dbe04ae72ef66b38e1f85 | lab-tutor unavailable; amd64 only; documented VyOS missing-GRUB health quirk; physical/hardware offload, NAT-T, certificate authentication, long rekey, induced loss, and scale not tested; resource samples are point-in-time |
 | ipv6-access-services | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | ipv6-bgp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | ipv6-ospf3 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
