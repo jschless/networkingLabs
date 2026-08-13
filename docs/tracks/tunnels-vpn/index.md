@@ -7,7 +7,7 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 | [gre-basics](gre-basics.md) | Practice | cEOS | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
 | [ipsec-basics](ipsec-basics.md) | Build | VyOS + ops Linux | IKEv2 site-to-site IPsec, policy ownership, encrypted evidence, proposal triage |
 | [gre-ipsec](gre-ipsec.md) | Build | VyOS + ops Linux | Transport-mode ESP for GRE, layered capture evidence, confidentiality-failure triage |
-| [dmvpn-phase1](dmvpn-phase1.md) | Practice | VyOS | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF |
+| [dmvpn-phase1](dmvpn-phase1.md) | Build | VyOS + ops Linux | Hub-transit mGRE/NHRP, OSPF service routes, packet proof, partial-failure triage |
 | [dmvpn-phase2](dmvpn-phase2.md) | Practice | VyOS | DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts |
 | [dmvpn-phase3](dmvpn-phase3.md) | Practice | VyOS | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp |
 | [dmvpn-phase3-ipsec-capstone](dmvpn-phase3-ipsec-capstone.md) | Capstone | VyOS | DMVPN Phase 3 with in-lab PKI and certificate-based IPsec |
@@ -23,6 +23,8 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 - **IPsec/GRE protection labs**: `ipsec-basics` and `gre-ipsec` use
   `vyos:local` gateways plus incidental hosts/transit from
   `docker build -t ops-lab:local images/ops-lab/`
+- **DMVPN Phase 1**: `vyos:local` hub/spokes plus an incidental
+  `ops-lab:local` WAN bridge
 - **FlexVPN Linux lab**: `docker build -t ipsec-lab:local labs/ipsec-basics/`
 - **WireGuard lab**: `docker build -t wireguard-lab:local labs/wireguard/`
 - **OPNsense labs**: local QEMU/KVM base image — see [OPNsense platform notes](../../platforms/opnsense.md)
