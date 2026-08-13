@@ -8,9 +8,9 @@ catalog.
 - Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
 - Inventory date: 2026-07-31
 - Topology-backed labs: 143
-- Completed labs: 15 of 143
-- Remaining pending labs: 128
-- Completed type mix: 11 Build, 2 Guided Debug, 1 Reference / Observation,
+- Completed labs: 16 of 143
+- Remaining pending labs: 127
+- Completed type mix: 12 Build, 2 Guided Debug, 1 Reference / Observation,
   and 1 Capstone
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -71,7 +71,7 @@ catalog.
 | debug-vxlan-evpn | changed | Guided Debug | Cause exposed up front; all-FRR platform/catalog mismatch; missing staged evidence and hidden diagnosis; unrelated loopback-OSPF and EVPN-RR defects; weak checker; no supported fault lifecycle or probe/validation records | Native cEOS under the canonical tag for critical spine, vtep1, and vtep2; ops-lab Linux only for incidental host1/host2 | Linux retained only for incidental endpoints; no critical-role exception | Legacy causal probe; clean amd64 cEOS deployment with OSPF, Lo0 reachability, and EVPN healthy; solved checker 44/44; break twice produced exactly 37/7 with control plane green and one-way UDP/4789 from .22 to .1 on VNI 100; solution twice restored 44/44; full repository gates; AUTHORING fallback and same-reviewer closure; clean destroy | About 3.73 GiB sampled total: spine 1.209, vtep1 1.255, vtep2 1.269 GiB | 40b959249bc898187f494dea86b90c2ba24d05ab | lab-tutor unavailable; arm64 not live-tested; licensed local cEOS required; memory is point-in-time; physical ASIC, scale, IPv6, and multihoming not tested |
 | dhcp-dns-troubleshooting | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | dmvpn-ceos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| dmvpn-phase1 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dmvpn-phase1 | changed | Build | Preconfigured/contradictory Phase 1 tunnel semantics and stale FRR/EOS artifacts; weak seven-check grader; no opaque lifecycle or packet-path proof | Native `vyos:local` for critical hub and three spokes; `ops-lab:local` Linux for the incidental WAN bridge | Linux retained only for the incidental Layer 2 bridge/capture role; no critical-role exception | Exact **36/55** learner baseline; repeated **91/0** healthy and idempotent solution; focused OSPF **90/1** and address-pollution **70/21** negatives; deliberate **69/22** with NHRP/underlay and unaffected spokes green; repeated repair and forced-TERM rollback to **91/0**; bridge-wide Phase 1 GRE capture; two clean destroys; full repository gates; AUTHORING fallback and same-reviewer closure with no findings | About 1.04 GiB point-in-time aggregate: hub 264.7 MiB; spokes 266.7/265.7/265.2 MiB; bridge 640 KiB | 499d05b | lab-tutor unavailable; amd64 current VyOS rolling only; fixed-remote native NHRP crashed so validated mGRE spokes enforce Phase 1 by hub transit; encryption, dual hub, scale, adverse WAN, physical hardware untested; resources are point samples |
 | dmvpn-phase2 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | dmvpn-phase3 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | dmvpn-phase3-ipsec-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
