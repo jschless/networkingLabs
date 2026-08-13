@@ -1,12 +1,13 @@
 name: ipsec-basics
 
-# IPsec site-to-site tunnel practice lab
+# Native VyOS IKEv2 site-to-site IPsec Build lab
 #
 # Topology:
 #
 #  [host-a] ---eth1--- [gw-a] ---eth2--- [internet] ---eth2--- [gw-b] ---eth2--- [host-b]
 #
-# IP addressing (pre-configured by setup.sh):
+# IP addressing and underlay routes are pre-configured. The learned IPsec
+# configuration is intentionally absent from both gateway startup configs.
 #
 #   LAN A:   192.168.1.0/24
 #     host-a eth1: 192.168.1.10   default route -> 192.168.1.1
@@ -32,7 +33,7 @@ topology:
   nodes:
     host-a:
       kind: linux
-      image: ipsec-lab:local
+      image: ops-lab:local
       binds:
         - configs/host-a/setup.sh:/setup.sh
       exec:
@@ -42,10 +43,12 @@ topology:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/gw-a/config.boot
+      binds:
+        - configs/gw-a/apply-solution.sh:/opt/ipsec-basics/apply-solution.sh:ro
 
     internet:
       kind: linux
-      image: ipsec-lab:local
+      image: ops-lab:local
       binds:
         - configs/internet/setup.sh:/setup.sh
       sysctls:
@@ -57,10 +60,14 @@ topology:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/gw-b/config.boot
+      binds:
+        - configs/gw-b/apply-solution.sh:/opt/ipsec-basics/apply-solution.sh:ro
+        - configs/gw-b/inject-fault.sh:/opt/ipsec-basics/inject-fault.sh:ro
+        - configs/gw-b/restore-hash.sh:/opt/ipsec-basics/restore-hash.sh:ro
 
     host-b:
       kind: linux
-      image: ipsec-lab:local
+      image: ops-lab:local
       binds:
         - configs/host-b/setup.sh:/setup.sh
       exec:

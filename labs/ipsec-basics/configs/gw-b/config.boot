@@ -38,6 +38,10 @@ interfaces {
 
 protocols {
     static {
+        route 192.168.1.0/24 {
+            next-hop 203.0.113.5 {
+            }
+        }
         route 203.0.113.0/30 {
             next-hop 203.0.113.5 {
             }

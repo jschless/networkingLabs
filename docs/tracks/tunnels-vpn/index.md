@@ -5,8 +5,8 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
 | [gre-basics](gre-basics.md) | Practice | cEOS | GRE on Arista cEOS, EOS tunnel syntax, OSPF over GRE |
+| [ipsec-basics](ipsec-basics.md) | Build | VyOS + ops Linux | IKEv2 site-to-site IPsec, policy ownership, encrypted evidence, proposal triage |
 | [gre-ipsec](gre-ipsec.md) | Practice | VyOS | GRE + IPsec transport mode |
-| [ipsec-basics](ipsec-basics.md) | Practice | VyOS | IKEv2 site-to-site IPsec, PSK, tunnel mode |
 | [dmvpn-phase1](dmvpn-phase1.md) | Practice | VyOS | Hub-and-spoke DMVPN, mGRE, NHRP, OSPF |
 | [dmvpn-phase2](dmvpn-phase2.md) | Practice | VyOS | DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts |
 | [dmvpn-phase3](dmvpn-phase3.md) | Practice | VyOS | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp |
@@ -20,6 +20,7 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 ## Platform Notes
 
 - **VyOS labs**: `vyos:local` — one-time build from a VyOS ISO, see [VyOS platform notes](../../platforms/vyos.md)
+- **IPsec basics**: prepare `vyos:local`, then build incidental hosts/transit with `docker build -t ops-lab:local images/ops-lab/`
 - **FlexVPN Linux lab**: `docker build -t ipsec-lab:local labs/ipsec-basics/`
 - **WireGuard lab**: `docker build -t wireguard-lab:local labs/wireguard/`
 - **OPNsense labs**: local QEMU/KVM base image — see [OPNsense platform notes](../../platforms/opnsense.md)
