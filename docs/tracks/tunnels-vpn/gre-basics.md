@@ -3,10 +3,14 @@ title: gre-basics
 ---
 
 !!! tip "Practice Lab"
-    GRE tunnel, routing over GRE, recursive routing pitfall
+    **Build** — native cEOS GRE, visible encapsulation, OSPF over the overlay,
+    and recursive endpoint-resolution diagnosis
 
 !!! note "Image"
-    Arista cEOS — `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
+    Critical gateways: native Arista cEOS — run
+    `./scripts/build-images.sh ceos`; see the
+    [cEOS platform notes](../../platforms/ceos.md).
+    Incidental hosts/transit: `docker build -t ops-lab:local images/ops-lab/`.
 
 {%
   include-markdown "../../../labs/gre-basics/README.md"
