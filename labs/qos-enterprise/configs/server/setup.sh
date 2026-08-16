@@ -1,24 +1,26 @@
-#!/bin/bash
-# server/setup.sh — iperf3 server: accept all traffic from all clients
+#!/bin/sh
+set -eu
+
+i=0
+while ! ip link show eth1 >/dev/null 2>&1; do
+    i=$((i + 1))
+    [ "$i" -lt 30 ] || { echo "server: eth1 unavailable" >&2; exit 1; }
+    sleep 1
+done
 
 ip link set eth1 up
-ip addr add 10.2.0.2/30 dev eth1
-# "replace": the containerlab mgmt network already installed a default route,
-# and a plain "ip route add default" fails on it (leaving the node unable to
-# reach the far side).
-ip route replace default via 10.2.0.1
+ip address replace 10.2.0.2/30 dev eth1
+ip route replace default via 10.2.0.1 dev eth1
 
-echo "[server] Networking up: 10.2.0.2/30 gw 10.2.0.1"
+for comm in /proc/[0-9]*/comm; do
+    [ -r "$comm" ] || continue
+    [ "$(cat "$comm")" = "iperf3" ] || continue
+    pid=${comm#/proc/}
+    pid=${pid%/comm}
+    kill "$pid" 2>/dev/null || true
+done
+rm -f /tmp/iperf3-5201.log /tmp/iperf3-5202.log /tmp/iperf3-5203.log
 
-# Start iperf3 in server mode
-# -s         server mode
-# -D         daemon (background)
-# --forceflush  flush output immediately
-nohup iperf3 -s --forceflush > /tmp/iperf3-server.log 2>&1 &
-
-echo "[server] iperf3 server started (listening on all interfaces, port 5201)"
-echo "[server] Logs: tail -f /tmp/iperf3-server.log"
-echo "[server] Connections from:"
-echo "           client-voice  10.1.1.1  (UDP 500kbps  DSCP EF)"
-echo "           client-video  10.1.2.1  (UDP 1Mbps    DSCP AF41)"
-echo "           client-data   10.1.3.1  (TCP flood    DSCP BE)"
+for port in 5201 5202 5203; do
+    iperf3 -s -D -p "$port" --logfile "/tmp/iperf3-${port}.log"
+done

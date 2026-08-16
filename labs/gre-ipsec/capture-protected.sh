@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Generate and validate a bounded outer-only ESP observation for Task 4.
+set -euo pipefail
+
+usage() {
+    printf '%s\n' 'Usage: labs/gre-ipsec/capture-protected.sh' '' \
+        'Capture the healthy host flow on the transit link and require bidirectional ESP without raw GRE.'
+}
+
+case ${1:-} in -h|--help) usage; exit 0 ;; '') ;; *) usage >&2; exit 2 ;; esac
+(( $# == 0 )) || { usage >&2; exit 2; }
+
+prefix=clab-gre-ipsec
+capture_file=$(mktemp -t gre-ipsec-protected.XXXXXX)
+capture_pid=
+cleanup() {
+    [[ -z "$capture_pid" ]] || kill "$capture_pid" 2>/dev/null || true
+    rm -f "$capture_file"
+}
+trap cleanup EXIT
+
+for node in internet host-a; do
+    [[ "$(docker inspect --format '{{.State.Running}}' "$prefix-$node" 2>/dev/null)" == true ]] || {
+        echo "ERROR: gre-ipsec is not fully deployed" >&2
+        exit 1
+    }
+done
+
+timeout 12 docker exec "$prefix-internet" \
+    tcpdump -lnni eth1 -c 4 'ip proto 47 or ip proto 50' >"$capture_file" 2>&1 &
+capture_pid=$!
+sleep 1
+docker exec "$prefix-host-a" ping -c 3 -W 2 192.168.2.10 >/dev/null
+if ! wait "$capture_pid"; then
+    capture_pid=
+    sed -n '1,14p' "$capture_file"
+    echo "ERROR: bounded capture ended before collecting the required packets" >&2
+    exit 1
+fi
+capture_pid=
+
+sed -n '1,14p' "$capture_file"
+if grep -qE '203\.0\.113\.1 > 203\.0\.113\.6: ESP' "$capture_file" \
+    && grep -qE '203\.0\.113\.6 > 203\.0\.113\.1: ESP' "$capture_file" \
+    && ! grep -qE 'GREv0|192\.168\.[12]\.|ICMP echo' "$capture_file"; then
+    echo "PASS: the bounded WAN capture shows bidirectional public ESP and no readable GRE flow."
+    exit 0
+fi
+
+echo "ERROR: the capture did not prove the required protected WAN flow" >&2
+exit 1

@@ -1,12 +1,13 @@
 ---
-title: copp-basics
+title: Control Plane Policing (CoPP)
 ---
 
-!!! tip "Practice Lab"
-    Control Plane Policing, traffic classification, rate limiting
+!!! tip "Build Lab"
+    Software control-plane classification, token-bucket policing, counters,
+    and the INPUT-versus-FORWARD boundary while BGP and OSPF remain healthy.
 
 !!! note "Image"
-    `frr-lab:local` — `docker build -t frr-lab:local images/frr/`
+    `copp-lab:local` — `docker build -t copp-lab:local labs/copp-basics/`
 
 {%
   include-markdown "../../../labs/copp-basics/README.md"

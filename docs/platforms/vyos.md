@@ -72,6 +72,7 @@ This repository uses `vyos:local` for:
 - `debug-dmvpn-phase1`
 - `urpf-antispoofing`
 - `mtu-pmtud-troubleshooting`
+- `qos-enterprise`
 
 ## Access Model
 
@@ -91,6 +92,11 @@ set ...
 commit
 save
 ```
+
+`qos-enterprise` uses the current native `qos policy shaper` and
+`qos interface ... egress` configuration model. VyOS renders its learned HTB,
+DSCP classifiers, drop-tail, SFQ, and RED treatments through Linux `tc`; this
+is real software scheduling, not Cisco MQC or hardware queue emulation.
 
 From config mode, prefix operational commands with `run`, for example:
 

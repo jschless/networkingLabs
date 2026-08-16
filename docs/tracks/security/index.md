@@ -10,7 +10,7 @@ Ten labs covering ACL fundamentals, black-core routing, OPNsense NGFW policy, MA
 | [opnsense-ngfw-basics](opnsense-ngfw-basics.md) | Capstone | OPNsense | Aliases, NAT, DMZ publishing, state, logs, Suricata IPS |
 | [dot1x-nac](dot1x-nac.md) | Practice | Custom | 802.1X port auth, RADIUS, EAP, NAC enforcement |
 | [urpf-antispoofing](urpf-antispoofing.md) | Build | VyOS + Linux | Prove strict and loose uRPF with route asymmetry, one-way capture, and live drop counters |
-| [copp-basics](copp-basics.md) | Practice | FRR | Control Plane Policing, traffic classification, rate limiting |
+| [copp-basics](copp-basics.md) | Build | FRR + Linux | Software control-plane classification, token-bucket policing, counters, INPUT vs FORWARD |
 | [dot1x-ceos-practice](dot1x-ceos-practice.md) | Practice | cEOS | 802.1X wired NAC on Arista EOS, RADIUS, MAB |
 | [zero-trust-secure-access](zero-trust-secure-access.md) | Practice | Keycloak + Linux | OIDC claims, mTLS device signal, resource policy, origin isolation, decision logs |
 | [advanced-security-architecture](advanced-security-architecture.md) | Capstone | Linux + Suricata + ModSecurity | VRF/zone policy, state/NAT, IDS/IPS, WAF/PEP, controlled egress, OOB, RTBH, evidence correlation |

@@ -3,12 +3,15 @@ interfaces {
         address 10.0.0.13/24
         description "WAN NBMA"
     }
-    loopback lo {
+    dummy dum0 {
         address 192.168.3.1/24
+        description "Service LAN 3"
+    }
+    loopback lo {
     }
     tunnel tun0 {
         address 172.16.0.13/32
-        description "GRE tunnel to hub"
+        description "mGRE DMVPN tunnel — spoke3"
         enable-multicast
         encapsulation gre
         source-interface eth1

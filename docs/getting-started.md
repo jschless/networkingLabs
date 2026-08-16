@@ -104,14 +104,15 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | Image | Used by | Build command |
 |-------|---------|---------------|
 | `frr-lab:local` | the FRR/Linux labs (most non-cEOS labs) | `docker build -t frr-lab:local images/frr/` |
+| `copp-lab:local` | `copp-basics` software control-plane policy nodes | `docker build -t copp-lab:local labs/copp-basics/` (FRR 10.5.0 / Alpine 3.22.2 base `quay.io/frrouting/frr@sha256:fc7f887ab4d8da06f481a4f8d59afded88b3c5823f03610a7e808f7eba45eeea`; exact iptables and security-refresh package pins; validated on amd64) |
 | `enterprise-dual-stack-tools:local` | `enterprise-dual-stack-capstone` Linux services/endpoints | `docker build -t enterprise-dual-stack-tools:local labs/enterprise-dual-stack-capstone/` |
 | `advanced-security-tools:1.0.0` | `advanced-security-architecture` endpoints, WAF/PEP, DNS/proxy/logs | `docker build -t advanced-security-tools:1.0.0 labs/advanced-security-architecture/` (pinned Debian 12.12 digest; pinned nginx/ModSecurity CRS, dnsmasq, Squid, nftables, and rsyslog packages) |
 | `advanced-security-fw:1.0.0` | `advanced-security-architecture` stateful gateway and inline IDS/IPS | `docker build -f labs/advanced-security-architecture/Dockerfile.fw -t advanced-security-fw:1.0.0 labs/advanced-security-architecture/` (pinned Suricata 7.0.10 image digest; nftables NFQUEUE) |
-| `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, `mtu-pmtud-troubleshooting`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | one-time build from a free VyOS ISO — see [VyOS platform notes](platforms/vyos.md) |
-| `ipsec-lab:local` | `ipsec-basics`, `flexvpn-basics` | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
+| `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, `mtu-pmtud-troubleshooting`, `qos-enterprise`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | one-time build from a free VyOS ISO — see [VyOS platform notes](platforms/vyos.md) |
+| `ipsec-lab:local` | `flexvpn-basics` only (the retained Dockerfile lives under `labs/ipsec-basics/`) | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
 | `black-core-tools:local` | `black-core-routing` | `docker build -t black-core-tools:local labs/black-core-routing/` |
-| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `mtu-pmtud-troubleshooting`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` (multi-arch Alpine 3.20.10 base pinned by OCI index digest) |
+| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `dmvpn-phase1`, `gre-basics`, `gre-ipsec`, `ipsec-basics`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `mtu-pmtud-troubleshooting`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` (multi-arch Alpine 3.20.10 base pinned by OCI index digest) |
 | `rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`; the lab also needs `ceos:4.35.2F`, `ops-lab:local`, and the manifest-pinned MetalLB/nginx images |
 | `anycast-dns:local` | `anycast-dns` FRR resolver hosts | `docker build -t anycast-dns:local labs/anycast-dns/` (pinned Alpine 3.16-compatible bash, bind-tools, and dnsmasq packages; the lab also needs `ceos:4.35.2F`, `frr-lab:local`, and `ops-lab:local`) |
 | `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
@@ -121,7 +122,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `nac-practice:local` | `dot1x-ceos-practice` | `docker build -t nac-practice:local labs/dot1x-ceos-practice/` |
 | `nac-practice-tacacs:local` | `dot1x-ceos-practice` | `docker build -f labs/dot1x-ceos-practice/Dockerfile.tacacs -t nac-practice-tacacs:local labs/dot1x-ceos-practice/` |
 | `assurance-lab:local` | `network-assurance` | Build `ops-lab:local` and `assurance-lab:local`, then prepare `ceos:4.35.2F` using the [cEOS platform notes](platforms/ceos.md) |
-| `qos-lab:local` | `qos-enterprise` | `docker build -t qos-lab:local labs/qos-enterprise/` |
+| `qos-lab:local` | `qos-enterprise` incidental traffic endpoints | `docker build -t qos-lab:local labs/qos-enterprise/` (base `debian@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818`; exact Bookworm pins for iproute2, iperf3, ping, and tcpdump; the learned router also requires `vyos:local`) |
 | `telemetry-lab:local` | `telemetry-monitoring-hybrid` | `docker build -t telemetry-lab:local labs/telemetry-monitoring-hybrid/` |
 | `sdwan-lab:local` | `sdwan-concepts` | `docker build -t sdwan-lab:local labs/sdwan-concepts/` |
 | `orchestrated-wan-tools:1.0.0` | `orchestrated-wan-overlay` | `docker build -t orchestrated-wan-tools:1.0.0 labs/orchestrated-wan-overlay/` (pinned Debian 12.12 base; mTLS, WireGuard, nftables, and `tc`) |

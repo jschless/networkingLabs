@@ -17,7 +17,7 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 | [packet-analysis-basics](packet-analysis-basics.md) | Practice | ARP, OSPF, ICMP, TCP handshake capture, mirrored traffic, Wireshark workflow |
 | [mtu-pmtud-troubleshooting](mtu-pmtud-troubleshooting.md) | Guided Debug | Locate a GRE packet-size boundary, calculate native VyOS tunnel MTUs, and prove PMTUD feedback |
 | [network-assurance](network-assurance.md) | Reference / Observation | Correlate native cEOS SNMP, syslog, and SPAN with NetFlow v9 from a non-inline sensor |
-| [qos-enterprise](qos-enterprise.md) | Practice | Linux `tc` QoS: DSCP marking, HTB scheduling, WRED, SFQ |
+| [qos-enterprise](qos-enterprise.md) | Build | Build native VyOS HTB software QoS with DSCP classifiers, drop-tail, SFQ, RED, and bounded contention evidence |
 | [ztp-basics](ztp-basics.md) | Practice | Zero-touch provisioning: DHCP option 67 + HTTP config service, factory-reset a cEOS and watch native ZTP install your config |
 | [automation-fundamentals](automation-fundamentals.md) | Practice | eAPI from curl up to Python: structured state, idempotent change, verify-from-the-other-end, drift report |
 | [network-automation-netbox](network-automation-netbox.md) | Capstone | Build relational DCIM/IPAM, validate cable/address graphs, render native EOS, and reconcile explicit field ownership |
@@ -35,7 +35,7 @@ one-way-audio troubleshooting. It is registered and counted in Enterprise only.
 - **ipv6-access-services**: `docker build -t ops-lab:local images/ops-lab/`
 - **mtu-pmtud-troubleshooting**: build `ops-lab:local` and prepare `vyos:local` using the [VyOS platform notes](../../platforms/vyos.md)
 - **network-assurance**: build `ops-lab:local` and `assurance-lab:local`, then prepare `ceos:4.35.2F` using the [cEOS platform notes](../../platforms/ceos.md)
-- **qos-enterprise**: `docker build -t qos-lab:local labs/qos-enterprise/`
+- **qos-enterprise**: prepare `vyos:local` using the [VyOS platform notes](../../platforms/vyos.md), then `docker build -t qos-lab:local labs/qos-enterprise/` (pinned Debian endpoint image)
 - **ztp-basics**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t ops-lab:local images/ops-lab/`
 - **automation-fundamentals**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t automation-fundamentals:local labs/automation-fundamentals/`
 - **network-automation-netbox**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F` and `docker build -t netbox-automation:local labs/network-automation-netbox/`

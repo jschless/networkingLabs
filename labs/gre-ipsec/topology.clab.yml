@@ -1,85 +1,51 @@
 name: gre-ipsec
 
-# GRE over IPsec Lab
-#
-# Combine GRE (for routing protocol support) with IPsec transport mode
-# (for encryption). Classic enterprise WAN pattern.
-#
-# Topology:
-#
-#   [host-a] --- [gw-a] ---WAN--- [internet] ---WAN--- [gw-b] --- [host-b]
-#
-# Physical addressing (pre-configured):
-#   LAN A:   192.168.1.0/24
-#     host-a eth1: 192.168.1.10    default route -> 192.168.1.1
-#     gw-a   eth1: 192.168.1.1
-#   WAN:
-#     gw-a     eth2: 203.0.113.1/30
-#     internet eth1: 203.0.113.2/30
-#     internet eth2: 203.0.113.5/30
-#     gw-b     eth1: 203.0.113.6/30
-#   LAN B:   192.168.2.0/24
-#     gw-b   eth2: 192.168.2.1
-#     host-b eth1: 192.168.2.10    default route -> 192.168.2.1
-#
-# GRE tunnel (pre-configured by VyOS startup-config):
-#   gw-a tun0: 172.16.0.1/30
-#   gw-b tun0: 172.16.0.2/30
-#   GRE local/remote = WAN IPs
-#
-# What you configure:
-#   - Native VyOS IKEv2/IPsec on gw-a and gw-b
-#   - IPsec transport mode protecting GRE (proto 47) between WAN IPs
-#   - Verify `show vpn ike sa` / `show vpn ipsec sa`
-#
-# Node images:
-#   gw-a, gw-b:            vyos:local
-#   host-a, host-b:        frr-lab:local
-#   internet:              ceos:4.35.2F
+# Native VyOS GRE-over-IPsec Build lab. The GRE overlay and static routes are
+# prerequisite scaffold; the learned IKEv2/ESP configuration is absent.
 
 topology:
-  defaults:
-    kind: linux
-    sysctls:
-      net.ipv4.ip_forward: "1"
-
   nodes:
     host-a:
-      image: frr-lab:local
+      kind: linux
+      image: ops-lab:local
       binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/host-a/frr.conf:/etc/frr/frr.conf
+        - configs/host-a/setup.sh:/setup.sh:ro
       exec:
-        - bash -c 'ip route del default dev eth0 2>/dev/null || true'
-        - vtysh -b
-        - ip route replace default via 192.168.1.1
+        - bash /setup.sh
 
     gw-a:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/gw-a/config.boot
+      binds:
+        - configs/gw-a/apply-solution.sh:/opt/gre-ipsec/apply-solution.sh:ro
 
     internet:
-      kind: ceos
-      image: ceos:4.35.2F
-      startup-config: configs/internet/startup-config
+      kind: linux
+      image: ops-lab:local
+      binds:
+        - configs/internet/setup.sh:/setup.sh:ro
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - bash /setup.sh
 
     gw-b:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/gw-b/config.boot
+      binds:
+        - configs/gw-b/apply-solution.sh:/opt/gre-ipsec/apply-solution.sh:ro
+        - configs/gw-b/inject-fault.sh:/opt/gre-ipsec/inject-fault.sh:ro
+        - configs/gw-b/restore-hash.sh:/opt/gre-ipsec/restore-hash.sh:ro
 
     host-b:
-      image: frr-lab:local
+      kind: linux
+      image: ops-lab:local
       binds:
-        - configs/daemons:/etc/frr/daemons
-        - configs/vtysh.conf:/etc/frr/vtysh.conf
-        - configs/host-b/frr.conf:/etc/frr/frr.conf
+        - configs/host-b/setup.sh:/setup.sh:ro
       exec:
-        - bash -c 'ip route del default dev eth0 2>/dev/null || true'
-        - vtysh -b
-        - ip route replace default via 192.168.2.1
+        - bash /setup.sh
 
   links:
     - endpoints: ["host-a:eth1",   "gw-a:eth1"]      # 192.168.1.0/24  LAN A

@@ -1,3 +1,5 @@
+# Retained build context for flexvpn-basics. ipsec-basics itself uses
+# ops-lab:local for incidental Linux roles and native VyOS gateways.
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

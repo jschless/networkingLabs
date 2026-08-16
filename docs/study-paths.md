@@ -56,7 +56,7 @@ show you:
 | Exam expects | What this repo has instead |
 |--------------|---------------------------|
 | **Named-mode EIGRP** (`router eigrp NAME` + address families) | FRR EIGRP is classic-mode, IPv4-only, no auth |
-| **MQC QoS** (`class-map`/`policy-map`/`service-policy`) | Linux `tc` classification and scheduling (`qos-enterprise`) |
+| **MQC QoS** (`class-map`/`policy-map`/`service-policy`) | Native VyOS software QoS in [`qos-enterprise`](tracks/operations/qos-enterprise.md): HTB, DSCP classification, drop-tail, SFQ, and RED rendered through Linux `tc`; the mechanisms transfer, but MQC syntax and hardware queues do not |
 | **HSRP and GLBP** | VRRP (`vrrp`, `ha-network-design-ceos`) — same FHRP concept, different protocol and CLI |
 | **Cisco NHRP/DMVPN syntax** (`ip nhrp map`, `tunnel mode gre multipoint`) | VyOS DMVPN (`dmvpn-phase1/2/3`) — identical NHRP behavior, different config grammar |
 | **IOS NAT** (`ip nat inside/outside`) | nftables and OPNsense NAT |
