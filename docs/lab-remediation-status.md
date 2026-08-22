@@ -8,9 +8,9 @@ catalog.
 - Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
 - Inventory date: 2026-07-31
 - Topology-backed labs: 143
-- Completed labs: 16 of 143
-- Remaining pending labs: 127
-- Completed type mix: 12 Build, 2 Guided Debug, 1 Reference / Observation,
+- Completed labs: 17 of 143
+- Remaining pending labs: 126
+- Completed type mix: 12 Build, 2 Guided Debug, 2 Reference / Observation,
   and 1 Capstone
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -72,7 +72,7 @@ catalog.
 | dhcp-dns-troubleshooting | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | dmvpn-ceos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | dmvpn-phase1 | changed | Build | Preconfigured/contradictory Phase 1 tunnel semantics and stale FRR/EOS artifacts; weak seven-check grader; no opaque lifecycle or packet-path proof | Native `vyos:local` for critical hub and three spokes; `ops-lab:local` Linux for the incidental WAN bridge | Linux retained only for the incidental Layer 2 bridge/capture role; no critical-role exception | Exact **36/55** learner baseline; repeated **91/0** healthy and idempotent solution; focused OSPF **90/1** and address-pollution **70/21** negatives; deliberate **69/22** with NHRP/underlay and unaffected spokes green; repeated repair and forced-TERM rollback to **91/0**; bridge-wide Phase 1 GRE capture; two clean destroys; full repository gates; AUTHORING fallback and same-reviewer closure with no findings | About 1.04 GiB point-in-time aggregate: hub 264.7 MiB; spokes 266.7/265.7/265.2 MiB; bridge 640 KiB | 499d05b | lab-tutor unavailable; amd64 current VyOS rolling only; fixed-remote native NHRP crashed so validated mGRE spokes enforce Phase 1 by hub transit; encryption, dual hub, scale, adverse WAN, physical hardware untested; resources are point samples |
-| dmvpn-phase2 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| dmvpn-phase2 | changed | Reference / Observation | Legacy shared-subnet/broadcast-OSPF design is incompatible with current VyOS `/32` NHRP tunnels and misleadingly labeled Traffic-Indication redirect/shortcut behavior as classic Phase 2; stale mixed-platform artifacts, weak grading, and the required reference observation/perturbation workflow were missing | Native `vyos:local` on all four critical hub/spoke roles; incidental `ops-lab:local` WAN bridge/capture point | Linux retained only for the incidental Layer 2 bridge/capture role; no critical-role exception | Fresh strengthened **117/0**; saved-only interface and OSPF atomics each **116/1**; target-only service-host fault with unrelated control/data paths healthy, repair and idempotent repair to **117/0**; prior forced-TERM rollback; direct bridge-wide GRE capture; active resource sample; repeated clean cycles/destroys; full repository gates; AUTHORING fallback and same-reviewer no-findings closure | Bridge 644 KiB; hub 267 MiB; spokes 263.7/267.4/268.2 MiB; about 1.04 GiB aggregate | 9a49739 | lab-tutor unavailable; amd64 current VyOS rolling only; compatibility reference uses Traffic-Indication/shortcut Phase 3-style optimization rather than classic Phase 2 resolution; encryption, dual hub, scale, adverse WAN, physical hardware, and future-image behavior not tested; resources are point samples |
 | dmvpn-phase3 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | dmvpn-phase3-ipsec-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | dot1x-ceos-practice | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
