@@ -112,7 +112,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `ipsec-lab:local` | `flexvpn-basics` only (the retained Dockerfile lives under `labs/ipsec-basics/`) | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
 | `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
 | `black-core-tools:local` | `black-core-routing` | `docker build -t black-core-tools:local labs/black-core-routing/` |
-| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `dmvpn-phase1`, `gre-basics`, `gre-ipsec`, `ipsec-basics`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `mtu-pmtud-troubleshooting`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` (multi-arch Alpine 3.20.10 base pinned by OCI index digest) |
+| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `dmvpn-phase1`, `dmvpn-phase2`, `gre-basics`, `gre-ipsec`, `ipsec-basics`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `mtu-pmtud-troubleshooting`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` (multi-arch Alpine 3.20.10 base pinned by OCI index digest) |
 | `rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`; the lab also needs `ceos:4.35.2F`, `ops-lab:local`, and the manifest-pinned MetalLB/nginx images |
 | `anycast-dns:local` | `anycast-dns` FRR resolver hosts | `docker build -t anycast-dns:local labs/anycast-dns/` (pinned Alpine 3.16-compatible bash, bind-tools, and dnsmasq packages; the lab also needs `ceos:4.35.2F`, `frr-lab:local`, and `ops-lab:local`) |
 | `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
@@ -151,8 +151,8 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 ### Images pulled automatically
 
 Some labs also reference public registry images that `containerlab deploy` pulls on
-first use — no build step needed: `frrouting/frr:latest` (helper/bridge nodes in the
-DMVPN labs), and
+first use — no build step needed: `quay.io/frrouting/frr:8.4.2` (incidental bridge
+nodes in the remaining Phase 3/debug DMVPN labs), and
 `rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`,
 `quay.io/metallb/controller:v0.14.8@sha256:93b83b39d06bbcb0aedc0eb750c9e43e3c46dc08a6f88400ed96105224d784ec`,
 `quay.io/metallb/speaker:v0.14.8@sha256:fd86bfc502601d6525739d411a0045e7085a4008a732be7e271c851800952142`,

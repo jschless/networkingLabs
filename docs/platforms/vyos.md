@@ -98,6 +98,22 @@ save
 DSCP classifiers, drop-tail, SFQ, and RED treatments through Linux `tc`; this
 is real software scheduling, not Cisco MQC or hardware queue emulation.
 
+## Current DMVPN Phase 2 compatibility boundary
+
+The validated rolling image requires `/32` addresses on NHRP-used tunnel
+interfaces. A shared tunnel `/24` is rejected, and broadcast OSPF over those
+`/32` mGRE interfaces exchanges hellos but forms no adjacency because FRR
+treats the links as unnumbered.
+
+`dmvpn-phase2` is therefore a **Reference/Observation** compatibility study,
+not a classic Phase 2 build. Its iBGP route reflector preserves remote-spoke
+overlay next hops, but the initial FIB recursively forwards through the hub.
+Direct peer forwarding appears only after hub `redirect` generates a Traffic
+Indication and spoke `shortcut` resolves the peer. That is the optimization
+mechanism associated with Phase 3; the lab labels it explicitly and does not
+claim ordinary Phase 2 next-hop NHRP resolution. See the lab's `PROBE.md` for
+the rejected live designs and its `VALIDATION.md` for the accepted environment.
+
 From config mode, prefix operational commands with `run`, for example:
 
 ```vyos
