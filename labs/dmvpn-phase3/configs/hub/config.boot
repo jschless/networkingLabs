@@ -7,7 +7,7 @@ interfaces {
     }
     tunnel tun0 {
         address 172.16.0.1/32
-        description "mGRE DMVPN tunnel - hub"
+        description "mGRE DMVPN Phase 3 hub"
         enable-multicast
         encapsulation gre
         source-interface eth1
@@ -44,8 +44,16 @@ protocols {
         }
     }
     static {
-        route 192.168.0.0/16 {
-            blackhole {
+        route 192.168.1.0/24 {
+            next-hop 172.16.0.11 {
+            }
+        }
+        route 192.168.2.0/24 {
+            next-hop 172.16.0.12 {
+            }
+        }
+        route 192.168.3.0/24 {
+            next-hop 172.16.0.13 {
             }
         }
     }

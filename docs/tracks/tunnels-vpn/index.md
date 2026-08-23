@@ -9,7 +9,7 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 | [gre-ipsec](gre-ipsec.md) | Build | VyOS + ops Linux | Transport-mode ESP for GRE, layered capture evidence, confidentiality-failure triage |
 | [dmvpn-phase1](dmvpn-phase1.md) | Build | VyOS + ops Linux | Hub-transit mGRE/NHRP, OSPF service routes, packet proof, partial-failure triage |
 | [dmvpn-phase2](dmvpn-phase2.md) | Reference / Observation | VyOS + ops Linux | Current-image Phase 2 compatibility boundary: preserved BGP next hops versus Phase 3-style Traffic-Indication shortcuts |
-| [dmvpn-phase3](dmvpn-phase3.md) | Practice | VyOS | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp |
+| [dmvpn-phase3](dmvpn-phase3.md) | Build | VyOS + ops Linux | Overlay-only OSPF, hub service summarization, and current-image service-host mappings with `/24` shortcuts |
 | [dmvpn-phase3-ipsec-capstone](dmvpn-phase3-ipsec-capstone.md) | Capstone | VyOS | DMVPN Phase 3 with in-lab PKI and certificate-based IPsec |
 | [flexvpn-basics](flexvpn-basics.md) | Practice | strongSwan | IKEv2 FlexVPN, Virtual Tunnel Interfaces |
 | [wireguard](wireguard.md) | Build | Linux WireGuard | Public-key identity, cryptokey routing, encrypted capture, hub forwarding |
@@ -23,7 +23,7 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 - **IPsec/GRE protection labs**: `ipsec-basics` and `gre-ipsec` use
   `vyos:local` gateways plus incidental hosts/transit from
   `docker build -t ops-lab:local images/ops-lab/`
-- **DMVPN Phase 1 and Phase 2 compatibility study**: `vyos:local` hub/spokes
+- **DMVPN Phase 1, Phase 2 compatibility study, and Phase 3 build**: `vyos:local` hub/spokes
   plus an incidental `ops-lab:local` WAN bridge
 - **FlexVPN Linux lab**: `docker build -t ipsec-lab:local labs/ipsec-basics/`
 - **WireGuard lab**: `docker build -t wireguard-lab:local labs/wireguard/`

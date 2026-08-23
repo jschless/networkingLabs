@@ -114,6 +114,26 @@ mechanism associated with Phase 3; the lab labels it explicitly and does not
 claim ordinary Phase 2 next-hop NHRP resolution. See the lab's `PROBE.md` for
 the rejected live designs and its `VALIDATION.md` for the accepted environment.
 
+## Current DMVPN Phase 3 service-summary behavior
+
+`dmvpn-phase3` keeps spoke service interfaces out of the shared OSPF area.
+The hub owns exact static service `/24`s through the corresponding overlay
+addresses, redistributes them, and advertises only an external
+`192.168.0.0/16` summary to the spokes. Advertising service interfaces from
+the spokes instead produces per-spoke same-area service specifics (`/24`s for
+the final dummy-interface topology) that the hub's external `summary-address`
+cannot suppress. Those specifics violate the sole-summary scaling contract,
+although the tested NHRP host route still provides direct optimization after
+traffic.
+
+After a hub redirect, the tested current image installs a dynamic NHRP mapping
+for the service host (for example, `192.168.2.1` correlated to the remote
+NBMA), a service-prefix shortcut route such as
+`dynamic 192.168.2.0/24 172.16.0.12` (`Via` is the column header), and a
+direct `tun0` FIB for the host. Those exact keys are qualified as current-image
+behavior; the transferable mechanism is the summary-first path followed by
+Traffic-Indication/shortcut resolution.
+
 From config mode, prefix operational commands with `run`, for example:
 
 ```vyos
@@ -121,9 +141,20 @@ run show ip ospf neighbor
 run show ip nhrp
 ```
 
-## Current Image Quirk
+## Current Image Quirks
 
-The current local image can report an unhealthy container state because of a missing `/boot/grub/grub.cfg` inside the container filesystem. That does not prevent the DMVPN labs from booting or operating, but the health status is not yet clean.
+On the rolling image observed during `dmvpn-phase3` validation, Docker health
+runs `systemctl is-system-running`. All four routers reported
+`unhealthy` because systemd was `degraded`; the sole failed unit was
+`atopacct.service`, whose start timed out when unsupported netlink process
+accounting could not initialize in the container. FRR daemons and interfaces
+continued to operate. Treat this as a documented image/container
+health limitation, not clean Docker health and not by itself a routing failure.
+
+An earlier local-image variant reported unhealthy because
+`/boot/grub/grub.cfg` was absent. That is a separate historical cause, not the
+`atopacct.service` failure observed in the current Phase 3 cycle; inspect the
+actual health command and failed units rather than assuming either variant.
 
 On the tested rolling image, the same failed system-option reset can make
 `configure` print a warning that the boot configuration had an error. Confirm
