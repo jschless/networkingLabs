@@ -8,9 +8,9 @@ catalog.
 - Base: `origin/main` at `d812c39d2448c44a0566f12250b0aff9c299f6a5`
 - Inventory date: 2026-07-31
 - Topology-backed labs: 143
-- Completed labs: 19 of 143
-- Remaining pending labs: 124
-- Completed type mix: 13 Build, 2 Guided Debug, 2 Reference / Observation,
+- Completed labs: 20 of 143
+- Remaining pending labs: 123
+- Completed type mix: 13 Build, 3 Guided Debug, 2 Reference / Observation,
   and 2 Capstone
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -59,7 +59,7 @@ catalog.
 | debug-bgp-path-selection | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | debug-dmvpn-phase1 | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | debug-eigrp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| debug-gre-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| debug-gre-basics | changed | Guided Debug | Exposed the exact cause before investigation; stale rejected tunnel-source syntax introduced a second defect; one-shot cEOS forwarding bootstrap was racy; heavyweight incidental roles, four weak assertions, and no exact repeatable capture/fault/rollback contract | Native `ceos:4.35.2F` on critical `gw-a`/`gw-b`; `ops-lab:local` Linux for incidental hosts and routed transit | Linux retained only for incidental endpoints/transit; no critical-role exception | Exact current incident **71/7** with both Tunnel0 headlines up/up; healthy **78/0**; fault/healthy captures **6:0:6:0** and **6:6:6:6**; focused canonical-interface, shutdown, Linux-management, and running/saved VRF-route negatives with pre-mutation rejection; normal fault/repair plus ERR/INT/TERM rollback; active resource sample; accepted clean cycles/destroys; all repository gates; AUTHORING fallback and same-reviewer closure with no findings | Prior unchanged-topology active peaks: `gw-a` 1.123 GiB, `gw-b` 1.13 GiB, hosts 776/764 KiB, transit 656 KiB; about 2.255 GiB aggregate | 82d0cce | `lab-tutor` unavailable; licensed amd64 cEOS 4.35.2F only; GRE intentionally clear text; software/container behavior, not physical ASIC forwarding; resource sample predates reviewer-only checker hardening but topology/images were unchanged |
 | debug-isis-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | debug-mpls-sr-isis-bgp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | debug-ospf-auth | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
