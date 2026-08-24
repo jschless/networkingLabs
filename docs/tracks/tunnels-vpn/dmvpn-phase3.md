@@ -2,11 +2,11 @@
 title: dmvpn-phase3
 ---
 
-!!! tip "Practice Lab"
-    DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp (VyOS)
+!!! tip "Build Lab"
+    Build overlay-only OSPF, hub service summarization, and current-image NHRP host mappings with service-prefix shortcuts on native VyOS.
 
 !!! note "Image"
-    `vyos:local` — one-time build from a VyOS ISO — see [VyOS platform notes](../../platforms/vyos.md)
+    `vyos:local` for the four learned routers plus `ops-lab:local` for the incidental WAN bridge — see [VyOS platform notes](../../platforms/vyos.md)
 
 {%
   include-markdown "../../../labs/dmvpn-phase3/README.md"

@@ -58,6 +58,7 @@ LOCAL_BUILDS=(
   "-t wireguard-lab:local labs/wireguard/"
   "-t black-core-tools:local labs/black-core-routing/"
   "-t ops-lab:local images/ops-lab/"
+  "-t dmvpn-pki:local labs/dmvpn-phase3-ipsec-capstone/"
   "-t nac-lab:local labs/dot1x-nac/"
   "-t nac-practice:local labs/dot1x-ceos-practice/"
   "-t assurance-lab:local labs/network-assurance/"

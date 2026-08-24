@@ -1,60 +1,86 @@
 #!/bin/sh
-set -e
+# Issue or validate one allow-listed router identity transactionally.
+set -eu
+umask 077
 
-BASE="${PKI_BASE:-/lab/pki}"
-ROUTER="${1:-}"
-FQDN="${2:-}"
+base=/lab/pki
+router=${1:-}
+fqdn=${2:-}
 
-if [ -z "$ROUTER" ] || [ -z "$FQDN" ]; then
-  echo "Usage: $0 <router> <fqdn>" >&2
-  exit 1
+case "$router:$fqdn" in
+    hub:hub.dmvpn.lab) serial=1001 ;;
+    spoke1:spoke1.dmvpn.lab) serial=1002 ;;
+    spoke2:spoke2.dmvpn.lab) serial=1003 ;;
+    spoke3:spoke3.dmvpn.lab) serial=1004 ;;
+    *)
+        echo "ERROR: identity is not in the capstone router/FQDN allow-list" >&2
+        exit 2
+        ;;
+esac
+
+/opt/dmvpn-pki/validate-pki.sh --ca-only >/dev/null || {
+    echo "ERROR: initialize a valid CA before issuing a router certificate" >&2
+    exit 1
+}
+
+key="$base/private/$router.key"
+csr="$base/csr/$router.csr"
+cert="$base/certs/$router.pem"
+ext="$base/ext/$router.ext"
+
+existing=0
+for path in "$key" "$csr" "$cert" "$ext"; do
+    [ -e "$path" ] && existing=$((existing + 1))
+done
+if [ "$existing" -ne 0 ]; then
+    [ "$existing" -eq 4 ] && /opt/dmvpn-pki/validate-pki.sh "$router" >/dev/null || {
+        echo "ERROR: existing $router material is incomplete or invalid; refusing to overwrite it" >&2
+        exit 1
+    }
+    echo "Existing validated certificate for $router reused."
+    exit 0
 fi
 
-CA_CERT="$BASE/ca/dmvpn-ca.pem"
-CA_KEY="$BASE/private/dmvpn-ca.key"
-ROUTER_KEY="$BASE/private/${ROUTER}.key"
-ROUTER_CSR="$BASE/csr/${ROUTER}.csr"
-ROUTER_CERT="$BASE/certs/${ROUTER}.pem"
-ROUTER_EXT="$BASE/ext/${ROUTER}.ext"
-INSTALL_SNIPPET="$BASE/install/${ROUTER}.commands"
-CERT_NAME="${ROUTER}-cert"
+tmp=$(mktemp -d "/lab/.dmvpn-$router.XXXXXX")
+cleanup() { rm -rf "$tmp"; }
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-if [ ! -f "$CA_CERT" ] || [ ! -f "$CA_KEY" ]; then
-  echo "CA files are missing. Create $CA_CERT and $CA_KEY first." >&2
-  exit 1
-fi
-
-openssl genrsa -out "$ROUTER_KEY" 2048
-openssl req -new -key "$ROUTER_KEY" -out "$ROUTER_CSR" \
-  -subj "/C=US/ST=Lab/L=Toronto/O=ContainerLab/CN=${FQDN}"
-
-cat > "$ROUTER_EXT" <<EOF
-subjectAltName=DNS:${FQDN}
-extendedKeyUsage=serverAuth,clientAuth
+cat >"$tmp/$router.ext" <<EOF
+basicConstraints = critical,CA:false
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = serverAuth,clientAuth
+subjectAltName = DNS:$fqdn
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
 EOF
 
-openssl x509 -req -in "$ROUTER_CSR" -CA "$CA_CERT" -CAkey "$CA_KEY" \
-  -CAcreateserial -out "$ROUTER_CERT" -days 825 -sha256 -extfile "$ROUTER_EXT"
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 \
+    -out "$tmp/$router.key" >/dev/null 2>&1
+openssl req -new -sha256 -key "$tmp/$router.key" -out "$tmp/$router.csr" \
+    -subj "/C=CA/ST=Ontario/L=Toronto/O=ContainerLab/OU=DMVPN Capstone/CN=$fqdn" \
+    -addext "subjectAltName=DNS:$fqdn" >/dev/null 2>&1
+openssl x509 -req -sha256 -days 825 -set_serial "$serial" \
+    -in "$tmp/$router.csr" -CA "$base/ca/dmvpn-ca.pem" \
+    -CAkey "$base/private/dmvpn-ca.key" -extfile "$tmp/$router.ext" \
+    -out "$tmp/$router.pem" >/dev/null 2>&1
+chmod 0600 "$tmp/$router.key" "$tmp/$router.csr" "$tmp/$router.pem" "$tmp/$router.ext"
 
-# VyOS `set pki` takes the base64 BODY of the PEM (the text between the
-# BEGIN/END armor lines), not a base64 of the whole file — stripping the
-# armor and joining the lines produces exactly that. Re-encoding the full
-# PEM makes commit fail with "Invalid certificate".
-pem_body() { sed '/^-----/d' "$1" | tr -d '\n'; }
+openssl verify -CAfile "$base/ca/dmvpn-ca.pem" "$tmp/$router.pem" >/dev/null 2>&1
+key_pub=$(openssl pkey -in "$tmp/$router.key" -pubout 2>/dev/null | openssl sha256)
+cert_pub=$(openssl x509 -in "$tmp/$router.pem" -pubkey -noout 2>/dev/null | openssl sha256)
+[ "$key_pub" = "$cert_pub" ] || {
+    echo "ERROR: staged router key and certificate do not match" >&2
+    exit 1
+}
 
-CA_B64="$(pem_body "$CA_CERT")"
-CERT_B64="$(pem_body "$ROUTER_CERT")"
-# The key must be PKCS#8 for VyOS; openssl genrsa emits PKCS#1 ("BEGIN RSA
-# PRIVATE KEY"), so convert before stripping the armor.
-KEY_B64="$(openssl pkcs8 -topk8 -nocrypt -in "$ROUTER_KEY" | sed '/^-----/d' | tr -d '\n')"
-
-cat > "$INSTALL_SNIPPET" <<EOF
-set pki ca DMVPN-CA certificate '${CA_B64}'
-set pki certificate ${CERT_NAME} certificate '${CERT_B64}'
-set pki certificate ${CERT_NAME} private key '${KEY_B64}'
-EOF
-
-chmod 600 "$ROUTER_KEY" "$INSTALL_SNIPPET"
-
-echo "Issued certificate for $ROUTER ($FQDN)"
-echo "Install snippet: $INSTALL_SNIPPET"
+mv "$tmp/$router.key" "$key"
+mv "$tmp/$router.csr" "$csr"
+mv "$tmp/$router.pem" "$cert"
+mv "$tmp/$router.ext" "$ext"
+trap - EXIT HUP INT TERM
+rm -rf "$tmp"
+/opt/dmvpn-pki/validate-pki.sh "$router" >/dev/null
+echo "Issued and validated certificate for $router ($fqdn)."

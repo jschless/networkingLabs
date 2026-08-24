@@ -1,17 +1,17 @@
 name: debug-dmvpn-phase1
 
+# Native VyOS Guided Debug lab. The saved startup state contains one wrong
+# spoke1 NHRP unicast-map leaf; every other data/control-plane leaf is healthy.
+
 topology:
   nodes:
     br-wan:
       kind: linux
-      image: quay.io/frrouting/frr:8.4.2
+      image: ops-lab:local
+      binds:
+        - configs/br-wan/setup.sh:/setup.sh:ro
       exec:
-        - ip link add name br0 type bridge
-        - ip link set br0 up
-        - ip link set eth1 master br0
-        - ip link set eth2 master br0
-        - ip link set eth3 master br0
-        - ip link set eth4 master br0
+        - bash /setup.sh
 
     hub:
       kind: vyosnetworks_vyos
@@ -22,16 +22,31 @@ topology:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke1/config.boot
+      binds:
+        - configs/set-map.sh:/opt/debug-dmvpn-phase1/set-map.sh:ro
+        - configs/spoke-startup-normalize.sh:/opt/debug-dmvpn-phase1/spoke-startup-normalize.sh:ro
+      exec:
+        - su - admin -c '/bin/bash /opt/debug-dmvpn-phase1/spoke-startup-normalize.sh 10.0.0.254'
 
     spoke2:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke2/config.boot
+      binds:
+        - configs/set-map.sh:/opt/debug-dmvpn-phase1/set-map.sh:ro
+        - configs/spoke-startup-normalize.sh:/opt/debug-dmvpn-phase1/spoke-startup-normalize.sh:ro
+      exec:
+        - su - admin -c '/bin/bash /opt/debug-dmvpn-phase1/spoke-startup-normalize.sh 10.0.0.1'
 
     spoke3:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke3/config.boot
+      binds:
+        - configs/set-map.sh:/opt/debug-dmvpn-phase1/set-map.sh:ro
+        - configs/spoke-startup-normalize.sh:/opt/debug-dmvpn-phase1/spoke-startup-normalize.sh:ro
+      exec:
+        - su - admin -c '/bin/bash /opt/debug-dmvpn-phase1/spoke-startup-normalize.sh 10.0.0.1'
 
   links:
     - endpoints: ["hub:eth1", "br-wan:eth1"]
