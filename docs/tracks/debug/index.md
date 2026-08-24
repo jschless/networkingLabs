@@ -20,7 +20,7 @@ Fifteen fully-working topologies, each with **one intentional bug**. The README 
 | [debug-bgp-basics](debug-bgp-basics.md) | BGP sessions | FRR |
 | [debug-bgp-path-selection](debug-bgp-path-selection.md) | BGP path selection | FRR |
 | [debug-bgp-filtering](debug-bgp-filtering.md) | BGP filtering | FRR |
-| [debug-gre-basics](debug-gre-basics.md) | GRE tunnels | cEOS |
+| [debug-gre-basics](debug-gre-basics.md) | GRE tunnels | cEOS + ops Linux |
 | [debug-dmvpn-phase1](debug-dmvpn-phase1.md) | DMVPN | VyOS |
 | [debug-vrf-lite](debug-vrf-lite.md) | VRF-Lite | cEOS |
 | [debug-spine-leaf](debug-spine-leaf.md) | BGP spine-leaf | cEOS |

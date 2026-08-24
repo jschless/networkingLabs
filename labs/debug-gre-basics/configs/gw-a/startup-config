@@ -1,20 +1,24 @@
+! gw-a — Site A gateway with the intended healthy half of the incident.
 hostname gw-a
 !
 interface Loopback0
    ip address 10.0.0.1/32
 !
 interface Ethernet1
+   description to host-a LAN-A
    no switchport
    ip address 192.168.1.1/24
    no shutdown
 !
 interface Ethernet2
+   description to internet WAN-A
    no switchport
    ip address 203.0.113.1/30
    no shutdown
 !
 interface Tunnel0
-   tunnel source Ethernet2
+   description GRE to Site B
+   tunnel source interface Ethernet2
    tunnel destination 203.0.113.6
    ip address 172.16.0.1/30
    no shutdown

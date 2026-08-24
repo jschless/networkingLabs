@@ -80,7 +80,7 @@ interface Vlan10
 
 ! GRE tunnel (requires tunnel path-mtu-discovery + ttl 255 for OSPF)
 interface Tunnel0
-   tunnel source Ethernet1
+   tunnel source interface Ethernet1
    tunnel destination 203.0.113.2
    tunnel path-mtu-discovery
    tunnel ttl 255
@@ -97,9 +97,24 @@ router bgp 65001
 
 2. **OSPF routes not installed over tunnel**: EOS default is `no tunnel routes`. The adjacency forms but routes aren't installed. Fix: add `tunnel routes` under `router ospf 1`.
 
-3. **Transit forwarding blocked by iptables**: cEOS installs DROP rules in `EOS_FORWARD` for data-plane interfaces. Fix via topology exec:
+3. **Transit forwarding blocked by iptables**: cEOS can install a target
+   `EOS_FORWARD` DROP after an early topology `exec` has already completed. A
+   one-shot deletion is therefore racy. Use a bounded readiness helper that:
+
+   - waits until the local EOS CLI is usable;
+   - removes every matching LAN-ingress DROP, including late insertions;
+   - requires 30 seconds of continuous absence before writing a lab-unique
+     readiness marker; and
+   - exits nonzero if either bounded wait expires.
+
+   Bind the helper read-only and pass the Linux-facing interface plus unique
+   marker from the topology:
 
    ```yaml
+   binds:
+     - configs/eos-forward-ready.sh:/opt/eos-forward-ready.sh:ro
    exec:
-     - bash -c "iptables -D EOS_FORWARD -i eth1 -j DROP 2>/dev/null || true"
+     - bash /opt/eos-forward-ready.sh eth1 /tmp/example-eos-forward.ready
    ```
+
+   `gre-basics` and `debug-gre-basics` contain the validated helper pattern.
