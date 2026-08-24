@@ -1,0 +1,339 @@
+deck: IS-IS
+cards:
+
+  - id: isis-net-address-anatomy
+    type: basic
+    subdeck: Addressing
+    front: |
+      Break down the NET address `49.0001.0100.0000.0001.00`.
+    back: |
+      ```
+      49    . 0001  . 0100.0000.0001 . 00
+      AFI     Area ID   System ID      NSEL
+      ```
+
+      - **AFI 49** — the private/locally-administered address space (the IS-IS
+        equivalent of RFC 1918).
+      - **Area ID** — variable length; shared by every router in the area.
+      - **System ID** — exactly **6 bytes**, unique across the whole domain.
+      - **NSEL** — always **00** on a router.
+    extra: |
+      Common convention: pad the loopback into the system ID —
+      10.0.0.1 → `010.000.000.001` → `0100.0000.0001`.
+    tags: [isis, concept, addressing]
+    source: labs/isis-basics
+
+  - id: isis-duplicate-system-id
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      Two routers are configured with the same IS-IS System ID. What are the
+      symptoms?
+    back: |
+      Their LSPs **collide in the LSDB**, so SPF runs against a corrupted
+      graph. You get intermittent, shifting unreachability — and the
+      adjacencies may still look perfectly **up**, which is what makes it so
+      hard to diagnose.
+
+      Unique System ID is the one identity rule IS-IS will not forgive.
+    tags: [isis, symptom-cause]
+    source: labs/isis-basics
+
+  - id: isis-runs-over-layer2
+    type: basic
+    subdeck: Concepts
+    front: |
+      IS-IS runs directly over Layer 2; OSPF runs over IP (protocol 89). Name
+      a concrete consequence.
+    back: |
+      An **IP misconfiguration cannot break an IS-IS adjacency** — mismatched
+      subnets, a wrong mask, or a missing IP address would kill OSPF on the
+      same link while IS-IS stays up.
+
+      It also means IS-IS is **unreachable from the IP network**: you cannot
+      attack the routing protocol from a remote host, because there's no IP
+      packet to send. SP backbones cite both as robustness and security wins.
+    tags: [isis, concept]
+    source: labs/isis-basics
+
+  - id: isis-tlv-extensibility
+    type: basic
+    subdeck: Concepts
+    front: |
+      IS-IS LSPs are TLV-encoded while OSPF uses fixed LSA formats. Why does
+      that matter historically?
+    back: |
+      IS-IS absorbed **IPv6, MPLS-TE, and Segment Routing** by defining new
+      TLVs — no new protocol version, no forklift.
+
+      OSPF needed an entirely new protocol (**OSPFv3**) just to carry IPv6.
+      TLV extensibility is the architectural reason IS-IS dominates in service
+      provider cores.
+    tags: [isis, concept]
+    source: labs/isis-basics
+
+  - id: isis-levels-and-hierarchy
+    type: basic
+    subdeck: Levels
+    front: |
+      What are L1, L2 and L1/2 routers, and where does IS-IS put the area
+      boundary compared with OSPF?
+    back: |
+      - **L1** — knows only its own area; reaches everything else via the
+        nearest L1/2.
+      - **L2** — the backbone.
+      - **L1/2** — holds **both** databases; the IS-IS analogue of an OSPF ABR.
+
+      **The boundary is on the link, not the router.** Every IS-IS router is
+      wholly inside one area; the two ends of a boundary link are in different
+      areas and join via an L2 adjacency. An OSPF ABR by contrast *straddles*
+      two areas with different interfaces in each.
+    tags: [isis, concept, levels]
+    source: labs/isis-multiarea
+
+  - id: isis-adjacency-area-rules
+    type: basic
+    subdeck: Levels
+    front: |
+      Two directly-connected routers are in different IS-IS areas, both
+      configured `level-1-2`. What adjacency forms?
+    back: |
+      **L2 only.**
+
+      **L1 adjacency requires matching area IDs; L2 adjacency does not care
+      about area at all.** Different areas therefore means no L1 adjacency is
+      possible, but the backbone adjacency comes up normally.
+
+      This split personality — L1 with same-area neighbours, L2 across the
+      boundary — is the heart of IS-IS hierarchy.
+    tags: [isis, concept, levels]
+    source: labs/isis-multiarea
+
+  - id: isis-level-mismatch
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      One router is `level-1` only, its neighbour `level-2-only`. What
+      happens, and how do you fix it?
+    back: |
+      **No usable adjacency** — they operate at different levels of the
+      hierarchy and have no level in common. `show isis neighbors detail`
+      exposes the level/circuit-type mismatch.
+
+      Fix: align both to the same level, or make at least one side
+      `level-1-2`.
+    extra: |
+      Worth knowing the other common IS-IS adjacency killers: mismatched MTU
+      (IS-IS pads hellos to full MTU on point-to-point links by default), and
+      mismatched authentication.
+    tags: [isis, symptom-cause, levels]
+    source: labs/isis-basics
+
+  - id: isis-attached-bit
+    type: basic
+    subdeck: Levels
+    front: |
+      An L1 router has no specific route to a destination in another area, yet
+      reaches it. What mechanism is at work?
+    back: |
+      The **attached bit (ATT)**. An L1/2 router sets it in its **L1 LSP**,
+      signalling "I am your way out of the area." Every L1 router responds by
+      installing a **default route** toward the nearest such router.
+
+      Elegant and scalable — L1 databases stay tiny — but **blunt**: an L1
+      router can make no choice at all about external destinations. It just
+      sends everything to its closest exit.
+    tags: [isis, concept, levels]
+    source: labs/isis-multiarea
+
+  - id: isis-attached-bit-blackhole
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      An L1/2 router loses its backbone (L2) connectivity but stays up as an
+      L1 router. What's the failure mode?
+    back: |
+      If it keeps advertising the attached bit, L1 routers keep installing a
+      default toward it and it **black-holes** everything destined outside the
+      area — it has no L2 path left to forward on.
+
+      Detection: compare `show isis database level-2` on that router against a
+      healthy backbone router, and alert on L2 adjacency count rather than
+      trusting the default route's presence.
+    tags: [isis, symptom-cause, levels]
+    source: labs/isis-multiarea
+
+  - id: isis-route-leaking
+    type: basic
+    subdeck: Levels
+    front: |
+      What problem does L2→L1 route leaking solve that the attached-bit
+      default cannot?
+    back: |
+      **Multi-exit areas.** With only a default, every L1 router sends all
+      external traffic to its *closest* L1/2 — even when the other exit is
+      topologically far better for a specific destination.
+
+      Leaking specific L2 prefixes into L1 lets L1 routers make a real
+      longest-prefix choice between exits.
+
+      ```
+      router isis CORE
+       redistribute isis ip level-2 into level-1 route-map LEAK-MAP
+      ```
+    extra: |
+      The scaling trap: "just leak everything" rebuilds the full backbone table
+      inside every L1 area and destroys the hierarchy the levels exist to
+      provide. Leak deliberately, prefix by prefix.
+    tags: [isis, ios-xe, concept, levels]
+    source: labs/isis-multiarea
+
+  - id: isis-l1l2-scope-discipline
+    type: basic
+    subdeck: Levels
+    front: |
+      Why keep `level-1-2` only at true area edges rather than enabling it
+      broadly?
+    back: |
+      Every L1/2 router carries **both** databases and injects its L2 LSP into
+      the backbone. Extending L2 deeper into an area inflates **every backbone
+      router's LSDB**, not just the local one.
+
+      L1/2 isn't a property of "border" routers by nature — any router can
+      carry L2, which is exactly why the discipline matters.
+    tags: [isis, concept, levels]
+    source: labs/isis-multiarea
+
+  - id: isis-metric-style-wide
+    type: basic
+    subdeck: Metrics
+    front: |
+      What is the default IS-IS interface metric range, and what does
+      `metric-style wide` change?
+    back: |
+      The legacy ("narrow") metric is **6 bits — maximum 63** per interface,
+      with a maximum path cost of 1023. Default interface metric is **10**.
+
+      `metric-style wide` moves to **24-bit** interface metrics (32-bit path
+      cost) and is **required** for MPLS traffic engineering and Segment
+      Routing.
+
+      ```
+      router isis CORE
+       metric-style wide
+      ```
+    extra: |
+      Change it domain-wide. Routers using different metric styles compute
+      SPF over incompatible views, so a partial rollout causes routing
+      inconsistency.
+    tags: [isis, ios-xe, syntax, metrics]
+    source: labs/isis-basics
+
+  - id: isis-metric-noop-on-single-path
+    type: basic
+    subdeck: Metrics
+    front: |
+      You raise an interface metric and nothing re-routes. Why?
+    back: |
+      **Metric changes are silent no-ops until the topology offers a choice.**
+      On a linear path there is no alternative, so only the *recorded cost*
+      changes, not the path.
+
+      A metric only re-routes traffic when a genuine second path exists — this
+      is a very common "I changed the metric and nothing happened" confusion,
+      and it applies equally to OSPF cost and EIGRP delay.
+    tags: [isis, concept, metrics]
+    source: labs/isis-basics
+
+  - id: isis-overload-bit
+    type: basic
+    subdeck: Concepts
+    front: |
+      What does the IS-IS **overload bit** do, and name two operational uses.
+    back: |
+      It advertises the router's own prefixes but signals **"do not transit
+      me"** — other routers keep reaching it, but route *through* it only if
+      there is no alternative.
+
+      1. **Maintenance** — drain transit traffic off a router before working on
+         it, without dropping adjacencies.
+      2. **On boot** — hold off transit until BGP has converged, so the router
+         doesn't attract traffic it can't yet forward.
+
+      ```
+      router isis CORE
+       set-overload-bit on-startup 300
+      ```
+
+      Forget to clear a manually-set bit and the router silently stays out of
+      the forwarding path — capacity you're paying for but not using.
+    tags: [isis, ios-xe, concept]
+    source: labs/isis-basics
+
+  - id: isis-dis-vs-dr
+    type: basic
+    subdeck: Concepts
+    front: |
+      IS-IS elects a **DIS** on a broadcast LAN; OSPF elects a **DR**. How do
+      the adjacency models differ?
+    back: |
+      **OSPF**: non-DR routers form full adjacencies only with the DR/BDR and
+      stay at `2-Way` with each other — the LAN is a hub-and-spoke of
+      adjacencies.
+
+      **IS-IS**: **every** router forms an adjacency with every other router on
+      the LAN. The DIS's only job is to originate the pseudonode LSP
+      representing the LAN.
+
+      So IS-IS LANs are genuinely fully meshed at the adjacency level.
+    extra: |
+      Two more differences: IS-IS has **no backup DIS** (re-election is fast
+      and deterministic), and DIS election is **preemptive** — highest priority
+      wins immediately, where an OSPF DR keeps its role until it dies.
+    tags: [isis, concept]
+    source: labs/isis-basics
+
+  - id: isis-iosxe-config
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: bring up IS-IS level-2-only with wide metrics, a passive
+      loopback, and one transit interface.
+    back: |
+      ```
+      router isis CORE
+       net 49.0001.0100.0000.0001.00
+       is-type level-2-only
+       metric-style wide
+       passive-interface Loopback0
+      !
+      interface Loopback0
+       ip router isis CORE
+      !
+      interface GigabitEthernet0/0
+       ip router isis CORE
+       isis metric 100 level-2
+      ```
+    extra: |
+      Note `passive-interface` lives under the **process** on IOS-XE (FRR and
+      EOS put `isis passive` on the interface instead). Verify with
+      `show isis neighbors`, `show isis database`, `show ip route isis`.
+    tags: [isis, ios-xe, syntax]
+    source: labs/isis-basics
+
+  - id: isis-vs-ospf-area-merge
+    type: basic
+    subdeck: Concepts
+    front: |
+      Two companies merge, each with its own backbone. Which is easier to
+      join, IS-IS or OSPF, and why?
+    back: |
+      **IS-IS.** L2 adjacency ignores area IDs entirely, so you connect the two
+      backbones with a link and they simply peer at Level 2 — no renumbering.
+
+      OSPF requires that **everything touch area 0**. Two existing area 0s
+      cannot be joined by a virtual link (a VL *extends* area 0 through a
+      transit area, it doesn't merge two backbones), so one side must be
+      renumbered into a non-backbone area.
+    tags: [isis, concept]
+    source: labs/isis-multiarea

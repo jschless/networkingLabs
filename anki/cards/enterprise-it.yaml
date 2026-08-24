@@ -1,0 +1,866 @@
+deck: Enterprise IT
+cards:
+
+# ── Active Directory ──────────────────────────────────────────────────────
+
+  - id: eit-ad-three-services
+    type: basic
+    subdeck: Active Directory
+    front: |
+      Active Directory is really three services. Name them, their protocol,
+      port, and job.
+    back: |
+      | Service | Protocol | Port | Job |
+      |---|---|---|---|
+      | Directory | **LDAP** | 389 / 636 (LDAPS) | Stores users, groups, computers, OUs — the database |
+      | Authentication | **Kerberos** | 88 | Proves identity with tickets, never passwords on the wire |
+      | Service location | **DNS** | 53 | SRV records tell clients where the domain controllers are |
+
+      Almost every "AD is broken" incident is really one of these three,
+      and most often it's **DNS**.
+    tags: [enterprise-it, windows, concept, ad]
+    source: enterprise-it-101/labs/01-active-directory
+
+  - id: eit-ad-srv-records
+    type: basic
+    subdeck: Active Directory
+    front: |
+      How does a client find a domain controller it has never been told about,
+      and why does breaking that produce misleading errors?
+    back: |
+      It queries **DNS SRV records** — `_ldap._tcp.<domain>` and
+      `_kerberos._tcp.<domain>` — which return the DC's hostname, port, weight
+      and priority. Nothing about the DC is hard-coded on the client.
+
+      Delete or break those records and clients lose the entire domain, but the
+      **error blames Kerberos or LDAP, not DNS** — "cannot contact the KDC",
+      "server not available." The failing component names itself; the actual
+      cause is one layer down.
+
+      **If AD is misbehaving, check DNS first.** It is the answer far more
+      often than its share of the architecture suggests.
+    tags: [enterprise-it, windows, symptom-cause, ad, dns]
+    source: enterprise-it-101/labs/01-active-directory
+
+  - id: eit-ou-vs-group
+    type: basic
+    subdeck: Active Directory
+    front: |
+      OUs vs. groups — what is each for, and what can't you do with an OU?
+    back: |
+      **OUs** are **containers** for organising objects. They exist to target
+      **Group Policy** and to **delegate administration** over a subtree. An
+      object lives in exactly one OU.
+
+      **Groups** are **security principals**. They exist to grant permissions,
+      and an object can be in many.
+
+      **You cannot grant file-share access to an OU.** Alice is *in* the
+      Employees OU but *a member of* the engineering group — different axes,
+      different purposes. Confusing them is the most common AD design mistake.
+    tags: [enterprise-it, windows, concept, ad]
+    source: enterprise-it-101/labs/01-active-directory
+
+  - id: eit-kerberos-tickets
+    type: basic
+    subdeck: Active Directory
+    front: |
+      What does `kinit` actually do, and why is a stolen ticket less
+      catastrophic than a stolen password?
+    back: |
+      It proves you know your password **without sending it**. You receive a
+      **TGT (ticket-granting ticket)** from the KDC, then trade the TGT for
+      per-service tickets as needed — which *is* single sign-on.
+
+      A stolen **ticket** is **time-limited** (typically 10 hours) and usually
+      scoped to one service. A stolen **password** is valid until it is
+      changed, everywhere, for everything.
+
+      Underwriting all of it is the **`krbtgt` account's key** — which is why
+      "Golden Ticket" attacks target it, and why recovering from a domain
+      compromise requires resetting `krbtgt` **twice**.
+    tags: [enterprise-it, windows, concept, kerberos]
+    source: enterprise-it-101/labs/01-active-directory
+
+  - id: eit-kerberos-clock-skew
+    type: basic
+    subdeck: Active Directory
+    front: |
+      Why does Kerberos fail when a client's clock is more than ~5 minutes off?
+    back: |
+      Kerberos embeds **timestamps** in its authenticators specifically to
+      prevent **replay attacks** — the KDC rejects a request whose timestamp is
+      outside the tolerance window, because it can't distinguish a genuinely
+      delayed request from a replayed one.
+
+      Default tolerance is **5 minutes**.
+
+      The practical consequence: **NTP is a hard dependency of authentication,
+      not a convenience.** A drifting clock presents as "cannot log in" or
+      "cannot join the domain" with no mention of time anywhere in the error.
+    tags: [enterprise-it, windows, symptom-cause, kerberos]
+    source: enterprise-it-101/labs/02-ntp-time-services
+
+  - id: eit-domain-join-artifacts
+    type: basic
+    subdeck: Domain join
+    front: |
+      A domain join produces three concrete artifacts. What are they and where
+      does each live?
+    back: |
+      | Artifact | Where | Purpose |
+      |---|---|---|
+      | **Computer account** (`WS1$`) | In AD | The directory tracks the machine as a principal in its own right |
+      | **Keytab** (`/etc/krb5.keytab`) | On the host | The machine's password-less credential to AD |
+      | **`sssd.conf` + PAM/NSS** | On the host | Wires Linux identity and login to the DC |
+
+      The machine having its **own** identity is the key idea: the host
+      authenticates to AD independently of any user, which is what lets it
+      validate tickets and query the directory before anyone logs in.
+    tags: [enterprise-it, linux, concept, ad]
+    source: enterprise-it-101/labs/04-domain-join
+
+  - id: eit-login-dependency-ladder
+    type: basic
+    subdeck: Domain join
+    front: |
+      "I can't log in this morning." What four things must work, in order, and
+      what does each failure look like?
+    back: |
+      1. **DNS** — can the host resolve the domain's SRV records? Failure:
+         "cannot contact the KDC."
+      2. **Time** — is the clock within 5 minutes of the DC? Failure: clock
+         skew, "pre-authentication failed."
+      3. **The machine's own credential** — is the keytab still valid? (Machine
+         passwords rotate; a restored-from-snapshot VM has a stale one.)
+         Failure: the host itself can't bind.
+      4. **The DC** — is it reachable and responding on LDAP/Kerberos?
+
+      This is the diagnostic ladder for **every** "can't log in" ticket, and
+      the order matters — each layer depends on the one above it.
+    extra: |
+      Checks on a Linux member: `getent hosts`/`dig SRV`, `chronyc tracking` or
+      `timedatectl`, `klist -k /etc/krb5.keytab`, `realm list` / `sssctl
+      domain-status`.
+    tags: [enterprise-it, linux, symptom-cause, ad]
+    source: enterprise-it-101/labs/04-domain-join
+
+  - id: eit-credential-cache-tradeoff
+    type: basic
+    subdeck: Domain join
+    front: |
+      SSSD's credential cache: when does it save you, and when is it a security
+      hole?
+    back: |
+      **Saves you**: a laptop away from the corporate network can still
+      authenticate a **previously-seen** user — offline login. Without it, no
+      DC reachability means nobody logs in anywhere.
+
+      **Security hole**: a **disabled or terminated** user's account may still
+      work offline until the machine next checks in. Revocation is only as fast
+      as the next successful contact with a DC.
+
+      Bounded with `cache_credentials` plus
+      `offline_credentials_expiration` (days). Tighten it and you shorten the
+      exposure window — at the cost of stranding legitimate users who are away
+      from the network longer than that.
+    tags: [enterprise-it, linux, concept, ad, security]
+    source: enterprise-it-101/labs/04-domain-join
+
+  - id: eit-machine-account-revocation
+    type: basic
+    subdeck: Domain join
+    front: |
+      An attacker copies `/etc/krb5.keytab` from a decommissioned machine. What
+      can they do, and how do you neutralise it?
+    back: |
+      They can **impersonate that machine** to AD — bind to the directory,
+      request service tickets as `WS1$`, and read whatever that computer object
+      is permitted to read. Machine accounts are often over-privileged and
+      never audited.
+
+      Neutralise by **deleting or disabling the computer object in AD**. That
+      instantly invalidates the keytab, because the credential is a shared
+      secret held in the directory.
+
+      Contrast with a stolen **user** password: you reset it, but the user
+      keeps working under a new one. A machine credential has no such
+      continuity — killing the object is the revocation.
+
+      Practical lesson: **decommissioning a host means deleting its AD object**,
+      not just powering it off.
+    tags: [enterprise-it, windows, concept, ad, security]
+    source: enterprise-it-101/labs/04-domain-join
+
+  - id: eit-nss-vs-pam
+    type: basic
+    subdeck: Domain join
+    front: |
+      NSS vs. PAM vs. SSSD on a Linux domain member — what does each answer?
+    back: |
+      - **NSS** answers *"does this user exist, and what is their UID/GID?"* —
+        used by `id`, `getent`, `ls -l`. Identity, not authentication.
+      - **PAM** answers *"may this user log in right now?"* — used by `login`,
+        `sshd`, `su`, via `pam_sss`.
+      - **SSSD** is the daemon both consult, and the **only** component that
+        actually talks to AD.
+
+      So `id alice` working while `ssh alice@host` fails is not a contradiction:
+      identity resolves (NSS) but authentication or access control (PAM) does
+      not. Knowing which one you tested tells you where to look.
+    extra: |
+      Gotcha: **root's `su` skips authentication entirely** — testing a login
+      as root proves nothing. Always test from an unprivileged shell.
+    tags: [enterprise-it, linux, concept, ad]
+    source: enterprise-it-101/labs/04-domain-join
+
+# ── PKI ───────────────────────────────────────────────────────────────────
+
+  - id: eit-cert-chain-pieces
+    type: basic
+    subdeck: PKI
+    front: |
+      Five things must be right for a TLS certificate to validate. Name each
+      and its failure message.
+    back: |
+      | Piece | Failure if wrong |
+      |---|---|
+      | **Leaf cert** | Server can't prove who it is |
+      | **Intermediate** (presented *with* the leaf) | `unable to get local issuer certificate` |
+      | **Root**, installed **on the client** | Client rejects the whole chain |
+      | **Name match (SAN)** vs. the name you dialled | Hostname-mismatch error |
+      | **Validity window** (`notBefore`/`notAfter`) | Expired, or "not yet valid" from clock skew |
+
+      The most common real-world failure is the **missing intermediate**: it
+      works in a browser (which caches intermediates from other sites) and
+      fails in `curl` and every API client.
+    tags: [enterprise-it, concept, pki]
+    source: enterprise-it-101/labs/03-certificate-authority
+
+  - id: eit-internal-ca-why
+    type: basic
+    subdeck: PKI
+    front: |
+      Why do internal CAs exist, and what's the trade-off?
+    back: |
+      Public CAs will only issue for names you can **prove you control on the
+      public internet**. Internal names — `.corp`, `.local`, `dc1.lab.corp`,
+      RFC 1918 addresses — can never get a public certificate, because no one
+      can demonstrate ownership of them.
+
+      An internal CA issues for them freely.
+
+      The trade-off: **only the machines you explicitly configure will trust
+      it.** Every client, container image, JVM truststore, and mobile device
+      needs the root installed — and each one you miss becomes an unexplained
+      TLS failure later.
+    tags: [enterprise-it, concept, pki]
+    source: enterprise-it-101/labs/03-certificate-authority
+
+  - id: eit-two-tier-pki
+    type: basic
+    subdeck: PKI
+    front: |
+      Why a two-tier PKI (offline root + issuing intermediate) rather than one
+      CA?
+    back: |
+      The **root signs exactly one thing** — the intermediate — and then goes
+      **offline** (ideally powered off, in a safe). The **intermediate** does
+      all day-to-day issuance.
+
+      This makes compromise **recoverable**: a compromised intermediate is
+      revoked and replaced, and clients — which trust only the root — need no
+      changes at all.
+
+      A compromised **root** is catastrophic: every client's truststore must be
+      updated, by hand, everywhere, before anything works again.
+
+      You are trading one-time complexity for the ability to survive the
+      incident you hope never happens.
+    tags: [enterprise-it, concept, pki, security]
+    source: enterprise-it-101/labs/03-certificate-authority
+
+  - id: eit-openssl-s-client
+    type: basic
+    subdeck: PKI
+    front: |
+      `ldapsearch` says "Can't contact LDAP server." What should you reach for
+      before suspecting the network?
+    back: |
+      ```
+      openssl s_client -connect dc1.lab.corp:636 -showcerts
+      ```
+
+      It shows **what the server actually presents** and whether *you* trust it
+      — read the `Verify return code` line at the end.
+
+      Generic "can't contact" errors from LDAP, database and API clients are
+      very often **TLS trust failures**, not connectivity. The client can't
+      complete the handshake, so from its perspective there is no server.
+
+      Test reachability separately (`nc -vz host 636`) so you know which of the
+      two you're actually looking at.
+    tags: [enterprise-it, symptom-cause, pki]
+    source: enterprise-it-101/labs/03-certificate-authority
+
+# ── DNS and DHCP ──────────────────────────────────────────────────────────
+
+  - id: eit-dhcp-dora
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      What is DORA, why is it broadcast-based, and what does a client get
+      besides an address?
+    back: |
+      **Discover → Offer → Request → Ack.**
+
+      Broadcast because the client starts with **no address of its own and no
+      knowledge of the server's address** — it has nothing to unicast with.
+      (Which is why a **DHCP relay / `ip helper-address`** is needed the moment
+      the server isn't on the same broadcast domain.)
+
+      Besides the address, the options carry the whole local environment:
+      **default gateway, DNS servers, domain name, NTP servers**, and often
+      much more.
+
+      DHCP is **service bootstrapping**, not just address assignment — which is
+      why a wrong DHCP option breaks things that look nothing like addressing.
+    tags: [enterprise-it, concept, dhcp]
+    source: enterprise-it-101/labs/06-dhcp-dynamic-dns
+
+  - id: eit-ddns-independence
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      A client gets an address but has no DNS name. Is that a DHCP problem?
+    back: |
+      **No — it's a DDNS problem.** DHCP and dynamic DNS update are **separate
+      daemons with separate configuration and separate logs**, and they fail
+      independently.
+
+      If the lease was issued, DHCP worked. Look instead at: the DDNS daemon,
+      the **TSIG key**, and the zone's `allow-update` policy.
+
+      Also remember DDNS must **remove** as well as add — records are deleted
+      on lease release/expiry. That symmetry is what stops DNS filling with
+      stale entries that resolve to whoever holds the address now.
+    tags: [enterprise-it, symptom-cause, dhcp, dns]
+    source: enterprise-it-101/labs/06-dhcp-dynamic-dns
+
+  - id: eit-tsig-and-gss-tsig
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      Why must dynamic DNS updates be authenticated, and how is it done in BIND
+      vs. AD?
+    back: |
+      Because an unauthenticated update endpoint lets **anyone rewrite your
+      DNS** — repoint a hostname, hijack a service, or intercept traffic. DNS
+      is the network's naming authority; write access to it is total.
+
+      - **BIND** uses **TSIG**: a shared HMAC key, with the zone configured
+        `allow-update { key <name>; }`.
+      - **AD DNS** uses **GSS-TSIG**: the same idea, but the key material comes
+        from **Kerberos**, so a domain-joined machine can update its own record
+        using its machine credential and nothing else.
+
+      GSS-TSIG is why AD clients "just work" and why non-domain devices need a
+      DHCP server to update on their behalf.
+    tags: [enterprise-it, concept, dns, security]
+    source: enterprise-it-101/labs/06-dhcp-dynamic-dns
+
+# ── Policy and federation ─────────────────────────────────────────────────
+
+  - id: eit-gpo-mechanism
+    type: basic
+    subdeck: Policy
+    front: |
+      What is a GPO, mechanically, and why does it do nothing on a Linux host?
+    back: |
+      **Files in SYSVOL plus an LDAP link.** A GPO is a folder under
+      `\\dc\sysvol\<domain>\Policies\{GUID}` containing the settings, plus a
+      **link** on an OU (or site or domain) recording where it applies.
+
+      Applying it is entirely the **client's** job: Windows runs a policy
+      engine that reads the link, fetches the files, and enforces them.
+
+      **Linux has no such engine.** A Linux host can happily *read* the SYSVOL
+      share and will do nothing with it. GPO is a Windows client feature that
+      happens to be stored in AD — not something AD pushes.
+
+      For Linux fleets you need config management (Ansible, Puppet, Salt)
+      targeting the same directory membership.
+    tags: [enterprise-it, windows, concept, gpo]
+    source: enterprise-it-101/labs/08-group-policy
+
+  - id: eit-target-directory-not-hostlist
+    type: basic
+    subdeck: Policy
+    front: |
+      Why target "all machines in the Workstations OU" rather than a
+      hand-maintained host list?
+    back: |
+      Because **the directory is already the source of truth for what a machine
+      is**, and it's updated as part of provisioning. A separate host list is a
+      second copy of the same fact that drifts the moment someone builds a
+      machine without editing it.
+
+      Targeting membership means a new workstation is **compliant on day one**,
+      with no extra step to forget — and a decommissioned one stops being
+      targeted automatically.
+
+      This is the same principle as a network **source of truth**: derive
+      configuration from the authoritative inventory rather than maintaining a
+      parallel list.
+    tags: [enterprise-it, concept, gpo, automation]
+    source: enterprise-it-101/labs/08-group-policy
+
+  - id: eit-federation-not-migration
+    type: basic
+    subdeck: Federation
+    front: |
+      In an AD ↔ IdP federation (e.g. Keycloak), where do passwords actually
+      live?
+    back: |
+      **In AD.** The IdP reads AD as a **read-through directory** and validates
+      a password by **binding to AD as that user**. It stores no passwords of
+      its own.
+
+      **Federation is not migration.** AD stays authoritative for identity and
+      credentials; the IdP adds modern protocol support (OIDC/SAML), MFA, and a
+      consistent login experience on top.
+
+      That's what makes it deployable: you're adding a protocol translator, not
+      moving the crown jewels.
+    tags: [enterprise-it, concept, sso]
+    source: enterprise-it-101/labs/10-sso-federation
+
+  - id: eit-jwt-hides-nothing
+    type: basic
+    subdeck: Federation
+    front: |
+      A JWT is `header.payload.signature`, base64url-encoded. What actually
+      provides the security?
+    back: |
+      **Not secrecy — the payload is public, readable JSON.** Anyone holding
+      the token can decode and read every claim.
+
+      Security comes from two separate things:
+      - **The signature** — integrity. The app validates it against the IdP's
+        published key (fetched via OIDC discovery), so claims cannot be forged
+        or altered.
+      - **TLS** — confidentiality in transit, so the token isn't captured at
+        all.
+
+      Consequences: never put secrets in a JWT, and treat a leaked token as a
+      **live credential** for its remaining lifetime — the signature that makes
+      it trustworthy also makes it usable by whoever holds it.
+    tags: [enterprise-it, concept, sso, security]
+    source: enterprise-it-101/labs/10-sso-federation
+
+  - id: eit-oidc-issuer-url
+    type: basic
+    subdeck: Federation
+    front: |
+      SSO works in the browser but the application rejects the token. What's a
+      classic cause?
+    back: |
+      **The issuer URL doesn't match.** The browser and the application must
+      reach the IdP at the **same URL that appears as the token's `issuer`
+      claim** — token validation compares them literally.
+
+      Typical trigger: the browser uses a public hostname while the app,
+      inside a container network, reaches the IdP by an internal name or
+      `localhost`. Both work; the strings differ; validation fails.
+
+      Fix by defining **one canonical issuer URL** and making it resolvable
+      and reachable from every party, rather than letting each participant use
+      whatever address is convenient.
+    tags: [enterprise-it, symptom-cause, sso]
+    source: enterprise-it-101/labs/10-sso-federation
+
+# ── Enterprise DNS ────────────────────────────────────────────────────────
+
+  - id: eit-layered-enterprise-dns
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      Why do enterprises point clients at a recursive resolver rather than
+      directly at the AD DNS servers?
+    back: |
+      So clients know about **one** resolver and it routes per query. The
+      recursive resolver (BIND, Unbound, Infoblox) **conditionally forwards**
+      the AD domain to the domain controllers and **recurses** everything else
+      to the internet.
+
+      This keeps the DCs from having to be internet resolvers — which is both a
+      load and a security problem — while giving you one place to apply
+      filtering, logging, split-horizon views and caching.
+
+      ```
+      zone "lab.corp" { type forward; forwarders { 10.100.1.10; }; };
+      ```
+    tags: [enterprise-it, concept, dns]
+    source: enterprise-it-101/labs/05-dns-deep-dive
+
+  - id: eit-open-resolver-risk
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      What is `allow-recursion` for, and what happens if you leave it open?
+    back: |
+      It restricts **recursive** service to your own clients. Leave it open and
+      you have an **open resolver** — an amplifier for **DNS reflection DDoS**:
+      an attacker spoofs a victim's source address, sends you a small query, and
+      you send the victim a much larger answer.
+
+      Your server becomes an unwitting weapon, and your bandwidth pays for it.
+
+      The distinction matters: an **authoritative** server should answer the
+      world for **its own zones**; a **recursive resolver** should answer
+      **only your clients** for anything. Combining both roles on one server is
+      the configuration that gets it wrong.
+    tags: [enterprise-it, concept, dns, security]
+    source: enterprise-it-101/labs/05-dns-deep-dive
+
+  - id: eit-dig-status-codes
+    type: basic
+    subdeck: DHCP and DNS
+    front: |
+      `dig` returns NOERROR, SERVFAIL, or NXDOMAIN. What layer does each point
+      at?
+    back: |
+      - **NOERROR** — the query was answered. (An empty answer section still
+        counts: the name exists but has no record of that *type*.)
+      - **NXDOMAIN** — **authoritative**: this name does not exist. The
+        resolution chain worked; the name is genuinely absent.
+      - **SERVFAIL** — the **resolver failed**: it couldn't reach the
+        authoritative server, or **DNSSEC validation failed**, or a forwarder
+        is broken. Nothing about the name itself.
+
+      **NXDOMAIN is a successful answer; SERVFAIL is an infrastructure fault.**
+      Confusing them sends you looking for a missing record when the real
+      problem is a dead forwarder.
+    extra: |
+      `dig +trace` walks the delegation from the root, which localises *which*
+      server in the chain is failing. Internal unsigned zones under a validating
+      resolver need `validate-except` or they SERVFAIL.
+    tags: [enterprise-it, symptom-cause, dns]
+    source: enterprise-it-101/labs/05-dns-deep-dive
+
+# ── File services ─────────────────────────────────────────────────────────
+
+  - id: eit-share-vs-filesystem-permissions
+    type: basic
+    subdeck: File services
+    front: |
+      A user connects to a file share but can't read any files. Which of the
+      two permission layers is denying them?
+    back: |
+      **The filesystem layer.** There are two, and a request must satisfy
+      **both**:
+
+      | Layer | Set by | Controls |
+      |---|---|---|
+      | **Share ACL** | `valid users`, `read only`, `write list` (or Share Permissions) | Who may **connect**, and in what mode |
+      | **Filesystem** | POSIX owner/group/mode, ACLs, NTFS ACLs | Who may **read or write the actual files** |
+
+      "Connects but can't read" means the share layer admitted them and the
+      filesystem denied — so you look at ownership and ACLs on the directory,
+      not at the share definition.
+
+      Common practice: leave the share permissive and do all real access control
+      at the **filesystem** layer, so there is one place to audit.
+    tags: [enterprise-it, symptom-cause, smb]
+    source: enterprise-it-101/labs/07-file-shares
+
+  - id: eit-file-server-sees-no-passwords
+    type: basic
+    subdeck: File services
+    front: |
+      A domain-joined file server authenticates users without ever seeing their
+      passwords. How?
+    back: |
+      **Kerberos service tickets.** The client obtains a ticket for the file
+      server's SPN from the **DC**, and the file server validates it using its
+      own **machine key** (its keytab). The user's password never travels to,
+      or through, the file server.
+
+      Security consequence: **compromising a file server yields no user
+      credentials.** Contrast with NTLM or any password-forwarding scheme,
+      where every authenticating server handles material an attacker can
+      capture and replay.
+
+      This is the same reason a member server holds **no user database** — it
+      trusts the DC for identity and maps AD users to local UIDs on the fly.
+    tags: [enterprise-it, concept, smb, kerberos]
+    source: enterprise-it-101/labs/07-file-shares
+
+# ── Mail ──────────────────────────────────────────────────────────────────
+
+  - id: eit-email-two-protocols
+    type: basic
+    subdeck: Mail
+    front: |
+      "Email is broken." What's the first distinction to draw, and why?
+    back: |
+      **Sending vs. receiving — they are different protocols that fail
+      independently.**
+
+      - **SMTP** (25 server-to-server, 587 submission) *moves* mail.
+      - **IMAP** (143, 993) *reads* mailboxes.
+
+      "Can't send" points at SMTP, the MX chain, or relay policy. "Can't
+      receive" points at IMAP, the mailbox store, or delivery. Diagnosing them
+      as one problem wastes most of the time.
+
+      The exception worth knowing: when **everything** mail-related fails at
+      once, suspect the shared dependency — usually the **LDAP bind account**
+      that both the MTA (for recipient lookup) and the IMAP server (for
+      authentication) rely on.
+    tags: [enterprise-it, symptom-cause, mail]
+    source: enterprise-it-101/labs/09-email-gateway
+
+  - id: eit-spf-dkim-dmarc
+    type: basic
+    subdeck: Mail
+    front: |
+      SPF, DKIM and DMARC — what does each check, and why do you need all
+      three?
+    back: |
+      - **SPF** — a DNS record listing which **IP addresses** may send for your
+        domain. Checks the **envelope sender**. Breaks on forwarding, because
+        the forwarder's IP isn't in your list.
+      - **DKIM** — a **cryptographic signature** over the message, with the
+        public key in DNS. Survives forwarding, because it doesn't depend on the
+        path.
+      - **DMARC** — the **policy** layer: requires that SPF or DKIM pass **and
+        align** with the visible `From:` header, tells receivers what to do on
+        failure (none/quarantine/reject), and requests **reports**.
+
+      DMARC is the piece that matters: SPF and DKIM each validate something
+      the user never sees, and only alignment ties the result to the **From
+      address a human actually reads**.
+    tags: [enterprise-it, concept, mail, security]
+    source: enterprise-it-101/labs/09-email-gateway
+
+  - id: eit-mail-starttls
+    type: basic
+    subdeck: Mail
+    front: |
+      What does STARTTLS do, and what is its structural weakness?
+    back: |
+      It **upgrades an already-open plaintext connection** to TLS, rather than
+      starting encrypted. The client connects on port 25/143, issues
+      `STARTTLS`, and the session becomes encrypted from that point.
+
+      The weakness: an active attacker can **strip the STARTTLS advertisement**
+      from the server's greeting, and the client — seeing no TLS offered —
+      falls back to plaintext. A downgrade attack the user never sees.
+
+      Mitigations: **implicit TLS** on dedicated ports (465 submission, 993
+      IMAPS), plus **MTA-STS** and **DANE** to let a domain publish "always
+      require TLS for my mail."
+    tags: [enterprise-it, concept, mail, security]
+    source: enterprise-it-101/labs/09-email-gateway
+
+# ── Web proxy ─────────────────────────────────────────────────────────────
+
+  - id: eit-proxy-kerberos-sso
+    type: basic
+    subdeck: Web proxy
+    front: |
+      How does a web proxy authenticate a domain user without prompting them,
+      and what identity does it use?
+    back: |
+      **Kerberos Negotiate (SPNEGO).** The client trades its **TGT** for a
+      service ticket for the proxy's SPN (`HTTP/proxy1.lab.corp`) and presents
+      it in the `Proxy-Authorization` header. The proxy validates it with its
+      own **keytab**.
+
+      No password reaches the proxy and there's no prompt — single sign-on for
+      web access.
+
+      Two distinct identities are in play: the **SPN + keytab** is the proxy's
+      *acceptor* identity for validating client tickets; the proxy's **machine
+      account** is what it uses to bind to LDAP for group lookups.
+    extra: |
+      `curl --proxy-negotiate` authenticates to the **proxy**; `--negotiate`
+      authenticates to the **origin server**. Using the wrong one produces an
+      endless 407.
+    tags: [enterprise-it, concept, proxy, kerberos]
+    source: enterprise-it-101/labs/11-web-proxy
+
+  - id: eit-proxy-as-audit-point
+    type: basic
+    subdeck: Web proxy
+    front: |
+      Beyond filtering, what is the proxy's most valuable property?
+    back: |
+      **It is the audit point.** Every request is logged against a
+      **cryptographically proven user identity** — not an IP address that could
+      be shared, NATted, or reassigned — together with the allow/deny verdict
+      that was applied.
+
+      That's the foundation of web-access compliance and of any forensic
+      question of the form "who fetched this, when."
+
+      A firewall log gives you `10.1.2.3 → 93.184.216.34:443`. A
+      Kerberos-authenticated proxy log gives you
+      `alice@lab.corp → example.com/path, DENIED by rule 4`.
+    extra: |
+      `http_access` rules are **first match wins** — the rule *order* is the
+      policy, exactly as with ACLs and route-maps.
+    tags: [enterprise-it, concept, proxy, security]
+    source: enterprise-it-101/labs/11-web-proxy
+
+# ── Backup and recovery ───────────────────────────────────────────────────
+
+  - id: eit-rpo-vs-rto
+    type: basic
+    subdeck: Backup
+    front: |
+      RPO vs. RTO — define each and say what sets it.
+    back: |
+      - **RPO — Recovery *Point* Objective**: how much data you may lose. Set by
+        **backup frequency** (and retention). Hourly backups ⇒ up to an hour of
+        loss.
+      - **RTO — Recovery *Time* Objective**: how long until you are working
+        again. Set by **restore speed and practice**.
+
+      Every schedule decision is one of these in disguise, and they're bought
+      separately: more frequent backups improve RPO and do **nothing** for RTO.
+      Cutting RTO needs faster media, pre-staged infrastructure, and rehearsal.
+    tags: [enterprise-it, concept, backup]
+    source: enterprise-it-101/labs/15-backup-recovery
+
+  - id: eit-untested-backup
+    type: basic
+    subdeck: Backup
+    front: |
+      Why is "the backup job succeeded" almost worthless as evidence?
+    back: |
+      **Nobody needs backups; everybody needs restores.** A successful job says
+      the data was written somewhere — not that it can be read back, that the
+      encryption key still exists, that the archive is complete, or that the
+      restored system actually functions.
+
+      An untested backup is a hope.
+
+      And verify against **known data** — a specific record you deliberately
+      created — not against service liveness. A restored service can start
+      cleanly while containing the wrong data entirely, passing every health
+      check.
+    extra: |
+      **3-2-1**: three copies, two media types, one offsite. Practice with
+      `--dry-run` restores routinely and full recovery drills periodically.
+    tags: [enterprise-it, concept, backup]
+    source: enterprise-it-101/labs/15-backup-recovery
+
+  - id: eit-crash-vs-application-consistent
+    type: basic
+    subdeck: Backup
+    front: |
+      Crash-consistent vs. application-consistent backup — what's the
+      difference and when does it matter?
+    back: |
+      **Crash-consistent**: you copied the files as they were at an instant —
+      exactly the state after a power cut. Fine for a filesystem, and often
+      recoverable for a database with a journal, but you're relying on crash
+      recovery to work.
+
+      **Application-consistent**: the application was asked to produce a
+      coherent snapshot — `pg_dump`, VSS, `samba-tool domain backup offline`.
+      No mid-write state, no torn transactions.
+
+      It matters for **anything with internal state spanning multiple files**:
+      databases, AD, mail stores. Copying live database files is the classic
+      way to end up with backups that restore successfully and are subtly
+      corrupt.
+    tags: [enterprise-it, concept, backup]
+    source: enterprise-it-101/labs/15-backup-recovery
+
+  - id: eit-deferred-outage
+    type: basic
+    subdeck: Backup
+    front: |
+      You delete a service's on-disk state and the service keeps working. What
+      does that tell you?
+    back: |
+      **Nothing about the disk.** Services run from **in-memory state and open
+      file handles** — a KDC with its database deleted keeps issuing tickets, a
+      CA with no key file keeps signing from a loaded key.
+
+      This is a **deferred outage**: the bill arrives at the next restart, which
+      may be weeks later, long after anyone connects it to the change.
+
+      Practical rules: never treat "it still works" as verification of a
+      storage or configuration change, and **restart the service deliberately**
+      as part of validating one.
+    tags: [enterprise-it, symptom-cause, backup]
+    source: enterprise-it-101/labs/15-backup-recovery
+
+  - id: eit-monitoring-alert-quality
+    type: basic
+    subdeck: Monitoring
+    front: |
+      What separates a useful alert from noise?
+    back: |
+      A useful alert is **actionable, symptom-based, and rare**:
+
+      - **Actionable** — there is something a human should do *now*. If the
+        response is "acknowledge and move on," it should be a dashboard, not a
+        page.
+      - **Symptom-based** — alert on "users can't log in," not on "CPU is 85%."
+        Cause-based alerts fire constantly and miss the failures you didn't
+        anticipate.
+      - **Rare** — every non-actionable page erodes trust in every future one.
+        Alert fatigue is how real incidents get acknowledged and ignored.
+
+      The reliable test: **would you want to be woken at 3 a.m. for this?** If
+      not, it isn't an alert.
+    tags: [enterprise-it, concept, monitoring]
+    source: enterprise-it-101/labs/13-monitoring
+
+  - id: eit-log-centralization
+    type: basic
+    subdeck: Monitoring
+    front: |
+      Why centralise logs rather than reading them on each host?
+    back: |
+      - **Correlation** — an incident touches several systems, and the story
+        only exists when their logs are interleaved on one timeline.
+      - **Survivability** — an attacker's first move on a compromised host is
+        to clear its logs. Shipped-off-box logs are already out of reach.
+      - **Retention** — local logs rotate away in days; the incident is often
+        discovered in weeks.
+      - **Access** — investigating shouldn't require production shell access on
+        every machine.
+
+      The hard prerequisite is **synchronised clocks**. Without NTP the
+      centralised timeline is fiction, and correlation — the main reason you
+      built it — silently produces wrong answers.
+    tags: [enterprise-it, concept, monitoring, siem]
+    source: enterprise-it-101/labs/14-siem-logging
+
+  - id: eit-radius-vs-ldap-auth
+    type: basic
+    subdeck: Federation
+    front: |
+      Why does network gear authenticate against RADIUS rather than talking to
+      AD directly?
+    back: |
+      Switches, APs and VPN concentrators need a **simple, purpose-built AAA
+      protocol** — one request/response for authentication, authorisation
+      attributes returned in the same message, and **accounting** built in.
+      LDAP has no concept of "authorise this port into VLAN 20 and log the
+      session."
+
+      RADIUS also **decouples** the device from the identity store: the RADIUS
+      server (NPS, FreeRADIUS, ISE) talks to AD, and the switch never needs
+      directory credentials, LDAP libraries, or a schema.
+
+      So the chain is: **device → RADIUS → AD**, with policy evaluated in the
+      middle where it can be changed once.
+    tags: [enterprise-it, concept, radius]
+    source: enterprise-it-101/labs/12-radius

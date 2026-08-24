@@ -1,0 +1,385 @@
+deck: IPv6
+cards:
+
+# ── Addressing and host autoconfiguration ─────────────────────────────────
+
+  - id: v6-address-types
+    type: cloze
+    subdeck: Addressing
+    text: |
+      IPv6 address scopes: link-local is {{c1::fe80::/10}} and is
+      {{c2::mandatory on every IPv6-enabled interface}}; unique local
+      (the RFC 1918 analogue) is {{c3::fc00::/7}}, in practice
+      {{c4::fd00::/8}}; global unicast currently allocated from
+      {{c5::2000::/3}}; multicast is {{c6::ff00::/8}}. There is no
+      {{c7::broadcast}} address in IPv6 at all — its role is taken by
+      multicast.
+    tags: [ipv6, cloze, addressing]
+    source: labs/ipv6-access-services
+
+  - id: v6-key-multicast-groups
+    type: basic
+    subdeck: Addressing
+    front: |
+      Name the IPv6 multicast groups you actually need to recognise in a
+      capture.
+    back: |
+      - `ff02::1` — **all nodes** on the link (the closest thing to broadcast)
+      - `ff02::2` — **all routers**
+      - `ff02::5` / `ff02::6` — **OSPFv3** all-SPF-routers / all-DR-routers
+      - `ff02::9` — RIPng
+      - `ff02::1:ff00:0/104` — **solicited-node**, used by Neighbor Discovery
+
+      The solicited-node group is the clever one: a node joins the group
+      derived from the **last 24 bits of its own address**, so a neighbour
+      lookup reaches essentially one host instead of interrupting every device
+      on the segment the way ARP broadcast does.
+    tags: [ipv6, concept, addressing]
+    source: labs/ipv6-access-services
+
+  - id: v6-nd-replaces-arp
+    type: basic
+    subdeck: Neighbor Discovery
+    front: |
+      What does Neighbor Discovery replace from IPv4, and what protocol does it
+      run over?
+    back: |
+      ND runs over **ICMPv6** and absorbs several IPv4 mechanisms at once:
+
+      | ND message | Replaces |
+      |---|---|
+      | Neighbor Solicitation / Advertisement | **ARP** |
+      | Router Solicitation / Advertisement | ICMP router discovery + much of DHCP |
+      | Redirect | ICMP redirect |
+      | Duplicate Address Detection | gratuitous ARP conflict checking |
+
+      Operational consequence: **blocking ICMPv6 breaks IPv6 outright.** The
+      habit of "deny all ICMP" that merely degrades IPv4 makes IPv6 stop
+      working entirely — no address resolution, no router discovery, no PMTUD.
+    tags: [ipv6, concept, nd]
+    source: labs/ipv6-access-services
+
+  - id: v6-slaac-vs-dhcpv6
+    type: basic
+    subdeck: Host config
+    front: |
+      SLAAC vs. DHCPv6 — what does each provide, and why does an enterprise
+      often need both?
+    back: |
+      **SLAAC** (from the Router Advertisement): a **prefix** the host combines
+      with its own interface identifier, plus a **default gateway**. Zero server
+      state. Historically it provided **no DNS** at all.
+
+      **DHCPv6**: full server-assigned configuration — address (stateful) or
+      just options (stateless) — including **DNS servers, domain, NTP**, and
+      crucially a **lease record** of who had which address.
+
+      Enterprises want SLAAC's simplicity but also DNS and an audit trail, so
+      the common combination is **SLAAC + stateless DHCPv6**, or SLAAC with
+      **RDNSS** carried in the RA (RFC 8106), which modern OSes support.
+    extra: |
+      The RA's **M** flag says "use DHCPv6 for addressing"; the **O** flag says
+      "use DHCPv6 for other information only."
+    tags: [ipv6, concept, slaac]
+    source: labs/ipv6-access-services
+
+  - id: v6-address-but-no-dns
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      An IPv6 host has a global address and a default route but cannot resolve
+      names. What's missing, and how do you tell what the network intended?
+    back: |
+      **The DNS server list.** SLAAC alone never provided it, so the network
+      must supply it by **RDNSS in the RA** or by **DHCPv6**.
+
+      To tell which was intended, read the RA:
+      - **RDNSS option present** → the design is RA-only, and either the option
+        is misconfigured or the client is too old to honour it.
+      - **O or M flag set** → the design expects DHCPv6, so the DHCPv6 server
+        or relay is the thing that's broken.
+      - **Neither** → nobody configured DNS at all.
+
+      **SLAAC success and DNS success are separate checks** — an address proves
+      only that the RA arrived.
+    tags: [ipv6, symptom-cause, slaac]
+    source: labs/ipv6-access-services
+
+  - id: v6-rogue-ra
+    type: basic
+    subdeck: Security
+    front: |
+      Describe the rogue-RA attack and its mitigation. Why is it worse than
+      rogue DHCP?
+    back: |
+      Any host on the segment can send a Router Advertisement, and receivers
+      **accept it by default** — instantly becoming the default gateway for the
+      whole link, or renumbering hosts onto an attacker-chosen prefix.
+
+      Worse than rogue DHCP because it is often **accidental**: a Windows
+      machine with Internet Connection Sharing, a misconfigured hypervisor, or
+      a home router plugged in backwards will emit RAs unprompted, and IPv6
+      hosts obey immediately with no request having been made.
+
+      Mitigation: **RA Guard** on access ports (the IPv6 analogue of DHCP
+      snooping) — drop RAs arriving on any port that isn't a known router port.
+    tags: [ipv6, ios-xe, concept, security]
+    source: labs/ipv6-access-services
+
+  - id: v6-first-hop-security
+    type: basic
+    subdeck: Security
+    front: |
+      Name the IPv6 first-hop security features and their IPv4 counterparts.
+    back: |
+      | IPv6 | IPv4 counterpart |
+      |---|---|
+      | **RA Guard** | Rogue-DHCP protection (DHCP snooping) |
+      | **DHCPv6 Guard** | DHCP snooping |
+      | **IPv6 Snooping / binding table** | DHCP snooping binding table |
+      | **IPv6 Source Guard** | IP Source Guard |
+      | **IPv6 ND Inspection** | Dynamic ARP Inspection |
+
+      Same dependency chain as IPv4: **the binding table is built first**, and
+      Source Guard and ND Inspection both read from it. Break the binding table
+      and everything downstream of it fails.
+
+      The trap: a dual-stack network with IPv4 fully hardened and **no IPv6
+      first-hop security at all** — attackers simply use the unprotected family.
+    tags: [ipv6, concept, security]
+    source: labs/ipv6-access-services
+
+  - id: v6-happy-eyeballs
+    type: basic
+    subdeck: Dual stack
+    front: |
+      Why can "IPv6 present but broken" cause slow connections that IPv4-only
+      hosts never experience?
+    back: |
+      A dual-stack host resolves both A and AAAA and, per **RFC 6724**,
+      **prefers IPv6**. If IPv6 is advertised but the path is broken, the host
+      tries IPv6 first and waits for a **TCP timeout** before falling back —
+      adding seconds to every connection.
+
+      **Happy Eyeballs (RFC 8305)** is the fix: start the IPv6 attempt, and
+      begin the IPv4 attempt after a short delay (~250 ms), taking whichever
+      completes first.
+
+      Operational lesson: **partially-working IPv6 is worse than no IPv6.**
+      Either deploy it properly or don't advertise it — a broken AAAA record or
+      a black-holed prefix degrades users who would otherwise be fine.
+    tags: [ipv6, symptom-cause, dual-stack]
+    source: labs/ipv6-access-services
+
+# ── MP-BGP for IPv6 ───────────────────────────────────────────────────────
+
+  - id: v6-mpbgp-afi-safi
+    type: basic
+    subdeck: MP-BGP
+    front: |
+      Base BGP carries only IPv4. What lets it carry anything else, and how is
+      that negotiated?
+    back: |
+      **MP-BGP (RFC 4760)** adds address families identified by **AFI/SAFI** —
+      IPv6 unicast is **AFI 2 / SAFI 1** — carried in the `MP_REACH_NLRI` and
+      `MP_UNREACH_NLRI` attributes.
+
+      Support is negotiated as a **capability in the OPEN message**. If one side
+      doesn't advertise the family, it simply isn't carried — which is why a
+      neighbour can be perfectly Established and still exchange zero IPv6
+      prefixes.
+
+      The same mechanism carries VPNv4, VPNv6, EVPN, labeled-unicast and
+      flowspec — all of BGP's expansion is AFI/SAFI.
+    tags: [ipv6, concept, bgp]
+    source: labs/ipv6-bgp
+
+  - id: v6-two-peering-designs
+    type: basic
+    subdeck: MP-BGP
+    front: |
+      Two ways to carry IPv6 prefixes in BGP. What are they and what does each
+      cost?
+    back: |
+      **Extended next-hop (RFC 5549)** — activate an existing **IPv4-transport**
+      session in `address-family ipv6`, and it carries IPv6 prefixes with an
+      **IPv6 next-hop**. One session for both families, half the peerings to
+      build and monitor. Requires the capability on both ends.
+
+      **Native IPv6 sessions** — peer over IPv6 addresses, carrying IPv6 only.
+      Conceptually cleaner and independently controllable, but doubles the
+      session count and gives you a second control plane to keep healthy.
+
+      The practical failure mode of running both families over one session:
+      **an IPv4 problem takes down IPv6 too.** Separate sessions fail
+      independently, which is often worth the extra state.
+    tags: [ipv6, concept, bgp]
+    source: labs/ipv6-bgp
+
+  - id: v6-next-hop-self-per-af
+    type: basic
+    subdeck: MP-BGP
+    front: |
+      You remove `next-hop-self` from the IPv6 address-family only, leaving
+      IPv4 intact. What breaks?
+    back: |
+      **Only the IPv6 prefixes** learned from the external peer go
+      inaccessible. IPv4 is untouched.
+
+      `next-hop-self`, like almost every BGP policy knob, is configured
+      **per address-family**. The session is shared; the policy is not.
+
+      This is the general lesson for dual-stack BGP: a session being up says
+      nothing about any particular family, and **every policy must be
+      duplicated per AF** — filters, route-maps, next-hop-self, soft-clear.
+      Half-configured address families are the most common dual-stack bug.
+    extra: |
+      Check them separately: `show bgp ipv4 unicast summary` and
+      `show bgp ipv6 unicast summary` list the same neighbours with different
+      prefix counts.
+    tags: [ipv6, symptom-cause, bgp]
+    source: labs/ipv6-bgp
+
+  - id: v6-iosxe-bgp-config
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: carry IPv6 prefixes over a native IPv6 BGP session.
+    back: |
+      ```
+      ipv6 unicast-routing
+      !
+      router bgp 65001
+       bgp router-id 10.0.0.1
+       neighbor 2001:DB8:12::2 remote-as 65002
+       !
+       address-family ipv6 unicast
+        neighbor 2001:DB8:12::2 activate
+        network 2001:DB8::1/128
+      ```
+    extra: |
+      Two things bite here. **`no bgp default ipv4-unicast`** is worth setting
+      so neighbours aren't silently activated in a family you didn't intend.
+      And a neighbour is **not** activated in IPv6 just because you defined it —
+      `activate` under the AF is mandatory, and forgetting it gives you an
+      Established session carrying nothing.
+    tags: [ipv6, ios-xe, syntax, bgp]
+    source: labs/ipv6-bgp
+
+# ── Transition mechanisms ─────────────────────────────────────────────────
+
+  - id: v6-transition-mechanism-map
+    type: basic
+    subdeck: Transition
+    front: |
+      Match each transition mechanism to the problem it solves: 6PE, 6VPE,
+      NAT64, DNS64, DS-Lite, MAP-E/T.
+    back: |
+      | Mechanism | Problem |
+      |---|---|
+      | **6PE** | IPv6 customer sites across an **IPv4-only MPLS core** |
+      | **6VPE** | Same, but with **VRF separation** (RFC 4659) |
+      | **NAT64** | **IPv6-only clients** reaching **IPv4-only servers** |
+      | **DNS64** | Synthesises AAAA records so those clients can resolve at all |
+      | **DS-Lite** | **IPv4 over IPv6** tunnels — an ISP with an IPv6-only access network still serving IPv4 customers |
+      | **MAP-E / MAP-T** | Stateless IPv4-in-IPv6 for ISPs — no per-flow state in the core |
+
+      The split worth remembering: **6PE/6VPE carry IPv6 over IPv4
+      infrastructure; DS-Lite and MAP carry IPv4 over IPv6 infrastructure.**
+      Opposite directions of the same migration.
+    tags: [ipv6, concept, transition]
+    source: labs/ipv6-transition
+
+  - id: v6-6pe-mechanism
+    type: basic
+    subdeck: Transition
+    front: |
+      How does 6PE get IPv6 traffic across an IPv4-only MPLS core, and what do
+      the P routers see?
+    back: |
+      **PEs are dual-stack**; the core is not. IPv6 prefixes are distributed
+      between PEs in the **`ipv6 labeled-unicast`** address family, each with an
+      MPLS label — the same idea as BGP-LU for IPv4.
+
+      Forwarding uses a **two-label stack**: an outer **transport label** (LDP
+      or SR) to reach the remote PE, and an inner **6PE label** identifying the
+      IPv6 prefix at the egress PE.
+
+      **The P routers only ever see IPv4 and MPLS labels.** They never process
+      an IPv6 header, need no IPv6 addresses, and need no IPv6 routing at all —
+      which is exactly the point: you deploy IPv6 at the edge without touching
+      the core.
+    tags: [ipv6, concept, transition, mpls]
+    source: labs/ipv6-transition
+
+  - id: v6-ipv4-mapped-nexthop
+    type: basic
+    subdeck: Transition
+    front: |
+      In 6PE, what next-hop does an IPv6 prefix carry, and why is it written
+      that way?
+    back: |
+      The originating PE's **IPv4 loopback**, encoded as an **IPv4-mapped IPv6
+      address** — `10.0.0.1` becomes `::ffff:10.0.0.1`.
+
+      It has to be an IPv6-shaped value because the MP-BGP next-hop field for
+      an IPv6 NLRI is an IPv6 address. But the thing it must **resolve
+      against** is the IPv4 IGP/LDP infrastructure of the core, so the actual
+      address is IPv4.
+
+      The receiving PE strips the `::ffff:` prefix, resolves 10.0.0.1 in the
+      IPv4 IGP, and gets the transport label. **A v6-shaped container holding a
+      v4 address** — the neatest illustration of what 6PE is doing.
+    tags: [ipv6, concept, transition, mpls]
+    source: labs/ipv6-transition
+
+  - id: v6-nat64-dns64
+    type: basic
+    subdeck: Transition
+    front: |
+      Walk through how an IPv6-only host reaches an IPv4-only web server using
+      NAT64 and DNS64.
+    back: |
+      1. Host queries for `example.com`. The **DNS64** resolver finds **no
+         AAAA**, but does find an A record — say `93.184.216.34`.
+      2. DNS64 **synthesises** an AAAA by embedding that IPv4 address in the
+         NAT64 prefix: `64:ff9b::93.184.216.34`.
+      3. The host, believing it's talking IPv6, sends to that address.
+      4. Routing carries it to the **NAT64** gateway, which owns `64:ff9b::/96`.
+      5. NAT64 extracts the IPv4 address from the low 32 bits, translates the
+         source to an address from its IPv4 pool, and forwards a normal IPv4
+         packet.
+      6. Replies are translated back and returned as IPv6.
+
+      `64:ff9b::/96` is the IANA **Well-Known Prefix**.
+    extra: |
+      The critical limitation: **DNS64 requires DNS.** An application handed a
+      literal IPv4 address, or one doing DNSSEC validation (the synthesised
+      record fails validation), bypasses the whole mechanism and simply fails.
+      That's why **464XLAT** exists — a client-side translator that handles
+      IPv4-literal applications on IPv6-only mobile networks.
+    tags: [ipv6, concept, transition]
+    source: labs/ipv6-transition
+
+  - id: v6-nat64-vs-dslite
+    type: basic
+    subdeck: Transition
+    front: |
+      NAT64 and DS-Lite both involve IPv4, IPv6 and a translator. What's the
+      fundamental difference?
+    back: |
+      **NAT64 translates; DS-Lite tunnels.**
+
+      - **NAT64**: the client is genuinely **IPv6-only** and speaks IPv6 all the
+        way to the gateway, which **rewrites** the packet into IPv4. The client
+        has no IPv4 stack in play at all.
+      - **DS-Lite**: the client still runs **IPv4** internally and encapsulates
+        it in IPv6 (`IPv4-in-IPv6`) to reach the ISP's **AFTR**, which
+        decapsulates and applies carrier-grade NAT.
+
+      Consequence: NAT64 breaks IPv4-literal applications (they never generate
+      an IPv6 packet); DS-Lite doesn't, because the application still sees a
+      normal IPv4 stack. DS-Lite's cost is **CGN state** at the AFTR and the
+      loss of a real per-subscriber IPv4 address.
+    tags: [ipv6, concept, transition]
+    source: labs/ipv6-transition

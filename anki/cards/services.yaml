@@ -1,0 +1,298 @@
+deck: Services and Delivery
+cards:
+
+# ── Load balancing ────────────────────────────────────────────────────────
+
+  - id: svc-l4-vs-l7-lb
+    type: basic
+    subdeck: Load balancing
+    front: |
+      L4 vs. L7 load balancing — what can each see, and what follows?
+    back: |
+      **L4** sees only IP addresses, ports and TCP/UDP state. It forwards
+      connections without terminating them — fast, cheap, protocol-agnostic,
+      and works for anything. But it cannot route on URL, host header, cookie,
+      or method, and cannot see inside TLS.
+
+      **L7** terminates the connection and parses the application protocol. It
+      can route by path or hostname, do session affinity by cookie, rewrite
+      headers, retry failed requests, and terminate TLS. The cost is CPU, added
+      latency, and the fact that it is now a **participant** in the
+      conversation, not a forwarder.
+
+      Rule of thumb: **L4 for throughput and arbitrary protocols; L7 when the
+      routing decision needs application context.**
+    tags: [services, concept, load-balancing]
+    source: labs/load-balancer-basics
+
+  - id: svc-client-ip-preservation
+    type: basic
+    subdeck: Load balancing
+    front: |
+      Three balancing styles — L7 proxy, L4 DNAT, and DSR. Compare them on
+      client-IP preservation and how much of the network must cooperate.
+    back: |
+      | | Client IP at backend | Network cooperation needed |
+      |---|---|---|
+      | **L7 proxy** | Lost — replaced by the proxy's. Recovered via `X-Forwarded-For` | Least — the LB can sit anywhere routable |
+      | **L4 DNAT** | Preserved | Return traffic **must** route back through the LB |
+      | **DSR** | Preserved | Most — backends share the VIP on a loopback, ARP suppression, same L2 segment |
+
+      The pattern: **the more of the client's original packet you preserve, the
+      more the surrounding network has to be built around the load balancer.**
+    tags: [services, concept, load-balancing]
+    source: labs/load-balancer-basics
+
+  - id: svc-asymmetric-return-nat-lb
+    type: basic
+    subdeck: Load balancing
+    front: |
+      NAT-mode load balancing: the backend receives the request and replies,
+      but the client never sees a response. Why?
+    back: |
+      **Asymmetric return.** The LB rewrote only the destination, so the
+      backend sees the **real client IP** as the source — and replies **directly
+      to the client**, bypassing the load balancer.
+
+      The client then receives a packet from the *backend's* address for a
+      connection it opened to the *VIP*, and its stack discards it. If a
+      stateful firewall is in the path, that packet is dropped as
+      out-of-state before it even arrives.
+
+      Fixes: make the LB the backends' **default gateway**, put the LB inline,
+      or use **SNAT** so the backend replies to the LB (losing the client IP,
+      hence `X-Forwarded-For`).
+
+      The tell in a capture: **you see the request and the reply, but on
+      different paths.**
+    tags: [services, symptom-cause, load-balancing]
+    source: labs/load-balancer-basics
+
+  - id: svc-xff-trust
+    type: basic
+    subdeck: Load balancing
+    front: |
+      `X-Forwarded-For` recovers the client IP behind a proxy. What must a
+      backend know before trusting it?
+    back: |
+      **Which hop actually appended the value it's reading.** XFF is just a
+      header, and a client can send its own before your proxy appends to it —
+      so the list is `<client-supplied garbage>, <real client>, <proxy1>, ...`.
+
+      A backend that reads the **first** entry is trusting attacker-controlled
+      input, which is how XFF-based access control and rate limiting get
+      bypassed.
+
+      Rules: count from the **right**, skip exactly as many entries as you have
+      **trusted proxies**, and configure the list of trusted proxy addresses
+      explicitly. Or have the edge proxy **overwrite** rather than append.
+    tags: [services, concept, load-balancing, security]
+    source: labs/load-balancer-basics
+
+  - id: svc-health-check-depth
+    type: basic
+    subdeck: Load balancing
+    front: |
+      Why is a TCP-connect health check usually insufficient?
+    back: |
+      It proves the **port is listening**, nothing more. An application with a
+      dead database connection, an exhausted thread pool, or a half-deployed
+      release will happily accept TCP and return errors to every request — and
+      stay in rotation the whole time.
+
+      Use an **application-layer check** hitting a real endpoint (`GET
+      /healthz`) that exercises the dependencies and returns a meaningful
+      status code.
+
+      The counter-risk: a check that's *too* deep couples all your backends to
+      one shared dependency, so a slow database ejects every server at once and
+      turns a degradation into a total outage. Health checks should test **this
+      instance's ability to serve**, not the whole system's health.
+    tags: [services, concept, load-balancing]
+    source: labs/load-balancer-basics
+
+# ── Global delivery ───────────────────────────────────────────────────────
+
+  - id: svc-dns-failover-ttl
+    type: basic
+    subdeck: Global delivery
+    front: |
+      In DNS-based global load balancing, what actually governs user-visible
+      recovery time?
+    back: |
+      Not the probe interval — **the resolver's caching behaviour**.
+
+      The chain is: probe detects failure (interval × fall threshold) → the
+      authoritative record changes → **every cached copy must expire (TTL)** →
+      clients re-resolve. And plenty of resolvers and applications ignore short
+      TTLs or cache indefinitely.
+
+      So a 30-second TTL sets the *floor*, not the actual recovery time, and
+      lowering it multiplies your query load without guaranteeing anything.
+
+      This is the fundamental limit of DNS failover, and why **anycast** (where
+      failover is a routing withdrawal, invisible to DNS) recovers faster.
+    tags: [services, concept, global-delivery, dns]
+    source: labs/global-application-delivery
+
+  - id: svc-connection-draining
+    type: basic
+    subdeck: Global delivery
+    front: |
+      You're draining a site for maintenance. What state fundamentally cannot
+      be moved between independent sites?
+    back: |
+      **In-flight connection state.** A long-lived upload, a WebSocket, an SSH
+      session, a streaming response — all bound to a specific TCP connection to
+      a specific server. There is no mechanism to hand a live TCP connection to
+      another site.
+
+      So a safe drain means: **stop sending new connections** (withdraw from
+      DNS/anycast), then **wait** for existing ones to finish, with a bounded
+      timeout after which you accept that the remainder will break.
+
+      The design consequence: drain time is set by your **longest legitimate
+      connection**, which is why long-lived sessions and fast maintenance are
+      in permanent tension — and why stateless designs drain in seconds.
+    tags: [services, concept, global-delivery]
+    source: labs/global-application-delivery
+
+  - id: svc-cache-poisoning-after-repair
+    type: basic
+    subdeck: Global delivery
+    front: |
+      You've fixed a vulnerable object at the origin, but users still receive
+      the bad version. What do you check?
+    back: |
+      1. **The cache key** — are the good and bad versions actually distinct
+         objects? If the key ignores a varying header, they collide.
+      2. **Freshness** — what TTL / `Cache-Control` was the bad object served
+         with? A long max-age keeps it alive regardless of the origin.
+      3. **Purge** — did the invalidation reach **every** edge node, and did it
+         match the key you thought it did?
+      4. **Stale-serving controls** — `stale-while-revalidate` and
+         `stale-if-error` will deliberately keep serving the old object.
+
+      Fixing the origin is necessary but **not sufficient**. A cache is a
+      distributed copy of your mistake, and you must invalidate it explicitly.
+    tags: [services, symptom-cause, global-delivery]
+    source: labs/global-application-delivery
+
+# ── OT / ICS ──────────────────────────────────────────────────────────────
+
+  - id: svc-zones-and-conduits
+    type: basic
+    subdeck: OT / ICS
+    front: |
+      What is the zone-and-conduit model (IEC 62443), and what is the one rule
+      that defines it?
+    back: |
+      **Zones** are groupings of assets with a **common security requirement**
+      (enterprise, industrial DMZ, cell/area). **Conduits** are the explicitly
+      defined, controlled communication paths between them — every allowed flow
+      named, with a protocol, direction, and owner.
+
+      The defining rule: **there is no direct enterprise-to-cell path.**
+      Everything traverses the **industrial DMZ**, where a broker, historian
+      replica, or jump host **terminates** the session. Enterprise systems talk
+      to the IDMZ; OT systems talk to the IDMZ; they never talk to each other.
+
+      The IDMZ is a **termination point**, not a routing hop — that distinction
+      is the entire control.
+    tags: [services, concept, ot]
+    source: labs/ot-zone-conduit
+
+  - id: svc-ot-vs-it-priorities
+    type: basic
+    subdeck: OT / ICS
+    front: |
+      Why does OT invert IT's security priorities, and what practical
+      differences follow?
+    back: |
+      IT prioritises **confidentiality → integrity → availability**. OT
+      prioritises **availability → integrity → confidentiality**: a process
+      that stops can destroy equipment or injure people, while a leaked sensor
+      reading usually cannot.
+
+      Practical consequences:
+      - **No unscheduled patching** — maintenance windows are months apart and
+        vendor-certified.
+      - **No active scanning** — an nmap scan can crash a PLC outright. Use
+        **passive** protocol visibility (SPAN/TAP) instead.
+      - **Decades-long device lifetimes**, with protocols (Modbus/TCP, DNP3)
+        that have **no authentication at all** by design.
+
+      Since you cannot secure the endpoint, you secure the **network around
+      it** — which is exactly why the zone-and-conduit model exists.
+    tags: [services, concept, ot, security]
+    source: labs/ot-zone-conduit
+
+  - id: svc-stale-data-diagnosis
+    type: basic
+    subdeck: OT / ICS
+    front: |
+      A historian is showing stale process values. How do you distinguish clock
+      skew from a broken return path?
+    back: |
+      **Clock skew**: the data **is arriving** — packet captures show current
+      values reaching the historian — but the **timestamps** are wrong, so
+      records land in the wrong place in the time series or are rejected as
+      out-of-order. Compare timestamps in the payload against the capture time.
+
+      **Broken return path**: the data **is not arriving**. Requests reach the
+      device, but the responses are dropped by a one-way policy or asymmetric
+      route. The last value simply persists in the historian.
+
+      The distinguishing evidence: **is new data physically arriving at the
+      collector?** Capture at the collector's interface answers it immediately,
+      and separates a time problem from a reachability problem — two failures
+      that look identical in the application.
+    tags: [services, symptom-cause, ot]
+    source: labs/ot-zone-conduit
+
+# ── Hybrid cloud ──────────────────────────────────────────────────────────
+
+  - id: svc-hybrid-inspection-point
+    type: basic
+    subdeck: Hybrid cloud
+    front: |
+      A dual-attached enterprise reaches a cloud application through a
+      centralised inspection point. What routing problem does that create?
+    back: |
+      **Forcing symmetry.** The inspection device is **stateful** — it must see
+      both directions of a flow or it drops the return traffic as out-of-state.
+
+      But with two attachments, normal routing will happily send the request via
+      one path and the reply via the other. Nothing is "wrong" from a routing
+      perspective; the firewall simply never sees half the conversation.
+
+      Fixes: make one path clearly preferred in **both** directions (local-pref
+      inbound, AS-path prepending or MED outbound), use PBR to pin flows, or
+      run the inspection devices as a **state-synchronised cluster** so either
+      one can handle either direction.
+
+      **Stateful inspection is what turns asymmetric routing from an
+      inefficiency into an outage.**
+    tags: [services, symptom-cause, cloud]
+    source: labs/cloud-hybrid-networking
+
+  - id: svc-dns-views-hybrid
+    type: basic
+    subdeck: Hybrid cloud
+    front: |
+      Why do hybrid deployments so often need split-horizon DNS (views)?
+    back: |
+      The same service name must resolve **differently depending on where the
+      client is**: internal clients should get the private address and take the
+      private circuit; external clients must get the public address.
+
+      Without it you get **hairpinning** — an internal client resolves the
+      public IP, exits to the internet, and comes back in through the edge,
+      paying the latency and the bandwidth twice, and often failing NAT
+      reflection entirely.
+
+      The cost is **two sources of truth for one name**. When they drift, you
+      get the hardest class of bug: it works from one network and not another,
+      and neither team's tests reproduce the other's.
+    tags: [services, concept, cloud, dns]
+    source: labs/cloud-hybrid-networking

@@ -1,0 +1,547 @@
+deck: Layer 2
+cards:
+
+# ── VLANs and trunks ──────────────────────────────────────────────────────
+
+  - id: l2-access-vs-trunk-on-the-wire
+    type: basic
+    subdeck: VLANs
+    front: |
+      An access port and a trunk port both carry VLAN 10 frames. What is
+      actually different on the wire?
+    back: |
+      **The 802.1Q tag.** An access port sends frames **untagged** — VLAN
+      membership is implied by the port's configuration. A trunk sends them
+      with a **4-byte 802.1Q header** carrying the VLAN ID, so one link can
+      carry many VLANs.
+
+      Cable two switches access-port-to-access-port and it "works" — but only
+      for that one VLAN, and both sides silently drop everything else into
+      whatever VLAN their port is assigned. A classic mystery outage.
+    tags: [layer2, concept, vlan]
+    source: labs/vlan-trunks-switchport-basics
+
+  - id: l2-vlans-must-be-carried
+    type: basic
+    subdeck: VLANs
+    front: |
+      Two hosts in the same VLAN and same subnet, on different switches, can't
+      reach each other. Everything is "up." Where do you look first?
+    back: |
+      **Not at IP.** Same-subnet failure across switches is almost always a
+      **trunk or access-port problem**.
+
+      A VLAN does not exist on a link until you explicitly carry it:
+
+      ```
+      show vlan brief          ! does the VLAN exist on both switches?
+      show interfaces trunk    ! is it in the allowed list on BOTH ends?
+      show interfaces status   ! is the host port in the right access VLAN?
+      ```
+    tags: [layer2, symptom-cause, vlan]
+    source: labs/vlan-trunks-switchport-basics
+
+  - id: l2-iosxe-vlan-trunk-config
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: put a host port in VLAN 10 and build a trunk carrying VLANs 10
+      and 20 with a dedicated native VLAN.
+    back: |
+      ```
+      vlan 10
+       name USERS
+      vlan 20
+       name VOICE
+      !
+      interface GigabitEthernet1/0/1
+       switchport mode access
+       switchport access vlan 10
+      !
+      interface GigabitEthernet1/0/24
+       switchport trunk encapsulation dot1q
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,20
+      ```
+    extra: |
+      `switchport trunk encapsulation dot1q` is needed only on older platforms
+      that also supported ISL. Beware `switchport trunk allowed vlan 30` —
+      it **replaces** the list; use `allowed vlan add 30` to append.
+    tags: [layer2, ios-xe, syntax, vlan]
+    source: labs/vlan-trunks-switchport-basics
+
+  - id: l2-allowed-vlan-mismatch
+    type: basic
+    subdeck: VLANs
+    front: |
+      You remove VLAN 20 from the trunk's allowed list on **one** switch only.
+      What breaks and what keeps working?
+    back: |
+      **VLAN 10 users are fine; VLAN 20 hosts fail across the trunk.**
+      Selective failure — which is exactly what makes allowed-list pruning both
+      useful and dangerous. The link is up, STP is happy, and only one
+      VLAN's users are affected.
+
+      `show interfaces trunk` on both ends is the command that exposes it: the
+      "VLANs allowed and active" lists differ.
+    tags: [layer2, symptom-cause, vlan]
+    source: labs/vlan-trunks-switchport-basics
+
+  - id: l2-native-vlan-hopping
+    type: basic
+    subdeck: VLANs
+    front: |
+      The native VLAN is sent untagged on a trunk. What attack does that
+      enable, and how do you defeat it?
+    back: |
+      **Double-tagging VLAN hopping.** An attacker on the native VLAN sends a
+      frame with *two* 802.1Q tags. The first switch strips the outer tag
+      (it matches the native VLAN, so it's removed) and forwards the frame
+      with the inner tag still attached — landing it in a VLAN the attacker
+      should never reach. It's one-way, but enough for spoofing and DoS.
+
+      Defenses:
+      ```
+      switchport trunk native vlan 999      ! an unused, empty VLAN
+      vlan dot1q tag native                 ! tag the native VLAN too
+      ```
+      Plus: never make the native VLAN a user VLAN, and prune it off trunks
+      that don't need it.
+    tags: [layer2, concept, vlan, security]
+    source: labs/vlan-trunks-switchport-basics
+
+  - id: l2-native-vlan-mismatch
+    type: basic
+    subdeck: Troubleshooting
+    front: |
+      You change the native VLAN on one end of a trunk only. What happens?
+    back: |
+      The two switches now **merge two different VLANs' traffic** — frames
+      untagged by one side land in the other side's native VLAN. Two broadcast
+      domains silently become one.
+
+      CDP/DTP detect it and log `%CDP-4-NATIVE_VLAN_MISMATCH`, and on Cisco
+      gear PVST+ puts the port into a **type-inconsistent** blocking state
+      (visible in `show spanning-tree inconsistentports`) — which is STP saving
+      you from a mistake that would otherwise merge broadcast domains.
+    tags: [layer2, symptom-cause, vlan]
+    source: labs/vlan-trunks-switchport-basics
+
+  - id: l2-intervlan-needs-l3
+    type: basic
+    subdeck: VLANs
+    front: |
+      A host in VLAN 10 can't reach VLAN 20, both "up." What's missing, and
+      why is that by design?
+    back: |
+      **A Layer 3 gateway** — an SVI, a routed subinterface, or a router.
+
+      A VLAN *is* a broadcast domain, and broadcast domains are separated by
+      definition. Switching alone never moves a frame between VLANs; that's
+      the entire point of having them. Traffic between VLANs is a **routing**
+      operation, which is also where you get to apply policy.
+    tags: [layer2, concept, vlan]
+    source: labs/vlan-trunks-switchport-basics
+
+# ── Spanning tree ─────────────────────────────────────────────────────────
+
+  - id: l2-stp-root-election
+    type: basic
+    subdeck: STP
+    front: |
+      How is the STP root bridge elected, and why is leaving it to defaults an
+      operational hazard?
+    back: |
+      **Lowest bridge ID wins.** Bridge ID = 4-bit **priority** (default 32768,
+      settable only in multiples of 4096) + 12-bit **extended system ID** (the
+      VLAN number) + the switch's **MAC address**.
+
+      With every switch at the default priority, the tiebreaker is the MAC —
+      so the **oldest switch usually wins**, because older gear has lower
+      MACs. Your root ends up being whatever slow access switch happens to be
+      in a closet, and all traffic bends toward it.
+    extra: |
+      ```
+      spanning-tree vlan 10 root primary     ! or: priority 4096
+      spanning-tree vlan 10 root secondary   ! or: priority 8192
+      ```
+      Set it explicitly on both core switches, always.
+    tags: [layer2, ios-xe, concept, stp]
+    source: labs/stp-operations
+
+  - id: l2-rstp-port-roles-states
+    type: basic
+    subdeck: STP
+    front: |
+      Name the RSTP port roles and port states.
+    back: |
+      **Roles:** Root (best path to the root), Designated (best path *onto* a
+      segment), **Alternate** (a backup path to the root — blocked), **Backup**
+      (a redundant path to the same segment as another local port — blocked).
+
+      **States:** Discarding, Learning, Forwarding.
+
+      RSTP collapsed classic STP's Disabled/Blocking/Listening into a single
+      **Discarding** state, and added the Alternate/Backup roles so a
+      precomputed replacement can be promoted **immediately** instead of
+      waiting out the 15-second listening and learning timers.
+    tags: [layer2, concept, stp]
+    source: labs/stp-operations
+
+  - id: l2-rstp-convergence
+    type: basic
+    subdeck: STP
+    front: |
+      Why does RSTP converge in under a second where classic STP took ~50?
+    back: |
+      Classic STP is **timer-driven**: max-age 20 s + listening 15 s +
+      learning 15 s.
+
+      RSTP is **handshake-driven**. On point-to-point links a designated port
+      sends a **proposal** and the neighbour replies with an **agreement**,
+      synchronising the tree hop by hop with no timers. Alternate ports are
+      already computed, so failover is a promotion, not a recalculation.
+
+      **Edge (PortFast) ports** are the other half: they skip the state machine
+      entirely because they can't form a loop.
+    tags: [layer2, concept, stp]
+    source: labs/stp-operations
+
+  - id: l2-portfast-purpose
+    type: basic
+    subdeck: STP
+    front: |
+      What does PortFast do, and what is the non-obvious second benefit?
+    back: |
+      It moves a port straight to **forwarding**, skipping listening and
+      learning — so a host gets link immediately instead of waiting ~30 s
+      (which otherwise breaks DHCP and PXE boot).
+
+      **Second benefit:** an edge port **does not generate topology change
+      notifications**. Without PortFast, every workstation powering on or off
+      floods a TCN through the network, causing every switch to age out its MAC
+      table in 15 s and flood unknown unicast — network-wide disruption from a
+      user rebooting a laptop.
+    extra: |
+      ```
+      interface GigabitEthernet1/0/1
+       spanning-tree portfast
+      ! or globally, on all access ports:
+      spanning-tree portfast default
+      ```
+    tags: [layer2, ios-xe, concept, stp]
+    source: labs/campus-l2-hardening
+
+  - id: l2-bpduguard-vs-rootguard
+    type: basic
+    subdeck: STP
+    front: |
+      BPDU Guard vs. Root Guard — both react to unexpected BPDUs. Contrast
+      their triggers, actions, and where each belongs.
+    back: |
+      | | BPDU Guard | Root Guard |
+      |---|---|---|
+      | Triggers on | **Any** BPDU received | Only a **superior** BPDU |
+      | Action | **err-disables** the port | Puts it in **root-inconsistent** (blocking) |
+      | Recovery | Manual, or `errdisable recovery` | **Automatic** once superior BPDUs stop |
+      | Belongs on | Host/edge ports — no switch should ever be there | Ports facing a real switch that must never become root |
+
+      **BPDU Guard says "no switches here at all." Root Guard says "a switch,
+      yes — but you don't get to be root."**
+    extra: |
+      ```
+      interface Gi1/0/1
+       spanning-tree portfast
+       spanning-tree bpduguard enable
+      !
+      interface Gi1/0/2
+       spanning-tree guard root
+      !
+      errdisable recovery cause bpduguard
+      errdisable recovery interval 300
+      ```
+    tags: [layer2, ios-xe, concept, stp, security]
+    source: labs/campus-l2-hardening
+
+  - id: l2-pvst-load-sharing
+    type: basic
+    subdeck: STP
+    front: |
+      How does per-VLAN spanning tree let you use both uplinks, and what
+      breaks if two switches disagree about a VLAN's root?
+    back: |
+      Make one core switch root for the odd VLANs and the other root for the
+      even VLANs. Each access switch then blocks a *different* uplink per VLAN
+      group, so **both uplinks carry traffic** instead of one sitting idle.
+
+      Disagreement is the failure: if the intended root and the actual root
+      differ for a VLAN, that VLAN's traffic takes a suboptimal path — often
+      hairpinning across the inter-core link — while every port still shows
+      forwarding. Nothing is "down"; it's just slow and asymmetric, which is
+      why you verify with `show spanning-tree vlan <n>` rather than trusting
+      link state.
+    tags: [layer2, concept, stp]
+    source: labs/stp-operations
+
+  - id: l2-stp-troubleshooting-questions
+    type: basic
+    subdeck: STP
+    front: |
+      The three questions to ask about any STP topology, and the command for
+      each.
+    back: |
+      1. **Who is root?** → `show spanning-tree vlan 10` (look for
+         "This bridge is the root", or the Root ID and cost)
+      2. **Which port is blocking?** → `show spanning-tree blockedports`
+      3. **Is anything in a guard/inconsistent state?** →
+         `show spanning-tree inconsistentports`
+
+      STP is about enforcing **design intent**, not merely preventing loops.
+      A loop-free topology that put the root in the wrong place is still a
+      broken design.
+    tags: [layer2, ios-xe, concept, stp]
+    source: labs/stp-operations
+
+  - id: l2-tcn-effect
+    type: basic
+    subdeck: STP
+    front: |
+      A link flaps repeatedly. Why does that briefly disrupt VLANs that don't
+      even use the flapping link?
+    back: |
+      Each flap generates a **topology change notification**, which propagates
+      to every switch and makes them age out their **MAC address tables** in
+      15 s instead of 300.
+
+      With empty MAC tables, switches **flood unknown unicast** out every port.
+      That's a burst of extra traffic and brief packet loss for *every*
+      conversation on the switch, not just the ones on the changed link.
+
+      This is precisely why PortFast/edge ports are excluded from generating
+      TCNs.
+    tags: [layer2, symptom-cause, stp]
+    source: labs/stp-operations
+
+# ── EtherChannel / LACP ───────────────────────────────────────────────────
+
+  - id: l2-etherchannel-modes
+    type: basic
+    subdeck: EtherChannel
+    front: |
+      IOS-XE `channel-group` modes — which protocol does each use, and which
+      combinations form a bundle?
+    back: |
+      | Mode | Protocol | Behaviour |
+      |---|---|---|
+      | `active` | LACP | Initiates negotiation |
+      | `passive` | LACP | Responds only |
+      | `desirable` | PAgP (Cisco) | Initiates |
+      | `auto` | PAgP (Cisco) | Responds only |
+      | `on` | none | Static, no negotiation |
+
+      Forms: active/active, active/passive, desirable/desirable,
+      desirable/auto, on/on.
+      **Never forms:** passive/passive, auto/auto, or any mix of `on` with a
+      negotiating mode.
+
+      **`active` on both sides** is the right default — LACP catches
+      misconfiguration.
+    tags: [layer2, ios-xe, syntax, etherchannel]
+    source: labs/lacp-etherchannel
+
+  - id: l2-static-etherchannel-danger
+    type: basic
+    subdeck: EtherChannel
+    front: |
+      Why is `mode on` (static EtherChannel) considered unsafe?
+    back: |
+      There is **no negotiation and no partner verification**. The switch
+      simply assumes every member port leads to the same neighbour.
+
+      Miscable one member to a *different* switch, or leave the far end as
+      individual ports, and you have created a **forwarding loop** that STP may
+      not catch — because the bundle presents itself to STP as one logical
+      port, so the redundant path is invisible to the loop-prevention
+      mechanism.
+
+      LACP would have refused to bundle a port whose partner system ID didn't
+      match.
+    tags: [layer2, concept, etherchannel]
+    source: labs/lacp-etherchannel
+
+  - id: l2-etherchannel-hash-per-flow
+    type: basic
+    subdeck: EtherChannel
+    front: |
+      Why does a single large file transfer over a 2×10G bundle never exceed
+      10G?
+    back: |
+      Load balancing is **per-flow, hash-based**, not per-packet. The switch
+      hashes header fields (MAC, IP, and/or L4 ports) to pick a member, and the
+      same flow always hashes to the same link.
+
+      That's deliberate: per-packet striping would **reorder TCP segments**
+      across links with different queue depths, and out-of-order delivery
+      collapses TCP throughput far worse than the bandwidth gained.
+
+      A bundle's aggregate capacity is only usable with **many diverse flows**.
+    extra: |
+      ```
+      port-channel load-balance src-dst-ip
+      ```
+      More hash inputs = more entropy. The two ends need **not** use the same
+      algorithm — each independently hashes its own transmit direction, so a
+      mismatch just means asymmetric member usage, not breakage.
+    tags: [layer2, ios-xe, concept, etherchannel]
+    source: labs/lacp-etherchannel
+
+  - id: l2-lacp-rate-and-unidirectional
+    type: basic
+    subdeck: EtherChannel
+    front: |
+      LACP timers are 30 s (slow) / 90 s hold by default. Since carrier loss
+      is detected instantly anyway, when do the timers actually matter?
+    back: |
+      When the **physical layer stays up but LACPDUs stop arriving** — a
+      **unidirectional fiber failure**, a transceiver failing one way, or a
+      transparent media converter in the middle.
+
+      With slow timers you keep hashing traffic onto a black-holed member for
+      up to 90 s. `lacp rate fast` (1 s PDUs, 3 s hold) closes that to 3 s.
+
+      ```
+      interface GigabitEthernet1/0/1
+       lacp rate fast
+      ```
+    extra: |
+      Arista EOS spells this `lacp timer fast`. UDLD solves the same
+      unidirectional problem at a lower layer.
+    tags: [layer2, ios-xe, concept, etherchannel]
+    source: labs/lacp-etherchannel
+
+  - id: l2-port-channel-min-links
+    type: basic
+    subdeck: EtherChannel
+    front: |
+      What does `port-channel min-links 2` do, and why would you deliberately
+      make an outage worse?
+    back: |
+      It brings the **whole Port-channel down** unless at least that many
+      members are bundled — the surviving port shows the `M` flag ("not
+      aggregated, minimum links not met").
+
+      Why: a half-capacity path that routing still treats as fully healthy is
+      worse than a clean failure. With min-links, losing a member triggers
+      **routing reconvergence onto a path that can actually carry the load**,
+      instead of quietly congesting a degraded bundle.
+
+      Trade-off: you convert a partial degradation into a full reconvergence
+      event, so it's for bundles where half capacity genuinely can't cope.
+    tags: [layer2, ios-xe, concept, etherchannel]
+    source: labs/lacp-etherchannel
+
+  - id: l2-etherchannel-vs-stp-failover
+    type: basic
+    subdeck: EtherChannel
+    front: |
+      Why is EtherChannel member failover faster than STP reconvergence for
+      the same physical failure?
+    back: |
+      A member failure is handled **locally in the forwarding plane** — the
+      switch just removes that member from the hash bucket and keeps
+      forwarding. The logical interface never goes down, so **no protocol
+      converges at all**: STP doesn't recompute, and OSPF/BGP adjacencies on
+      the Port-channel never even notice.
+
+      STP failover requires detecting the failure, exchanging BPDUs, and
+      transitioning a blocked port to forwarding — a control-plane round trip
+      across the topology.
+    tags: [layer2, concept, etherchannel]
+    source: labs/lacp-etherchannel
+
+# ── Edge hardening ────────────────────────────────────────────────────────
+
+  - id: l2-edge-trust-model
+    type: basic
+    subdeck: Hardening
+    front: |
+      Why is "apply at the edge" the governing rule for Layer 2 hardening?
+    back: |
+      Because **host-facing and switch-facing ports have different trust
+      models**, and the edge is the only place you know which is which.
+
+      A core trunk legitimately carries BPDUs, DHCP offers, gratuitous ARP and
+      many MAC addresses. A user port legitimately carries **none of those** —
+      so anything unusual there is either a mistake or an attack, and can be
+      blocked with no false positives.
+
+      Push the same rules toward the core and you break the network's normal
+      operation.
+    tags: [layer2, concept, security]
+    source: labs/campus-l2-hardening
+
+  - id: l2-dhcp-snooping-chain
+    type: basic
+    subdeck: Hardening
+    front: |
+      DHCP snooping, Dynamic ARP Inspection, and IP Source Guard form a
+      dependency chain. What does each do, and what fails first if the uplink
+      isn't trusted?
+    back: |
+      1. **DHCP snooping** — drops DHCP *server* messages on untrusted ports
+         and builds the **binding table** (MAC ↔ IP ↔ VLAN ↔ port).
+      2. **DAI** — validates ARP against that binding table; stops ARP spoofing.
+      3. **IP Source Guard** — filters traffic whose source IP doesn't match
+         the binding.
+
+      Steps 2 and 3 **have no data of their own** — they both read the snooping
+      binding table.
+
+      If the uplink toward the real DHCP server isn't marked trusted, snooping
+      **drops the legitimate DHCP offers**. Users fail to get addresses, the
+      binding table stays empty, and DAI then blocks their ARP too. One missing
+      `ip dhcp snooping trust` takes out the whole chain.
+    extra: |
+      ```
+      ip dhcp snooping
+      ip dhcp snooping vlan 10
+      no ip dhcp snooping information option
+      !
+      interface GigabitEthernet1/0/24      ! uplink toward the DHCP server
+       ip dhcp snooping trust
+      !
+      ip arp inspection vlan 10
+      interface GigabitEthernet1/0/24
+       ip arp inspection trust
+      ```
+    tags: [layer2, ios-xe, symptom-cause, security]
+    source: labs/campus-l2-hardening
+
+  - id: l2-port-security-voice-trap
+    type: basic
+    subdeck: Hardening
+    front: |
+      `switchport port-security maximum 1` on an access port. What legitimate
+      setup does that break?
+    back: |
+      **An IP phone with a PC daisy-chained behind it.** That's two MAC
+      addresses on one port — the phone in the voice VLAN and the PC in the
+      data VLAN — so the second device trips the violation.
+
+      Fix: allow for both, per-VLAN:
+
+      ```
+      interface GigabitEthernet1/0/1
+       switchport port-security maximum 3
+       switchport port-security maximum 2 vlan access
+       switchport port-security maximum 1 vlan voice
+       switchport port-security violation restrict
+       switchport port-security mac-address sticky
+      ```
+    extra: |
+      Violation modes: `shutdown` (err-disable, the default), `restrict` (drop
+      + log + increment counters), `protect` (drop silently — avoid, it gives
+      you no evidence).
+    tags: [layer2, ios-xe, symptom-cause, security]
+    source: labs/campus-l2-hardening

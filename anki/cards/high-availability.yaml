@@ -1,0 +1,389 @@
+deck: High Availability
+cards:
+
+# ── First-hop redundancy ──────────────────────────────────────────────────
+
+  - id: ha-vrrp-virtual-mac
+    type: basic
+    subdeck: FHRP
+    front: |
+      Hosts use a VRRP virtual IP that neither router owns as a real interface
+      address. What MAC do they get, and why does that design matter?
+    back: |
+      The **virtual MAC `00:00:5e:00:01:<VRID>`** — derived from the group ID,
+      identical on both routers.
+
+      It matters because the MAC is **stable across failover**. When mastership
+      moves, hosts never re-ARP: same VIP, same MAC. Only the *switch* MAC
+      address table has to relearn which port that MAC lives behind, which the
+      new master triggers with a **gratuitous ARP**.
+
+      Had the VIP mapped to a real router's MAC, every host on the segment
+      would have to age out its ARP cache before recovering.
+    extra: |
+      HSRP uses `0000.0c07.ac<group>` (v1) and works the same way. GLBP is the
+      Cisco variant that load-balances by handing different hosts different
+      virtual MACs.
+    tags: [ha, concept, vrrp]
+    source: labs/vrrp
+
+  - id: ha-vrrp-election
+    type: basic
+    subdeck: FHRP
+    front: |
+      How is the VRRP master elected, and what is special about the address
+      owner?
+    back: |
+      **Highest priority wins** (range 1–254, default 100); the tiebreak is the
+      **highest interface IP**.
+
+      The **address owner** — a router whose real interface IP *is* the VIP —
+      has priority **255** and always wins. That's a fixed value you cannot
+      configure, because the owner can legitimately claim the address.
+
+      Failover timing: the master advertises every **1 s**; a backup declares
+      it dead after **3 missed advertisements (~3 s)**.
+    tags: [ha, concept, vrrp]
+    source: labs/vrrp
+
+  - id: ha-vrrp-preempt
+    type: basic
+    subdeck: FHRP
+    front: |
+      A higher-priority router comes back after a failure. Does it reclaim
+      master, and what does turning preempt off buy you?
+    back: |
+      **With preempt** (the VRRP default): it reclaims mastership on its very
+      first advertisement, because its priority beats the current master's.
+
+      **Without preempt**: it comes back as **backup** and leaves the incumbent
+      as master indefinitely — a working master is never displaced.
+
+      Turning preempt off avoids a **second traffic disruption** during
+      recovery, and stops a flapping router from repeatedly seizing and losing
+      mastership. The cost is that your traffic path is no longer
+      deterministic — you have to *look* to know who's active.
+    extra: |
+      HSRP is the opposite: preemption is **off** by default and must be
+      enabled explicitly.
+    tags: [ha, ios-xe, concept, vrrp]
+    source: labs/vrrp
+
+  - id: ha-fhrp-tracking
+    type: basic
+    subdeck: FHRP
+    front: |
+      The VRRP master's *uplink* fails but its LAN interface stays up. What
+      happens, and what's the fix?
+    back: |
+      **Nothing happens** — VRRP only watches the LAN segment it runs on. The
+      master keeps advertising, keeps winning the election, and keeps
+      black-holing every packet hosts send it, because it has no path upstream.
+
+      Fix: **object tracking** that decrements priority below the backup's when
+      the uplink (or a tracked route, or an IP SLA probe) goes down:
+
+      ```
+      track 1 interface GigabitEthernet0/1 line-protocol
+      !
+      interface Vlan10
+       vrrp 1 ip 192.168.1.254
+       vrrp 1 priority 110
+       vrrp 1 track 1 decrement 20
+      ```
+
+      110 − 20 = 90, which loses to the backup's 100.
+    tags: [ha, ios-xe, symptom-cause, vrrp]
+    source: labs/vrrp
+
+  - id: ha-fhrp-comparison
+    type: basic
+    subdeck: FHRP
+    front: |
+      HSRP vs. VRRP vs. GLBP — key differences.
+    back: |
+      | | HSRP | VRRP | GLBP |
+      |---|---|---|---|
+      | Standard | Cisco proprietary | **RFC 5798, open** | Cisco proprietary |
+      | Roles | Active / Standby | Master / Backup | AVG + up to 4 AVFs |
+      | Preempt default | **Off** | **On** | On |
+      | Address owner | No such concept | Priority 255 | No |
+      | Load balancing | Per-VLAN groups only | Per-VLAN groups only | **Native**, per-host |
+
+      GLBP's Active Virtual Gateway answers each host's ARP with a *different*
+      forwarder's virtual MAC, so one group load-balances across routers
+      without needing multiple groups and split VLANs.
+    tags: [ha, concept, vrrp]
+    source: labs/vrrp
+
+# ── BFD ───────────────────────────────────────────────────────────────────
+
+  - id: ha-bfd-why
+    type: basic
+    subdeck: BFD
+    front: |
+      OSPF already detects failures. Why add BFD?
+    back: |
+      OSPF's default detection is the **dead interval — 40 s** (4 × 10 s
+      hello). That is up to 40 seconds of **black-holed traffic** on a failure
+      the physical layer never reported (a failure behind a media converter,
+      a switch in the path, or a unidirectional link).
+
+      BFD detects the same failure in **sub-second** time — typically 300 ms ×
+      3 multiplier ≈ 900 ms — and tells OSPF to tear the adjacency down
+      immediately.
+    extra: |
+      BFD is a single lightweight protocol shared by **all** clients on the
+      box: OSPF, IS-IS, BGP, EIGRP, HSRP and static routes can all subscribe to
+      one BFD session, so you pay the hello cost once instead of tuning
+      aggressive timers in each protocol separately.
+    tags: [ha, concept, bfd]
+    source: labs/bfd-ospf
+
+  - id: ha-bfd-vs-aggressive-timers
+    type: basic
+    subdeck: BFD
+    front: |
+      Why is BFD better than simply lowering a routing protocol's hello and
+      dead timers?
+    back: |
+      - **It's purpose-built and cheap.** BFD is a minimal fixed-format packet,
+        often handled in **hardware or the line card**, so it survives a busy
+        control plane. Aggressive OSPF hellos are processed by the routing
+        process itself — exactly the thing that gets starved under load, and
+        that then declares false failures.
+      - **One session serves every protocol** instead of tuning each.
+      - **Sub-second is actually achievable.** Protocol timers bottom out around
+        1 second and become unstable there.
+
+      The classic failure of aggressive timers: a CPU spike makes the router
+      *look* dead, adjacencies drop, the resulting reconvergence spikes the CPU
+      further, and the network oscillates.
+    tags: [ha, concept, bfd]
+    source: labs/bfd-ospf
+
+  - id: ha-iosxe-bfd-config
+    type: basic
+    subdeck: Config (IOS-XE)
+    front: |
+      IOS-XE: enable BFD for OSPF and for a BGP neighbour.
+    back: |
+      ```
+      interface GigabitEthernet0/0
+       bfd interval 300 min_rx 300 multiplier 3
+      !
+      router ospf 1
+       bfd all-interfaces
+      !
+      router bgp 65001
+       neighbor 10.1.0.1 fall-over bfd
+      ```
+
+      Verify with `show bfd neighbors [details]`.
+    extra: |
+      The timers live on the **interface**; the routing protocols merely
+      subscribe. Both ends negotiate to the slower of the two configured
+      intervals.
+    tags: [ha, ios-xe, syntax, bfd]
+    source: labs/bfd-bgp
+
+# ── Graceful restart ──────────────────────────────────────────────────────
+
+  - id: ha-graceful-restart-what-it-does
+    type: basic
+    subdeck: Graceful restart
+    front: |
+      A neighbour's BGP process restarts with graceful restart enabled. Does
+      the session stay up? What actually changes?
+    back: |
+      **No — the session still resets.** Graceful restart does not keep the TCP
+      session alive.
+
+      What changes is what the *peer* does with the routes: instead of
+      withdrawing them immediately, it **marks them stale and keeps forwarding
+      on them** for the restart window, then refreshes them when the neighbour
+      comes back.
+
+      The premise is that the **control plane and data plane are separate** —
+      the restarting router's hardware forwarding tables are still programmed
+      and still switching packets while its BGP process is dead.
+    extra: |
+      `restart-time` bounds how long the peer waits for the session to return;
+      `stalepath-time` bounds how long stale routes may be used after it does.
+    tags: [ha, concept, graceful-restart]
+    source: labs/graceful-restart
+
+  - id: ha-graceful-restart-danger
+    type: basic
+    subdeck: Graceful restart
+    front: |
+      When is graceful restart's core assumption a dangerous lie?
+    back: |
+      When the restart is **not** a clean process restart — a genuine crash, a
+      power event, or a failure that also changed the topology.
+
+      Then the peer is holding stale routes and forwarding toward a router that
+      **cannot actually deliver them**. Graceful restart has converted a fast,
+      visible failure into a silent black hole lasting up to the
+      `stalepath-time`.
+
+      It also conflicts directly with **BFD**: BFD exists to drop routes in
+      milliseconds, GR exists to keep them through a blip. Running both means
+      deciding, per failure type, which one you want to win — typically BFD on
+      links (real topology loss) and GR only for planned software restarts on
+      boxes with genuinely independent forwarding hardware.
+    tags: [ha, concept, graceful-restart]
+    source: labs/graceful-restart
+
+  - id: ha-nsf-vs-nsr
+    type: basic
+    subdeck: Graceful restart
+    front: |
+      NSF (graceful restart) vs. NSR — what's the difference?
+    back: |
+      **NSF / graceful restart** needs the **neighbour's cooperation**: the peer
+      must support the capability and agree to hold routes stale. The session
+      *does* drop.
+
+      **NSR (Non-Stop Routing)** keeps protocol state **synchronised to a
+      standby control plane locally**, so the session never drops and the
+      neighbour never knows anything happened. No peer support required, but it
+      needs redundant supervisors and much more state replication.
+
+      NSF is a protocol agreement; NSR is a hardware capability.
+    tags: [ha, concept, graceful-restart]
+    source: labs/graceful-restart
+
+# ── Anycast ───────────────────────────────────────────────────────────────
+
+  - id: ha-anycast-mechanism
+    type: basic
+    subdeck: Anycast
+    front: |
+      How does anycast work, and what makes it different from a load balancer?
+    back: |
+      **Several servers advertise the identical /32 (or /128) from different
+      locations.** Routing picks the nearest instance by ordinary best-path
+      selection — no shared state, no health-check controller, no single
+      device in the path.
+
+      Difference from a load balancer: anycast balances at **routing
+      granularity**, so it is stateless, has no capacity ceiling of its own,
+      and fails over by route withdrawal. But it gives you **no session
+      affinity** and no per-request health awareness — routing doesn't know
+      whether the service behind the route actually works.
+    tags: [ha, concept, anycast]
+    source: labs/anycast-dns
+
+  - id: ha-anycast-health-lie
+    type: basic
+    subdeck: Anycast
+    front: |
+      An anycast DNS server's daemon dies but the router keeps advertising its
+      VIP. What layer is lying, and how do you fix it?
+    back: |
+      **The routing layer** — it is advertising *reachability of an address*,
+      and that is still perfectly true. It has no idea the **service** behind
+      it is dead. Clients nearest that node get black-holed while the route
+      looks healthy everywhere.
+
+      Fix: bind the advertisement to **service health**, not interface state —
+      the host runs a local BGP speaker (ExaBGP, BIRD, FRR) or a healthcheck
+      daemon that **withdraws the /32 when the service fails its own check**.
+
+      The general principle: **advertise a route only when the thing it
+      promises actually works.** Same lesson as IP SLA tracking on a static
+      route.
+    tags: [ha, symptom-cause, anycast]
+    source: labs/anycast-dns
+
+  - id: ha-anycast-redistribute-connected-risk
+    type: basic
+    subdeck: Anycast
+    front: |
+      An anycast node uses `redistribute connected` to advertise its service
+      VIP. What's the risk?
+    back: |
+      It advertises **every** connected route — management interfaces, transit
+      links, container networks — not just the service /32. You've leaked your
+      management plane across a trust boundary, and possibly created a more
+      specific route that hijacks traffic inside the network.
+
+      Always pair redistribution with an **exact-prefix filter**:
+
+      ```
+      ip prefix-list ANYCAST-VIP seq 5 permit 10.53.53.53/32
+      !
+      route-map ANYCAST-OUT permit 10
+       match ip address prefix-list ANYCAST-VIP
+      !
+      router bgp 65010
+       address-family ipv4 unicast
+        redistribute connected route-map ANYCAST-OUT
+      ```
+    tags: [ha, ios-xe, concept, anycast, security]
+    source: labs/anycast-dns
+
+  - id: ha-stateful-failover-two-things
+    type: basic
+    subdeck: Stateful HA
+    front: |
+      An active/backup firewall pair fails over. Two things must move — what
+      are they, and what happens if only one does?
+    back: |
+      1. **The address** — so clients keep sending to the same place. Handled by
+         VRRP/keepalived with a virtual IP.
+      2. **The connection state** — so flows already in progress survive.
+         Handled by replicating the **connection-tracking table** to the standby
+         (conntrackd, or a vendor's state-sync link).
+
+      With only the address moving, a **long-lived TCP flow dies on failover**:
+      packets arrive at the new active, which has no state entry for them, and
+      a stateful firewall drops any non-SYN packet it has no session for.
+
+      Short-lived HTTP recovers invisibly — the client just reconnects. Long
+      flows (SSH, database connections, uploads, VoIP) break, so the outage
+      looks intermittent and application-dependent.
+    tags: [ha, concept, firewall]
+    source: labs/service-ha
+
+  - id: ha-state-sync-cost
+    type: basic
+    subdeck: Stateful HA
+    front: |
+      What does state synchronisation cost, and when is it not worth it?
+    back: |
+      - **Bandwidth and CPU** on a dedicated sync link, proportional to
+        **connection setup rate** — not to throughput. A firewall doing many
+        short connections syncs harder than one doing few large ones.
+      - **A window of inconsistency**: state is replicated asynchronously, so
+        connections established in the last moments before failover may not
+        have made it.
+      - **Coupling**: the two units now share state, so a corrupt or malformed
+        entry can affect both — the failure mode a standby was meant to prevent.
+
+      Not worth it where **all flows are short** and clients reconnect
+      transparently. It's essential where flows are long-lived or the
+      application can't reconnect cleanly.
+    tags: [ha, concept, firewall]
+    source: labs/service-ha
+
+  - id: ha-detection-vs-recovery
+    type: basic
+    subdeck: Concepts
+    front: |
+      Total outage time has two components. Name them and the tool for each.
+    back: |
+      **Detection time** + **recovery time**.
+
+      - **Detection** — how long before anything notices. Tools: BFD, IP SLA
+        probes, aggressive protocol timers, carrier/link-down. Usually the
+        **dominant** term, and the one people forget to measure.
+      - **Recovery** — how long to install a working path once the failure is
+        known. Tools: precomputed backups (EIGRP feasible successors, LFA/TI-LFA
+        fast reroute, ECMP), and a pre-built standby (VRRP, EtherChannel).
+
+      Optimising one without the other is wasted: sub-second BFD in front of a
+      protocol that needs 20 seconds to reconverge buys you almost nothing.
+    tags: [ha, concept]
+    source: labs/bfd-ospf
