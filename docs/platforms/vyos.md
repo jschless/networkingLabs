@@ -134,6 +134,29 @@ direct `tun0` FIB for the host. Those exact keys are qualified as current-image
 behavior; the transferable mechanism is the summary-first path followed by
 Traffic-Indication/shortcut resolution.
 
+## Certificate-protected Phase 3 capstone
+
+`dmvpn-phase3-ipsec-capstone` inherits the exact Phase 3 service-summary model
+above and adds native x509-authenticated IKEv2 plus GRE-scoped ESP transport.
+The validated local-image design orders endpoints
+`hub < spoke1 < spoke2 < spoke3`: the lower-ranked endpoint initiates and the
+higher-ranked endpoint responds. In the four-node topology, every router should
+therefore own exactly three IKE SAs, three CHILD SAs, six ESP XFRM states, and
+six GRE policy directions without duplicate SAs.
+
+Certificate credentials scale per router, but this capstone's explicit static
+peer configuration still scales per pair. The lab does not claim a validated
+dynamic production profile, CA revocation service, dual-hub design, or ESP
+tunnel-mode alternative. Its purpose-built `dmvpn-pki:local` container is
+intrinsic ephemeral PKI scaffolding; all learned routing and IPsec behavior
+remains native VyOS.
+
+With x509 peers loaded, the capstone's current-image shortcut header is
+`Type Prefix Via Identity`; its data row includes the correlated certificate
+identity as a fourth value, for example
+`dynamic 192.168.2.0/24 172.16.0.12 spoke2.dmvpn.lab`. This differs from the
+three-field non-x509 Phase 3 row above and is graded as exact capstone state.
+
 From config mode, prefix operational commands with `run`, for example:
 
 ```vyos
@@ -158,6 +181,21 @@ actual health command and failed units rather than assuming either variant.
 
 On the tested rolling image, the same failed system-option reset can make
 `configure` print a warning that the boot configuration had an error. Confirm
-the intended state with `show configuration commands` and operational `show`
-or Linux `ip` commands; native commits and `save` still work in these labs.
-Do not assume an identically worded warning is harmless on an untested image.
+the intended state in non-PKI labs with `show configuration commands` and
+operational `show` or Linux `ip` commands; native commits and `save` still work
+in these labs. Do not assume an identically worded warning is harmless on an
+untested image.
+
+PKI labs, including `dmvpn-phase3-ipsec-capstone`, require stricter output
+hygiene: never display unfiltered `show configuration commands` or
+`/config/config.boot`, because imported private-key material is present. Limit
+terminal output to an explicitly non-secret subtree, such as this peer-only
+live view:
+
+```vyos
+show configuration commands | match "^set vpn ipsec site-to-site peer "
+```
+
+Apply an equally anchored peer-only filter when comparing saved state. When a
+content comparison is unnecessary, use `sha256sum /config/config.boot` as the
+persistence fingerprint. Never print the `pki` subtree or private-key values.

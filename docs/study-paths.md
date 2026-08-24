@@ -83,6 +83,7 @@ BGP:      bgp-basics → bgp-path-selection → bgp-filtering → bgp-communitie
 Redist:   ospf-bgp-redist → redistribution-tags → route-maps-pbr
 Tunnels:  gre-basics → ipsec-basics → gre-ipsec → dmvpn-phase1
           → dmvpn-phase2 (compatibility reference) → dmvpn-phase3
+          → dmvpn-phase3-ipsec-capstone
 HA:       bfd-ospf → bfd-bgp → vrrp
 IS-IS:    isis-basics → isis-multiarea
 IPv6:     ipv6-ospf3 → ipv6-bgp
@@ -161,6 +162,7 @@ management-access-control → dhcp-dns-troubleshooting → aaa-ops-troubleshooti
 
 ```
 dmvpn-phase1 (VyOS build) → dmvpn-phase2 (compatibility reference) → dmvpn-phase3
+→ dmvpn-phase3-ipsec-capstone (x509 GRE-protection capstone)
 ```
 
 ## Troubleshooting Practice
