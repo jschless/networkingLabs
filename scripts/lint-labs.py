@@ -25,10 +25,8 @@ import yaml
 REPO = Path(__file__).resolve().parent.parent
 LABS = REPO / "labs"
 
-# Lab dirs intentionally absent from the docs nav.
-NAV_EXEMPT = {
-    "dmvpn-ceos",  # deprecated placeholder; see its README
-}
+# Topology-backed lab dirs intentionally absent from the docs nav.
+NAV_EXEMPT: set[str] = set()
 
 errors: list[str] = []
 

@@ -33,6 +33,6 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 
 ## cEOS Variants
 
-DMVPN was previously maintained on Arista cEOS as well; that variant is **deprecated** and
-`labs/dmvpn-ceos/` remains only as a placeholder pointing at the VyOS labs above. DMVPN
-practice in this repo is VyOS-only.
+DMVPN was previously maintained on Arista cEOS as well. The
+`labs/dmvpn-ceos/` directory is now a **retired redirect** to the maintained VyOS
+progression and contains no runnable topology. DMVPN practice in this repo is VyOS-only.
