@@ -9,12 +9,12 @@ catalog.
 - Inventory date: 2026-07-31
 - Original remediation inventory: 143 lab decisions (all directories that were
   topology-backed when inventoried)
-- Lab decisions complete: 22/143
-- Remaining pending labs: 121
+- Lab decisions complete: 23/143
+- Remaining pending labs: 120
 - Intentionally exempt decisions: 1 retired duplicate
 - Current active topology-backed labs: 142
-- Active completed type mix: 13 Build, 4 Guided Debug, 2 Reference / Observation,
-  and 2 Capstone (21 typed active completions). The intentionally exempt retired
+- Active completed type mix: 14 Build, 4 Guided Debug, 2 Reference / Observation,
+  and 2 Capstone (22 typed active completions). The intentionally exempt retired
   redirect has no active lab type, so this type sum does not equal the decision count.
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -103,7 +103,7 @@ catalog.
 | enterprise-wan-edge-capstone | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | enterprise-wireless-architecture | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | evpn-border-ceos | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| flexvpn-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| flexvpn-basics | changed | Build | Misstated a Linux strongSwan topology as literal FlexVPN; used unproven `%unique` VTI binding, exposed answers, lacked a supported solution/capture/fault/repair lifecycle, and graded only five weak checks | Target-owned pinned strongSwan 5.9.8/Linux gateways for the critical hub and two spokes, with deterministic XFRM marks/VTI keys, explicit routes, ESP, and hub hairpinning; `ops-lab:local` for incidental hosts/transit; validated cEOS/VyOS images do not implement Cisco FlexVPN | Critical Linux retained under feature-unavailable exception (b): strongSwan plus kernel VTI/XFRM provides the real route-based IKEv2 mechanism being learned; hosts/transit are incidental Linux roles | Final hardened checker **143/0**; VTI/address **132/2**, extra route and transit-rule **133/1**, IKE/credential **132/2**, and wrong-PSK/extra-marked-policy **142/1** atomics with exact recovery; deliberate key-9/mark-1 fault **128/6** with IKE/CHILD and unaffected paths green; ERR/TERM/INT rollback; protected/VTI/two-leg hairpin captures; two accepted clean cycles; repository gates; same-reviewer **APPROVE** | Gateway maxima: gw-a 3.660 MiB, gw-b 3.543 MiB, gw-c 3.508 MiB; 14.031 MiB aggregate; OOM false, restarts 0 | 47c82cd | `lab-tutor` unavailable; x86_64/amd64 strongSwan analogue, not Cisco FlexVPN or IOS syntax; certificates, NAT-T, scale, long-duration/adverse-WAN behavior, physical forwarding, and hardware crypto offload untested |
 | global-application-delivery | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | graceful-restart | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | gre-basics | changed | Build | Answer-leaking startup configs; rejected tunnel-source and passive-interface syntax; false broadcast-failure and immediate recursive-flap claims; early `EOS_FORWARD` race; weak four-check checker; incomplete task anatomy and fault lifecycle | Native `ceos:4.35.2F` on critical `gw-a`/`gw-b`; `ops-lab:local` Linux for incidental hosts/transit | Linux only under category (c) for incidental roles; no critical-role exception | Clean learner walk; broadcast `FULL/DR` and `FULL/BDR`, then point-to-point `FULL`; readable outer GRE and inner ICMP capture; repeated **49/0** healthy; focused **48/1** atomics; causal **45/4** and **41/8**; recursive **42/7** twice plus forced-TERM rollback and post-fix normal fault/repair; active-load samples; two accepted clean deploys and destroys; full repository gates; AUTHORING fallback and same-reviewer closure with no findings | `gw-a`/`gw-b` 1.13 GiB each; hosts 664/644 KiB; transit 1.949 MiB; about 2.263 GiB total | 89b57ad10ccafb3096a86f6712324a25bf7cee1b | lab-tutor unavailable; arm64 not live-tested; licensed cEOS required; software/container validation only, not hardware/ASIC; GRE intentionally unencrypted; memory/CPU samples are point-in-time |
