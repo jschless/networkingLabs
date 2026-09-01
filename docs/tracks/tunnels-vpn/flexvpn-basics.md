@@ -2,11 +2,11 @@
 title: flexvpn-basics
 ---
 
-!!! tip "Practice Lab"
-    IKEv2 FlexVPN, Virtual Tunnel Interfaces, strongSwan
+!!! tip "Build Lab"
+    Linux strongSwan analogue of FlexVPN route-based IKEv2 concepts: deterministic XFRM marks, kernel VTIs, ESP evidence, and hub hairpinning
 
 !!! note "Image"
-    `ipsec-lab:local` — `docker build -t ipsec-lab:local labs/ipsec-basics/`
+    `flexvpn-lab:local` — `docker build -t flexvpn-lab:local labs/flexvpn-basics/`
 
 {%
   include-markdown "../../../labs/flexvpn-basics/README.md"

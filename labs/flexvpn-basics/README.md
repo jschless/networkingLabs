@@ -1,142 +1,211 @@
-# FlexVPN Basics — IKEv2 + VTI — Practice Lab
+# Route-Based IKEv2 with strongSwan — Practice Lab
 
-FlexVPN is Cisco's IKEv2 framework; this lab implements its concepts on
-Linux with strongSwan and kernel VTI interfaces — route-based IPsec where
-the *routing table*, not per-subnet policies, decides what gets encrypted.
-The hub (gw-a) is fully pre-built. You bring up two spokes, tie VTIs to
-IPsec SAs via XFRM marks, prove the encryption on the wire, and confirm
-the hub-and-spoke forwarding model.
+Build a Linux strongSwan analogue of the route-based IKEv2 and per-peer
+tunnel-interface concepts used by Cisco FlexVPN. This is **not Cisco FlexVPN
+and does not teach IOS syntax**: it uses real IKEv2, ESP, Linux kernel VTI
+interfaces, marked XFRM states and policies, and a hub forwarding hairpin so
+you can observe the mechanisms directly.
 
-## How to use this lab
+**Lab type:** Build
 
-This is a **practice lab**, not a tutorial. The hub (gw-a) is fully
-pre-configured; you build the spokes.
+**Estimated time:** 75–100 minutes
 
-- **Predict before you configure**, **open hints before the solution**,
-  and **verify** with `ipsec status`, `ip xfrm state`, and a WAN capture.
+**Prerequisites:** `ipsec-basics` or equivalent IKEv2/ESP knowledge
 
-## Background
+## Platform decision
 
-| Concept | Cisco FlexVPN | This lab (Linux + strongSwan) |
-|---|---|---|
-| Key exchange | IKEv2 (RFC 7296) | `keyexchange=ikev2` |
-| Tunnel interface | Virtual-Access (SVTI) | `vti0/vti1/vti2` (ip_vti) |
-| Per-spoke interface on hub | one Virtual-Access each | one VTI each |
-| Routing | OSPF/BGP over tunnel | static or OSPF over VTI |
-| Spoke-to-spoke | via hub (no NHRP) | via hub (no NHRP) |
-
-A **VTI** is a point-to-point interface bound to an IPsec SA via a kernel
-XFRM **mark**: route a packet into the VTI and it's encrypted by the
-matching SA — no per-subnet XFRM policies. That's "route-based" IPsec, and
-it's why routing protocols can run straight over the tunnel. Contrast
-DMVPN, where NHRP creates dynamic spoke-to-spoke shortcuts; FlexVPN's
-static VTIs always route spoke-to-spoke through the hub.
-
-IKEv2 (vs IKEv1): 4 messages to establish (vs 9), built-in NAT traversal
-and dead-peer detection, simpler rekeying, mandatory cipher agility.
+The three gateways are critical learned roles and intentionally run Linux
+strongSwan. The validated local cEOS and VyOS images do not implement Cisco
+FlexVPN; strongSwan 5.9.8 plus Linux `ip_vti` provides the executable IKEv2,
+deterministic XFRM marks, VTI routing, encryption, and hairpin behavior this
+lab teaches. Hosts and the simulated internet use lightweight
+`ops-lab:local` because they are incidental traffic roles.
 
 ## Topology
 
 ```mermaid
 flowchart TB
     ha(["host-a<br/>192.168.1.10"])
-    gwa["gw-a (HUB)<br/>192.168.1.1<br/>203.0.113.1<br/>vti1: 10.10.1.1<br/>vti2: 10.10.2.1"]
-    inet["internet<br/>203.0.113.2 / .5 / .9"]
-    gwb["gw-b (spoke1)<br/>203.0.113.6<br/>192.168.2.1<br/>vti0: 10.10.1.2"]
-    gwc["gw-c (spoke2)<br/>203.0.113.10<br/>192.168.3.1<br/>vti0: 10.10.2.2"]
+    gwa["gw-a hub<br/>203.0.113.1<br/>vti1 10.10.1.1 key 1<br/>vti2 10.10.2.1 key 2"]
+    inet["internet<br/>public transit only"]
+    gwb["gw-b spoke1<br/>203.0.113.6<br/>vti0 10.10.1.2 key 1"]
+    gwc["gw-c spoke2<br/>203.0.113.10<br/>vti0 10.10.2.2 key 2"]
     hb(["host-b<br/>192.168.2.10"])
     hc(["host-c<br/>192.168.3.10"])
-
-    ha -- "192.168.1.0/24" --- gwa
-    gwa -- "203.0.113.0/30" --- inet
-    inet -- "203.0.113.4/30" --- gwb
-    inet -- "203.0.113.8/30" --- gwc
-    gwb -- "192.168.2.0/24" --- hb
-    gwc -- "192.168.3.0/24" --- hc
-
-    gwa -. "IKEv2 VTI<br/>10.10.1.0/30" .- gwb
-    gwa -. "IKEv2 VTI<br/>10.10.2.0/30" .- gwc
-
-    classDef hub stroke:#d2762c,stroke-width:2px
-    classDef spoke stroke:#5b9bd5,stroke-width:2px
-    classDef router stroke:#4778ff,stroke-width:2px
-    classDef host stroke:#6aa84f,stroke-width:2px
-    class gwa hub
-    class gwb,gwc spoke
-    class inet router
-    class ha,hb,hc host
+    ha --- gwa --- inet
+    inet --- gwb --- hb
+    inet --- gwc --- hc
+    gwa -. "IKEv2 / ESP" .- gwb
+    gwa -. "IKEv2 / ESP" .- gwc
 ```
 
-| Node | WAN | LAN | VTI |
-|------|-----|-----|-----|
-| gw-a (hub) | 203.0.113.1 | 192.168.1.1/24 | vti1 10.10.1.1, vti2 10.10.2.1 |
-| gw-b (spoke1) | 203.0.113.6 | 192.168.2.1/24 | vti0 10.10.1.2 |
-| gw-c (spoke2) | 203.0.113.10 | 192.168.3.1/24 | vti0 10.10.2.2 |
+| Link | Endpoint A | Endpoint B |
+|---|---|---|
+| LAN A | host-a `192.168.1.10/24` | gw-a `192.168.1.1/24` |
+| Hub WAN | gw-a `203.0.113.1/30` | internet `203.0.113.2/30` |
+| Spoke1 WAN | internet `203.0.113.5/30` | gw-b `203.0.113.6/30` |
+| Spoke2 WAN | internet `203.0.113.9/30` | gw-c `203.0.113.10/30` |
+| LAN B | gw-b `192.168.2.1/24` | host-b `192.168.2.10/24` |
+| LAN C | gw-c `192.168.3.1/24` | host-c `192.168.3.10/24` |
 
-The PSK is `FlexVPN-SharedKey-2024`; `ipsec.secrets` is pre-populated on
-the spokes.
+The hub has passive `auto=add` connection definitions with `dpdaction=clear`,
+VTI keys `1` and `2`, tunnel addresses, and protected routes. Spokes own
+initiation and retry with `auto=start` plus `dpdaction=restart`. Spoke WAN/LAN
+addressing is scaffolded, but spoke connection definitions, secrets, VTIs, and
+protected routes are absent. The simulated internet drops any clear-text
+`192.168.0.0/16` forwarding.
+
+## How to use this lab
+
+This is a **practice lab**, not a tutorial. Each task gives you an
+**objective** and **hints** — your job is to produce the configuration.
+
+- **Predict before you configure.** When a task asks for a prediction,
+  commit to an answer before touching the CLI. Being wrong and finding out
+  why is the point.
+- **Open the hints before the solution.** The solution toggle is the answer
+  key — use it to check your work or when genuinely stuck, not as step one.
+- **Verify like an operator.** After each task, prove the state is what you
+  think it is with operational commands before moving on.
 
 ## Deploy
 
 ```bash
-docker build -t ipsec-lab:local labs/ipsec-basics/    # shared image, once
+docker build -t flexvpn-lab:local labs/flexvpn-basics/
+docker build -t ops-lab:local images/ops-lab/
 ./scripts/lab.sh deploy flexvpn-basics
-./scripts/lab.sh bash flexvpn-basics gw-a    # gw-b, gw-c
 ```
 
----
-
-## Task 1 — Read the hub and understand VTI ↔ XFRM marks
-
-**Objective:** Confirm WAN reachability and inspect how the hub's VTIs are
-keyed, before any spoke connects.
+Open a gateway shell with:
 
 ```bash
-./scripts/lab.sh cmd flexvpn-basics gw-a ping -c2 203.0.113.6
-./scripts/lab.sh cmd flexvpn-basics gw-a ip tunnel show
-./scripts/lab.sh cmd flexvpn-basics gw-a ip xfrm state    # empty so far
+./scripts/lab.sh bash flexvpn-basics gw-b
 ```
 
-**Predict first:** the hub's `ip tunnel show` lists `vti1 ... key 1` and
-`vti2 ... key 2`, but `ip xfrm state` is empty. How can a VTI exist with
-no IPsec SA behind it yet — what does "key 1" do, and what installs the
-actual encryption state?
+## Task 1 — Separate the interface, route, and security layers
 
-<details markdown="1">
-<summary>Check your work</summary>
+**Objective:** Inspect the preconfigured hub and answer-free spokes. Identify
+which state belongs to the VTI layer, which belongs to routing, and which can
+exist only after IKEv2 negotiation.
 
-The VTIs exist as plain interfaces with a `key` (kernel mark) but no SA —
-`ip xfrm state` is empty because no spoke has negotiated yet. When a spoke
-connects, strongSwan (with `mark=%unique`) installs XFRM SAs whose mark
-matches the VTI's key, and the kernel then auto-encrypts anything routed
-into that VTI. So the VTI is just a marked conduit; the IKEv2 negotiation
-supplies the crypto. This decoupling — interface always present, SA comes
-and goes — is what makes route-based IPsec resilient and routable.
+**Predict first:** The hub VTIs and routes exist before either spoke starts
+strongSwan. Will `ip xfrm state` already contain ESP SAs? What, precisely,
+turns VTI key `1` into a protected forwarding path?
 
-</details>
-
----
-
-## Task 2 — Build spoke1 (gw-b): VTI + IKEv2
-
-**Objective:** On gw-b, create `vti0` (key 1, matching the hub's vti1),
-address it, disable XFRM policy on it, uncomment the `to-hub` connection,
-and start strongSwan until the SA is ESTABLISHED.
-
-**Predict first:** the VTI `key` on gw-b must be `1` to match the hub's
-vti1. What breaks if you use key 2 instead — does IKEv2 fail to
-authenticate, or does the SA come up but traffic not flow?
+```bash
+./scripts/lab.sh cmd flexvpn-basics gw-a ip -d tunnel show
+./scripts/lab.sh cmd flexvpn-basics gw-a ip -4 route show
+./scripts/lab.sh cmd flexvpn-basics gw-a ip xfrm state
+./scripts/lab.sh cmd flexvpn-basics gw-b cat /etc/ipsec.conf
+./scripts/lab.sh cmd flexvpn-basics gw-b ping -c2 203.0.113.1
+```
 
 <details markdown="1">
 <summary>Hints</summary>
 
-- `ip tunnel add vti0 mode vti local 203.0.113.6 remote 203.0.113.1 key 1`,
-  then `ip link set vti0 up`, `ip addr add 10.10.1.2/30 dev vti0`,
-  `sysctl -w net.ipv4.conf.vti0.disable_policy=1`.
-- Uncomment `conn to-hub` in `/etc/ipsec.conf` (leftid `@spoke1`, rightid
-  `@hub`, `mark=%unique`, `auto=start`).
-- `ipsec start`; watch `tail -f /var/log/syslog` for `IKE_SA_INIT` /
-  `IKE_AUTH`.
+- A VTI key is a packet mark, not encryption material.
+- Compare an interface (`ip -d tunnel`), a route (`ip route`), and an XFRM
+  state (`ip xfrm state`) as three independent objects.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+No configuration is required. Record the hub VTI keys and endpoints, confirm
+the spoke contains no `conn` definition or secret, and confirm public underlay
+reachability.
+
+</details>
+
+<details markdown="1">
+<summary>Check your work</summary>
+
+The hub shows `vti1` key `1` and `vti2` key `2`, but no ESP state is installed.
+The VTI and route can exist without a security association. A negotiated CHILD
+SA installs XFRM states and policies carrying the matching mark; routing puts a
+packet on the VTI, and the VTI key selects those marked policies. The key does
+not authenticate the peer and is not a secret.
+
+</details>
+
+## Task 2 — Build spoke1 with deterministic mark 1
+
+**Objective:** On gw-b, create a key-1 VTI, configure one initiating IKEv2
+connection to `@hub`, install a credential, and route LAN A and LAN C through
+the hub. Reach host-a from host-b.
+
+**Predict first:** If IKE and the CHILD SA establish but the VTI key is `9`
+while XFRM uses mark `1`, which control-plane evidence remains healthy and
+which data-plane evidence fails?
+
+<details markdown="1">
+<summary>Hints</summary>
+
+- Build `vti0` between public endpoints `203.0.113.6` and `203.0.113.1`; its
+  deterministic key is the spoke number.
+- Use IKEv2, PSK identities `@spoke1` and `@hub`, all-address traffic selectors,
+  mark `1`, and an initiating start action.
+- Use the exact proposals `aes256-sha256-modp2048` and
+  `aes256gcm16-modp2048`. Disable duplicate policy lookup on the VTI.
+- Route `192.168.1.0/24` and `192.168.3.0/24` to `10.10.1.1`.
+
+</details>
+
+<details markdown="1">
+<summary>Solution</summary>
+
+The repository answer helper replaces only gw-b's learned state:
+
+```bash
+docker exec clab-flexvpn-basics-gw-b \
+  bash /opt/flexvpn-basics/apply-solution.sh
+```
+
+For a manual build, the exact answer written by that helper is visible at
+`labs/flexvpn-basics/configs/gw-b/apply-solution.sh` after you have attempted
+the task.
+
+</details>
+
+<details markdown="1">
+<summary>Check your work</summary>
+
+`ipsec status` must show exactly one `ESTABLISHED` IKE SA and one `INSTALLED,
+TUNNEL` CHILD SA. `ip -s xfrm state` shows two directional ESP states marked
+`0x1`; `ip -s xfrm policy` shows three directional all-address policies marked
+`0x1`. This lab does **not** eliminate XFRM policies: VTI routing chooses the
+interface, and its mark constrains which policies own the packet.
+
+```bash
+./scripts/lab.sh cmd flexvpn-basics gw-b ipsec status
+./scripts/lab.sh cmd flexvpn-basics gw-b ip -s xfrm state
+./scripts/lab.sh cmd flexvpn-basics gw-b ip -s xfrm policy
+./scripts/lab.sh cmd flexvpn-basics host-b ping -c3 192.168.1.10
+```
+
+The prediction resolves at two layers: IKE/CHILD can stay established because
+identity, credential, and proposals still match, while forwarding fails when
+VTI key `9` cannot select XFRM mark `1`.
+
+</details>
+
+## Task 3 — Add spoke2 without duplicate SAs
+
+**Objective:** Build gw-c with VTI key and XFRM mark `2`, initiate exactly one
+IKE/CHILD pair, and install routes for LAN A and LAN B. Prove all three LANs
+reach one another.
+
+**Predict first:** What failure mode would simultaneous `auto=start` on both
+ends create, and why does a passive hub plus initiating spokes prevent it?
+
+<details markdown="1">
+<summary>Hints</summary>
+
+- Change the spoke identity, public/VTI addressing, key/mark, and protected
+  route next hop; keep the proposal and hub identity consistent.
+- Inspect the hub as well as the spoke. The healthy count is two IKE/CHILD
+  pairs on the hub and one pair on each spoke.
 
 </details>
 
@@ -144,229 +213,173 @@ authenticate, or does the SA come up but traffic not flow?
 <summary>Solution</summary>
 
 ```bash
-ip tunnel add vti0 mode vti local 203.0.113.6 remote 203.0.113.1 key 1
-ip link set vti0 up
-ip addr add 10.10.1.2/30 dev vti0
-sysctl -w net.ipv4.conf.vti0.disable_policy=1
+docker exec clab-flexvpn-basics-gw-c \
+  bash /opt/flexvpn-basics/apply-solution.sh
 ```
 
-In `/etc/ipsec.conf`:
+Or replace every learned node with the canonical answer and grade it:
 
+```bash
+labs/flexvpn-basics/solution.sh
 ```
-conn to-hub
-    left=203.0.113.6
-    leftid=@spoke1
-    leftsubnet=0.0.0.0/0
-    right=203.0.113.1
-    rightid=@hub
-    rightsubnet=0.0.0.0/0
-    mark=%unique
-    type=tunnel
-    auto=start
-```
-
-Then `ipsec start`.
 
 </details>
 
 <details markdown="1">
 <summary>Check your work</summary>
 
-`ipsec status` shows `to-hub[1]: ESTABLISHED`; `ip xfrm state` shows two
-ESP SAs (in + out) with a non-zero mark; `ping -c3 10.10.1.1` (hub VTI)
-works and `tcpdump -i eth1 esp` shows ESP during the ping.
+The hub has exactly two established IKE SAs and two CHILD SAs; each spoke has
+one of each. The hub stays passive with `auto=add` and clears a dead peer,
+while each spoke owns initial and retry negotiation with `auto=start` and
+`dpdaction=restart`. One initiator per relationship avoids competing
+negotiations and duplicate CHILD SAs. Deterministic marks also ensure each
+per-peer VTI selects only its own XFRM policy set.
 
-Prediction answer: a wrong VTI key is *not* an IKEv2 problem — the IKEv2
-SA still authenticates and ESTABLISHES (it's keyed off `leftid`/`rightid`
-and the PSK). But the kernel mark won't match, so encrypted traffic has no
-SA to ride and pings fail. "SA established but pings dead" almost always
-means a mark/route/disable_policy issue, not an IKE one — a crucial triage
-split (compare ipsec-basics, where the failure modes are IKE-side).
+```bash
+./scripts/lab.sh cmd flexvpn-basics gw-a ipsec status
+./scripts/lab.sh cmd flexvpn-basics host-a ping -c2 192.168.2.10
+./scripts/lab.sh cmd flexvpn-basics host-a ping -c2 192.168.3.10
+./scripts/lab.sh cmd flexvpn-basics host-b ping -c2 192.168.3.10
+```
 
 </details>
 
----
+## Task 4 — Make ESP, VTI decapsulation, and hairpinning visible
 
-## Task 3 — Route over the VTI
+**Objective:** Prove that a private packet is public ESP on transit, readable
+above XFRM on a VTI, and decrypted then re-encrypted across two hub VTIs for a
+spoke-to-spoke flow.
 
-**Objective:** Add routes so gw-b reaches LAN A (and later spoke2's LAN)
-via the hub VTI, and the hub routes back to LAN B.
+**Predict first:** For one host-b to host-c echo request, on which two hub VTIs
+will the private packet appear, and how many ESP legs traverse public transit?
+
+```bash
+labs/flexvpn-basics/capture-protected.sh
+labs/flexvpn-basics/capture-vti.sh
+labs/flexvpn-basics/capture-hairpin.sh
+```
+
+<details markdown="1">
+<summary>Hints</summary>
+
+- Compare public endpoint addresses in the WAN capture with private endpoint
+  addresses on the VTI captures.
+- There is no direct spoke-to-spoke SA or shortcut in this topology.
+
+</details>
 
 <details markdown="1">
 <summary>Solution</summary>
 
-On **gw-b**:
-
-```bash
-ip route add 192.168.1.0/24 via 10.10.1.1 dev vti0   # LAN A
-ip route add 192.168.3.0/24 via 10.10.1.1 dev vti0   # spoke2 LAN (via hub)
-```
-
-On **gw-a** (hub):
-
-```bash
-ip route add 192.168.2.0/24 via 10.10.1.2 dev vti1
-```
+Run the three bounded helpers as shown. Each generates its own traffic, grades
+the evidence, removes its temporary file, and stops its capture process.
 
 </details>
 
 <details markdown="1">
 <summary>Check your work</summary>
 
-`host-b → 192.168.1.10` succeeds; `traceroute -n 192.168.1.1` from gw-b
-shows the hub VTI (10.10.1.1) as the hop. This is route-based IPsec in
-action: you didn't write a single XFRM policy — adding an `ip route` to
-the VTI was enough to make that traffic encrypted, because the VTI's mark
-ties it to the SA. That's the whole appeal over policy-based IPsec
-(ipsec-basics), where adding a protected subnet means editing selectors.
+The WAN branch contains bidirectional `203.0.113.6` ↔ `203.0.113.1` ESP and no
+readable `192.168` packet. The spoke VTI exposes the private request/reply above
+XFRM. The hairpin helper sees the same host-b ↔ host-c private flow on both
+hub `vti1` and `vti2`: the hub decrypts one ESP leg and encrypts another.
 
 </details>
 
----
+## Task 5 — Diagnose an SA-up, data-down mark mismatch
 
-## Task 4 — Build spoke2 (gw-c)
+**Objective:** Arm one opaque live-only fault, preserve evidence before
+diagnosing, repair only the VTI key, and return to exact healthy state.
 
-**Objective:** Repeat for gw-c — VTI key `2` (matching hub vti2), address
-10.10.2.2/30, the `to-hub` conn with `@spoke2`, and routes.
+**Predict first:** Rank these hypotheses before arming the fault: bad PSK, IKE
+proposal mismatch, missing protected route, or VTI-key/XFRM-mark mismatch.
+Which outputs would eliminate each hypothesis?
+
+```bash
+labs/flexvpn-basics/break.sh
+./scripts/lab.sh cmd flexvpn-basics gw-b ipsec status
+./scripts/lab.sh cmd flexvpn-basics gw-b ip -d tunnel show vti0
+./scripts/lab.sh cmd flexvpn-basics gw-b ip -s xfrm state
+./scripts/lab.sh cmd flexvpn-basics host-b ping -c2 192.168.1.10
+./scripts/lab.sh cmd flexvpn-basics host-c ping -c2 192.168.1.10
+```
+
+<details markdown="1">
+<summary>Hints</summary>
+
+- Treat `ESTABLISHED`, `INSTALLED`, route presence, VTI key, and XFRM mark as
+  separate claims.
+- Compare the faulted spoke with the untouched spoke before changing anything.
+
+</details>
 
 <details markdown="1">
 <summary>Solution</summary>
 
 ```bash
-ip tunnel add vti0 mode vti local 203.0.113.10 remote 203.0.113.1 key 2
-ip link set vti0 up
-ip addr add 10.10.2.2/30 dev vti0
-sysctl -w net.ipv4.conf.vti0.disable_policy=1
-# uncomment conn to-hub with left=203.0.113.10, leftid=@spoke2
-ipsec start
-ip route add 192.168.1.0/24 via 10.10.2.1 dev vti0
-ip route add 192.168.2.0/24 via 10.10.2.1 dev vti0
-# on gw-a:  ip route add 192.168.3.0/24 via 10.10.2.2 dev vti2
+labs/flexvpn-basics/repair.sh
 ```
+
+The minimal manual repair is to change gw-b `vti0` back to key `1`; do not
+restart IKE or rewrite the route and credential layers that remained healthy.
 
 </details>
 
 <details markdown="1">
 <summary>Check your work</summary>
 
-`ping -c3 10.10.2.1` from gw-c works; both spokes now have established SAs
-to the hub. The hub holds *two* VTIs and *two* SAs — one dedicated
-interface per spoke, which is the FlexVPN model (contrast DMVPN's single
-mGRE serving all spokes). This per-spoke interface is what makes
-per-tunnel routing metrics and QoS easy, at the cost of N interfaces on
-the hub.
+During the fault, spoke1 retains exactly one IKE and CHILD SA and marked XFRM
+state, while only its protected forwarding branches fail. Spoke2 and public
+underlay reachability remain healthy. The evidence rules out credentials and
+proposals; key `9` versus mark `1` isolates the binding fault. `repair.sh`
+restores key `1` without changing IKE files and requires the full checker.
 
 </details>
 
----
-
-## Task 5 — Prove the spoke-to-spoke hairpin (the FlexVPN limit)
-
-**Objective:** From host-b reach host-c and trace the path.
-
-**Predict first:** both spokes have SAs to the hub but *not* to each other.
-When host-b talks to host-c, how many encryption/decryption operations
-happen on the hub, and how many hops will the traceroute show?
+## Verification
 
 ```bash
-./scripts/lab.sh cmd flexvpn-basics host-b ping -c3 192.168.3.10
-# on gw-b:
-traceroute -n 192.168.3.10
+labs/flexvpn-basics/check.sh
 ```
 
-<details markdown="1">
-<summary>What you should observe</summary>
+The exact checker proves node/image inventory, the documented Linux mechanism
+exception, underlay containment, VTI endpoints/keys/addresses/sysctls/routes,
+one deterministic IKE/CHILD pair per spoke, marked XFRM states and policies,
+algorithms, bidirectional LAN reachability, and counter-proven hub hairpinning.
+It rejects extra learned connections, VTI addresses, private routes, SAs, and
+marked or tunnel-mode policies rather than accepting merely working pings.
 
-The path is host-b → gw-b → [vti0 encrypt] → **gw-a decrypt + re-encrypt**
-→ [vti2] → gw-c → host-c. The hub decrypts spoke1's traffic and
-re-encrypts it for spoke2 — a full crypto round-trip *plus* the data
-hairpins through the hub's location even if the spokes are physically
-adjacent. This is FlexVPN/static-VTI's defining limitation versus DMVPN
-Phase 2's NHRP shortcut (dmvpn-phase2 lab). It's the price of the
-simpler, NHRP-free static model — fine for a few sites, painful for a
-large any-to-any mesh.
-
-</details>
-
----
-
-## Reference
-
-### strongSwan
+Destroy the lab when finished:
 
 ```bash
-ipsec start | stop | restart
-ipsec status            # ESTABLISHED / CONNECTING
-ipsec statusall         # ciphers, lifetimes, counters
-ipsec up|down to-hub
-tail -f /var/log/syslog # live IKEv2 logs
+./scripts/lab.sh destroy flexvpn-basics
 ```
-
-### VTI / XFRM
-
-```bash
-ip tunnel add vti0 mode vti local <src> remote <dst> key <N>
-ip tunnel show ; ip tunnel del vti0
-sysctl -w net.ipv4.conf.vti0.disable_policy=1
-ip xfrm state ; ip xfrm policy ; ip xfrm monitor
-```
-
-### Traffic
-
-```bash
-tcpdump -i eth1 esp                       # encrypted on WAN
-tcpdump -i eth1 'udp port 500 or udp port 4500'   # IKEv2
-```
-
-### OSPF over VTI (design)
-
-Static routes work but don't scale; OSPF over the VTIs (point-to-point
-network type, all VTI+LAN interfaces in area 0, hub as the natural center)
-distributes routes as spokes come and go. The `ipsec-lab:local` image
-lacks FRR, so this is design-only here — but the network type matters:
-point-to-point avoids DR/BDR election that a VTI can't complete.
-
----
 
 ## Challenge questions
 
-No answers provided — reason them through.
-
-1. The Task 5 hairpin does two crypto operations on the hub per spoke-to-
-   spoke packet. Quantify the hub CPU and latency cost as spoke count and
-   inter-spoke traffic grow, and explain exactly what DMVPN Phase 2's NHRP
-   shortcut changes to avoid it.
-2. A spoke's SA is ESTABLISHED but pings to the hub VTI fail. Give the
-   ordered three-check diagnosis (mark match, route, `disable_policy`) and
-   explain why none of these is an IKEv2 problem.
-3. `mark=%unique` assigns a distinct mark per connection. Why is uniqueness
-   essential when one hub terminates many spokes, and what breaks if two
-   spokes accidentally share a mark/key?
-4. You must add a 50th spoke. Compare the incremental work and hub state
-   for FlexVPN (per-spoke VTI) vs DMVPN (one mGRE + NHRP registration), and
-   state the spoke count where you'd switch designs.
+1. Design certificate authentication for 50 spokes. Which identity and trust
+   decisions change, and which VTI/mark invariants remain identical?
+2. The hub's crypto throughput is saturated by spoke-to-spoke traffic. Compare
+   two designs that remove or distribute the decrypt-and-re-encrypt hairpin.
+3. Replace static routes with a routing protocol over the VTIs. Which failure
+   would you monitor to distinguish routing convergence from CHILD-SA health?
+4. Linux XFRM interfaces can replace legacy VTI devices on newer systems.
+   Propose an experiment that compares their route and policy ownership without
+   changing the IKEv2 security contract.
 
 ## Troubleshooting
 
-**Tunnel stuck CONNECTING** — verify WAN reachability first; both sides
-running `ipsec`; read `/var/log/syslog`; confirm the conn block is
-uncommented.
-
-**AUTH_FAILED** — `leftid`/`rightid` are the PSK lookup keys; they must
-match across `ipsec.conf` and `ipsec.secrets` on both ends.
-
-**ESTABLISHED but pings fail** — check two SAs in `ip xfrm state`, routes
-exist, and `disable_policy=1` on the VTI; capture `vti0` and `eth1`
-together while pinging.
-
-**`RTNETLINK answers: File exists`** — a stale VTI; `ip tunnel del vti0`
-then recreate.
+| Symptom | Likely cause | Focused action |
+|---|---|---|
+| No IKE SA | underlay, identity, PSK, or IKE proposal | prove public ping; inspect `ipsec statusall` and logs |
+| IKE up, no CHILD | ESP proposal or selector mismatch | compare CHILD proposal and `0.0.0.0/0` selectors |
+| IKE/CHILD up, no private traffic | route, VTI key/mark, or VTI policy sysctl | compare `ip route`, `ip -d tunnel`, XFRM marks, `disable_policy` |
+| Table 220 unexpectedly owns routes | automatic strongSwan routes enabled | require `install_routes = no`; keep route ownership explicit |
+| Duplicate CHILD SAs | both peers initiated or duplicate connection definitions | keep hub `auto=add`, one spoke initiator, one connection per peer |
+| Traffic appears in clear on transit | routing bypass or containment pollution | stop testing; inspect route selection and transit FORWARD policy |
 
 ## Extensions
 
-Optional follow-on ideas (not part of the validated workflow):
-
-- Add a routing protocol over the VTI and compare to the static base.
-- Replace PSK with certificates; note which strongSwan identities change.
-- Force a proposal or mark mismatch and isolate it with `ip xfrm` +
-  `ipsec statusall` + capture.
+- Replace the lab PSK with an ephemeral CA and per-spoke certificates.
+- Add a routing protocol over each point-to-point VTI and test reconvergence.
+- Compare per-peer QoS counters on the two hub VTIs during concurrent traffic.
