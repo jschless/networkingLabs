@@ -1,15 +1,18 @@
 # OPNsense platform notes
 
 The OPNsense labs run an external QEMU/KVM VM beside ContainerLab. They require
-a Linux x86-64 host with `/dev/kvm`; OPNsense itself is x86-64-only. The VM is
-open-source and has no license activation step, but its disk is intentionally
-not committed to this repository.
+a Linux x86-64 host with `/dev/kvm`; OPNsense itself is x86-64-only. Install
+`iproute2`, `qemu-system-x86_64`, `qemu-img`, an OpenSSH client, `sshpass`, and
+GNU `timeout` in addition to Docker and ContainerLab. The VM is open-source and
+has no license activation step, but its disk is intentionally not committed to
+this repository.
 
 ## One-time base image
 
-Download an OPNsense x86-64 image from the official project and install it in
-QEMU. Allocate at least 3 GB RAM and one virtio management NIC. During this
-one-time setup:
+Download and install the OPNsense 26.1.6_2 x86-64 image used by the current
+automation and exact graders. Other releases are not interchangeable without
+revalidation. Allocate at least 3 GB RAM and one virtio management NIC. During
+this one-time setup:
 
 1. Assign the first NIC (`vtnet0`) to the management network and configure it
    for DHCP.

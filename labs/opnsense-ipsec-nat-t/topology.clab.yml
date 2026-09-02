@@ -5,7 +5,9 @@ name: opnsense-ipsec-nat-t
 topology:
   defaults:
     kind: linux
-    image: opnsense-tools:local
+    # These containers provide only intrinsic NAT and incidental test hosts.
+    # The learned firewall roles run genuine OPNsense in external QEMU/KVM VMs.
+    image: ops-lab:local
   nodes:
     br-public:
       kind: bridge
