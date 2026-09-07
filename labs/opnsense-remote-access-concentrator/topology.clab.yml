@@ -1,36 +1,44 @@
 name: opnsense-remote-access-concentrator
 
-# An external OPNsense VM is the concentrator.  The developer and contractor
-# containers are WireGuard road warriors after the learner configures them.
+# One external OPNsense VM is the learned concentrator. The two WireGuard
+# containers are intrinsic remote-access endpoints; service roles are
+# incidental probes behind the firewall.
 topology:
-  defaults:
-    kind: linux
-    image: wireguard-lab:local
   nodes:
     br-remote-wan:
       kind: bridge
     br-corp:
       kind: bridge
     developer:
+      kind: linux
+      image: wireguard-lab:local
+      cap-add: [NET_ADMIN, NET_RAW]
       binds:
-        - configs/developer/setup.sh:/setup.sh
+        - configs/developer/setup.sh:/setup.sh:ro
       exec:
         - bash /setup.sh
     contractor:
+      kind: linux
+      image: wireguard-lab:local
+      cap-add: [NET_ADMIN, NET_RAW]
       binds:
-        - configs/contractor/setup.sh:/setup.sh
+        - configs/contractor/setup.sh:/setup.sh:ro
       exec:
         - bash /setup.sh
     corp-app:
-      image: opnsense-tools:local
+      kind: linux
+      image: ops-lab:local
       binds:
-        - configs/corp-app/setup.sh:/setup.sh
+        - configs/corp-app/setup.sh:/setup.sh:ro
+        - configs/tcp-responder.py:/tcp-responder.py:ro
       exec:
         - bash /setup.sh
     jump-host:
-      image: opnsense-tools:local
+      kind: linux
+      image: ops-lab:local
       binds:
-        - configs/jump-host/setup.sh:/setup.sh
+        - configs/jump-host/setup.sh:/setup.sh:ro
+        - configs/tcp-responder.py:/tcp-responder.py:ro
       exec:
         - bash /setup.sh
   links:

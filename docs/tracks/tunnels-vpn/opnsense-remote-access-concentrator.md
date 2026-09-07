@@ -2,10 +2,10 @@
 title: opnsense-remote-access-concentrator
 ---
 
-!!! tip "Practice Lab"
-    WireGuard remote-access concentrator, split tunneling, per-peer authorization, and revocation
+!!! tip "Build Lab"
+    Native OPNsense WireGuard concentration, split routing, per-key policy, encrypted evidence, selective revocation, and ownership triage
 
 !!! note "Images"
-    `wireguard-lab:local` plus a local OPNsense QEMU/KVM base image
+    `wireguard-lab:local`, `ops-lab:local`, and the tested local OPNsense 26.1.6_2 QEMU/KVM base image
 
 {% include-markdown "../../../labs/opnsense-remote-access-concentrator/README.md" %}

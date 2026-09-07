@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ip addr add 10.70.10.20/24 dev eth1
+
+ip addr replace 10.70.10.20/24 dev eth1
 ip route replace default via 10.70.10.1
 ip link set eth1 up
-cat >/tmp/jump-response.sh <<'EOF'
-#!/bin/bash
-printf 'jump host\n'
-EOF
-chmod +x /tmp/jump-response.sh
-nohup socat TCP-LISTEN:22,reuseaddr,fork EXEC:/tmp/jump-response.sh >/tmp/jump.log 2>&1 &
+pkill -f '^python3 /tcp-responder.py 22 jump-host$' >/dev/null 2>&1 || true
+nohup python3 /tcp-responder.py 22 jump-host \
+  >/tmp/opnsense-ra-jump-host.log 2>&1 &
