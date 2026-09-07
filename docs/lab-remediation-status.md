@@ -9,12 +9,12 @@ catalog.
 - Inventory date: 2026-07-31
 - Original remediation inventory: 143 lab decisions (all directories that were
   topology-backed when inventoried)
-- Lab decisions complete: 24/143
-- Remaining pending labs: 119
+- Lab decisions complete: 25/143
+- Remaining pending labs: 118
 - Intentionally exempt decisions: 1 retired duplicate
 - Current active topology-backed labs: 142
-- Active completed type mix: 15 Build, 4 Guided Debug, 2 Reference / Observation,
-  and 2 Capstone (23 typed active completions). The intentionally exempt retired
+- Active completed type mix: 16 Build, 4 Guided Debug, 2 Reference / Observation,
+  and 2 Capstone (24 typed active completions). The intentionally exempt retired
   redirect has no active lab type, so this type sum does not equal the decision count.
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -134,7 +134,7 @@ catalog.
 | network-gitops-change-pipeline | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | opnsense-ipsec-nat-t | changed | Build | Four-ping/NAT assertions could not grade either firewall; legacy Phase-1/2 wording conflicted with current OPNsense Connections; there was no executable answer, exact saved/live ownership, bounded capture, opaque fault, rollback contract, or reproducible version/tooling declaration; catalog image/type metadata was stale | Genuine OPNsense 26.1.6_2/FreeBSD on both critical firewall roles; `ops-lab:local` Linux retained for the intrinsic NAT boundary and incidental protected hosts/bridges | Linux is critical only to the explicit NAT-translation mechanism and otherwise incidental; no learned firewall-role exception | Clean answer-free **12/51** baseline; repeated exact **63/0** solution; focused extra-connection and wrong-PSK **62/1** negatives; four-packet bidirectional public UDP/4500 ESP capture with protected addresses absent; repeated exact **60/3** fault and idempotent repair; TERM/INT/ERR configuration rollback plus direct single-PID signal cleanup; exact role-scoped live `enc0` PF policy; repository gates; AUTHORING fallback and same-reviewer approval; clean destroy with zero runtime residue | Active maxima: HQ QEMU 1,960,100 KiB, Branch QEMU 1,958,236 KiB; hosts/NAT 3.105/0.900/1.410 MiB; about 3.742 GiB aggregate | 5eef7b824f2e80b68d2ad3b0c5c1054e4669056d | `lab-tutor` unavailable; Linux x86-64/KVM and exact local OPNsense 26.1.6_2 base required; PSK, one CHILD, fixed selectors/static routing only; certificates, HA, dynamic routing, scale, rekey endurance, adverse WAN, offload, and physical forwarding untested; memory is three point samples |
 | opnsense-ngfw-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| opnsense-remote-access-concentrator | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| opnsense-remote-access-concentrator | changed | Build | Legacy six-check Practice flow could pass a dummy `wg0`, did not grade OPNsense identities, ownership, routes, saved/live policy, or logs, lacked native solution/capture/fault/rollback contracts, and ended its revocation task in a state that contradicted final entitlement checks | Genuine OPNsense 26.1.6_2 for the learned native WireGuard/PF concentrator; `wireguard-lab:local` for intrinsic remote peers; `ops-lab:local` for incidental services | No FRR; Linux is retained for the intrinsic remote WireGuard endpoints and incidental application/jump responders, not as a concentrator substitute | Clean answer-free **12/47** baseline; repeated healthy **59/0** with stable identities; exact saved/live object and client-secret/config negatives; four-packet encrypted public capture; repeated selective revoke/re-enroll; focused ownership fault **56/3** and repeated repair; ERR/INT/TERM rollback; active resource samples; full repository gates; AUTHORING fallback and same-reviewer **APPROVE**; clean destroy | QEMU 1,966,180 KiB RSS; containers 5.156/1.504/5.625/9.426 MiB maxima; about 1.90 GiB aggregate, OOM false and restarts 0 | be98122bdc6f6d2ef7993947574e72b67cc278ca | `lab-tutor` unavailable; amd64 OPNsense 26.1.6_2/KVM only; no HA, roaming, DNS policy, MFA, scale, performance, long-duration key lifecycle, other hypervisors, or physical/offload validation |
 | orchestrated-wan-overlay | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | ospf-auth | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | ospf-bgp-redist | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
