@@ -19,18 +19,12 @@ protocols {
             holdtime 300
             multicast dynamic
             network-id 1
-            redirect
             registration-no-unique
         }
     }
     ospf {
         area 0 {
             network 172.16.0.1/32
-            network 192.168.2.0/24
-            network 192.168.3.0/24
-        }
-        interface eth1 {
-            passive
         }
         interface tun0 {
             network point-to-multipoint

@@ -1,33 +1,17 @@
 name: dmvpn-phase3
 
-# DMVPN Phase 3 — Hub Summarization + NHRP Shortcuts  (VyOS)
-#
-# Phase 3 = Phase 1 routing (OSPF p2mp, all routes via hub) + NHRP shortcuts.
-# Hub summarizes spoke LANs into 192.168.0.0/16; shortcuts install /24 overrides.
-#
-# Key commands:
-#   Hub:    ip nhrp redirect  +  OSPF p2mp  +  redistribute static (summary 192.168.0.0/16)
-#   Spokes: ip nhrp shortcut  +  OSPF p2mp  (same as Phase 1 + shortcut)
-#
-# Pre-configured: hub (fully working Phase 3)
-# Your task: Configure NHRP + OSPF p2mp + ip nhrp shortcut on each spoke
-#
-# Access:
-#   ./scripts/lab.sh cli dmvpn-phase3 hub
-#   ./scripts/lab.sh cli dmvpn-phase3 spoke1
+# Native VyOS DMVPN Phase 3 Build lab. The hub owns the summarized service
+# reachability and redirect behavior; learners build every spoke control plane.
 
 topology:
   nodes:
     br-wan:
       kind: linux
-      image: quay.io/frrouting/frr:8.4.2
+      image: ops-lab:local
+      binds:
+        - configs/br-wan/setup.sh:/setup.sh:ro
       exec:
-        - ip link add name br0 type bridge
-        - ip link set br0 up
-        - ip link set eth1 master br0
-        - ip link set eth2 master br0
-        - ip link set eth3 master br0
-        - ip link set eth4 master br0
+        - bash /setup.sh
 
     hub:
       kind: vyosnetworks_vyos
@@ -38,16 +22,24 @@ topology:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke1/config.boot
+      binds:
+        - configs/spoke1/apply-solution.sh:/opt/dmvpn-phase3/apply-solution.sh:ro
+        - configs/spoke1/inject-fault.sh:/opt/dmvpn-phase3/inject-fault.sh:ro
+        - configs/spoke1/restore-shortcut.sh:/opt/dmvpn-phase3/restore-shortcut.sh:ro
 
     spoke2:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke2/config.boot
+      binds:
+        - configs/spoke2/apply-solution.sh:/opt/dmvpn-phase3/apply-solution.sh:ro
 
     spoke3:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke3/config.boot
+      binds:
+        - configs/spoke3/apply-solution.sh:/opt/dmvpn-phase3/apply-solution.sh:ro
 
   links:
     - endpoints: ["hub:eth1",    "br-wan:eth1"]

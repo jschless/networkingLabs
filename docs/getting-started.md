@@ -61,7 +61,7 @@ The two things it can't fetch for you are the **cEOS tarball** (licensed — see
 | Image | Acquire it with | Arch |
 |-------|-----------------|------|
 | `ghcr.io/nokia/srlinux:latest` | `docker pull ghcr.io/nokia/srlinux:latest` | multi-arch ✅ |
-| `quay.io/frrouting/frr:8.4.2` | pulled automatically as the base of `frr-lab:local` and the DMVPN/`sdwan` labs | multi-arch ✅ |
+| `quay.io/frrouting/frr:8.4.2` | pulled automatically as the base of `frr-lab:local` and the remaining FRR/`sdwan` labs | multi-arch ✅ |
 | `quay.io/frrouting/frr:10.5.0` | `enterprise-dual-stack-capstone` ISP edge | multi-arch ✅ |
 
 All other registry images the labs use (`grafana`, `prometheus`/`prom/*`, `postgres`, `redis`,
@@ -70,7 +70,7 @@ demand — nothing to do.
 
 > **Why quay for FRR:** Docker Hub's `frrouting/frr:latest` is **amd64-only**. The quay.io
 > mirror publishes a true multi-arch build (incl. arm64), and tag `8.4.2` keeps the FRR 8.4
-> syntax the labs are written against. This is what lets the FRR/DMVPN labs run native on Apple
+> syntax the labs are written against. This is what lets the FRR labs run native on Apple
 > Silicon instead of under emulation.
 
 #### Requires a free Arista account
@@ -109,10 +109,11 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `advanced-security-tools:1.0.0` | `advanced-security-architecture` endpoints, WAF/PEP, DNS/proxy/logs | `docker build -t advanced-security-tools:1.0.0 labs/advanced-security-architecture/` (pinned Debian 12.12 digest; pinned nginx/ModSecurity CRS, dnsmasq, Squid, nftables, and rsyslog packages) |
 | `advanced-security-fw:1.0.0` | `advanced-security-architecture` stateful gateway and inline IDS/IPS | `docker build -f labs/advanced-security-architecture/Dockerfile.fw -t advanced-security-fw:1.0.0 labs/advanced-security-architecture/` (pinned Suricata 7.0.10 image digest; nftables NFQUEUE) |
 | `vyos:local` | `ipsec-basics`, `gre-ipsec`, `macsec-basics`, `black-core-routing`, `mtu-pmtud-troubleshooting`, `qos-enterprise`, and the DMVPN labs (`dmvpn-phase1/2/3`, `dmvpn-phase3-ipsec-capstone`, `debug-dmvpn-phase1`) | one-time build from a free VyOS ISO — see [VyOS platform notes](platforms/vyos.md) |
-| `ipsec-lab:local` | `flexvpn-basics` only (the retained Dockerfile lives under `labs/ipsec-basics/`) | `docker build -t ipsec-lab:local labs/ipsec-basics/` |
-| `wireguard-lab:local` | `wireguard` | `docker build -t wireguard-lab:local labs/wireguard/` |
+| `flexvpn-lab:local` | `flexvpn-basics` Linux strongSwan/VTI gateway roles | `docker build -t flexvpn-lab:local labs/flexvpn-basics/` (pinned Debian Bookworm base; pinned strongSwan 5.9.8-5+deb12u5, iproute2, iptables, ping, procps, and tcpdump packages) |
+| `wireguard-lab:local` | `wireguard`, `opnsense-remote-access-concentrator` | `docker build -t wireguard-lab:local labs/wireguard/` |
 | `black-core-tools:local` | `black-core-routing` | `docker build -t black-core-tools:local labs/black-core-routing/` |
-| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `dhcp-dns-troubleshooting`, `dmvpn-phase1`, `gre-basics`, `gre-ipsec`, `ipsec-basics`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `mtu-pmtud-troubleshooting`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` (multi-arch Alpine 3.20.10 base pinned by OCI index digest) |
+| `dmvpn-pki:local` | `dmvpn-phase3-ipsec-capstone` intrinsic ephemeral CA | `docker build -t dmvpn-pki:local labs/dmvpn-phase3-ipsec-capstone/` (multi-arch Alpine 3.20 base pinned by OCI index digest; exact `openssl=3.3.7-r0`) |
+| `ops-lab:local` | `aaa-ops-troubleshooting`, `anycast-dns`, `debug-dmvpn-phase1`, `debug-gre-basics`, `dhcp-dns-troubleshooting`, `dmvpn-phase1`, `dmvpn-phase2`, `dmvpn-phase3`, `dmvpn-phase3-ipsec-capstone`, `gre-basics`, `gre-ipsec`, `ipsec-basics`, `ipv6-access-services`, `k8s-fabric`, `management-access-control`, `mtu-pmtud-troubleshooting`, `opnsense-ipsec-nat-t`, `opnsense-remote-access-concentrator`, `troubleshooting-range-dci-edge`, `troubleshooting-range-hybrid-access`, `vrf-lite`, `ztp-basics` | `docker build -t ops-lab:local images/ops-lab/` (multi-arch Alpine 3.20.10 base pinned by OCI index digest) |
 | `rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf` (pulled) | `k8s-fabric` | `docker pull rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`; the lab also needs `ceos:4.35.2F`, `ops-lab:local`, and the manifest-pinned MetalLB/nginx images |
 | `anycast-dns:local` | `anycast-dns` FRR resolver hosts | `docker build -t anycast-dns:local labs/anycast-dns/` (pinned Alpine 3.16-compatible bash, bind-tools, and dnsmasq packages; the lab also needs `ceos:4.35.2F`, `frr-lab:local`, and `ops-lab:local`) |
 | `nac-lab:local` | `dot1x-nac` | `docker build -t nac-lab:local labs/dot1x-nac/` |
@@ -132,7 +133,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 | `global-delivery:local` | `global-application-delivery` | `docker build -t global-delivery:local labs/global-application-delivery/` (pinned Alpine 3.22.1 and CoreDNS 1.12.2 bases; HAProxy/nginx/dnsmasq packages pinned) |
 | `service-ha:local` | `service-ha` | `docker build -t service-ha:local labs/service-ha/` |
 | `netbox-automation:local` | `network-automation-netbox` | `docker build -t netbox-automation:local labs/network-automation-netbox/` (digest-pinned Python 3.12.13; pinned Ansible, requests, pynetbox, Jinja2, and PyYAML) |
-| `opnsense-tools:local` | `opnsense-ngfw-basics`, `opnsense-ipsec-nat-t` | `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/` |
+| `opnsense-tools:local` | `opnsense-ngfw-basics` | `docker build -t opnsense-tools:local labs/opnsense-ngfw-basics/` |
 | `enterprise-services-infra:local` | `enterprise-services-infra` | `docker build -t enterprise-services-infra:local labs/enterprise-services-infra/` |
 | `enterprise-voice-tools:1.0.0` | `enterprise-voice-sip-qos` | `docker build -t enterprise-voice-tools:1.0.0 labs/enterprise-voice-sip-qos/` (digest-pinned Ubuntu 24.04 base; pinned Asterisk 20.6.0 and SIPp 3.7.7) |
 | `ot-zone-tools:1.0.0` | `ot-zone-conduit` | `docker build -t ot-zone-tools:1.0.0 labs/ot-zone-conduit/` (digest-pinned Ubuntu 24.04 base; PyModbus 3.11.3, Suricata, nftables, OpenSSH, and passive-mirror tools) |
@@ -151,8 +152,7 @@ amd64 on Intel/Linux and arm64 on Apple Silicon with no changes.
 ### Images pulled automatically
 
 Some labs also reference public registry images that `containerlab deploy` pulls on
-first use — no build step needed: `frrouting/frr:latest` (helper/bridge nodes in the
-DMVPN labs), and
+first use — no build step needed: `quay.io/frrouting/frr:8.4.2`, and
 `rancher/k3s:v1.30.6-k3s1@sha256:204d4094343ed60ff60ed4b009785151c43d8f611761929aae3a1beb02fc0adf`,
 `quay.io/metallb/controller:v0.14.8@sha256:93b83b39d06bbcb0aedc0eb750c9e43e3c46dc08a6f88400ed96105224d784ec`,
 `quay.io/metallb/speaker:v0.14.8@sha256:fd86bfc502601d6525739d411a0045e7085a4008a732be7e271c851800952142`,

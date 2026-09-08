@@ -7,9 +7,10 @@ interfaces {
     }
     tunnel tun0 {
         address 172.16.0.1/32
-        description "mGRE DMVPN tunnel - hub"
+        description "mGRE encrypted Phase 3 hub"
         enable-multicast
         encapsulation gre
+        mtu 1400
         source-interface eth1
     }
 }

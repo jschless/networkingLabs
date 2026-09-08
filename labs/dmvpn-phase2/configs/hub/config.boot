@@ -6,14 +6,44 @@ interfaces {
     loopback lo {
     }
     tunnel tun0 {
-        address 172.16.0.1/24
-        description "mGRE DMVPN tunnel - hub"
+        address 172.16.0.1/32
+        description "mGRE DMVPN compatibility hub"
         enable-multicast
         encapsulation gre
         source-interface eth1
     }
 }
 protocols {
+    bgp {
+        neighbor 172.16.0.11 {
+            address-family {
+                ipv4-unicast {
+                    route-reflector-client
+                }
+            }
+            remote-as 65000
+        }
+        neighbor 172.16.0.12 {
+            address-family {
+                ipv4-unicast {
+                    route-reflector-client
+                }
+            }
+            remote-as 65000
+        }
+        neighbor 172.16.0.13 {
+            address-family {
+                ipv4-unicast {
+                    route-reflector-client
+                }
+            }
+            remote-as 65000
+        }
+        parameters {
+            router-id 10.0.0.1
+        }
+        system-as 65000
+    }
     nhrp {
         tunnel tun0 {
             holdtime 300
@@ -21,21 +51,6 @@ protocols {
             network-id 1
             redirect
             registration-no-unique
-        }
-    }
-    ospf {
-        area 0 {
-            network 172.16.0.0/24
-        }
-        interface eth1 {
-            passive
-        }
-        interface tun0 {
-            network broadcast
-            priority 10
-        }
-        parameters {
-            router-id 10.0.0.1
         }
     }
 }

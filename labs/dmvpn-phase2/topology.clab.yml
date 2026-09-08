@@ -1,39 +1,18 @@
 name: dmvpn-phase2
 
-# DMVPN Phase 2 — Dynamic Spoke-to-Spoke Shortcuts  (VyOS)
-#
-# Phase 2 enables direct spoke-to-spoke tunnels via NHRP resolution.
-# Unlike Phase 1 (all traffic via hub), Phase 2 creates dynamic shortcuts
-# directly between spokes after NHRP resolves the remote spoke's WAN IP.
-#
-# Tunnel IPs:
-#   hub:    172.16.0.1/24   spoke1: 172.16.0.11/24
-#   spoke2: 172.16.0.12/24  spoke3: 172.16.0.13/24
-#
-# Phase 2 vs Phase 1 differences:
-#   - OSPF: broadcast mode (vs point-to-multipoint in Phase 1)
-#   - Hub: OSPF priority 10 (forces DR)
-#   - Spokes: OSPF priority 0 (never DR), ip nhrp shortcut (new in P2)
-#
-# Pre-configured: hub (fully working Phase 2)
-# Your task: Configure NHRP + OSPF broadcast + ip nhrp shortcut on each spoke
-#
-# Access:
-#   ./scripts/lab.sh cli dmvpn-phase2 hub
-#   ./scripts/lab.sh cli dmvpn-phase2 spoke1
+# Native VyOS DMVPN compatibility reference. Current VyOS/FRR requires /32
+# NHRP tunnel addresses; BGP preserves remote-spoke next hops while NHRP
+# redirect/shortcut supplies the observed direct-data-path optimization.
 
 topology:
   nodes:
     br-wan:
       kind: linux
-      image: quay.io/frrouting/frr:8.4.2
+      image: ops-lab:local
+      binds:
+        - configs/br-wan/setup.sh:/setup.sh:ro
       exec:
-        - ip link add name br0 type bridge
-        - ip link set br0 up
-        - ip link set eth1 master br0
-        - ip link set eth2 master br0
-        - ip link set eth3 master br0
-        - ip link set eth4 master br0
+        - bash /setup.sh
 
     hub:
       kind: vyosnetworks_vyos
@@ -44,6 +23,9 @@ topology:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke1/config.boot
+      binds:
+        - configs/spoke1/inject-fault.sh:/opt/dmvpn-phase2/inject-fault.sh:ro
+        - configs/spoke1/restore-service-host-map.sh:/opt/dmvpn-phase2/restore-service-host-map.sh:ro
 
     spoke2:
       kind: vyosnetworks_vyos
@@ -56,7 +38,7 @@ topology:
       startup-config: configs/spoke3/config.boot
 
   links:
-    - endpoints: ["hub:eth1",    "br-wan:eth1"]
+    - endpoints: ["hub:eth1", "br-wan:eth1"]
     - endpoints: ["spoke1:eth1", "br-wan:eth2"]
     - endpoints: ["spoke2:eth1", "br-wan:eth3"]
     - endpoints: ["spoke3:eth1", "br-wan:eth4"]

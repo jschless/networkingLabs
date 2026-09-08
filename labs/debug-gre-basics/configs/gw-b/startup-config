@@ -1,20 +1,24 @@
+! gw-b — Site B gateway. This saved incident contains one intentional defect.
 hostname gw-b
 !
 interface Loopback0
    ip address 10.0.0.2/32
 !
 interface Ethernet1
+   description to internet WAN-B
    no switchport
    ip address 203.0.113.6/30
    no shutdown
 !
 interface Ethernet2
+   description to host-b LAN-B
    no switchport
    ip address 192.168.2.1/24
    no shutdown
 !
 interface Tunnel0
-   tunnel source Ethernet1
+   description GRE to Site A
+   tunnel source interface Ethernet1
    tunnel destination 192.168.1.1
    ip address 172.16.0.2/30
    no shutdown

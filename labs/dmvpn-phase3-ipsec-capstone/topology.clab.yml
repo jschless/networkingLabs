@@ -1,63 +1,60 @@
 name: dmvpn-phase3-ipsec-capstone
 
-# DMVPN Phase 3 + Certificate IPsec Capstone  (VyOS)
-#
-# Goal:
-#   Build a DMVPN Phase 3 fabric on VyOS, then protect the GRE underlay with
-#   certificate-based IPsec so spoke-to-spoke shortcuts remain encrypted.
-#
-# Tasks:
-#   - generate a local CA and endpoint certificates on `ca`
-#   - import CA/cert/key material into hub and spokes
-#   - configure DMVPN Phase 3 (NHRP redirect/shortcut + OSPF p2mp + summary)
-#   - configure full-mesh GRE-over-IPsec transport selectors
+# Native VyOS capstone. Learners build the complete NHRP, OSPF, PKI, and
+# certificate-IPsec control plane over an interface-only baseline.
 
 topology:
   nodes:
     br-wan:
       kind: linux
-      image: quay.io/frrouting/frr:8.4.2
+      image: ops-lab:local
+      binds:
+        - configs/br-wan/setup.sh:/setup.sh:ro
       exec:
-        - ip link add name br0 type bridge
-        - ip link set br0 up
-        - ip link set eth1 master br0
-        - ip link set eth2 master br0
-        - ip link set eth3 master br0
-        - ip link set eth4 master br0
+        - bash /setup.sh
 
     ca:
       kind: linux
-      # frr-lab (not the bare frr image): the CA workflow needs openssl
-      image: frr-lab:local
+      image: dmvpn-pki:local
       binds:
-        - configs/ca/setup.sh:/setup.sh
-        - configs/ca/init-ca.sh:/lab/init-ca.sh
-        - configs/ca/issue-router.sh:/lab/issue-router.sh
-      exec:
-        - sh /setup.sh
+        - configs/ca/init-ca.sh:/opt/dmvpn-pki/init-ca.sh:ro
+        - configs/ca/issue-router.sh:/opt/dmvpn-pki/issue-router.sh:ro
+        - configs/ca/validate-pki.sh:/opt/dmvpn-pki/validate-pki.sh:ro
 
     hub:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/hub/config.boot
+      binds:
+        - configs/router/apply-solution.sh:/opt/dmvpn-capstone/apply-solution.sh:ro
 
     spoke1:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke1/config.boot
+      binds:
+        - configs/router/apply-solution.sh:/opt/dmvpn-capstone/apply-solution.sh:ro
+        - configs/spoke1/remove-pair.sh:/opt/dmvpn-capstone/remove-pair.sh:ro
+        - configs/spoke1/restore-pair.sh:/opt/dmvpn-capstone/restore-pair.sh:ro
 
     spoke2:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke2/config.boot
+      binds:
+        - configs/router/apply-solution.sh:/opt/dmvpn-capstone/apply-solution.sh:ro
+        - configs/spoke2/remove-pair.sh:/opt/dmvpn-capstone/remove-pair.sh:ro
+        - configs/spoke2/restore-pair.sh:/opt/dmvpn-capstone/restore-pair.sh:ro
 
     spoke3:
       kind: vyosnetworks_vyos
       image: vyos:local
       startup-config: configs/spoke3/config.boot
+      binds:
+        - configs/router/apply-solution.sh:/opt/dmvpn-capstone/apply-solution.sh:ro
 
   links:
-    - endpoints: ["hub:eth1",    "br-wan:eth1"]
+    - endpoints: ["hub:eth1", "br-wan:eth1"]
     - endpoints: ["spoke1:eth1", "br-wan:eth2"]
     - endpoints: ["spoke2:eth1", "br-wan:eth3"]
     - endpoints: ["spoke3:eth1", "br-wan:eth4"]

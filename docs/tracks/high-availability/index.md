@@ -4,7 +4,7 @@ Seven labs covering BFD, VRRP, anycast services, stateful firewall HA, Graceful 
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
-| [bfd-ospf](bfd-ospf.md) | Practice | cEOS | BFD with OSPF, sub-second link failure detection |
+| [bfd-ospf](bfd-ospf.md) | Build | cEOS | Build OSPF+BFD, capture control traffic, measure silent-loss convergence, and diagnose timer drift |
 | [bfd-bgp](bfd-bgp.md) | Practice | cEOS | BFD with BGP, fast session teardown vs hold timer |
 | [vrrp](vrrp.md) | Practice | cEOS | VRRP master/backup, virtual IP, priority, preemption |
 | [anycast-dns](anycast-dns.md) | Build | cEOS + FRR service hosts | Filtered routing-on-host export, closest-instance RIB/FIB selection, health-controlled withdrawal, and stale-coupling blackholes |

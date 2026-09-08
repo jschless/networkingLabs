@@ -58,7 +58,7 @@ show you:
 | **Named-mode EIGRP** (`router eigrp NAME` + address families) | FRR EIGRP is classic-mode, IPv4-only, no auth |
 | **MQC QoS** (`class-map`/`policy-map`/`service-policy`) | Native VyOS software QoS in [`qos-enterprise`](tracks/operations/qos-enterprise.md): HTB, DSCP classification, drop-tail, SFQ, and RED rendered through Linux `tc`; the mechanisms transfer, but MQC syntax and hardware queues do not |
 | **HSRP and GLBP** | VRRP (`vrrp`, `ha-network-design-ceos`) — same FHRP concept, different protocol and CLI |
-| **Cisco NHRP/DMVPN syntax** (`ip nhrp map`, `tunnel mode gre multipoint`) | VyOS DMVPN (`dmvpn-phase1/2/3`) — identical NHRP behavior, different config grammar |
+| **Cisco NHRP/DMVPN syntax** (`ip nhrp map`, `tunnel mode gre multipoint`) | VyOS DMVPN (`dmvpn-phase1/2/3`) — Phase 1 mGRE/NHRP mechanics transfer with different config grammar; `dmvpn-phase2` is a current-image compatibility reference whose direct path needs Traffic-Indication/shortcut optimization rather than classic Phase 2 ordinary resolution; `dmvpn-phase3` uses overlay-only OSPF plus a hub-owned external service summary and observes current-image service-host mappings with service-prefix `/24` shortcuts |
 | **IOS NAT** (`ip nat inside/outside`) | nftables and OPNsense NAT |
 | **LDP via IOS `mpls ip` syntax** | Real LDP on FRR (`mpls-ldp`) — identical protocol, FRR's `mpls ldp` config block instead; plus the SR alternative (`mpls-sr-*`) |
 | **Catalyst Center (DNA Center), SD-WAN Manager (vManage), ISE, EEM, LISP, TrustSec** | Nothing — these are products, not protocols, and can't be containerized here |
@@ -82,6 +82,8 @@ EIGRP:    eigrp-basics → eigrp-variance → eigrp-stub
 BGP:      bgp-basics → bgp-path-selection → bgp-filtering → bgp-communities → bgp-aggregation
 Redist:   ospf-bgp-redist → redistribution-tags → route-maps-pbr
 Tunnels:  gre-basics → ipsec-basics → gre-ipsec → dmvpn-phase1
+          → dmvpn-phase2 (compatibility reference) → dmvpn-phase3
+          → dmvpn-phase3-ipsec-capstone
 HA:       bfd-ospf → bfd-bgp → vrrp
 IS-IS:    isis-basics → isis-multiarea
 IPv6:     ipv6-ospf3 → ipv6-bgp
@@ -159,7 +161,8 @@ management-access-control → dhcp-dns-troubleshooting → aaa-ops-troubleshooti
 ## DMVPN Progression
 
 ```
-dmvpn-phase1 (VyOS) → dmvpn-phase2 → dmvpn-phase3
+dmvpn-phase1 (VyOS build) → dmvpn-phase2 (compatibility reference) → dmvpn-phase3
+→ dmvpn-phase3-ipsec-capstone (x509 GRE-protection capstone)
 ```
 
 ## Troubleshooting Practice

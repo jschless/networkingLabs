@@ -3,7 +3,9 @@ title: debug-dmvpn-phase1
 ---
 
 !!! warning "Debug Lab"
-    A fully-working topology with **one intentional bug**. Use the symptoms, hints, and solution in the README to practice structured troubleshooting.
+    A native VyOS Phase 1 topology with **one intentional saved bug**. Diagnose
+    the registration-green/adjacency-stalled incident, apply a live-only
+    repair, and preserve the saved fault for repeat practice.
 
 {%
   include-markdown "../../../labs/debug-dmvpn-phase1/README.md"

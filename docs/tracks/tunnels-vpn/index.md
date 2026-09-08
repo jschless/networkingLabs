@@ -8,14 +8,14 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 | [ipsec-basics](ipsec-basics.md) | Build | VyOS + ops Linux | IKEv2 site-to-site IPsec, policy ownership, encrypted evidence, proposal triage |
 | [gre-ipsec](gre-ipsec.md) | Build | VyOS + ops Linux | Transport-mode ESP for GRE, layered capture evidence, confidentiality-failure triage |
 | [dmvpn-phase1](dmvpn-phase1.md) | Build | VyOS + ops Linux | Hub-transit mGRE/NHRP, OSPF service routes, packet proof, partial-failure triage |
-| [dmvpn-phase2](dmvpn-phase2.md) | Practice | VyOS | DMVPN Phase 2 — spoke-to-spoke tunnels, NHRP shortcuts |
-| [dmvpn-phase3](dmvpn-phase3.md) | Practice | VyOS | DMVPN Phase 3 — NHRP shortcuts with OSPF p2mp |
-| [dmvpn-phase3-ipsec-capstone](dmvpn-phase3-ipsec-capstone.md) | Capstone | VyOS | DMVPN Phase 3 with in-lab PKI and certificate-based IPsec |
-| [flexvpn-basics](flexvpn-basics.md) | Practice | strongSwan | IKEv2 FlexVPN, Virtual Tunnel Interfaces |
+| [dmvpn-phase2](dmvpn-phase2.md) | Reference / Observation | VyOS + ops Linux | Current-image Phase 2 compatibility boundary: preserved BGP next hops versus Phase 3-style Traffic-Indication shortcuts |
+| [dmvpn-phase3](dmvpn-phase3.md) | Build | VyOS + ops Linux | Overlay-only OSPF, hub service summarization, and current-image service-host mappings with `/24` shortcuts |
+| [dmvpn-phase3-ipsec-capstone](dmvpn-phase3-ipsec-capstone.md) | Capstone | VyOS + intrinsic PKI | Summary-first DMVPN Phase 3 with exact x509 GRE protection and confidentiality-failure triage |
+| [flexvpn-basics](flexvpn-basics.md) | Build | Linux strongSwan | FlexVPN-concept analogue: route-based IKEv2, deterministic VTI/XFRM marks, ESP evidence, hub hairpinning |
 | [wireguard](wireguard.md) | Build | Linux WireGuard | Public-key identity, cryptokey routing, encrypted capture, hub forwarding |
-| [opnsense-ipsec-nat-t](opnsense-ipsec-nat-t.md) | Practice | OPNsense | IKEv2 IPsec through NAT, UDP/4500, failure triage |
-| [opnsense-remote-access-concentrator](opnsense-remote-access-concentrator.md) | Practice | OPNsense + WireGuard | Remote-access concentration, split tunnel, per-peer policy |
-| [vrf-lite](vrf-lite.md) | Practice | cEOS | VRF-Lite, per-VRF routing tables, route leaking |
+| [opnsense-ipsec-nat-t](opnsense-ipsec-nat-t.md) | Build | OPNsense + ops Linux | Native IKEv2 through NAT, exact protected policy, ESP-in-UDP proof, opaque data-path triage |
+| [opnsense-remote-access-concentrator](opnsense-remote-access-concentrator.md) | Build | OPNsense + WireGuard | Native remote-access concentration, per-key split routing and policy, selective revocation, opaque ownership triage |
+| [vrf-lite](vrf-lite.md) | Build | cEOS + ops Linux | Native per-VRF forwarding, dedicated-link packet proof, precise bidirectional `/32` sharing, and inactive-static triage |
 
 ## Platform Notes
 
@@ -23,15 +23,17 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 - **IPsec/GRE protection labs**: `ipsec-basics` and `gre-ipsec` use
   `vyos:local` gateways plus incidental hosts/transit from
   `docker build -t ops-lab:local images/ops-lab/`
-- **DMVPN Phase 1**: `vyos:local` hub/spokes plus an incidental
-  `ops-lab:local` WAN bridge
-- **FlexVPN Linux lab**: `docker build -t ipsec-lab:local labs/ipsec-basics/`
+- **DMVPN Phase 1, Phase 2 compatibility study, Phase 3 build, and encrypted capstone**:
+  `vyos:local` hub/spokes plus an incidental `ops-lab:local` WAN bridge; the capstone
+  also builds `dmvpn-pki:local` for ephemeral certificate issuance
+- **FlexVPN-concept Linux lab**: `docker build -t flexvpn-lab:local labs/flexvpn-basics/`;
+  this is an executable strongSwan/VTI analogue, not Cisco FlexVPN or IOS syntax
 - **WireGuard lab**: `docker build -t wireguard-lab:local labs/wireguard/`
 - **OPNsense labs**: local QEMU/KVM base image — see [OPNsense platform notes](../../platforms/opnsense.md)
-- **cEOS labs**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
+- **cEOS labs**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`; `vrf-lite` also uses `ops-lab:local` for four incidental traffic endpoints
 
 ## cEOS Variants
 
-DMVPN was previously maintained on Arista cEOS as well; that variant is **deprecated** and
-`labs/dmvpn-ceos/` remains only as a placeholder pointing at the VyOS labs above. DMVPN
-practice in this repo is VyOS-only.
+DMVPN was previously maintained on Arista cEOS as well. The
+`labs/dmvpn-ceos/` directory is now a **retired redirect** to the maintained VyOS
+progression and contains no runnable topology. DMVPN practice in this repo is VyOS-only.
