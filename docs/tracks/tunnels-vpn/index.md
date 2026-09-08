@@ -15,7 +15,7 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
 | [wireguard](wireguard.md) | Build | Linux WireGuard | Public-key identity, cryptokey routing, encrypted capture, hub forwarding |
 | [opnsense-ipsec-nat-t](opnsense-ipsec-nat-t.md) | Build | OPNsense + ops Linux | Native IKEv2 through NAT, exact protected policy, ESP-in-UDP proof, opaque data-path triage |
 | [opnsense-remote-access-concentrator](opnsense-remote-access-concentrator.md) | Build | OPNsense + WireGuard | Native remote-access concentration, per-key split routing and policy, selective revocation, opaque ownership triage |
-| [vrf-lite](vrf-lite.md) | Practice | cEOS | VRF-Lite, per-VRF routing tables, route leaking |
+| [vrf-lite](vrf-lite.md) | Build | cEOS + ops Linux | Native per-VRF forwarding, dedicated-link packet proof, precise bidirectional `/32` sharing, and inactive-static triage |
 
 ## Platform Notes
 
@@ -30,7 +30,7 @@ Twelve labs covering GRE, IPsec, NAT traversal, DMVPN (Phase 1/2/3 plus a certif
   this is an executable strongSwan/VTI analogue, not Cisco FlexVPN or IOS syntax
 - **WireGuard lab**: `docker build -t wireguard-lab:local labs/wireguard/`
 - **OPNsense labs**: local QEMU/KVM base image — see [OPNsense platform notes](../../platforms/opnsense.md)
-- **cEOS labs**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`
+- **cEOS labs**: `docker import cEOS-lab-4.35.2F.tar ceos:4.35.2F`; `vrf-lite` also uses `ops-lab:local` for four incidental traffic endpoints
 
 ## cEOS Variants
 
