@@ -9,12 +9,12 @@ catalog.
 - Inventory date: 2026-07-31
 - Original remediation inventory: 143 lab decisions (all directories that were
   topology-backed when inventoried)
-- Lab decisions complete: 26/143
-- Remaining pending labs: 117
+- Lab decisions complete: 27/143
+- Remaining pending labs: 116
 - Intentionally exempt decisions: 1 retired duplicate
 - Current active topology-backed labs: 142
-- Active completed type mix: 17 Build, 4 Guided Debug, 2 Reference / Observation,
-  and 2 Capstone (25 typed active completions). The intentionally exempt retired
+- Active completed type mix: 18 Build, 4 Guided Debug, 2 Reference / Observation,
+  and 2 Capstone (26 typed active completions). The intentionally exempt retired
   redirect has no active lab type, so this type sum does not equal the decision count.
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -22,6 +22,25 @@ catalog.
   available in this Codex session. Student-flow review therefore uses
   `labs/AUTHORING.md` as the fallback contract. No ledger entry may claim
   `lab-tutor` validation unless that skill later becomes available and is actually run.
+
+## Continuation handoff for future AI
+
+> Resume on branch `codex/networking-lab-remediation` after the merge-request
+> checkpoint that ends with BFD/OSPF. The durable count is **27/143 complete,
+> 116 pending**. `bfd-ospf` is fully accepted and cleanly destroyed; its
+> implementation commit is `5849f693efb8dd46531c52d9a6b639c572eb2de2`.
+> The next unprocessed High Availability lab is **`bfd-bgp`**. Start it from
+> analysis and a fresh native probe; do not reuse BFD/OSPF runtime assumptions
+> without proving BGP behavior. Continue exactly one lab at a time with one
+> read-only analyst, main-agent native probe, one static-only implementer,
+> main-agent acceptance, and one same-reviewer closure, followed by separate
+> implementation and ledger commits plus a clean destroy. `lab-tutor` remained
+> unavailable, so use `labs/AUTHORING.md` without claiming tutor validation.
+> Preserve the unrelated user-owned `.claude/worktrees/` directory.
+
+The open integration review is GitHub pull request **#69** from this branch to
+`main`. Its title/body should describe this 27-decision checkpoint after the
+final ledger commit is pushed.
 
 ## Status meanings
 
@@ -42,7 +61,7 @@ catalog.
 | anycast-dns | changed | Build | Final fault was exposed and non-opaque; task anatomy was incomplete with answer leakage; FRR filled the critical site-router roles; lifecycle waits and daemon startup were unbounded and duplicate-prone; checker mutated state and covered only 17 weak assertions; failover was falsely claimed below 2 seconds; host outbound policy leaked seven routes despite an intended two | Native cEOS under the canonical tag for critical r1/r2: amd64 4.35.2F and arm64 cEOSarm 4.36.1F; FRR retained on dns1/dns2 because routing-on-host is intrinsic to the objective; ops-lab retained for incidental clients | Linux/FRR is critical only on the service hosts as the intrinsic routing-on-host mechanism; no site-router exception | Clean final amd64 cEOS build, deployment, and full documented walk; exact two-prefix host exports with three-layer policy, two VIP paths, local FIB selection, anycast and unique-address queries; solved checker 52/52; normal failover 2.657 s and recovery 0.878 s with no peer drops; break twice produced exactly 47/5 while routing remained green; solution twice restored 52/52; second clean redeploy reached 52/52; repository gates; AUTHORING fallback review and same-reviewer follow-ups | About 2.50 GiB sampled total | 28a4d47ea6f702816a4ca293f104b5e98542b8fa | lab-tutor unavailable; arm64 mapping not live-validated; licensed cEOS and local image build required; physical/provider convergence not tested |
 | automation-fundamentals | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | bfd-bgp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| bfd-ospf | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| bfd-ospf | changed | Build | Answer-bearing and stale TODO syntax; unused FRR artifacts contradicted the all-cEOS topology; carrier-down testing did not isolate BFD; the five weak checks included a `0%`-inside-`100%` ping false positive; no exact saved/operational contract, capture ownership, carrier-up comparison, opaque fault, or rollback workflow | Native amd64 `ceos:4.35.2F` on all three critical OSPF/BFD router roles | No FRR/Linux exception; all learned roles remain native cEOS | One clean acceptance deployment: exact **11/27** answer-free boundary; repeated **38/0** healthy solution; saved-only **37/1** and literal-100%-loss negatives; exact Up-but-9000-ms fault at **34/4** with repeated break/repair; eight BFD controls plus two OSPF hellos with normal/ERR/INT/TERM cleanup; solution ERR/INT/TERM and partial-backup rollback; carrier-up A/B measured 35.217 s OSPF-only versus 1.029 s BFD with forced-error cleanup; repository gates; AUTHORING fallback and same-reviewer **APPROVE**; 1.77-second clean destroy with zero residue | Final point sample: r1/r2/r3 1.135/1.137/1.127 GiB, about 3.399 GiB total | 5849f693efb8dd46531c52d9a6b639c572eb2de2 | `lab-tutor` unavailable; licensed local amd64 cEOS 4.35.2F only; asynchronous directly connected single-hop BFD; no echo/demand/multihop, scale, long-duration load, physical ASIC/offload, production SLA, arm64, or future-image validation |
 | bgp-aggregation | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | bgp-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | bgp-communities | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
