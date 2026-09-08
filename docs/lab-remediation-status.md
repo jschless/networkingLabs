@@ -9,12 +9,12 @@ catalog.
 - Inventory date: 2026-07-31
 - Original remediation inventory: 143 lab decisions (all directories that were
   topology-backed when inventoried)
-- Lab decisions complete: 25/143
-- Remaining pending labs: 118
+- Lab decisions complete: 26/143
+- Remaining pending labs: 117
 - Intentionally exempt decisions: 1 retired duplicate
 - Current active topology-backed labs: 142
-- Active completed type mix: 16 Build, 4 Guided Debug, 2 Reference / Observation,
-  and 2 Capstone (24 typed active completions). The intentionally exempt retired
+- Active completed type mix: 17 Build, 4 Guided Debug, 2 Reference / Observation,
+  and 2 Capstone (25 typed active completions). The intentionally exempt retired
   redirect has no active lab type, so this type sum does not equal the decision count.
 - Processing policy: exactly one lab is analyzed, edited, deployed, reviewed, committed,
   and cleaned up at a time.
@@ -171,7 +171,7 @@ catalog.
 | two-routers | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | urpf-antispoofing | changed | Build | Critical router used unproven FRR/Linux uRPF, exposed exact answers, conflated spoofed-ping failure with forwarding drops, and lacked the required five-task anatomy, robust checker, and opaque break/fix | VyOS 2026.03.15 rolling for the critical edge after cEOS 4.35.2F reported uRPF unsupported on this container platform; ops-lab Linux for incidental endpoints; live probes proved strict/loose/default-route behavior and counters | Linux retained only for incidental traffic generation/capture; no critical-role exception | Clean full task walk; immediate disabled baseline; strict/loose/asymmetry/default comparisons; 30/30 checker twice; direct-kernel-route and four-finding break negatives; repair; repository gates; AUTHORING fallback and independent review | About 399.3 MiB sampled probe high; final target about 253 MiB | 6a0a028d4cf743e86637cb852b8d8eacba15e9b1 | lab-tutor unavailable; IPv6, ECMP, policy routing, scale, fragments, and physical forwarding hardware not tested; local VyOS image due for review by 2026-08-31 |
 | vlan-trunks-switchport-basics | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
-| vrf-lite | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
+| vrf-lite | changed | Build | Answer-bearing PE startup comments, an unnecessary six-cEOS footprint, incorrect one-way cross-VRF syntax/claims, a `0%`-inside-`100%` ping-regex false positive, five weak assertions, and no exact saved/FIB/isolation/capture/opaque-fault/rollback workflow | Genuine `ceos:4.35.2F` on both critical learned PEs; four `ops-lab:local` Linux endpoints retain only fixed address/loopback/default-route traffic roles | Linux retained only for incidental traffic endpoints; no FRR or critical-role exception | Native syntax/FIB/capture/fault probe; exact answer-free boundary; repeated **45/0** healthy solution; saved-only **44/1** and unauthorized-share **42/3** negatives; repeated exact **40/5** inactive-resolver fault and focused repair; solution/fault ERR/INT/TERM rollback; partial-backup and failed-restore retention injection; tenant-only 3-request/3-reply captures with normal/ERR/INT/TERM cleanup; supported clean redeploy; repository gates; AUTHORING fallback and same-reviewer **APPROVE**; two-second clean destroy with zero residue | Final point sample about 2.27 GiB total: pe1/pe2 1.131/1.133 GiB and each Linux endpoint about 0.64 MiB; former six-cEOS probe 7.235 GiB | e367834c28349051b7f6226d01e5818020d1d462 | `lab-tutor` unavailable; licensed local amd64 cEOS 4.35.2F only; direct Docker restart is unsupported because Containerlab-injected links disappear, so use destroy/deploy; arm64, dynamic routing, scale, overlapping tenants, physical ASIC behavior, and future images untested |
 | vrrp | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | vxlan-evpn | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
 | vxlan-evpn-srlinux | pending | Unclassified | Analyst pass pending | Pending | Pending | Not run | Not recorded | Pending | Lab-specific validation pending |
