@@ -152,6 +152,7 @@ nav:
         - anycast-dns: tracks/high-availability/anycast-dns.md
         - service-ha: tracks/high-availability/service-ha.md
         - ha-network-design-ceos: tracks/high-availability/ha-network-design-ceos.md
+        - ha-branch-dual-transport: tracks/high-availability/ha-branch-dual-transport.md
         - graceful-restart: tracks/high-availability/graceful-restart.md
       - Enterprise Design:
         - tracks/enterprise/index.md

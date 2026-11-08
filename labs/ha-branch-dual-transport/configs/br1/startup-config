@@ -1,0 +1,34 @@
+! br1 — Branch router 1: owns the MPLS circuit (AS65010)
+! Base addressing only. MLAG-facing port-channel, VRRP, BGP, BFD, policy
+! and tracking are configured in the lab tasks (see README.md).
+!
+hostname br1
+!
+no aaa root
+!
+interface Loopback0
+   ip address 10.0.0.1/32
+!
+interface Ethernet1
+   description MPLS circuit to mpls PE (AS65100) 172.16.1.2
+   no switchport
+   ip address 172.16.1.1/30
+   no shutdown
+!
+interface Ethernet2
+   description LAN uplink to acc1 Ethernet2 (future Po1 member)
+   no shutdown
+!
+interface Ethernet3
+   description LAN uplink to acc2 Ethernet2 (future Po1 member)
+   no shutdown
+!
+interface Ethernet4
+   description cross-link to br2 Ethernet4
+   no switchport
+   ip address 10.0.12.1/30
+   no shutdown
+!
+ip routing
+!
+end

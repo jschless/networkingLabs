@@ -142,10 +142,10 @@ No cloud account. No license fees. Deploy, break things, learn.
 
     [:octicons-arrow-right-24: Data Center track](tracks/data-center/index.md)
 
-- :material-high-definition: **High Availability** (7 labs)
+- :material-high-definition: **High Availability** (8 labs)
 
     ---
-    BFD, VRRP, anycast services, stateful firewall HA, Graceful Restart, MLAG, multi-mechanism HA design
+    BFD, VRRP, anycast services, stateful firewall HA, Graceful Restart, MLAG, multi-mechanism HA design, dual-transport HA branch
 
     [:octicons-arrow-right-24: HA track](tracks/high-availability/index.md)
 

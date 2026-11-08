@@ -121,7 +121,7 @@ DMZ:      enterprise-dmz
 Security: enterprise-access-security → enterprise-edge-nat-firewall
 Services: enterprise-services-infra
 Multicast: enterprise-multicast
-HA:       ha-network-design-ceos
+HA:       ha-network-design-ceos → ha-branch-dual-transport
 Capstones: enterprise-collapsed-core-capstone → enterprise-campus-capstone
            → enterprise-routed-access-capstone → enterprise-wan-edge-capstone
 ```

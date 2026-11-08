@@ -1,0 +1,40 @@
+! acc1 — Branch access switch 1 (MLAG peer of acc2)
+! VLANs and port descriptions only. MLAG, the peer-link and every
+! port-channel are configured in the lab tasks (see README.md).
+!
+hostname acc1
+!
+no aaa root
+!
+vlan 10
+   name USERS
+!
+vlan 4094
+   name MLAG-PEER
+!
+interface Ethernet1
+   description host1 eth1 (future MLAG Po10)
+   no shutdown
+!
+interface Ethernet2
+   description br1 Ethernet2 (future MLAG Po11)
+   no shutdown
+!
+interface Ethernet3
+   description br2 Ethernet2 (future MLAG Po12)
+   no shutdown
+!
+interface Ethernet4
+   description acc2 Ethernet4 (future peer-link Po1000)
+   no shutdown
+!
+interface Ethernet5
+   description acc2 Ethernet5 (future peer-link Po1000)
+   no shutdown
+!
+interface Vlan4094
+   description MLAG peer SVI
+   ip address 10.255.254.1/30
+   no shutdown
+!
+end
