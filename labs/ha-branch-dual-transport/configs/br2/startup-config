@@ -1,0 +1,37 @@
+! br2 — Branch router 2: owns the Internet circuit (AS65010)
+! Base addressing and the GRE underlay host route only. The tunnel, MLAG-facing
+! port-channel, VRRP, BGP, BFD, policy and tracking are lab tasks.
+!
+hostname br2
+!
+no aaa root
+!
+interface Loopback0
+   ip address 10.0.0.2/32
+!
+interface Ethernet1
+   description Internet circuit to inet 198.51.100.2
+   no switchport
+   ip address 198.51.100.1/30
+   no shutdown
+!
+interface Ethernet2
+   description LAN uplink to acc1 Ethernet3 (future Po1 member)
+   no shutdown
+!
+interface Ethernet3
+   description LAN uplink to acc2 Ethernet3 (future Po1 member)
+   no shutdown
+!
+interface Ethernet4
+   description cross-link to br1 Ethernet4
+   no switchport
+   ip address 10.0.12.2/30
+   no shutdown
+!
+! Underlay: reach the hub's public tunnel endpoint over the Internet circuit only.
+ip route 203.0.113.1/32 198.51.100.2
+!
+ip routing
+!
+end

@@ -1,6 +1,6 @@
 # High Availability & Fast Convergence Track
 
-Seven labs covering BFD, VRRP, anycast services, stateful firewall HA, Graceful Restart, and a capstone HA design combining multiple mechanisms.
+Eight labs covering BFD, VRRP, anycast services, stateful firewall HA, Graceful Restart, and two capstones: a campus HA design and a dual-router, dual-transport HA branch.
 
 | Lab | Type | Platform | What You Learn |
 |-----|------|----------|----------------|
@@ -10,6 +10,7 @@ Seven labs covering BFD, VRRP, anycast services, stateful firewall HA, Graceful 
 | [anycast-dns](anycast-dns.md) | Build | cEOS + FRR service hosts | Filtered routing-on-host export, closest-instance RIB/FIB selection, health-controlled withdrawal, and stale-coupling blackholes |
 | [service-ha](service-ha.md) | Practice | Linux | Active/backup stateful firewall pair: keepalived VIP + conntrackd state sync; a long-lived TCP flow dies on failover without sync, survives with it |
 | [High-Availability Network Design](ha-network-design-ceos.md) | Capstone | cEOS | MLAG, VRRP tracking, OSPF+BFD+ECMP, dual-ISP BGP |
+| [HA Branch: Dual Router, Dual Transport](ha-branch-dual-transport.md) | Capstone | cEOS + FRR | MLAG-meshed branch, VRRP, MPLS + GRE-over-Internet with iBGP cross-link, two-way path policy, BFD, measured failure matrix |
 | [graceful-restart](graceful-restart.md) | Practice | cEOS | Graceful Restart for BGP on a route reflector, with service routes held stale during restart |
 
 ## Platform Notes

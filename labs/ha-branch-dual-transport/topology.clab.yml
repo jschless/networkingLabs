@@ -1,0 +1,141 @@
+name: ha-branch-dual-transport
+
+mgmt:
+  network: clab-ha-branch-dual-transport-mgmt
+  ipv4-subnet: 172.31.250.0/24
+
+# HA Remote Branch — Dual Router, Dual Transport (cEOS capstone)
+#
+#   Learned roles (cEOS, you configure):  br1, br2, acc1, acc2
+#   Provided roles (FRR/Linux, pre-built): mpls, inet, hub, host1, server
+#
+#                         [server] 10.20.20.100
+#                            |
+#                          [hub]  AS65000  (DC head-end, pre-configured)
+#                         /     \
+#               172.16.2.0/30   203.0.113.0/30
+#                      /           \
+#                  [mpls]         [inet]
+#                AS65100 PE      "the Internet"
+#                     |              |
+#            172.16.1.0/30    198.51.100.0/30   ...  GRE 10.99.0.0/30 br2<->hub
+#                     |              |
+#                  [br1]==========[br2]       AS65010, cross-link 10.0.12.0/30
+#                    | \          / |
+#                    |   \      /   |         Po1 on each router = LACP to
+#                    |     \  /     |         the MLAG pair (one leg per switch)
+#                    |     /  \     |
+#                  [acc1]==========[acc2]     MLAG pair, peer-link Po1000
+#                       \         /
+#                        [host1]  10.10.10.100 (LACP bond), VIP 10.10.10.1
+#
+# Pre-configured: hostnames, interface IPs, L2 port roles, GRE underlay host
+# routes, every provider/hub/endpoint role. NOT configured: MLAG, port-channels,
+# VRRP, GRE tunnel on br2, BGP, BFD, path policy, tracking.
+
+topology:
+  nodes:
+    br1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/br1/startup-config
+
+    br2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/br2/startup-config
+      # Platform plumbing, not part of the lab: cEOS's virtual dataplane forwards
+      # GRE-decapsulated packets twice (EOS + the Linux kernel). Drop the kernel copy.
+      exec:
+        - bash -c "iptables -t mangle -C FORWARD -i tu0 -j DROP 2>/dev/null || iptables -t mangle -A FORWARD -i tu0 -j DROP"
+
+    acc1:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc1/startup-config
+
+    acc2:
+      kind: ceos
+      image: ceos:4.35.2F
+      startup-config: configs/acc2/startup-config
+
+    mpls:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/mpls/frr.conf:/etc/frr/frr.conf
+        - configs/mpls/setup.sh:/setup.sh
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - bash /setup.sh
+        - vtysh -b
+
+    inet:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/inet/setup.sh:/setup.sh
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - bash /setup.sh
+
+    hub:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/frr/daemons:/etc/frr/daemons
+        - configs/frr/vtysh.conf:/etc/frr/vtysh.conf
+        - configs/hub/frr.conf:/etc/frr/frr.conf
+        - configs/hub/setup.sh:/setup.sh
+      sysctls:
+        net.ipv4.ip_forward: "1"
+      exec:
+        - bash /setup.sh
+        - vtysh -b
+
+    host1:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/host1/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+    server:
+      kind: linux
+      image: frr-lab:local
+      binds:
+        - configs/server/setup.sh:/setup.sh
+      exec:
+        - bash /setup.sh
+
+  links:
+    # --- Branch LAN: host dual-homed to the MLAG pair (LACP bond) ---
+    - endpoints: ["host1:eth1", "acc1:eth1"]   # 10.10.10.0/24 (L2, VLAN 10)
+    - endpoints: ["host1:eth2", "acc2:eth1"]   # 10.10.10.0/24 (L2, VLAN 10)
+
+    # --- Routers dual-homed to the MLAG pair (one LACP member per switch) ---
+    - endpoints: ["br1:eth2", "acc1:eth2"]     # 10.10.10.0/24 (br1 Po1 member)
+    - endpoints: ["br1:eth3", "acc2:eth2"]     # 10.10.10.0/24 (br1 Po1 member)
+    - endpoints: ["br2:eth2", "acc1:eth3"]     # 10.10.10.0/24 (br2 Po1 member)
+    - endpoints: ["br2:eth3", "acc2:eth3"]     # 10.10.10.0/24 (br2 Po1 member)
+
+    # --- MLAG peer-link (two members) ---
+    - endpoints: ["acc1:eth4", "acc2:eth4"]    # L2 trunk; VLAN 4094 SVI 10.255.254.0/30
+    - endpoints: ["acc1:eth5", "acc2:eth5"]    # L2 trunk; VLAN 4094 SVI 10.255.254.0/30
+
+    # --- Router cross-link (iBGP; lets each router borrow the other's transport) ---
+    - endpoints: ["br1:eth4", "br2:eth4"]      # 10.0.12.0/30
+
+    # --- Transports ---
+    - endpoints: ["br1:eth1", "mpls:eth1"]     # 172.16.1.0/30  MPLS access circuit
+    - endpoints: ["br2:eth1", "inet:eth1"]     # 198.51.100.0/30 Internet circuit
+    - endpoints: ["hub:eth1", "mpls:eth2"]     # 172.16.2.0/30  DC MPLS circuit
+    - endpoints: ["hub:eth2", "inet:eth2"]     # 203.0.113.0/30 DC Internet circuit
+
+    # --- DC LAN ---
+    - endpoints: ["hub:eth3", "server:eth1"]   # 10.20.20.0/24

@@ -34,7 +34,7 @@ carrier, voice, OT, storage, and assessment maturity), see the
 | Topic | Status | Labs |
 |-------|--------|------|
 | 1.1.a Enterprise design: 2-tier, 3-tier, fabric, cloud | ✅ | `enterprise-collapsed-core` (2-tier), `enterprise-campus` (3-tier), `enterprise-routed-access` (L3 access), `spine-leaf` (fabric) + their capstones; `enterprise-grand-capstone` ties a 2-tier campus to real AD/RADIUS/DHCP services end-to-end |
-| 1.1.b HA techniques: redundancy, FHRP, SSO | 🟡 | `vrrp`, `ha-network-design-ceos`, `graceful-restart`, `bfd-ospf`, `bfd-bgp` — VRRP hands-on; HSRP/GLBP and SSO are Cisco-only (theory) |
+| 1.1.b HA techniques: redundancy, FHRP, SSO | 🟡 | `vrrp`, `ha-network-design-ceos`, `ha-branch-dual-transport`, `graceful-restart`, `bfd-ospf`, `bfd-bgp` — VRRP hands-on; HSRP/GLBP and SSO are Cisco-only (theory) |
 | 1.2 Catalyst SD-WAN principles | 🟡 | `sdwan-concepts` — TLOC/color/OMP/BFD/app-route mechanisms built by hand and mapped one-to-one; vManage/vSmart product workflows remain theory |
 | 1.3 SD-Access principles | ❌ | Underlying data plane (VXLAN) is covered below; LISP control plane and DNA/Catalyst Center are not |
 | 1.4 Interpret QoS configurations | 🟡 | `qos-enterprise` — native VyOS HTB/DSCP software scheduling with drop-tail, SFQ, and RED; VyOS renders Linux `tc`, not Cisco MQC or hardware queues |
